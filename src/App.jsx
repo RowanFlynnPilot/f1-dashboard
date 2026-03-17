@@ -194,6 +194,7 @@ export default function F1Dashboard(){
         .dr{display:flex;align-items:center;padding:8px 12px;border-radius:8px;transition:all .2s}.dr:hover{background:rgba(255,255,255,0.04)}
         .rc{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:20px;transition:all .3s}.rc:hover{border-color:rgba(255,255,255,0.12);background:rgba(255,255,255,0.05)}
         .sr{display:flex;align-items:center;padding:14px 16px;border-radius:10px;transition:all .2s;margin-bottom:4px}.sr:hover{background:rgba(255,255,255,0.04)}
+        select:hover,select:focus{border-color:rgba(232,0,32,0.3)!important}select option{padding:8px}
         .hdr{padding:28px 32px 0}.main{padding:24px 32px 48px;max-width:1200px;margin:0 auto}
         .g2{display:grid;grid-template-columns:1fr 1fr;gap:24px}
         .g3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
@@ -382,17 +383,17 @@ export default function F1Dashboard(){
         {/* ═══ RACE RESULTS ═══ */}
         {tab==="Race Results"&&(
           <div className="fu" style={{display:"flex",flexDirection:"column",gap:24}}>
-            {/* Race Selector */}
-            <div style={{display:"flex",alignItems:"center",gap:12,flexWrap:"wrap"}}>
-              <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:"rgba(255,255,255,0.4)"}}>Jump to</div>
-              <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
-                <button onClick={()=>setSelRace("all")} style={{cursor:"pointer",padding:"6px 14px",borderRadius:6,border:selRace==="all"?"1px solid rgba(232,0,32,0.4)":"1px solid rgba(255,255,255,0.08)",background:selRace==="all"?"rgba(232,0,32,0.12)":"rgba(255,255,255,0.03)",color:selRace==="all"?"#E80020":"rgba(255,255,255,0.5)",fontSize:12,fontWeight:selRace==="all"?600:400,fontFamily:"'Outfit',sans-serif",transition:"all .2s"}}>All Races</button>
-                {races.map(race=>(
-                  <button key={race.r} onClick={()=>setSelRace(race.r)} style={{cursor:"pointer",padding:"6px 12px",borderRadius:6,border:selRace===race.r?"1px solid rgba(232,0,32,0.4)":"1px solid rgba(255,255,255,0.08)",background:selRace===race.r?"rgba(232,0,32,0.12)":"rgba(255,255,255,0.03)",color:selRace===race.r?"#E80020":"rgba(255,255,255,0.5)",fontSize:11,fontWeight:selRace===race.r?600:400,fontFamily:"'Outfit',sans-serif",transition:"all .2s",display:"flex",alignItems:"center",gap:6}}>
-                    {race.sprint&&<span style={{fontSize:8,fontWeight:700,letterSpacing:.3,padding:"1px 4px",borderRadius:2,background:"rgba(232,0,32,0.15)",color:"#E80020"}}>S</span>}
-                    {race.nm.replace(" Grand Prix","").replace(" Sprint"," Spr")}
-                  </button>
-                ))}
+            {/* Race Selector Dropdown */}
+            <div style={{display:"flex",alignItems:"center",gap:14}}>
+              <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:"rgba(255,255,255,0.4)",flexShrink:0}}>Race</div>
+              <div style={{position:"relative",flex:1,maxWidth:360}}>
+                <select value={selRace} onChange={e=>{const v=e.target.value;setSelRace(v==="all"?"all":v.includes("S")?v:parseInt(v));}} style={{width:"100%",appearance:"none",WebkitAppearance:"none",MozAppearance:"none",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.10)",borderRadius:8,padding:"10px 40px 10px 14px",color:"#fff",fontSize:13,fontWeight:500,fontFamily:"'Outfit',sans-serif",cursor:"pointer",outline:"none",transition:"border-color .2s"}}>
+                  <option value="all" style={{background:"#14141f",color:"#fff"}}>All Races & Sprints</option>
+                  {races.map(race=>(
+                    <option key={race.r} value={race.r} style={{background:"#14141f",color:"#fff"}}>{race.sprint?"🏁 ":"🏆 "}R{typeof race.r==="string"?race.r.replace("S",""):race.r} — {race.nm}</option>
+                  ))}
+                </select>
+                <div style={{position:"absolute",right:14,top:"50%",transform:"translateY(-50%)",pointerEvents:"none",color:"rgba(255,255,255,0.4)",fontSize:11}}>▾</div>
               </div>
             </div>
             {races.filter(race=>selRace==="all"||selRace===race.r).map(race=>(
