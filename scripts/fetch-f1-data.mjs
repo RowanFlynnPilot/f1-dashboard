@@ -270,13 +270,29 @@ async function main() {
 
   // Pit stops (most recent race)
   const latestPits = allPitStops.length > 0 ? allPitStops[allPitStops.length - 1] : null;
-  const pitStops = latestPits ? latestPits.pitStops.map(p => ({
-    driver: p.driverId,
-    lap: parseInt(p.lap),
-    stop: parseInt(p.stop),
-    duration: p.duration,
-    durationMs: parseFloat(p.duration) || 0,
-  })).sort((a, b) => a.durationMs - b.durationMs) : [];
+
+  // Build a lookup from driverId -> { name, team } using standings data
+  const driverLookup = {};
+  for (const ds of driverStandings) {
+    driverLookup[ds.Driver.driverId] = {
+      name: ds.Driver.familyName,
+      fullName: `${ds.Driver.givenName} ${ds.Driver.familyName}`,
+      team: teamName(ds.Constructors[0]?.constructorId),
+    };
+  }
+
+  const pitStops = latestPits ? latestPits.pitStops.map(p => {
+    const info = driverLookup[p.driverId] || { name: p.driverId, fullName: p.driverId, team: "" };
+    return {
+      driver: info.name,
+      fullName: info.fullName,
+      team: info.team,
+      lap: parseInt(p.lap),
+      stop: parseInt(p.stop),
+      duration: p.duration,
+      durationMs: parseFloat(p.duration) || 0,
+    };
+  }).sort((a, b) => a.durationMs - b.durationMs) : [];
 
   // Build final output
   const output = {
