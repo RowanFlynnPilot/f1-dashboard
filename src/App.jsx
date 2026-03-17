@@ -97,7 +97,7 @@ function transformData(raw) {
 
   // Pit stops from most recent race
   const pits = raw.pitStops.stops.map(p => ({
-    d: p.driver, fn: p.driver, t: "", s: p.durationMs, l: p.lap,
+    d: p.driver, fn: p.fullName || p.driver, t: p.team || "", s: p.durationMs, l: p.lap,
   })).filter(p => p.s > 0 && p.s < 60);
 
   // Schedule
@@ -649,7 +649,7 @@ export default function F1Dashboard(){
                 return(
                 <div key={race.r} className="sr" style={{background:race.st==="next"?"rgba(232,0,32,0.08)":race.st==="postponed"?"rgba(255,165,0,0.04)":"transparent",border:race.st==="next"?"1px solid rgba(232,0,32,0.2)":"1px solid transparent"}}>
                   <div style={{width:36,fontSize:13,fontWeight:700,color:race.st==="done"?"#27F4D2":race.st==="next"?"#E80020":"rgba(255,255,255,0.3)",flexShrink:0}}>R{race.r}</div>
-                  {FLAGS[race.fc] && <img src={FLAGS[race.fc]} alt={race.fc} style={{width:36,height:24,objectFit:"cover",borderRadius:3,flexShrink:0,marginRight:10,opacity:race.st==="postponed"?0.4:1}}/>}
+                  {race.fc && <div style={{width:36,height:24,borderRadius:3,flexShrink:0,marginRight:10,background:"rgba(255,255,255,0.06)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700,color:"rgba(255,255,255,0.4)",letterSpacing:.5,opacity:race.st==="postponed"?0.4:1}}>{race.fc}</div>}
                   <div style={{flex:1,minWidth:0}}>
                     <div style={{display:"flex",alignItems:"center",gap:8}}>
                       <span style={{fontSize:14,fontWeight:600,color:race.st==="postponed"?"rgba(255,255,255,0.4)":"#fff"}}>{race.nm}</span>
