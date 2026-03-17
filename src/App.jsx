@@ -127,7 +127,7 @@ function transformData(raw) {
 function DH({name,size=32}){const[e,sE]=useState(false);const u=DRIVER_IMAGES[name];if(!u||e){const i=name.split(" ").map(n=>n[0]).join("");return (<div style={{width:size,height:size,borderRadius:"50%",background:"rgba(255,255,255,0.08)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:size*0.38,fontWeight:700,color:"rgba(255,255,255,0.5)",flexShrink:0}}>{i}</div>);}return (<img src={u} alt={name} referrerPolicy="no-referrer" crossOrigin="anonymous" onError={()=>sE(true)} style={{width:size,height:size,borderRadius:"50%",objectFit:"cover",objectPosition:"top center",flexShrink:0,background:"rgba(255,255,255,0.05)"}}/>);}
 function TL({team,size=20}){const[e,sE]=useState(false);const u=TEAM_LOGOS[team];if(!u||e)return null;const isData=u.startsWith("data:");return (<img src={u} alt={team} {...(isData?{}:{referrerPolicy:"no-referrer",crossOrigin:"anonymous"})} onError={()=>sE(true)} style={{width:size,height:size,objectFit:"contain",flexShrink:0}}/>);}
 
-function SC({label,value,sub,accent,icon}){return (<div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:10,padding:"18px 20px",flex:1,minWidth:155}}><div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:"rgba(255,255,255,0.4)",marginBottom:8,fontFamily:"'Outfit',sans-serif"}}>{label}</div><div style={{display:"flex",alignItems:"center",gap:8}}>{icon}{" "}<span style={{fontSize:26,fontWeight:700,color:accent||"#fff",lineHeight:1,fontFamily:"'Outfit',sans-serif"}}>{value}</span></div>{sub&&<div style={{fontSize:12,color:"rgba(255,255,255,0.5)",marginTop:6,fontFamily:"'Outfit',sans-serif"}}>{sub}</div>}</div>);}
+function SC({label,value,sub,accent,icon}){return (<div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:10,padding:"14px 16px",flex:1,minWidth:130}}><div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:"rgba(255,255,255,0.4)",marginBottom:8,fontFamily:"'Outfit',sans-serif"}}>{label}</div><div style={{display:"flex",alignItems:"center",gap:8}}>{icon}{" "}<span style={{fontSize:22,fontWeight:700,color:accent||"#fff",lineHeight:1,fontFamily:"'Outfit',sans-serif"}}>{value}</span></div>{sub&&<div style={{fontSize:11,color:"rgba(255,255,255,0.5)",marginTop:6,fontFamily:"'Outfit',sans-serif"}}>{sub}</div>}</div>);}
 
 function SB({status}){const m={done:{bg:"rgba(39,244,210,0.12)",c:"#27F4D2",t:"COMPLETED"},next:{bg:"rgba(232,0,32,0.15)",c:"#E80020",t:"NEXT RACE"},postponed:{bg:"rgba(255,165,0,0.12)",c:"#FFA500",t:"POSTPONED"},upcoming:{bg:"rgba(255,255,255,0.05)",c:"rgba(255,255,255,0.4)",t:"UPCOMING"}};const s=m[status]||m.upcoming;return (<span style={{fontSize:10,fontWeight:700,letterSpacing:1,padding:"3px 8px",borderRadius:4,background:s.bg,color:s.c}}>{s.t}</span>);}
 
@@ -183,10 +183,33 @@ export default function F1Dashboard(){
         .dr{display:flex;align-items:center;padding:8px 12px;border-radius:8px;transition:all .2s}.dr:hover{background:rgba(255,255,255,0.04)}
         .rc{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:20px;transition:all .3s}.rc:hover{border-color:rgba(255,255,255,0.12);background:rgba(255,255,255,0.05)}
         .sr{display:flex;align-items:center;padding:14px 16px;border-radius:10px;transition:all .2s;margin-bottom:4px}.sr:hover{background:rgba(255,255,255,0.04)}
+        .hdr{padding:28px 32px 0}.main{padding:24px 32px 48px;max-width:1200px;margin:0 auto}
+        .g2{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+        .g3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+        .g4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+        .pod{display:flex;gap:12px}
+        .tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -4px;padding:0 4px}
+        @media(max-width:768px){
+          .hdr{padding:16px 14px 0}
+          .main{padding:16px 14px 32px}
+          .tb{padding:8px 12px;font-size:12px}
+          .g2{grid-template-columns:1fr}
+          .g3{grid-template-columns:1fr}
+          .g4{grid-template-columns:1fr 1fr}
+          .pod{flex-direction:column}
+          .rc{padding:14px}
+          .sr{padding:10px 12px;flex-wrap:wrap;gap:6px}
+          .sr>div:nth-child(4){width:auto!important}
+          .dr{padding:6px 8px}
+        }
+        @media(max-width:480px){
+          .g4{grid-template-columns:1fr}
+          .tb{padding:7px 10px;font-size:11px}
+        }
       `}</style>
 
       {/* Header */}
-      <div style={{position:"relative",padding:"28px 32px 0",background:"linear-gradient(180deg,rgba(232,0,32,0.08) 0%,transparent 100%)"}}>
+      <div className="hdr" style={{position:"relative",background:"linear-gradient(180deg,rgba(232,0,32,0.08) 0%,transparent 100%)"}}>
         <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,transparent,#E80020,transparent)"}}/>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:16}}>
           <div className="fu">
@@ -207,7 +230,7 @@ export default function F1Dashboard(){
         </div>
       </div>
 
-      <div style={{padding:"24px 32px 48px",maxWidth:1200,margin:"0 auto"}}>
+      <div className="main">
 
         {/* ═══ OVERVIEW ═══ */}
         {tab==="Overview"&&(
@@ -220,7 +243,7 @@ export default function F1Dashboard(){
               <SC label="Fastest Pit Stop" value={fastestPit?`${fastestPit.s.toFixed(3)}s`:"N/A"} sub={fastestPit?`${fastestPit.d}`:""} accent="#27F4D2"/>
               <SC label="Completed Races" value={`${completedRounds}`} sub={`of ${totalRounds} scheduled`} accent="#d946ef"/>
             </div>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:24}}>
+            <div className="g2">
               {/* Drivers */}
               <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20}}>
                 <div style={{fontSize:13,textTransform:"uppercase",letterSpacing:1.5,color:"rgba(255,255,255,0.4)",marginBottom:16,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
@@ -284,7 +307,7 @@ export default function F1Dashboard(){
         {/* ═══ STANDINGS ═══ */}
         {tab==="Standings"&&(
           <div className="fu" style={{display:"flex",flexDirection:"column",gap:24}}>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:24}}>
+            <div className="g2">
               <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20}}>
                 <div style={{fontSize:15,fontWeight:700,marginBottom:4}}>Drivers' World Championship</div>
                 <div style={{fontSize:12,color:"rgba(255,255,255,0.35)",marginBottom:16}}>{"After Round " + completedRounds}</div>
@@ -332,7 +355,7 @@ export default function F1Dashboard(){
             {/* Narrative */}
             <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20}}>
               <div style={{fontSize:13,textTransform:"uppercase",letterSpacing:1.5,color:"rgba(255,255,255,0.4)",marginBottom:16}}>Season Narrative</div>
-              <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:16}}>
+              <div className="g4">
                 {[{t:"Mercedes",ti:"Dominant Force",desc:"2 wins from 2 races. 1-2 in both GPs. 98 pts leads Ferrari by 31."},{t:"Ferrari",ti:"Best of the Rest",desc:"Hamilton's 1st Ferrari podium in China. Strong pace but no answer for Silver Arrows."},{t:"Red Bull",ti:"Struggling",desc:"Verstappen DNF in China. Only 8 pts for the 4× WDC. New Ford PU issues."},{t:"McLaren",ti:"Disaster",desc:"Both cars DNS in China. Defending constructors' champs drop to 3rd with 18 pts."}].map((n,i)=>(
                   <div key={i} style={{padding:16,background:TB[n.t],borderRadius:10,border:`1px solid ${TC[n.t]}20`}}>
                     <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:8}}><TL team={n.t} size={18}/><span style={{fontSize:11,color:"rgba(255,255,255,0.4)",textTransform:"uppercase",letterSpacing:1}}>{n.ti}</span></div>
@@ -364,7 +387,7 @@ export default function F1Dashboard(){
                     <div style={{fontSize:16,fontWeight:600,fontVariantNumeric:"tabular-nums"}}>{race.tm}</div>
                   </div>
                 </div>
-                <div style={{display:"flex",gap:12,marginBottom:16}}>
+                <div className="pod" style={{marginBottom:16}}>
                   {race.pod.map(p=>(
                     <div key={p.p} style={{flex:1,background:p.p===1?"rgba(255,215,0,0.08)":"rgba(255,255,255,0.03)",border:`1px solid ${p.p===1?"rgba(255,215,0,0.2)":"rgba(255,255,255,0.06)"}`,borderRadius:10,padding:"14px 14px",display:"flex",alignItems:"center",gap:10}}>
                       <div style={{fontSize:22,fontWeight:900,color:p.p===1?"#FFD700":p.p===2?"#C0C0C0":"#CD7F32",lineHeight:1}}>P{p.p}</div>
@@ -393,25 +416,29 @@ export default function F1Dashboard(){
                 {/* ── OpenF1 Sector Enrichment ── */}
                 {(()=>{
                   if(!openf1)return null;
-                  const rn=typeof race.r==="string"?parseInt(race.r):race.r;
-                  const mtg=openf1.meetings.find(m=>m.sessions.some(s=>s.sessionName==="Race"&&openf1.meetings.indexOf(m)===rn-1));
+                  // Match by race name — strip " Sprint" suffix for sprint races
+                  const baseName=race.nm.replace(" Sprint","");
+                  const mtg=openf1.meetings.find(m=>baseName.includes(m.meetingName.replace(" Grand Prix",""))||m.meetingName.includes(baseName.replace(" Grand Prix","")));
                   if(!mtg)return null;
-                  const sess=mtg.sessions.find(s=>s.sessionName==="Race");
+                  // Pick matching session: Sprint for sprint races, Race for regular
+                  const targetSession=race.sprint?"Sprint":"Race";
+                  const sess=mtg.sessions.find(s=>s.sessionName===targetSession)||mtg.sessions.find(s=>s.sessionName==="Race");
                   if(!sess||!sess.drivers||sess.drivers.length===0)return null;
                   const top5=sess.drivers.slice(0,5);
                   const sb=sess.sessionBests;
                   const fmtS=(v)=>v?v.toFixed(3):"—";
+                  const sessLabel=race.sprint?"Sprint Sector Times":"Race Sector Times";
                   return(
                     <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:10,padding:16,marginBottom:12}}>
-                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-                        <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:"rgba(255,255,255,0.4)"}}>Race Sector Times · Top 5 <span style={{fontSize:9,opacity:0.6,letterSpacing:0}}>(via OpenF1)</span></div>
+                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12,flexWrap:"wrap",gap:8}}>
+                        <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:"rgba(255,255,255,0.4)"}}>{sessLabel} · Top 5 <span style={{fontSize:9,opacity:0.6,letterSpacing:0}}>(via OpenF1)</span></div>
                         <div style={{display:"flex",gap:12,fontSize:10,color:"rgba(255,255,255,0.3)"}}>
                           <span>I1: {sb.topI1Speed||"—"} km/h</span>
                           <span>I2: {sb.topI2Speed||"—"} km/h</span>
                           <span>ST: {sb.topSTSpeed||"—"} km/h</span>
                         </div>
                       </div>
-                      <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+                      <div style={{overflowX:"auto",WebkitOverflowScrolling:"touch"}}><table style={{width:"100%",borderCollapse:"collapse",minWidth:600,fontSize:12}}>
                         <thead><tr style={{borderBottom:"1px solid rgba(255,255,255,0.06)"}}>
                           {["","Driver","Best S1","Best S2","Best S3","Theo. Best","Top Speed"].map(h=><th key={h} style={{textAlign:h==="Driver"?"left":"right",padding:"5px 8px",fontSize:9,textTransform:"uppercase",letterSpacing:.8,color:"rgba(255,255,255,0.3)",fontWeight:500}}>{h}</th>)}
                         </tr></thead>
@@ -422,7 +449,7 @@ export default function F1Dashboard(){
                           return(
                           <tr key={i} style={{borderBottom:"1px solid rgba(255,255,255,0.03)"}}>
                             <td style={{padding:"5px 8px",width:20,fontSize:11,fontWeight:700,color:i<3?"#fff":"rgba(255,255,255,0.35)"}}>{i+1}</td>
-                            <td style={{padding:"5px 8px"}}><div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:3,height:14,borderRadius:1,background:d.teamColour||"#555"}}/><span style={{fontWeight:600,fontSize:12}}>{d.acronym}</span><span style={{fontSize:10,color:"rgba(255,255,255,0.35)"}}>{d.team?.split(" ")[0]}</span></div></td>
+                            <td style={{padding:"5px 8px"}}><div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:3,height:14,borderRadius:1,background:d.teamColour||"#555"}}/><span style={{fontWeight:600,fontSize:12}}>{d.acronym}</span><span style={{fontSize:10,color:"rgba(255,255,255,0.2)",margin:"0 2px"}}>|</span><span style={{fontSize:10,color:"rgba(255,255,255,0.35)"}}>{d.team?.split(" ")[0]}</span></div></td>
                             <td style={{padding:"5px 8px",textAlign:"right",fontVariantNumeric:"tabular-nums",color:isFS1?"#d946ef":"rgba(255,255,255,0.6)",fontWeight:isFS1?700:400}}>{fmtS(d.bestS1)}</td>
                             <td style={{padding:"5px 8px",textAlign:"right",fontVariantNumeric:"tabular-nums",color:isFS2?"#d946ef":"rgba(255,255,255,0.6)",fontWeight:isFS2?700:400}}>{fmtS(d.bestS2)}</td>
                             <td style={{padding:"5px 8px",textAlign:"right",fontVariantNumeric:"tabular-nums",color:isFS3?"#d946ef":"rgba(255,255,255,0.6)",fontWeight:isFS3?700:400}}>{fmtS(d.bestS3)}</td>
@@ -430,13 +457,13 @@ export default function F1Dashboard(){
                             <td style={{padding:"5px 8px",textAlign:"right",fontVariantNumeric:"tabular-nums",color:"rgba(255,255,255,0.5)"}}>{d.maxSTSpeed||"—"}</td>
                           </tr>);
                         })}</tbody>
-                      </table>
+                      </table></div>
                     </div>
                   );
                 })()}
                 {expandedRace===race.r&&(
                   <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:10,overflow:"hidden",marginTop:4}}>
-                    <table style={{width:"100%",borderCollapse:"collapse",fontSize:13}}>
+                    <div style={{overflowX:"auto",WebkitOverflowScrolling:"touch"}}><table style={{width:"100%",borderCollapse:"collapse",minWidth:600,fontSize:13}}>
                       <thead><tr style={{borderBottom:"1px solid rgba(255,255,255,0.08)"}}>
                         {["Pos","","Driver","Team","Gap to Winner"].map(h=><th key={h} style={{textAlign:"left",padding:"8px 10px",fontSize:10,textTransform:"uppercase",letterSpacing:1,color:"rgba(255,255,255,0.3)",fontWeight:500}}>{h}</th>)}
                       </tr></thead>
@@ -456,14 +483,14 @@ export default function F1Dashboard(){
                           );
                         })}
                       </tbody>
-                    </table>
+                    </table></div>
                   </div>
                 )}
               </div>
             ))}
             <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20}}>
               <div style={{fontSize:13,textTransform:"uppercase",letterSpacing:1.5,color:"rgba(255,255,255,0.4)",marginBottom:16}}>2026 Season Key Facts</div>
-              <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12}}>
+              <div className="g3">
                 {[{l:"New Regulations",v:"Active aero, 50/50 ICE/ERS split, new chassis"},{l:"New Teams",v:"Cadillac (11th team), Audi (ex-Sauber)"},{l:"New Engine Suppliers",v:"Audi, Honda (Aston Martin), Ford (Red Bull)"},{l:"Calendar",v:"22 races (Bahrain & Saudi postponed)"},{l:"Defending Champions",v:"Norris (WDC) · McLaren (WCC)"},{l:"Youngest Pole",v:"Antonelli — 19y 201d (China)"}].map((f,i)=>(
                   <div key={i} style={{padding:14,background:"rgba(255,255,255,0.02)",borderRadius:8}}>
                     <div style={{fontSize:11,color:"rgba(255,255,255,0.4)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}}>{f.l}</div>
@@ -522,7 +549,7 @@ export default function F1Dashboard(){
               <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20}}>
                 <div style={{fontSize:15,fontWeight:700,marginBottom:4}}>{curMtg.meetingName} — {curSess.sessionName} Sector Analysis</div>
                 <div style={{fontSize:12,color:"rgba(255,255,255,0.35)",marginBottom:20}}>{drivers.length} drivers · Sorted by theoretical best lap · <span style={{color:"#d946ef"}}>Purple</span> = session fastest sector</div>
-                <table style={{width:"100%",borderCollapse:"collapse",fontSize:13}}>
+                <div style={{overflowX:"auto",WebkitOverflowScrolling:"touch"}}><table style={{width:"100%",borderCollapse:"collapse",minWidth:800,fontSize:13}}>
                   <thead><tr style={{borderBottom:"1px solid rgba(255,255,255,0.08)"}}>
                     {["#","","Driver","Team","Best S1","Best S2","Best S3","Theo. Best","Best Lap","I1","I2","ST"].map(h=><th key={h} style={{textAlign:["Driver","Team"].includes(h)?"left":"right",padding:"8px 10px",fontSize:10,textTransform:"uppercase",letterSpacing:.8,color:"rgba(255,255,255,0.3)",fontWeight:500,whiteSpace:"nowrap"}}>{h}</th>)}
                   </tr></thead>
@@ -540,7 +567,7 @@ export default function F1Dashboard(){
                         <tr key={i} style={{borderBottom:"1px solid rgba(255,255,255,0.04)",background:i<3?`${d.teamColour}08`:"transparent"}}>
                           <td style={{padding:"8px 10px",fontWeight:700,width:28,color:i<3?"#fff":"rgba(255,255,255,0.35)",fontSize:12,textAlign:"right"}}>{i+1}</td>
                           <td style={{padding:"8px 4px",width:24}}><div style={{width:3,height:18,borderRadius:2,background:d.teamColour||"#555"}}/></td>
-                          <td style={{padding:"8px 10px",fontWeight:600,whiteSpace:"nowrap"}}>{d.acronym} <span style={{fontWeight:400,fontSize:11,color:"rgba(255,255,255,0.35)"}}>{d.name?.split(" ").pop()}</span></td>
+                          <td style={{padding:"8px 10px",fontWeight:600,whiteSpace:"nowrap"}}>{d.acronym} <span style={{fontWeight:400,fontSize:11,color:"rgba(255,255,255,0.2)"}}>|</span> <span style={{fontWeight:400,fontSize:11,color:"rgba(255,255,255,0.35)"}}>{d.name?.split(" ").pop()}</span></td>
                           <td style={{padding:"8px 10px",color:"rgba(255,255,255,0.4)",fontSize:11}}>{d.team?.split(" ")[0]}</td>
                           <td style={{padding:"8px 10px",textAlign:"right",fontVariantNumeric:"tabular-nums",color:sCol(isFS1),fontWeight:isFS1?700:400}}>{fmtS(d.bestS1)}</td>
                           <td style={{padding:"8px 10px",textAlign:"right",fontVariantNumeric:"tabular-nums",color:sCol(isFS2),fontWeight:isFS2?700:400}}>{fmtS(d.bestS2)}</td>
@@ -554,7 +581,7 @@ export default function F1Dashboard(){
                       );
                     })}
                   </tbody>
-                </table>
+                </table></div>
               </div>
 
               {/* Speed Trap Visual Comparison */}
@@ -613,7 +640,7 @@ export default function F1Dashboard(){
             </div>
             <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20}}>
               <div style={{fontSize:15,fontWeight:700,marginBottom:16}}>{"Full Pit Stop Summary — " + pitRaceName}</div>
-              <table style={{width:"100%",borderCollapse:"collapse",fontSize:13}}>
+              <div style={{overflowX:"auto",WebkitOverflowScrolling:"touch"}}><table style={{width:"100%",borderCollapse:"collapse",minWidth:600,fontSize:13}}>
                 <thead><tr style={{borderBottom:"1px solid rgba(255,255,255,0.08)"}}>
                   {["#","Driver","Team","Lap","Duration"].map(h=><th key={h} style={{textAlign:"left",padding:"8px 12px",fontSize:11,textTransform:"uppercase",letterSpacing:1,color:"rgba(255,255,255,0.35)",fontWeight:500}}>{h}</th>)}
                 </tr></thead>
@@ -628,7 +655,7 @@ export default function F1Dashboard(){
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </table></div>
             </div>
           </div>
         )}
