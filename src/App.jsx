@@ -434,18 +434,24 @@ export default function F1Dashboard(){
                   if(!mtg)mtg=openf1.meetings.find(m=>{const mk=m.meetingName.replace(/ Grand Prix$/i,"").toLowerCase().trim();return baseKey.includes(mk)||mk.includes(baseKey);});
                   // Strategy 4: round-number index fallback (round 1 = first meeting, etc.)
                   if(!mtg){const rn=typeof race.r==="string"?parseInt(race.r):race.r;if(rn>0&&rn<=openf1.meetings.length)mtg=openf1.meetings[rn-1];}
-                  if(!mtg)return(<div style={{fontSize:10,color:"rgba(255,255,255,0.15)",padding:"4px 0"}}>Sector data: no matching meeting for "{baseName}"</div>);
+                  if(!mtg)return null;
                   const targetSession=race.sprint?"Sprint":"Race";
-                  const sess=mtg.sessions.find(s=>s.sessionName===targetSession)||mtg.sessions.find(s=>s.sessionName==="Race");
-                  if(!sess||!sess.drivers||sess.drivers.length===0)return(<div style={{fontSize:10,color:"rgba(255,255,255,0.15)",padding:"4px 0"}}>Sector data: matched "{mtg.meetingName}" but no {targetSession} session data ({mtg.sessions.map(s=>s.sessionName).join(", ")})</div>);
+                  // Preferred fallback order: target session → Qualifying → Sprint Qualifying → Sprint → Practice 3 → Practice 2 → Practice 1
+                  const sessPriority=race.sprint
+                    ?["Sprint","Sprint Qualifying","Qualifying","Practice 3","Practice 2","Practice 1"]
+                    :["Race","Qualifying","Sprint Qualifying","Sprint","Practice 3","Practice 2","Practice 1"];
+                  let sess=null;
+                  for(const sn of sessPriority){const s=mtg.sessions.find(s=>s.sessionName===sn&&s.drivers&&s.drivers.length>0);if(s){sess=s;break;}}
+                  if(!sess)return null;
                   const top5=sess.drivers.slice(0,5);
                   const sb=sess.sessionBests;
                   const fmtS=(v)=>v?v.toFixed(3):"—";
-                  const sessLabel=race.sprint?"Sprint Sector Times":"Race Sector Times";
+                  const isExact=sess.sessionName===targetSession;
+                  const sessLabel=isExact?(race.sprint?"Sprint Sector Times":"Race Sector Times"):`${sess.sessionName} Sector Times`;
                   return(
                     <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:10,padding:16,marginBottom:12}}>
                       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12,flexWrap:"wrap",gap:8}}>
-                        <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:"rgba(255,255,255,0.4)"}}>{sessLabel} · Top 5 <span style={{fontSize:9,opacity:0.6,letterSpacing:0}}>(via OpenF1)</span></div>
+                        <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:"rgba(255,255,255,0.4)"}}>{sessLabel} · Top 5 <span style={{fontSize:9,opacity:0.6,letterSpacing:0}}>(via OpenF1){!isExact?` · ${targetSession} data unavailable`:""}</span></div>
                         <div style={{display:"flex",gap:12,fontSize:10,color:"rgba(255,255,255,0.3)"}}>
                           <span>I1: {sb.topI1Speed||"—"} km/h</span>
                           <span>I2: {sb.topI2Speed||"—"} km/h</span>
