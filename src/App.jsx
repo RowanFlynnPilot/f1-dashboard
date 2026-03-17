@@ -415,12 +415,19 @@ export default function F1Dashboard(){
                 </div>
                 {/* ── OpenF1 Sector Enrichment ── */}
                 {(()=>{
-                  if(!openf1)return null;
-                  // Match by race name — strip " Sprint" suffix for sprint races
-                  const baseName=race.nm.replace(" Sprint","");
-                  const mtg=openf1.meetings.find(m=>baseName.includes(m.meetingName.replace(" Grand Prix",""))||m.meetingName.includes(baseName.replace(" Grand Prix","")));
+                  if(!openf1||!openf1.meetings||openf1.meetings.length===0)return null;
+                  // Strip " Sprint" suffix to get the base GP name
+                  const baseName=race.nm.replace(/ Sprint$/,"").trim();
+                  const baseKey=baseName.replace(/ Grand Prix$/i,"").toLowerCase().trim();
+                  // Strategy 1: exact meetingName match
+                  let mtg=openf1.meetings.find(m=>m.meetingName===baseName);
+                  // Strategy 2: match on stripped GP name
+                  if(!mtg)mtg=openf1.meetings.find(m=>m.meetingName.replace(/ Grand Prix$/i,"").toLowerCase().trim()===baseKey);
+                  // Strategy 3: substring matching
+                  if(!mtg)mtg=openf1.meetings.find(m=>{const mk=m.meetingName.replace(/ Grand Prix$/i,"").toLowerCase().trim();return baseKey.includes(mk)||mk.includes(baseKey);});
+                  // Strategy 4: round-number index fallback (round 1 = first meeting, etc.)
+                  if(!mtg){const rn=typeof race.r==="string"?parseInt(race.r):race.r;if(rn>0&&rn<=openf1.meetings.length)mtg=openf1.meetings[rn-1];}
                   if(!mtg)return null;
-                  // Pick matching session: Sprint for sprint races, Race for regular
                   const targetSession=race.sprint?"Sprint":"Race";
                   const sess=mtg.sessions.find(s=>s.sessionName===targetSession)||mtg.sessions.find(s=>s.sessionName==="Race");
                   if(!sess||!sess.drivers||sess.drivers.length===0)return null;
