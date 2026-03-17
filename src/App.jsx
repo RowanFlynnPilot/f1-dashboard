@@ -46,6 +46,9 @@ const TEAM_LOGOS = {
 const TC = { Mercedes: "#27F4D2", Ferrari: "#E80020", McLaren: "#FF8000", "Red Bull": "#3671C6", "Racing Bulls": "#6692FF", Alpine: "#FF87BC", "Aston Martin": "#229971", Haas: "#B6BABD", Williams: "#64C4FF", Audi: "#FF0000", Cadillac: "#1E1E1E" };
 const TB = { Mercedes: "rgba(39,244,210,0.10)", Ferrari: "rgba(232,0,32,0.10)", McLaren: "rgba(255,128,0,0.10)", "Red Bull": "rgba(54,113,198,0.10)", "Racing Bulls": "rgba(102,146,255,0.10)", Alpine: "rgba(255,135,188,0.10)", "Aston Martin": "rgba(34,153,113,0.10)", Haas: "rgba(182,186,189,0.10)", Williams: "rgba(100,196,255,0.10)", Audi: "rgba(255,0,0,0.06)", Cadillac: "rgba(120,120,120,0.10)" };
 
+// Normalize OpenF1 team names to match TC/TL keys
+function normTeam(t){if(!t)return"";return t.replace(" F1 Team","").replace(" Racing","").replace("Kick Sauber","Audi").trim();}
+
 // Data is loaded dynamically from data.json (fetched from Jolpica API)
 // Transform functions convert API format to dashboard format
 
@@ -149,6 +152,7 @@ export default function F1Dashboard(){
   const[openf1,setOpenf1]=useState(null);
   const[selMeeting,setSelMeeting]=useState(null);
   const[selSession,setSelSession]=useState(null);
+  const[selRace,setSelRace]=useState("all");
 
   useEffect(()=>{
     Promise.all([
@@ -378,7 +382,20 @@ export default function F1Dashboard(){
         {/* ═══ RACE RESULTS ═══ */}
         {tab==="Race Results"&&(
           <div className="fu" style={{display:"flex",flexDirection:"column",gap:24}}>
-            {races.map(race=>(
+            {/* Race Selector */}
+            <div style={{display:"flex",alignItems:"center",gap:12,flexWrap:"wrap"}}>
+              <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:"rgba(255,255,255,0.4)"}}>Jump to</div>
+              <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
+                <button onClick={()=>setSelRace("all")} style={{cursor:"pointer",padding:"6px 14px",borderRadius:6,border:selRace==="all"?"1px solid rgba(232,0,32,0.4)":"1px solid rgba(255,255,255,0.08)",background:selRace==="all"?"rgba(232,0,32,0.12)":"rgba(255,255,255,0.03)",color:selRace==="all"?"#E80020":"rgba(255,255,255,0.5)",fontSize:12,fontWeight:selRace==="all"?600:400,fontFamily:"'Outfit',sans-serif",transition:"all .2s"}}>All Races</button>
+                {races.map(race=>(
+                  <button key={race.r} onClick={()=>setSelRace(race.r)} style={{cursor:"pointer",padding:"6px 12px",borderRadius:6,border:selRace===race.r?"1px solid rgba(232,0,32,0.4)":"1px solid rgba(255,255,255,0.08)",background:selRace===race.r?"rgba(232,0,32,0.12)":"rgba(255,255,255,0.03)",color:selRace===race.r?"#E80020":"rgba(255,255,255,0.5)",fontSize:11,fontWeight:selRace===race.r?600:400,fontFamily:"'Outfit',sans-serif",transition:"all .2s",display:"flex",alignItems:"center",gap:6}}>
+                    {race.sprint&&<span style={{fontSize:8,fontWeight:700,letterSpacing:.3,padding:"1px 4px",borderRadius:2,background:"rgba(232,0,32,0.15)",color:"#E80020"}}>S</span>}
+                    {race.nm.replace(" Grand Prix","").replace(" Sprint"," Spr")}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {races.filter(race=>selRace==="all"||selRace===race.r).map(race=>(
               <div key={race.r} className="rc">
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:16,marginBottom:20}}>
                   <div>
@@ -557,12 +574,12 @@ export default function F1Dashboard(){
 
               {/* Summary Cards */}
               <div style={{display:"flex",gap:12,flexWrap:"wrap"}}>
-                <SC label="Fastest S1" value={fmtS(sb.fastestS1)+"s"} sub={drivers.find(d=>d.bestS1&&Math.abs(d.bestS1-sb.fastestS1)<0.001)?.acronym||""} accent="#d946ef"/>
-                <SC label="Fastest S2" value={fmtS(sb.fastestS2)+"s"} sub={drivers.find(d=>d.bestS2&&Math.abs(d.bestS2-sb.fastestS2)<0.001)?.acronym||""} accent="#d946ef"/>
-                <SC label="Fastest S3" value={fmtS(sb.fastestS3)+"s"} sub={drivers.find(d=>d.bestS3&&Math.abs(d.bestS3-sb.fastestS3)<0.001)?.acronym||""} accent="#d946ef"/>
-                <SC label="Top Speed (I1)" value={`${sb.topI1Speed||"—"} km/h`} sub={drivers.find(d=>d.maxI1Speed===sb.topI1Speed)?.acronym||""} accent="#FF8000"/>
-                <SC label="Top Speed (I2)" value={`${sb.topI2Speed||"—"} km/h`} sub={drivers.find(d=>d.maxI2Speed===sb.topI2Speed)?.acronym||""} accent="#FF8000"/>
-                <SC label="Top Speed (ST)" value={`${sb.topSTSpeed||"—"} km/h`} sub={drivers.find(d=>d.maxSTSpeed===sb.topSTSpeed)?.acronym||""} accent="#FF8000"/>
+                {(()=>{const d1=drivers.find(d=>d.bestS1&&Math.abs(d.bestS1-sb.fastestS1)<0.001);return <SC label="Fastest S1" value={fmtS(sb.fastestS1)+"s"} sub={d1?.acronym||""} accent="#d946ef" icon={d1?<TL team={normTeam(d1.team)} size={22}/>:null}/>;})()}
+                {(()=>{const d2=drivers.find(d=>d.bestS2&&Math.abs(d.bestS2-sb.fastestS2)<0.001);return <SC label="Fastest S2" value={fmtS(sb.fastestS2)+"s"} sub={d2?.acronym||""} accent="#d946ef" icon={d2?<TL team={normTeam(d2.team)} size={22}/>:null}/>;})()}
+                {(()=>{const d3=drivers.find(d=>d.bestS3&&Math.abs(d.bestS3-sb.fastestS3)<0.001);return <SC label="Fastest S3" value={fmtS(sb.fastestS3)+"s"} sub={d3?.acronym||""} accent="#d946ef" icon={d3?<TL team={normTeam(d3.team)} size={22}/>:null}/>;})()}
+                {(()=>{const di=drivers.find(d=>d.maxI1Speed===sb.topI1Speed);return <SC label="Top Speed (I1)" value={`${sb.topI1Speed||"—"} km/h`} sub={di?.acronym||""} accent="#FF8000" icon={di?<TL team={normTeam(di.team)} size={22}/>:null}/>;})()}
+                {(()=>{const di=drivers.find(d=>d.maxI2Speed===sb.topI2Speed);return <SC label="Top Speed (I2)" value={`${sb.topI2Speed||"—"} km/h`} sub={di?.acronym||""} accent="#FF8000" icon={di?<TL team={normTeam(di.team)} size={22}/>:null}/>;})()}
+                {(()=>{const di=drivers.find(d=>d.maxSTSpeed===sb.topSTSpeed);return <SC label="Top Speed (ST)" value={`${sb.topSTSpeed||"—"} km/h`} sub={di?.acronym||""} accent="#FF8000" icon={di?<TL team={normTeam(di.team)} size={22}/>:null}/>;})()}
               </div>
 
               {/* Driver Sector Comparison Table */}
