@@ -4,131 +4,1055 @@
   "completedRounds": 2,
   "totalRounds": 22,
   "drivers": [
-    {"pos":1,"name":"George Russell","team":"Mercedes","pts":51,"wins":1,"driverId":"russell"},
-    {"pos":2,"name":"Kimi Antonelli","team":"Mercedes","pts":47,"wins":1,"driverId":"antonelli"},
-    {"pos":3,"name":"Lewis Hamilton","team":"Ferrari","pts":36,"wins":0,"driverId":"hamilton"},
-    {"pos":4,"name":"Charles Leclerc","team":"Ferrari","pts":31,"wins":0,"driverId":"leclerc"},
-    {"pos":5,"name":"Lando Norris","team":"McLaren","pts":18,"wins":0,"driverId":"norris"},
-    {"pos":6,"name":"Oscar Piastri","team":"McLaren","pts":15,"wins":0,"driverId":"piastri"},
-    {"pos":7,"name":"Pierre Gasly","team":"Alpine","pts":12,"wins":0,"driverId":"gasly"},
-    {"pos":8,"name":"Max Verstappen","team":"Red Bull","pts":8,"wins":0,"driverId":"verstappen"},
-    {"pos":9,"name":"Fernando Alonso","team":"Aston Martin","pts":6,"wins":0,"driverId":"alonso"},
-    {"pos":10,"name":"Oliver Bearman","team":"Haas","pts":5,"wins":0,"driverId":"bearman"},
-    {"pos":11,"name":"Liam Lawson","team":"Red Bull","pts":4,"wins":0,"driverId":"lawson"},
-    {"pos":12,"name":"Alexander Albon","team":"Williams","pts":4,"wins":0,"driverId":"albon"},
-    {"pos":13,"name":"Carlos Sainz","team":"Williams","pts":3,"wins":0,"driverId":"sainz"},
-    {"pos":14,"name":"Isack Hadjar","team":"Racing Bulls","pts":2,"wins":0,"driverId":"hadjar"},
-    {"pos":15,"name":"Franco Colapinto","team":"Alpine","pts":2,"wins":0,"driverId":"colapinto"},
-    {"pos":16,"name":"Esteban Ocon","team":"Haas","pts":1,"wins":0,"driverId":"ocon"},
-    {"pos":17,"name":"Lance Stroll","team":"Aston Martin","pts":1,"wins":0,"driverId":"stroll"},
-    {"pos":18,"name":"Nico Hülkenberg","team":"Audi","pts":1,"wins":0,"driverId":"hulkenberg"},
-    {"pos":19,"name":"Arvid Lindblad","team":"Racing Bulls","pts":0,"wins":0,"driverId":"lindblad"},
-    {"pos":20,"name":"Gabriel Bortoleto","team":"Audi","pts":0,"wins":0,"driverId":"bortoleto"}
+    {
+      "pos": 1,
+      "name": "George Russell",
+      "team": "Mercedes",
+      "pts": 51,
+      "wins": 1,
+      "driverId": "russell"
+    },
+    {
+      "pos": 2,
+      "name": "Kimi Antonelli",
+      "team": "Mercedes",
+      "pts": 47,
+      "wins": 1,
+      "driverId": "antonelli"
+    },
+    {
+      "pos": 3,
+      "name": "Lewis Hamilton",
+      "team": "Ferrari",
+      "pts": 36,
+      "wins": 0,
+      "driverId": "hamilton"
+    },
+    {
+      "pos": 4,
+      "name": "Charles Leclerc",
+      "team": "Ferrari",
+      "pts": 31,
+      "wins": 0,
+      "driverId": "leclerc"
+    },
+    {
+      "pos": 5,
+      "name": "Lando Norris",
+      "team": "McLaren",
+      "pts": 18,
+      "wins": 0,
+      "driverId": "norris"
+    },
+    {
+      "pos": 6,
+      "name": "Oscar Piastri",
+      "team": "McLaren",
+      "pts": 15,
+      "wins": 0,
+      "driverId": "piastri"
+    },
+    {
+      "pos": 7,
+      "name": "Pierre Gasly",
+      "team": "Alpine",
+      "pts": 12,
+      "wins": 0,
+      "driverId": "gasly"
+    },
+    {
+      "pos": 8,
+      "name": "Max Verstappen",
+      "team": "Red Bull",
+      "pts": 8,
+      "wins": 0,
+      "driverId": "verstappen"
+    },
+    {
+      "pos": 9,
+      "name": "Fernando Alonso",
+      "team": "Aston Martin",
+      "pts": 6,
+      "wins": 0,
+      "driverId": "alonso"
+    },
+    {
+      "pos": 10,
+      "name": "Oliver Bearman",
+      "team": "Haas",
+      "pts": 5,
+      "wins": 0,
+      "driverId": "bearman"
+    },
+    {
+      "pos": 11,
+      "name": "Liam Lawson",
+      "team": "Red Bull",
+      "pts": 4,
+      "wins": 0,
+      "driverId": "lawson"
+    },
+    {
+      "pos": 12,
+      "name": "Alexander Albon",
+      "team": "Williams",
+      "pts": 4,
+      "wins": 0,
+      "driverId": "albon"
+    },
+    {
+      "pos": 13,
+      "name": "Carlos Sainz",
+      "team": "Williams",
+      "pts": 3,
+      "wins": 0,
+      "driverId": "sainz"
+    },
+    {
+      "pos": 14,
+      "name": "Isack Hadjar",
+      "team": "Racing Bulls",
+      "pts": 2,
+      "wins": 0,
+      "driverId": "hadjar"
+    },
+    {
+      "pos": 15,
+      "name": "Franco Colapinto",
+      "team": "Alpine",
+      "pts": 2,
+      "wins": 0,
+      "driverId": "colapinto"
+    },
+    {
+      "pos": 16,
+      "name": "Esteban Ocon",
+      "team": "Haas",
+      "pts": 1,
+      "wins": 0,
+      "driverId": "ocon"
+    },
+    {
+      "pos": 17,
+      "name": "Lance Stroll",
+      "team": "Aston Martin",
+      "pts": 1,
+      "wins": 0,
+      "driverId": "stroll"
+    },
+    {
+      "pos": 18,
+      "name": "Nico H\u00fclkenberg",
+      "team": "Audi",
+      "pts": 1,
+      "wins": 0,
+      "driverId": "hulkenberg"
+    },
+    {
+      "pos": 19,
+      "name": "Arvid Lindblad",
+      "team": "Racing Bulls",
+      "pts": 0,
+      "wins": 0,
+      "driverId": "lindblad"
+    },
+    {
+      "pos": 20,
+      "name": "Gabriel Bortoleto",
+      "team": "Audi",
+      "pts": 0,
+      "wins": 0,
+      "driverId": "bortoleto"
+    }
   ],
   "constructors": [
-    {"pos":1,"team":"Mercedes","pts":98,"wins":2,"drivers":[{"name":"Russell","pts":51},{"name":"Antonelli","pts":47}]},
-    {"pos":2,"team":"Ferrari","pts":67,"wins":0,"drivers":[{"name":"Hamilton","pts":36},{"name":"Leclerc","pts":31}]},
-    {"pos":3,"team":"McLaren","pts":33,"wins":0,"drivers":[{"name":"Norris","pts":18},{"name":"Piastri","pts":15}]},
-    {"pos":4,"team":"Alpine","pts":14,"wins":0,"drivers":[{"name":"Gasly","pts":12},{"name":"Colapinto","pts":2}]},
-    {"pos":5,"team":"Red Bull","pts":12,"wins":0,"drivers":[{"name":"Verstappen","pts":8},{"name":"Lawson","pts":4}]},
-    {"pos":6,"team":"Williams","pts":7,"wins":0,"drivers":[{"name":"Albon","pts":4},{"name":"Sainz","pts":3}]},
-    {"pos":7,"team":"Aston Martin","pts":7,"wins":0,"drivers":[{"name":"Alonso","pts":6},{"name":"Stroll","pts":1}]},
-    {"pos":8,"team":"Haas","pts":6,"wins":0,"drivers":[{"name":"Bearman","pts":5},{"name":"Ocon","pts":1}]},
-    {"pos":9,"team":"Racing Bulls","pts":2,"wins":0,"drivers":[{"name":"Hadjar","pts":2},{"name":"Lindblad","pts":0}]},
-    {"pos":10,"team":"Audi","pts":1,"wins":0,"drivers":[{"name":"Hülkenberg","pts":1},{"name":"Bortoleto","pts":0}]}
+    {
+      "pos": 1,
+      "team": "Mercedes",
+      "pts": 98,
+      "wins": 2,
+      "drivers": [
+        {
+          "name": "Russell",
+          "pts": 51
+        },
+        {
+          "name": "Antonelli",
+          "pts": 47
+        }
+      ]
+    },
+    {
+      "pos": 2,
+      "team": "Ferrari",
+      "pts": 67,
+      "wins": 0,
+      "drivers": [
+        {
+          "name": "Hamilton",
+          "pts": 36
+        },
+        {
+          "name": "Leclerc",
+          "pts": 31
+        }
+      ]
+    },
+    {
+      "pos": 3,
+      "team": "McLaren",
+      "pts": 33,
+      "wins": 0,
+      "drivers": [
+        {
+          "name": "Norris",
+          "pts": 18
+        },
+        {
+          "name": "Piastri",
+          "pts": 15
+        }
+      ]
+    },
+    {
+      "pos": 4,
+      "team": "Alpine",
+      "pts": 14,
+      "wins": 0,
+      "drivers": [
+        {
+          "name": "Gasly",
+          "pts": 12
+        },
+        {
+          "name": "Colapinto",
+          "pts": 2
+        }
+      ]
+    },
+    {
+      "pos": 5,
+      "team": "Red Bull",
+      "pts": 12,
+      "wins": 0,
+      "drivers": [
+        {
+          "name": "Verstappen",
+          "pts": 8
+        },
+        {
+          "name": "Lawson",
+          "pts": 4
+        }
+      ]
+    },
+    {
+      "pos": 6,
+      "team": "Williams",
+      "pts": 7,
+      "wins": 0,
+      "drivers": [
+        {
+          "name": "Albon",
+          "pts": 4
+        },
+        {
+          "name": "Sainz",
+          "pts": 3
+        }
+      ]
+    },
+    {
+      "pos": 7,
+      "team": "Aston Martin",
+      "pts": 7,
+      "wins": 0,
+      "drivers": [
+        {
+          "name": "Alonso",
+          "pts": 6
+        },
+        {
+          "name": "Stroll",
+          "pts": 1
+        }
+      ]
+    },
+    {
+      "pos": 8,
+      "team": "Haas",
+      "pts": 6,
+      "wins": 0,
+      "drivers": [
+        {
+          "name": "Bearman",
+          "pts": 5
+        },
+        {
+          "name": "Ocon",
+          "pts": 1
+        }
+      ]
+    },
+    {
+      "pos": 9,
+      "team": "Racing Bulls",
+      "pts": 2,
+      "wins": 0,
+      "drivers": [
+        {
+          "name": "Hadjar",
+          "pts": 2
+        },
+        {
+          "name": "Lindblad",
+          "pts": 0
+        }
+      ]
+    },
+    {
+      "pos": 10,
+      "team": "Audi",
+      "pts": 1,
+      "wins": 0,
+      "drivers": [
+        {
+          "name": "H\u00fclkenberg",
+          "pts": 1
+        },
+        {
+          "name": "Bortoleto",
+          "pts": 0
+        }
+      ]
+    }
   ],
   "races": [
     {
-      "round":1,"name":"Australian Grand Prix","circuit":"Albert Park Grand Prix Circuit","date":"2026-03-08",
-      "results":[
-        {"pos":"1","driver":"Antonelli","team":"Mercedes","gap":"WINNER","status":"Finished","fastestLapTime":"1:17.204","fastestLapRank":"3"},
-        {"pos":"2","driver":"Russell","team":"Mercedes","gap":"+3.821","status":"Finished","fastestLapTime":"1:16.892","fastestLapRank":"1"},
-        {"pos":"3","driver":"Hamilton","team":"Ferrari","gap":"+8.142","status":"Finished","fastestLapTime":"1:17.553","fastestLapRank":"5"},
-        {"pos":"4","driver":"Leclerc","team":"Ferrari","gap":"+12.477","status":"Finished","fastestLapTime":"1:17.331","fastestLapRank":"4"},
-        {"pos":"5","driver":"Norris","team":"McLaren","gap":"+18.902","status":"Finished","fastestLapTime":"1:17.812","fastestLapRank":"6"},
-        {"pos":"6","driver":"Piastri","team":"McLaren","gap":"+22.115","status":"Finished","fastestLapTime":"1:17.920","fastestLapRank":"7"},
-        {"pos":"7","driver":"Gasly","team":"Alpine","gap":"+34.201","status":"Finished","fastestLapTime":"1:18.440","fastestLapRank":"9"},
-        {"pos":"8","driver":"Verstappen","team":"Red Bull","gap":"+38.662","status":"Finished","fastestLapTime":"1:18.102","fastestLapRank":"8"},
-        {"pos":"9","driver":"Alonso","team":"Aston Martin","gap":"+42.330","status":"Finished","fastestLapTime":"1:18.671","fastestLapRank":"10"},
-        {"pos":"10","driver":"Bearman","team":"Haas","gap":"+45.881","status":"Finished","fastestLapTime":"1:18.903","fastestLapRank":"11"},
-        {"pos":"11","driver":"Albon","team":"Williams","gap":"+48.112","status":"Finished","fastestLapTime":"1:19.012","fastestLapRank":"12"},
-        {"pos":"12","driver":"Lawson","team":"Red Bull","gap":"+51.220","status":"Finished","fastestLapTime":"1:19.115","fastestLapRank":"13"},
-        {"pos":"13","driver":"Sainz","team":"Williams","gap":"+54.330","status":"Finished","fastestLapTime":"1:19.220","fastestLapRank":"14"},
-        {"pos":"14","driver":"Colapinto","team":"Alpine","gap":"+58.441","status":"Finished","fastestLapTime":"1:19.440","fastestLapRank":"15"},
-        {"pos":"15","driver":"Hadjar","team":"Racing Bulls","gap":"+62.110","status":"Finished","fastestLapTime":"1:19.553","fastestLapRank":"16"},
-        {"pos":"16","driver":"Ocon","team":"Haas","gap":"+65.220","status":"Finished","fastestLapTime":"1:19.612","fastestLapRank":"17"},
-        {"pos":"17","driver":"Stroll","team":"Aston Martin","gap":"+68.001","status":"Finished","fastestLapTime":"1:19.801","fastestLapRank":"18"},
-        {"pos":"18","driver":"Hülkenberg","team":"Audi","gap":"+72.442","status":"Finished","fastestLapTime":"1:19.990","fastestLapRank":"19"},
-        {"pos":"19","driver":"Lindblad","team":"Racing Bulls","gap":"+78.110","status":"Finished","fastestLapTime":"1:20.120","fastestLapRank":"20"},
-        {"pos":"20","driver":"Bortoleto","team":"Audi","gap":"+1 Lap","status":"Finished","fastestLapTime":"1:20.330","fastestLapRank":"21"}
+      "round": 1,
+      "name": "Australian Grand Prix",
+      "circuit": "Albert Park Grand Prix Circuit",
+      "date": "2026-03-08",
+      "results": [
+        {
+          "pos": "1",
+          "driver": "Antonelli",
+          "team": "Mercedes",
+          "gap": "WINNER",
+          "status": "Finished",
+          "fastestLapTime": "1:17.204",
+          "fastestLapRank": "3"
+        },
+        {
+          "pos": "2",
+          "driver": "Russell",
+          "team": "Mercedes",
+          "gap": "+3.821",
+          "status": "Finished",
+          "fastestLapTime": "1:16.892",
+          "fastestLapRank": "1"
+        },
+        {
+          "pos": "3",
+          "driver": "Hamilton",
+          "team": "Ferrari",
+          "gap": "+8.142",
+          "status": "Finished",
+          "fastestLapTime": "1:17.553",
+          "fastestLapRank": "5"
+        },
+        {
+          "pos": "4",
+          "driver": "Leclerc",
+          "team": "Ferrari",
+          "gap": "+12.477",
+          "status": "Finished",
+          "fastestLapTime": "1:17.331",
+          "fastestLapRank": "4"
+        },
+        {
+          "pos": "5",
+          "driver": "Norris",
+          "team": "McLaren",
+          "gap": "+18.902",
+          "status": "Finished",
+          "fastestLapTime": "1:17.812",
+          "fastestLapRank": "6"
+        },
+        {
+          "pos": "6",
+          "driver": "Piastri",
+          "team": "McLaren",
+          "gap": "+22.115",
+          "status": "Finished",
+          "fastestLapTime": "1:17.920",
+          "fastestLapRank": "7"
+        },
+        {
+          "pos": "7",
+          "driver": "Gasly",
+          "team": "Alpine",
+          "gap": "+34.201",
+          "status": "Finished",
+          "fastestLapTime": "1:18.440",
+          "fastestLapRank": "9"
+        },
+        {
+          "pos": "8",
+          "driver": "Verstappen",
+          "team": "Red Bull",
+          "gap": "+38.662",
+          "status": "Finished",
+          "fastestLapTime": "1:18.102",
+          "fastestLapRank": "8"
+        },
+        {
+          "pos": "9",
+          "driver": "Alonso",
+          "team": "Aston Martin",
+          "gap": "+42.330",
+          "status": "Finished",
+          "fastestLapTime": "1:18.671",
+          "fastestLapRank": "10"
+        },
+        {
+          "pos": "10",
+          "driver": "Bearman",
+          "team": "Haas",
+          "gap": "+45.881",
+          "status": "Finished",
+          "fastestLapTime": "1:18.903",
+          "fastestLapRank": "11"
+        },
+        {
+          "pos": "11",
+          "driver": "Albon",
+          "team": "Williams",
+          "gap": "+48.112",
+          "status": "Finished",
+          "fastestLapTime": "1:19.012",
+          "fastestLapRank": "12"
+        },
+        {
+          "pos": "12",
+          "driver": "Lawson",
+          "team": "Red Bull",
+          "gap": "+51.220",
+          "status": "Finished",
+          "fastestLapTime": "1:19.115",
+          "fastestLapRank": "13"
+        },
+        {
+          "pos": "13",
+          "driver": "Sainz",
+          "team": "Williams",
+          "gap": "+54.330",
+          "status": "Finished",
+          "fastestLapTime": "1:19.220",
+          "fastestLapRank": "14"
+        },
+        {
+          "pos": "14",
+          "driver": "Colapinto",
+          "team": "Alpine",
+          "gap": "+58.441",
+          "status": "Finished",
+          "fastestLapTime": "1:19.440",
+          "fastestLapRank": "15"
+        },
+        {
+          "pos": "15",
+          "driver": "Hadjar",
+          "team": "Racing Bulls",
+          "gap": "+62.110",
+          "status": "Finished",
+          "fastestLapTime": "1:19.553",
+          "fastestLapRank": "16"
+        },
+        {
+          "pos": "16",
+          "driver": "Ocon",
+          "team": "Haas",
+          "gap": "+65.220",
+          "status": "Finished",
+          "fastestLapTime": "1:19.612",
+          "fastestLapRank": "17"
+        },
+        {
+          "pos": "17",
+          "driver": "Stroll",
+          "team": "Aston Martin",
+          "gap": "+68.001",
+          "status": "Finished",
+          "fastestLapTime": "1:19.801",
+          "fastestLapRank": "18"
+        },
+        {
+          "pos": "18",
+          "driver": "H\u00fclkenberg",
+          "team": "Audi",
+          "gap": "+72.442",
+          "status": "Finished",
+          "fastestLapTime": "1:19.990",
+          "fastestLapRank": "19"
+        },
+        {
+          "pos": "19",
+          "driver": "Lindblad",
+          "team": "Racing Bulls",
+          "gap": "+78.110",
+          "status": "Finished",
+          "fastestLapTime": "1:20.120",
+          "fastestLapRank": "20"
+        },
+        {
+          "pos": "20",
+          "driver": "Bortoleto",
+          "team": "Audi",
+          "gap": "+1 Lap",
+          "status": "Finished",
+          "fastestLapTime": "1:20.330",
+          "fastestLapRank": "21"
+        }
       ],
-      "fastestLap":{"driver":"Russell","time":"1:16.892","team":"Mercedes"}
+      "fastestLap": {
+        "driver": "Russell",
+        "time": "1:16.892",
+        "team": "Mercedes"
+      }
     },
     {
-      "round":2,"name":"Chinese Grand Prix","circuit":"Shanghai International Circuit","date":"2026-03-15",
-      "results":[
-        {"pos":"1","driver":"Russell","team":"Mercedes","gap":"WINNER","status":"Finished","fastestLapTime":"1:33.112","fastestLapRank":"2"},
-        {"pos":"2","driver":"Antonelli","team":"Mercedes","gap":"+2.449","status":"Finished","fastestLapTime":"1:32.804","fastestLapRank":"1"},
-        {"pos":"3","driver":"Hamilton","team":"Ferrari","gap":"+11.220","status":"Finished","fastestLapTime":"1:33.442","fastestLapRank":"3"},
-        {"pos":"4","driver":"Leclerc","team":"Ferrari","gap":"+15.882","status":"Finished","fastestLapTime":"1:33.661","fastestLapRank":"4"},
-        {"pos":"5","driver":"Piastri","team":"McLaren","gap":"+28.440","status":"Finished","fastestLapTime":"1:33.991","fastestLapRank":"6"},
-        {"pos":"6","driver":"Gasly","team":"Alpine","gap":"+35.110","status":"Finished","fastestLapTime":"1:34.220","fastestLapRank":"7"},
-        {"pos":"7","driver":"Norris","team":"McLaren","gap":"+38.221","status":"DNS","fastestLapTime":null,"fastestLapRank":null},
-        {"pos":"8","driver":"Albon","team":"Williams","gap":"+42.110","status":"Finished","fastestLapTime":"1:34.550","fastestLapRank":"8"},
-        {"pos":"9","driver":"Sainz","team":"Williams","gap":"+45.331","status":"Finished","fastestLapTime":"1:34.770","fastestLapRank":"9"},
-        {"pos":"10","driver":"Bearman","team":"Haas","gap":"+48.220","status":"Finished","fastestLapTime":"1:34.892","fastestLapRank":"10"},
-        {"pos":"11","driver":"Lawson","team":"Red Bull","gap":"+52.110","status":"Finished","fastestLapTime":"1:35.001","fastestLapRank":"11"},
-        {"pos":"12","driver":"Alonso","team":"Aston Martin","gap":"+55.440","status":"Finished","fastestLapTime":"1:35.112","fastestLapRank":"12"},
-        {"pos":"13","driver":"Hadjar","team":"Racing Bulls","gap":"+58.220","status":"Finished","fastestLapTime":"1:35.330","fastestLapRank":"13"},
-        {"pos":"14","driver":"Ocon","team":"Haas","gap":"+62.110","status":"Finished","fastestLapTime":"1:35.551","fastestLapRank":"14"},
-        {"pos":"15","driver":"Colapinto","team":"Alpine","gap":"+65.220","status":"Finished","fastestLapTime":"1:35.770","fastestLapRank":"15"},
-        {"pos":"16","driver":"Stroll","team":"Aston Martin","gap":"+68.330","status":"Finished","fastestLapTime":"1:35.990","fastestLapRank":"16"},
-        {"pos":"17","driver":"Hülkenberg","team":"Audi","gap":"+72.110","status":"Finished","fastestLapTime":"1:36.110","fastestLapRank":"17"},
-        {"pos":"18","driver":"Lindblad","team":"Racing Bulls","gap":"+75.442","status":"Finished","fastestLapTime":"1:36.330","fastestLapRank":"18"},
-        {"pos":"19","driver":"Bortoleto","team":"Audi","gap":"+80.220","status":"Finished","fastestLapTime":"1:36.550","fastestLapRank":"19"},
-        {"pos":"20","driver":"Verstappen","team":"Red Bull","gap":"DNF","status":"DNF","fastestLapTime":"1:33.880","fastestLapRank":"5"}
+      "round": 2,
+      "name": "Chinese Grand Prix",
+      "circuit": "Shanghai International Circuit",
+      "date": "2026-03-15",
+      "results": [
+        {
+          "pos": "1",
+          "driver": "Russell",
+          "team": "Mercedes",
+          "gap": "WINNER",
+          "status": "Finished",
+          "fastestLapTime": "1:33.112",
+          "fastestLapRank": "2"
+        },
+        {
+          "pos": "2",
+          "driver": "Antonelli",
+          "team": "Mercedes",
+          "gap": "+2.449",
+          "status": "Finished",
+          "fastestLapTime": "1:32.804",
+          "fastestLapRank": "1"
+        },
+        {
+          "pos": "3",
+          "driver": "Hamilton",
+          "team": "Ferrari",
+          "gap": "+11.220",
+          "status": "Finished",
+          "fastestLapTime": "1:33.442",
+          "fastestLapRank": "3"
+        },
+        {
+          "pos": "4",
+          "driver": "Leclerc",
+          "team": "Ferrari",
+          "gap": "+15.882",
+          "status": "Finished",
+          "fastestLapTime": "1:33.661",
+          "fastestLapRank": "4"
+        },
+        {
+          "pos": "5",
+          "driver": "Piastri",
+          "team": "McLaren",
+          "gap": "+28.440",
+          "status": "Finished",
+          "fastestLapTime": "1:33.991",
+          "fastestLapRank": "6"
+        },
+        {
+          "pos": "6",
+          "driver": "Gasly",
+          "team": "Alpine",
+          "gap": "+35.110",
+          "status": "Finished",
+          "fastestLapTime": "1:34.220",
+          "fastestLapRank": "7"
+        },
+        {
+          "pos": "7",
+          "driver": "Norris",
+          "team": "McLaren",
+          "gap": "+38.221",
+          "status": "DNS",
+          "fastestLapTime": null,
+          "fastestLapRank": null
+        },
+        {
+          "pos": "8",
+          "driver": "Albon",
+          "team": "Williams",
+          "gap": "+42.110",
+          "status": "Finished",
+          "fastestLapTime": "1:34.550",
+          "fastestLapRank": "8"
+        },
+        {
+          "pos": "9",
+          "driver": "Sainz",
+          "team": "Williams",
+          "gap": "+45.331",
+          "status": "Finished",
+          "fastestLapTime": "1:34.770",
+          "fastestLapRank": "9"
+        },
+        {
+          "pos": "10",
+          "driver": "Bearman",
+          "team": "Haas",
+          "gap": "+48.220",
+          "status": "Finished",
+          "fastestLapTime": "1:34.892",
+          "fastestLapRank": "10"
+        },
+        {
+          "pos": "11",
+          "driver": "Lawson",
+          "team": "Red Bull",
+          "gap": "+52.110",
+          "status": "Finished",
+          "fastestLapTime": "1:35.001",
+          "fastestLapRank": "11"
+        },
+        {
+          "pos": "12",
+          "driver": "Alonso",
+          "team": "Aston Martin",
+          "gap": "+55.440",
+          "status": "Finished",
+          "fastestLapTime": "1:35.112",
+          "fastestLapRank": "12"
+        },
+        {
+          "pos": "13",
+          "driver": "Hadjar",
+          "team": "Racing Bulls",
+          "gap": "+58.220",
+          "status": "Finished",
+          "fastestLapTime": "1:35.330",
+          "fastestLapRank": "13"
+        },
+        {
+          "pos": "14",
+          "driver": "Ocon",
+          "team": "Haas",
+          "gap": "+62.110",
+          "status": "Finished",
+          "fastestLapTime": "1:35.551",
+          "fastestLapRank": "14"
+        },
+        {
+          "pos": "15",
+          "driver": "Colapinto",
+          "team": "Alpine",
+          "gap": "+65.220",
+          "status": "Finished",
+          "fastestLapTime": "1:35.770",
+          "fastestLapRank": "15"
+        },
+        {
+          "pos": "16",
+          "driver": "Stroll",
+          "team": "Aston Martin",
+          "gap": "+68.330",
+          "status": "Finished",
+          "fastestLapTime": "1:35.990",
+          "fastestLapRank": "16"
+        },
+        {
+          "pos": "17",
+          "driver": "H\u00fclkenberg",
+          "team": "Audi",
+          "gap": "+72.110",
+          "status": "Finished",
+          "fastestLapTime": "1:36.110",
+          "fastestLapRank": "17"
+        },
+        {
+          "pos": "18",
+          "driver": "Lindblad",
+          "team": "Racing Bulls",
+          "gap": "+75.442",
+          "status": "Finished",
+          "fastestLapTime": "1:36.330",
+          "fastestLapRank": "18"
+        },
+        {
+          "pos": "19",
+          "driver": "Bortoleto",
+          "team": "Audi",
+          "gap": "+80.220",
+          "status": "Finished",
+          "fastestLapTime": "1:36.550",
+          "fastestLapRank": "19"
+        },
+        {
+          "pos": "20",
+          "driver": "Verstappen",
+          "team": "Red Bull",
+          "gap": "DNF",
+          "status": "DNF",
+          "fastestLapTime": "1:33.880",
+          "fastestLapRank": "5"
+        }
       ],
-      "fastestLap":{"driver":"Antonelli","time":"1:32.804","team":"Mercedes"}
+      "fastestLap": {
+        "driver": "Antonelli",
+        "time": "1:32.804",
+        "team": "Mercedes"
+      }
     }
   ],
   "sprints": [],
   "schedule": [
-    {"round":1,"name":"Australian Grand Prix","circuit":"Albert Park Grand Prix Circuit","date":"2026-03-08","time":"04:00:00Z","country":"AU","completed":true,"sprint":false,"winner":"Antonelli"},
-    {"round":2,"name":"Chinese Grand Prix","circuit":"Shanghai International Circuit","date":"2026-03-15","time":"07:00:00Z","country":"CN","completed":true,"sprint":true,"winner":"Russell"},
-    {"round":3,"name":"Japanese Grand Prix","circuit":"Suzuka Circuit","date":"2026-04-06","time":"05:00:00Z","country":"JP","completed":false,"sprint":false,"winner":null},
-    {"round":4,"name":"Bahrain Grand Prix","circuit":"Bahrain International Circuit","date":"2026-04-13","time":"15:00:00Z","country":"BH","completed":false,"sprint":false,"winner":null},
-    {"round":5,"name":"Saudi Arabian Grand Prix","circuit":"Jeddah Corniche Circuit","date":"2026-04-20","time":"17:00:00Z","country":"SA","completed":false,"sprint":false,"winner":null},
-    {"round":6,"name":"Miami Grand Prix","circuit":"Miami International Autodrome","date":"2026-05-04","time":"20:00:00Z","country":"US","completed":false,"sprint":true,"winner":null},
-    {"round":7,"name":"Emilia Romagna Grand Prix","circuit":"Autodromo Enzo e Dino Ferrari","date":"2026-05-18","time":"13:00:00Z","country":"IT","completed":false,"sprint":false,"winner":null},
-    {"round":8,"name":"Monaco Grand Prix","circuit":"Circuit de Monaco","date":"2026-05-24","time":"13:00:00Z","country":"MC","completed":false,"sprint":false,"winner":null},
-    {"round":9,"name":"Spanish Grand Prix","circuit":"Circuit de Barcelona-Catalunya","date":"2026-06-01","time":"13:00:00Z","country":"ES","completed":false,"sprint":false,"winner":null},
-    {"round":10,"name":"Canadian Grand Prix","circuit":"Circuit Gilles Villeneuve","date":"2026-06-15","time":"18:00:00Z","country":"CA","completed":false,"sprint":false,"winner":null},
-    {"round":11,"name":"Austrian Grand Prix","circuit":"Red Bull Ring","date":"2026-06-29","time":"13:00:00Z","country":"AT","completed":false,"sprint":true,"winner":null},
-    {"round":12,"name":"British Grand Prix","circuit":"Silverstone Circuit","date":"2026-07-05","time":"14:00:00Z","country":"GB","completed":false,"sprint":false,"winner":null},
-    {"round":13,"name":"Belgian Grand Prix","circuit":"Circuit de Spa-Francorchamps","date":"2026-07-27","time":"13:00:00Z","country":"BE","completed":false,"sprint":false,"winner":null},
-    {"round":14,"name":"Hungarian Grand Prix","circuit":"Hungaroring","date":"2026-08-03","time":"13:00:00Z","country":"HU","completed":false,"sprint":false,"winner":null},
-    {"round":15,"name":"Dutch Grand Prix","circuit":"Circuit Park Zandvoort","date":"2026-08-31","time":"13:00:00Z","country":"NL","completed":false,"sprint":false,"winner":null},
-    {"round":16,"name":"Italian Grand Prix","circuit":"Autodromo Nazionale di Monza","date":"2026-09-07","time":"13:00:00Z","country":"IT","completed":false,"sprint":false,"winner":null},
-    {"round":17,"name":"Azerbaijan Grand Prix","circuit":"Baku City Circuit","date":"2026-09-21","time":"11:00:00Z","country":"AZ","completed":false,"sprint":true,"winner":null},
-    {"round":18,"name":"Singapore Grand Prix","circuit":"Marina Bay Street Circuit","date":"2026-10-05","time":"12:00:00Z","country":"SG","completed":false,"sprint":false,"winner":null},
-    {"round":19,"name":"United States Grand Prix","circuit":"Circuit of the Americas","date":"2026-10-25","time":"19:00:00Z","country":"US","completed":false,"sprint":true,"winner":null},
-    {"round":20,"name":"Mexico City Grand Prix","circuit":"Autodromo Hermanos Rodriguez","date":"2026-11-01","time":"20:00:00Z","country":"MX","completed":false,"sprint":false,"winner":null},
-    {"round":21,"name":"São Paulo Grand Prix","circuit":"Autodromo Jose Carlos Pace","date":"2026-11-09","time":"17:00:00Z","country":"BR","completed":false,"sprint":true,"winner":null},
-    {"round":22,"name":"Abu Dhabi Grand Prix","circuit":"Yas Marina Circuit","date":"2026-12-06","time":"13:00:00Z","country":"AE","completed":false,"sprint":false,"winner":null}
+    {
+      "round": 1,
+      "name": "Australian Grand Prix",
+      "circuit": "Albert Park Grand Prix Circuit",
+      "date": "2026-03-08",
+      "time": "04:00:00Z",
+      "country": "AU",
+      "completed": true,
+      "sprint": false,
+      "winner": "Antonelli"
+    },
+    {
+      "round": 2,
+      "name": "Chinese Grand Prix",
+      "circuit": "Shanghai International Circuit",
+      "date": "2026-03-15",
+      "time": "07:00:00Z",
+      "country": "CN",
+      "completed": true,
+      "sprint": true,
+      "winner": "Russell"
+    },
+    {
+      "round": 3,
+      "name": "Japanese Grand Prix",
+      "circuit": "Suzuka Circuit",
+      "date": "2026-04-06",
+      "time": "05:00:00Z",
+      "country": "JP",
+      "completed": false,
+      "sprint": false,
+      "winner": null
+    },
+    {
+      "round": 4,
+      "name": "Bahrain Grand Prix",
+      "circuit": "Bahrain International Circuit",
+      "date": "2026-04-13",
+      "time": "15:00:00Z",
+      "country": "BH",
+      "completed": false,
+      "sprint": false,
+      "winner": null
+    },
+    {
+      "round": 5,
+      "name": "Saudi Arabian Grand Prix",
+      "circuit": "Jeddah Corniche Circuit",
+      "date": "2026-04-20",
+      "time": "17:00:00Z",
+      "country": "SA",
+      "completed": false,
+      "sprint": false,
+      "winner": null
+    },
+    {
+      "round": 6,
+      "name": "Miami Grand Prix",
+      "circuit": "Miami International Autodrome",
+      "date": "2026-05-04",
+      "time": "20:00:00Z",
+      "country": "US",
+      "completed": false,
+      "sprint": true,
+      "winner": null
+    },
+    {
+      "round": 7,
+      "name": "Emilia Romagna Grand Prix",
+      "circuit": "Autodromo Enzo e Dino Ferrari",
+      "date": "2026-05-18",
+      "time": "13:00:00Z",
+      "country": "IT",
+      "completed": false,
+      "sprint": false,
+      "winner": null
+    },
+    {
+      "round": 8,
+      "name": "Monaco Grand Prix",
+      "circuit": "Circuit de Monaco",
+      "date": "2026-05-24",
+      "time": "13:00:00Z",
+      "country": "MC",
+      "completed": false,
+      "sprint": false,
+      "winner": null
+    },
+    {
+      "round": 9,
+      "name": "Spanish Grand Prix",
+      "circuit": "Circuit de Barcelona-Catalunya",
+      "date": "2026-06-01",
+      "time": "13:00:00Z",
+      "country": "ES",
+      "completed": false,
+      "sprint": false,
+      "winner": null
+    },
+    {
+      "round": 10,
+      "name": "Canadian Grand Prix",
+      "circuit": "Circuit Gilles Villeneuve",
+      "date": "2026-06-15",
+      "time": "18:00:00Z",
+      "country": "CA",
+      "completed": false,
+      "sprint": false,
+      "winner": null
+    },
+    {
+      "round": 11,
+      "name": "Austrian Grand Prix",
+      "circuit": "Red Bull Ring",
+      "date": "2026-06-29",
+      "time": "13:00:00Z",
+      "country": "AT",
+      "completed": false,
+      "sprint": true,
+      "winner": null
+    },
+    {
+      "round": 12,
+      "name": "British Grand Prix",
+      "circuit": "Silverstone Circuit",
+      "date": "2026-07-05",
+      "time": "14:00:00Z",
+      "country": "GB",
+      "completed": false,
+      "sprint": false,
+      "winner": null
+    },
+    {
+      "round": 13,
+      "name": "Belgian Grand Prix",
+      "circuit": "Circuit de Spa-Francorchamps",
+      "date": "2026-07-27",
+      "time": "13:00:00Z",
+      "country": "BE",
+      "completed": false,
+      "sprint": false,
+      "winner": null
+    },
+    {
+      "round": 14,
+      "name": "Hungarian Grand Prix",
+      "circuit": "Hungaroring",
+      "date": "2026-08-03",
+      "time": "13:00:00Z",
+      "country": "HU",
+      "completed": false,
+      "sprint": false,
+      "winner": null
+    },
+    {
+      "round": 15,
+      "name": "Dutch Grand Prix",
+      "circuit": "Circuit Park Zandvoort",
+      "date": "2026-08-31",
+      "time": "13:00:00Z",
+      "country": "NL",
+      "completed": false,
+      "sprint": false,
+      "winner": null
+    },
+    {
+      "round": 16,
+      "name": "Italian Grand Prix",
+      "circuit": "Autodromo Nazionale di Monza",
+      "date": "2026-09-07",
+      "time": "13:00:00Z",
+      "country": "IT",
+      "completed": false,
+      "sprint": false,
+      "winner": null
+    },
+    {
+      "round": 17,
+      "name": "Azerbaijan Grand Prix",
+      "circuit": "Baku City Circuit",
+      "date": "2026-09-21",
+      "time": "11:00:00Z",
+      "country": "AZ",
+      "completed": false,
+      "sprint": true,
+      "winner": null
+    },
+    {
+      "round": 18,
+      "name": "Singapore Grand Prix",
+      "circuit": "Marina Bay Street Circuit",
+      "date": "2026-10-05",
+      "time": "12:00:00Z",
+      "country": "SG",
+      "completed": false,
+      "sprint": false,
+      "winner": null
+    },
+    {
+      "round": 19,
+      "name": "United States Grand Prix",
+      "circuit": "Circuit of the Americas",
+      "date": "2026-10-25",
+      "time": "19:00:00Z",
+      "country": "US",
+      "completed": false,
+      "sprint": true,
+      "winner": null
+    },
+    {
+      "round": 20,
+      "name": "Mexico City Grand Prix",
+      "circuit": "Autodromo Hermanos Rodriguez",
+      "date": "2026-11-01",
+      "time": "20:00:00Z",
+      "country": "MX",
+      "completed": false,
+      "sprint": false,
+      "winner": null
+    },
+    {
+      "round": 21,
+      "name": "S\u00e3o Paulo Grand Prix",
+      "circuit": "Autodromo Jose Carlos Pace",
+      "date": "2026-11-09",
+      "time": "17:00:00Z",
+      "country": "BR",
+      "completed": false,
+      "sprint": true,
+      "winner": null
+    },
+    {
+      "round": 22,
+      "name": "Abu Dhabi Grand Prix",
+      "circuit": "Yas Marina Circuit",
+      "date": "2026-12-06",
+      "time": "13:00:00Z",
+      "country": "AE",
+      "completed": false,
+      "sprint": false,
+      "winner": null
+    }
   ],
   "pitStops": {
     "raceName": "Chinese Grand Prix",
     "stops": [
-      {"driver":"russell","lap":18,"stop":1,"duration":"22.103","durationMs":22.103},
-      {"driver":"antonelli","lap":19,"stop":1,"duration":"22.441","durationMs":22.441},
-      {"driver":"hamilton","lap":17,"stop":1,"duration":"23.012","durationMs":23.012},
-      {"driver":"leclerc","lap":18,"stop":1,"duration":"23.220","durationMs":23.220},
-      {"driver":"norris","lap":20,"stop":1,"duration":"23.551","durationMs":23.551},
-      {"driver":"piastri","lap":19,"stop":1,"duration":"23.880","durationMs":23.880},
-      {"driver":"gasly","lap":21,"stop":1,"duration":"24.112","durationMs":24.112},
-      {"driver":"verstappen","lap":16,"stop":1,"duration":"24.330","durationMs":24.330},
-      {"driver":"alonso","lap":22,"stop":1,"duration":"24.551","durationMs":24.551},
-      {"driver":"bearman","lap":20,"stop":1,"duration":"24.770","durationMs":24.770}
+      {
+        "driver": "Russell",
+        "lap": 18,
+        "stop": 1,
+        "duration": "22.103",
+        "durationMs": 22.103,
+        "fullName": "George Russell",
+        "team": "Mercedes"
+      },
+      {
+        "driver": "Antonelli",
+        "lap": 19,
+        "stop": 1,
+        "duration": "22.441",
+        "durationMs": 22.441,
+        "fullName": "Kimi Antonelli",
+        "team": "Mercedes"
+      },
+      {
+        "driver": "Hamilton",
+        "lap": 17,
+        "stop": 1,
+        "duration": "23.012",
+        "durationMs": 23.012,
+        "fullName": "Lewis Hamilton",
+        "team": "Ferrari"
+      },
+      {
+        "driver": "Leclerc",
+        "lap": 18,
+        "stop": 1,
+        "duration": "23.220",
+        "durationMs": 23.22,
+        "fullName": "Charles Leclerc",
+        "team": "Ferrari"
+      },
+      {
+        "driver": "Norris",
+        "lap": 20,
+        "stop": 1,
+        "duration": "23.551",
+        "durationMs": 23.551,
+        "fullName": "Lando Norris",
+        "team": "McLaren"
+      },
+      {
+        "driver": "Piastri",
+        "lap": 19,
+        "stop": 1,
+        "duration": "23.880",
+        "durationMs": 23.88,
+        "fullName": "Oscar Piastri",
+        "team": "McLaren"
+      },
+      {
+        "driver": "Gasly",
+        "lap": 21,
+        "stop": 1,
+        "duration": "24.112",
+        "durationMs": 24.112,
+        "fullName": "Pierre Gasly",
+        "team": "Alpine"
+      },
+      {
+        "driver": "Verstappen",
+        "lap": 16,
+        "stop": 1,
+        "duration": "24.330",
+        "durationMs": 24.33,
+        "fullName": "Max Verstappen",
+        "team": "Red Bull"
+      },
+      {
+        "driver": "Alonso",
+        "lap": 22,
+        "stop": 1,
+        "duration": "24.551",
+        "durationMs": 24.551,
+        "fullName": "Fernando Alonso",
+        "team": "Aston Martin"
+      },
+      {
+        "driver": "Bearman",
+        "lap": 20,
+        "stop": 1,
+        "duration": "24.770",
+        "durationMs": 24.77,
+        "fullName": "Oliver Bearman",
+        "team": "Haas"
+      }
     ]
   }
 }
