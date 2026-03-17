@@ -27,8 +27,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
-      - run: npm ci
+      - name: Install dependencies
+        run: npm install
       - name: Fetch F1 data from Jolpica API
         run: node scripts/fetch-f1-data.mjs
       - name: Fetch sector & speed data from OpenF1 API
