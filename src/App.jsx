@@ -93,7 +93,14 @@ function transformData(raw) {
         g: res.pos === "1" ? "WINNER" : (res.gap || res.status || ""),
       })),
     })),
-  ].sort((a, b) => new Date(a.dt) - new Date(b.dt));
+  ].sort((a, b) => {
+    const da = new Date(a.dt) - new Date(b.dt);
+    if (da !== 0) return da;
+    // Same date: sprints come before the main race
+    if (a.sprint && !b.sprint) return -1;
+    if (!a.sprint && b.sprint) return 1;
+    return 0;
+  });
 
   // Pit stops from most recent race
   const pits = raw.pitStops.stops.map(p => ({
@@ -427,10 +434,10 @@ export default function F1Dashboard(){
                   if(!mtg)mtg=openf1.meetings.find(m=>{const mk=m.meetingName.replace(/ Grand Prix$/i,"").toLowerCase().trim();return baseKey.includes(mk)||mk.includes(baseKey);});
                   // Strategy 4: round-number index fallback (round 1 = first meeting, etc.)
                   if(!mtg){const rn=typeof race.r==="string"?parseInt(race.r):race.r;if(rn>0&&rn<=openf1.meetings.length)mtg=openf1.meetings[rn-1];}
-                  if(!mtg)return null;
+                  if(!mtg)return(<div style={{fontSize:10,color:"rgba(255,255,255,0.15)",padding:"4px 0"}}>Sector data: no matching meeting for "{baseName}"</div>);
                   const targetSession=race.sprint?"Sprint":"Race";
                   const sess=mtg.sessions.find(s=>s.sessionName===targetSession)||mtg.sessions.find(s=>s.sessionName==="Race");
-                  if(!sess||!sess.drivers||sess.drivers.length===0)return null;
+                  if(!sess||!sess.drivers||sess.drivers.length===0)return(<div style={{fontSize:10,color:"rgba(255,255,255,0.15)",padding:"4px 0"}}>Sector data: matched "{mtg.meetingName}" but no {targetSession} session data ({mtg.sessions.map(s=>s.sessionName).join(", ")})</div>);
                   const top5=sess.drivers.slice(0,5);
                   const sb=sess.sessionBests;
                   const fmtS=(v)=>v?v.toFixed(3):"—";
