@@ -124,13 +124,70 @@ function transformData(raw) {
   const fetchedAt = raw.fetchedAt;
   const pitRaceName = raw.pitStops.raceName;
 
+  // Qualifying data
+  const qualifying = (raw.qualifying || []).map(q => ({
+    round: q.round,
+    name: q.raceName,
+    results: q.results.map(r => ({ pos: r.pos, d: r.driver, t: r.team })),
+  }));
+
+  // Head-to-head: group drivers by team, compute stats
+  const teamDrivers = {};
+  for (const d of DS) {
+    if (!teamDrivers[d.t]) teamDrivers[d.t] = [];
+    teamDrivers[d.t].push(d);
+  }
+
+  const h2h = Object.entries(teamDrivers).filter(([,drs]) => drs.length >= 2).map(([team, drs]) => {
+    const d1 = drs[0], d2 = drs[1]; // sorted by standings position already
+
+    // Qualifying head-to-head
+    let d1QualWins = 0, d2QualWins = 0;
+    const qualDetails = [];
+    for (const q of qualifying) {
+      const r1 = q.results.find(r => r.d === d1.n.split(" ").pop());
+      const r2 = q.results.find(r => r.d === d2.n.split(" ").pop());
+      if (r1 && r2) {
+        if (r1.pos < r2.pos) d1QualWins++; else if (r2.pos < r1.pos) d2QualWins++;
+        qualDetails.push({ race: q.name.replace(" Grand Prix",""), d1: r1.pos, d2: r2.pos });
+      }
+    }
+
+    // Race finish head-to-head (non-sprint only)
+    let d1RaceWins = 0, d2RaceWins = 0;
+    const d1Finishes = [], d2Finishes = [];
+    const raceDetails = [];
+    for (const race of allRaces.filter(r => !r.sprint)) {
+      const r1 = race.full.find(r => r.d === d1.n.split(" ").pop());
+      const r2 = race.full.find(r => r.d === d2.n.split(" ").pop());
+      if (r1 && r2) {
+        const p1 = typeof r1.p === "number" ? r1.p : 99;
+        const p2 = typeof r2.p === "number" ? r2.p : 99;
+        if (p1 < p2) d1RaceWins++; else if (p2 < p1) d2RaceWins++;
+        if (typeof r1.p === "number") d1Finishes.push(r1.p);
+        if (typeof r2.p === "number") d2Finishes.push(r2.p);
+        raceDetails.push({ race: race.nm.replace(" Grand Prix",""), d1: r1.p, d2: r2.p });
+      }
+    }
+
+    const d1AvgPos = d1Finishes.length > 0 ? +(d1Finishes.reduce((a,b) => a+b, 0) / d1Finishes.length).toFixed(1) : null;
+    const d2AvgPos = d2Finishes.length > 0 ? +(d2Finishes.reduce((a,b) => a+b, 0) / d2Finishes.length).toFixed(1) : null;
+
+    return {
+      team, d1, d2,
+      qual: { d1: d1QualWins, d2: d2QualWins, details: qualDetails },
+      race: { d1: d1RaceWins, d2: d2RaceWins, details: raceDetails },
+      avgPos: { d1: d1AvgPos, d2: d2AvgPos },
+    };
+  });
+
   // Get leader info
   const leader = DS[0] || { n: "TBD", t: "Mercedes", pts: 0 };
   const lastRace = allRaces.filter(r => !r.sprint).slice(-1)[0];
   const lastWinner = lastRace ? { name: lastRace.w, team: lastRace.wt, race: lastRace.nm } : null;
   const fastestLap = lastRace?.fl || null;
 
-  return { DS, CS, races: allRaces, pits, sched, completedRounds, totalRounds, fetchedAt, pitRaceName, leader, lastWinner, fastestLap };
+  return { DS, CS, races: allRaces, pits, sched, qualifying, h2h, completedRounds, totalRounds, fetchedAt, pitRaceName, leader, lastWinner, fastestLap };
 }
 
 
@@ -141,7 +198,7 @@ function SC({label,value,sub,accent,icon}){return (<div style={{background:"rgba
 
 function SB({status}){const m={done:{bg:"rgba(39,244,210,0.12)",c:"#27F4D2",t:"COMPLETED"},next:{bg:"rgba(232,0,32,0.15)",c:"#E80020",t:"NEXT RACE"},postponed:{bg:"rgba(255,165,0,0.12)",c:"#FFA500",t:"POSTPONED"},upcoming:{bg:"rgba(255,255,255,0.05)",c:"rgba(255,255,255,0.4)",t:"UPCOMING"}};const s=m[status]||m.upcoming;return (<span style={{fontSize:10,fontWeight:700,letterSpacing:1,padding:"3px 8px",borderRadius:4,background:s.bg,color:s.c}}>{s.t}</span>);}
 
-const TABS=[{id:"Overview",label:"📊 Overview"},{id:"Standings",label:"🏆 Standings"},{id:"Race Results",label:"🏁 Race Results"},{id:"Sector Times",label:"⏱️ Sector Times"},{id:"Pit Stops",label:"🔧 Pit Stops"},{id:"Schedule",label:"📅 Schedule"}];
+const TABS=[{id:"Overview",label:"📊 Overview"},{id:"Standings",label:"🏆 Standings"},{id:"Race Results",label:"🏁 Race Results"},{id:"Sector Times",label:"⏱️ Sector Times"},{id:"Head to Head",label:"🥊 Head to Head"},{id:"Pit Stops",label:"🔧 Pit Stops"},{id:"Schedule",label:"📅 Schedule"}];
 
 export default function F1Dashboard(){
   const[tab,setTab]=useState("Overview");
@@ -153,6 +210,7 @@ export default function F1Dashboard(){
   const[selMeeting,setSelMeeting]=useState(null);
   const[selSession,setSelSession]=useState(null);
   const[selRace,setSelRace]=useState("all");
+  const[h2hMetric,setH2hMetric]=useState("qual");
 
   useEffect(()=>{
     Promise.all([
@@ -174,7 +232,7 @@ export default function F1Dashboard(){
   if(loading)return(<div style={{minHeight:"100vh",background:"#0a0a0f",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Outfit',sans-serif"}}><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/><div style={{textAlign:"center"}}><div style={{fontSize:32,fontWeight:700,marginBottom:8}}>Loading F1 Data...</div><div style={{color:"rgba(255,255,255,0.4)"}}>Fetching from Jolpica API</div></div></div>);
   if(error||!data)return(<div style={{minHeight:"100vh",background:"#0a0a0f",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Outfit',sans-serif"}}><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/><div style={{textAlign:"center"}}><div style={{fontSize:32,fontWeight:700,color:"#E80020",marginBottom:8}}>Failed to Load Data</div><div style={{color:"rgba(255,255,255,0.5)"}}>{error||"No data available. Run: npm run fetch-data"}</div></div></div>);
 
-  const{DS,CS,races,pits,sched,completedRounds,totalRounds,fetchedAt,pitRaceName,leader,lastWinner,fastestLap}=data;
+  const{DS,CS,races,pits,sched,qualifying,h2h,completedRounds,totalRounds,fetchedAt,pitRaceName,leader,lastWinner,fastestLap}=data;
   const avgP=pits.length>0?(pits.reduce((a,b)=>a+b.s,0)/pits.length).toFixed(3):"N/A";
   const fastestPit=pits.length>0?pits[0]:null;
   const nextRace=sched.find(r=>r.st==="next");
@@ -652,6 +710,121 @@ export default function F1Dashboard(){
             </div>
           );
         })()}
+
+        {/* ═══ HEAD TO HEAD ═══ */}
+        {tab==="Head to Head"&&(
+          <div className="fu" style={{display:"flex",flexDirection:"column",gap:24}}>
+            {/* Metric Toggle */}
+            <div style={{display:"flex",alignItems:"center",gap:14,flexWrap:"wrap"}}>
+              <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:"rgba(255,255,255,0.4)"}}>Compare by</div>
+              <div style={{display:"flex",gap:4}}>
+                {[{id:"qual",label:"Qualifying Position"},{id:"race",label:"Average Finish"},{id:"pts",label:"Points Scored"}].map(m=>(
+                  <button key={m.id} onClick={()=>setH2hMetric(m.id)} style={{cursor:"pointer",padding:"8px 16px",borderRadius:6,border:h2hMetric===m.id?"1px solid rgba(232,0,32,0.4)":"1px solid rgba(255,255,255,0.08)",background:h2hMetric===m.id?"rgba(232,0,32,0.12)":"rgba(255,255,255,0.03)",color:h2hMetric===m.id?"#E80020":"rgba(255,255,255,0.5)",fontSize:12,fontWeight:h2hMetric===m.id?600:400,fontFamily:"'Outfit',sans-serif",transition:"all .2s"}}>{m.label}</button>
+                ))}
+              </div>
+            </div>
+
+            {/* Team Battles */}
+            <div style={{display:"flex",flexDirection:"column",gap:16}}>
+              {h2h.map(battle=>{
+                const tc=TC[battle.team]||"#555";
+                const d1Last=battle.d1.n.split(" ").pop();
+                const d2Last=battle.d2.n.split(" ").pop();
+
+                // Compute bar values based on selected metric
+                let d1Val,d2Val,d1Label,d2Label,metricNote;
+                if(h2hMetric==="qual"){
+                  d1Val=battle.qual.d1;d2Val=battle.qual.d2;
+                  d1Label=`${battle.qual.d1} win${battle.qual.d1!==1?"s":""}`;
+                  d2Label=`${battle.qual.d2} win${battle.qual.d2!==1?"s":""}`;
+                  metricNote="Qualifying head-to-head (higher grid position wins)";
+                }else if(h2hMetric==="race"){
+                  d1Val=battle.avgPos.d1?10-battle.avgPos.d1:0;d2Val=battle.avgPos.d2?10-battle.avgPos.d2:0; // invert so lower pos = bigger bar
+                  d1Label=battle.avgPos.d1?`P${battle.avgPos.d1} avg`:"No data";
+                  d2Label=battle.avgPos.d2?`P${battle.avgPos.d2} avg`:"No data";
+                  metricNote="Average race finishing position";
+                }else{
+                  d1Val=battle.d1.pts;d2Val=battle.d2.pts;
+                  d1Label=`${battle.d1.pts} pts`;d2Label=`${battle.d2.pts} pts`;
+                  metricNote="Championship points scored";
+                }
+                const total=d1Val+d2Val;
+                const d1Pct=total>0?(d1Val/total)*100:50;
+                const d2Pct=total>0?(d2Val/total)*100:50;
+                const d1Leads=d1Val>d2Val;
+                const d2Leads=d2Val>d1Val;
+                const tied=d1Val===d2Val;
+
+                return(
+                  <div key={battle.team} style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20,overflow:"hidden"}}>
+                    {/* Team Header */}
+                    <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16}}>
+                      <TL team={battle.team} size={28}/>
+                      <div style={{width:3,height:22,borderRadius:2,background:tc,opacity:.8}}/>
+                      <span style={{fontSize:16,fontWeight:700}}>{battle.team}</span>
+                      <span style={{fontSize:11,color:"rgba(255,255,255,0.3)",marginLeft:"auto"}}>{metricNote}</span>
+                    </div>
+
+                    {/* Driver vs Driver */}
+                    <div style={{display:"flex",alignItems:"center",gap:16,marginBottom:12}}>
+                      {/* Driver 1 */}
+                      <div style={{flex:1,textAlign:"right"}}>
+                        <div style={{display:"flex",alignItems:"center",justifyContent:"flex-end",gap:8,marginBottom:6}}>
+                          <div>
+                            <div style={{fontSize:15,fontWeight:700,color:d1Leads?"#fff":"rgba(255,255,255,0.5)"}}>{d1Last}</div>
+                            <div style={{fontSize:20,fontWeight:800,color:d1Leads?tc:"rgba(255,255,255,0.4)"}}>{d1Label}</div>
+                          </div>
+                          <DH name={battle.d1.n} size={44}/>
+                        </div>
+                      </div>
+
+                      {/* VS badge */}
+                      <div style={{flexShrink:0,width:40,height:40,borderRadius:"50%",background:"rgba(255,255,255,0.06)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:800,color:"rgba(255,255,255,0.3)"}}>VS</div>
+
+                      {/* Driver 2 */}
+                      <div style={{flex:1}}>
+                        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
+                          <DH name={battle.d2.n} size={44}/>
+                          <div>
+                            <div style={{fontSize:15,fontWeight:700,color:d2Leads?"#fff":"rgba(255,255,255,0.5)"}}>{d2Last}</div>
+                            <div style={{fontSize:20,fontWeight:800,color:d2Leads?tc:"rgba(255,255,255,0.4)"}}>{d2Label}</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Battle Bar */}
+                    <div style={{display:"flex",height:8,borderRadius:4,overflow:"hidden",background:"rgba(255,255,255,0.04)"}}>
+                      <div style={{width:`${d1Pct}%`,background:d1Leads?tc:"rgba(255,255,255,0.15)",borderRadius:"4px 0 0 4px",transition:"width .8s cubic-bezier(0.22,1,0.36,1)"}}/>
+                      <div style={{width:2,background:"#0a0a0f",flexShrink:0}}/>
+                      <div style={{width:`${d2Pct}%`,background:d2Leads?tc:"rgba(255,255,255,0.15)",borderRadius:"0 4px 4px 0",transition:"width .8s cubic-bezier(0.22,1,0.36,1)"}}/>
+                    </div>
+
+                    {/* Per-race detail row (Qualifying / Race) */}
+                    {h2hMetric!=="pts"&&(
+                      <div style={{marginTop:14,display:"flex",gap:6,flexWrap:"wrap"}}>
+                        {(h2hMetric==="qual"?battle.qual.details:battle.race.details).map((rd,i)=>{
+                          const d1Won=typeof rd.d1==="number"&&typeof rd.d2==="number"?rd.d1<rd.d2:false;
+                          const d2Won=typeof rd.d1==="number"&&typeof rd.d2==="number"?rd.d2<rd.d1:false;
+                          return(
+                            <div key={i} style={{background:"rgba(255,255,255,0.03)",borderRadius:6,padding:"6px 10px",fontSize:11,border:"1px solid rgba(255,255,255,0.04)",minWidth:80}}>
+                              <div style={{color:"rgba(255,255,255,0.35)",marginBottom:3,fontSize:10}}>{rd.race}</div>
+                              <div style={{display:"flex",justifyContent:"space-between",gap:8}}>
+                                <span style={{fontWeight:d1Won?700:400,color:d1Won?tc:"rgba(255,255,255,0.4)"}}>P{rd.d1}</span>
+                                <span style={{color:"rgba(255,255,255,0.15)"}}>—</span>
+                                <span style={{fontWeight:d2Won?700:400,color:d2Won?tc:"rgba(255,255,255,0.4)"}}>P{rd.d2}</span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* ═══ PIT STOPS ═══ */}
         {tab==="Pit Stops"&&(
