@@ -435,7 +435,7 @@ export default function F1Dashboard(){
                       <div style={{fontSize:13,fontWeight:600,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{d.n}</div>
                       <div style={{fontSize:10,color:"rgba(255,255,255,0.35)",marginTop:1}}>{d.t}</div>
                     </div>
-                    <div style={{width:32,textAlign:"center",fontSize:11,fontWeight:600,color:d.mv>0?"#27F4D2":d.mv<0?"#E80020":"rgba(255,255,255,0.2)"}}>{d.mv>0?`▲${d.mv}`:d.mv<0?`▼${Math.abs(d.mv)}`:"—"}</div>
+                    <div style={{width:40,textAlign:"center",fontSize:11,fontWeight:600,color:d.d!=="—"?"#27F4D2":"rgba(255,255,255,0.2)"}}>{d.d}</div>
                     <div style={{width:55,marginRight:8}}><div style={{height:4,width:`${d.pts>0?Math.max((d.pts/51)*100,3):0}%`,background:TC[d.t],borderRadius:2}}/></div>
                     <div style={{fontSize:14,fontWeight:700,width:32,textAlign:"right"}}>{d.pts}</div>
                   </div>
