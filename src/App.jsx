@@ -238,8 +238,9 @@ function DH({name,size=32,headshots}){const[tryLevel,setTryLevel]=useState(0);
   if(!of1&&headshots){const key=Object.keys(headshots).find(k=>k.toLowerCase()===name.toLowerCase()||normName(k)===normName(name));if(key)of1=headshots[key];}
   const of1Url=of1?.url;
   const b64Url=DRIVER_IMAGES[name];
-  // Priority: base64 (guaranteed) -> external URL -> acronym badge
-  const urls=[b64Url,of1Url].filter(Boolean);
+  // Priority: external CDN URL (current photos) -> base64 (fallback) -> acronym badge
+  // But if no external URL, go straight to base64
+  const urls=[of1Url,b64Url].filter(Boolean);
   const u=urls[tryLevel];
   if(!u){
     const acr=of1?.acronym||name.split(" ").map(n=>n[0]).join("").slice(0,3);
@@ -247,7 +248,7 @@ function DH({name,size=32,headshots}){const[tryLevel,setTryLevel]=useState(0);
     return (<div style={{width:size,height:size,borderRadius:"50%",background:`${tc}22`,border:`2px solid ${tc}66`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:size*0.32,fontWeight:800,color:tc,flexShrink:0,letterSpacing:0.5}}>{acr}</div>);
   }
   const isData=u.startsWith("data:");
-  return (<img src={u} alt={name} {...(isData?{crossOrigin:"anonymous"}:{})} onError={()=>setTryLevel(prev=>prev+1)} style={{width:size,height:size,borderRadius:"50%",objectFit:"cover",objectPosition:"top center",flexShrink:0,background:"rgba(255,255,255,0.05)"}}/>);}
+  return (<img src={u} alt={name} onError={()=>setTryLevel(prev=>prev+1)} style={{width:size,height:size,borderRadius:"50%",objectFit:"cover",objectPosition:"top center",flexShrink:0,background:"rgba(255,255,255,0.05)"}}/>);}
 function TL({team,size=20}){const[e,sE]=useState(false);const u=TEAM_LOGOS[team];if(!u||e)return null;const isData=u.startsWith("data:");return (<img src={u} alt={team} {...(isData?{}:{referrerPolicy:"no-referrer",crossOrigin:"anonymous"})} onError={()=>sE(true)} style={{width:size,height:size,objectFit:"contain",flexShrink:0}}/>);}
 
 function SC({label,value,sub,accent,icon}){return (<div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:10,padding:"14px 16px",flex:1,minWidth:130}}><div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:"rgba(255,255,255,0.4)",marginBottom:8,fontFamily:"'Outfit',sans-serif"}}>{label}</div><div style={{display:"flex",alignItems:"center",gap:8}}>{icon}{" "}<span style={{fontSize:22,fontWeight:700,color:accent||"#fff",lineHeight:1,fontFamily:"'Outfit',sans-serif"}}>{value}</span></div>{sub&&<div style={{fontSize:11,color:"rgba(255,255,255,0.5)",marginTop:6,fontFamily:"'Outfit',sans-serif"}}>{sub}</div>}</div>);}
