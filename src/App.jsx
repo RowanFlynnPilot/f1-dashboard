@@ -232,14 +232,14 @@ function transformData(raw) {
 }
 
 
+// Drivers whose external CDN headshots fail silently — use base64 only
+const DH_USE_B64 = new Set(["Kimi Antonelli","Andrea Kimi Antonelli","Arvid Lindblad"]);
 function DH({name,size=32,headshots}){const[tryLevel,setTryLevel]=useState(0);
   const normName=(n)=>n.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
   let of1=headshots&&(headshots[name]||Object.values(headshots).find(v=>false));
   if(!of1&&headshots){const key=Object.keys(headshots).find(k=>k.toLowerCase()===name.toLowerCase()||normName(k)===normName(name));if(key)of1=headshots[key];}
-  const of1Url=of1?.url;
+  const of1Url=DH_USE_B64.has(name)?null:of1?.url;
   const b64Url=DRIVER_IMAGES[name];
-  // Priority: external CDN URL (current photos) -> base64 (fallback) -> acronym badge
-  // But if no external URL, go straight to base64
   const urls=[of1Url,b64Url].filter(Boolean);
   const u=urls[tryLevel];
   if(!u){
@@ -247,7 +247,6 @@ function DH({name,size=32,headshots}){const[tryLevel,setTryLevel]=useState(0);
     const tc=of1?.teamColour||TC[of1?.team]||"rgba(255,255,255,0.2)";
     return (<div style={{width:size,height:size,borderRadius:"50%",background:`${tc}22`,border:`2px solid ${tc}66`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:size*0.32,fontWeight:800,color:tc,flexShrink:0,letterSpacing:0.5}}>{acr}</div>);
   }
-  const isData=u.startsWith("data:");
   return (<img src={u} alt={name} onError={()=>setTryLevel(prev=>prev+1)} style={{width:size,height:size,borderRadius:"50%",objectFit:"cover",objectPosition:"top center",flexShrink:0,background:"rgba(255,255,255,0.05)"}}/>);}
 function TL({team,size=20}){const[e,sE]=useState(false);const u=TEAM_LOGOS[team];if(!u||e)return null;const isData=u.startsWith("data:");return (<img src={u} alt={team} {...(isData?{}:{referrerPolicy:"no-referrer",crossOrigin:"anonymous"})} onError={()=>sE(true)} style={{width:size,height:size,objectFit:"contain",flexShrink:0}}/>);}
 
@@ -343,9 +342,12 @@ export default function F1Dashboard(){
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:16}}>
           <div className="fu">
             <div style={{display:"flex",alignItems:"center",gap:16,marginBottom:8}}>
-              <img src={F1_LOGO} alt="Formula 1" style={{height:36,objectFit:"contain"}}/>
-              <div style={{height:24,width:1,background:"rgba(255,255,255,0.15)"}}/>
-              <div style={{fontSize:14,fontWeight:500,color:"#fff",letterSpacing:2,textTransform:"uppercase"}}>2026 Season Dashboard</div>
+              <img src={F1_LOGO} alt="Formula 1" style={{height:52,objectFit:"contain"}}/>
+              <div style={{height:36,width:2,background:"rgba(255,255,255,0.15)"}}/>
+              <div>
+                <div style={{fontSize:22,fontWeight:700,color:"#fff",letterSpacing:3,textTransform:"uppercase",lineHeight:1.1}}>2026 Season Dashboard</div>
+                <div style={{fontSize:12,color:"rgba(255,255,255,0.35)",letterSpacing:1.5,marginTop:4,textTransform:"uppercase"}}>Formula 1 World Championship</div>
+              </div>
             </div>
             <div style={{fontSize:13,color:"rgba(255,255,255,0.7)",marginTop:4}}>Round {completedRounds} of {totalRounds} completed{nextRace?` · Next: ${nextRace.nm} · ${nextRace.dt}`:""}</div>
           </div>
