@@ -212,6 +212,7 @@ async function main() {
 
   const now = new Date();
   const allMeetingData = [];
+  const headshotMap = {}; // fullName -> { url, number, acronym, team }
 
   for (const meeting of meetings) {
     const meetingStart = new Date(meeting.date_start);
@@ -251,6 +252,22 @@ async function main() {
         // Fetch drivers
         const drivers = await getDrivers(session.session_key);
         await sleep(350);
+
+        // Collect headshot URLs (latest session wins for each driver)
+        if (drivers) {
+          for (const d of drivers) {
+            const name = d.full_name || `${d.first_name} ${d.last_name}`;
+            if (d.headshot_url) {
+              headshotMap[name] = {
+                url: d.headshot_url,
+                number: d.driver_number,
+                acronym: d.name_acronym,
+                team: d.team_name,
+                teamColour: d.team_colour ? `#${d.team_colour}` : null,
+              };
+            }
+          }
+        }
 
         // Fetch laps
         const laps = await getLaps(session.session_key);
@@ -346,6 +363,7 @@ async function main() {
     fetchedAt: new Date().toISOString(),
     meetingCount: allMeetingData.length,
     meetings: allMeetingData,
+    driverHeadshots: headshotMap,
   };
 
   // Write to public/openf1-data.json
