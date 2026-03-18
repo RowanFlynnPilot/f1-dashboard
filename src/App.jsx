@@ -194,9 +194,10 @@ function transformData(raw) {
 
 function DH({name,size=32,headshots}){const[tryLevel,setTryLevel]=useState(0);
   // Fallback chain: OpenF1 headshot URL (0) -> base64 DRIVER_IMAGES (1) -> initials (2)
-  // Case-insensitive lookup for OpenF1 headshots (API may use "Max VERSTAPPEN" vs "Max Verstappen")
+  // Multi-strategy lookup: exact -> case-insensitive -> accent-stripped
+  const normName=(n)=>n.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
   let of1Url=headshots&&headshots[name]?.url;
-  if(!of1Url&&headshots){const key=Object.keys(headshots).find(k=>k.toLowerCase()===name.toLowerCase());if(key)of1Url=headshots[key].url;}
+  if(!of1Url&&headshots){const key=Object.keys(headshots).find(k=>k.toLowerCase()===name.toLowerCase()||normName(k)===normName(name));if(key)of1Url=headshots[key].url;}
   const b64Url=DRIVER_IMAGES[name];
   const urls=[of1Url,b64Url].filter(Boolean);
   const u=urls[tryLevel];
