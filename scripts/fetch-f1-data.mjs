@@ -145,6 +145,7 @@ async function main() {
   const raceResults = [];
   const sprintResults = [];
   const allPitStops = [];
+  const allQualifying = [];
 
   for (const race of completedRaces) {
     const round = parseInt(race.round);
@@ -160,6 +161,10 @@ async function main() {
 
     const pits = await getPitStops(round);
     if (pits.length > 0) allPitStops.push({ round, raceName: race.raceName, pitStops: pits });
+    await sleep(400);
+
+    const quali = await getQualifying(round);
+    if (quali.length > 0) allQualifying.push({ round, raceName: race.raceName, results: quali });
     await sleep(400);
   }
 
@@ -309,6 +314,19 @@ async function main() {
       raceName: latestPits?.raceName || "",
       stops: pitStops,
     },
+    qualifying: allQualifying.map(q => ({
+      round: q.round,
+      raceName: q.raceName,
+      results: q.results.map(r => ({
+        pos: parseInt(r.position),
+        driver: r.Driver.familyName,
+        driverId: r.Driver.driverId,
+        team: teamName(r.Constructor?.constructorId),
+        q1: r.Q1 || null,
+        q2: r.Q2 || null,
+        q3: r.Q3 || null,
+      })),
+    })),
   };
 
   // Write to public/data.json
