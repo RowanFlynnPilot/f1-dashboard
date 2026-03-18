@@ -1054,5 +1054,379 @@
         "team": "Haas"
       }
     ]
-  }
+  },
+  "qualifying": [
+    {
+      "round": 1,
+      "raceName": "Australian Grand Prix",
+      "results": [
+        {
+          "pos": 1,
+          "driver": "Antonelli",
+          "driverId": "antonelli",
+          "team": "Mercedes",
+          "q1": "1:17.442",
+          "q2": "1:16.891",
+          "q3": "1:16.204"
+        },
+        {
+          "pos": 2,
+          "driver": "Russell",
+          "driverId": "russell",
+          "team": "Mercedes",
+          "q1": "1:17.510",
+          "q2": "1:16.920",
+          "q3": "1:16.318"
+        },
+        {
+          "pos": 3,
+          "driver": "Leclerc",
+          "driverId": "leclerc",
+          "team": "Ferrari",
+          "q1": "1:17.602",
+          "q2": "1:17.012",
+          "q3": "1:16.551"
+        },
+        {
+          "pos": 4,
+          "driver": "Hamilton",
+          "driverId": "hamilton",
+          "team": "Ferrari",
+          "q1": "1:17.710",
+          "q2": "1:17.105",
+          "q3": "1:16.672"
+        },
+        {
+          "pos": 5,
+          "driver": "Norris",
+          "driverId": "norris",
+          "team": "McLaren",
+          "q1": "1:17.801",
+          "q2": "1:17.220",
+          "q3": "1:16.890"
+        },
+        {
+          "pos": 6,
+          "driver": "Piastri",
+          "driverId": "piastri",
+          "team": "McLaren",
+          "q1": "1:17.882",
+          "q2": "1:17.330",
+          "q3": "1:17.012"
+        },
+        {
+          "pos": 7,
+          "driver": "Gasly",
+          "driverId": "gasly",
+          "team": "Alpine",
+          "q1": "1:18.012",
+          "q2": "1:17.550",
+          "q3": "1:17.331"
+        },
+        {
+          "pos": 8,
+          "driver": "Verstappen",
+          "driverId": "verstappen",
+          "team": "Red Bull",
+          "q1": "1:18.102",
+          "q2": "1:17.660",
+          "q3": "1:17.442"
+        },
+        {
+          "pos": 9,
+          "driver": "Alonso",
+          "driverId": "alonso",
+          "team": "Aston Martin",
+          "q1": "1:18.220",
+          "q2": "1:17.801",
+          "q3": "1:17.612"
+        },
+        {
+          "pos": 10,
+          "driver": "Bearman",
+          "driverId": "bearman",
+          "team": "Haas",
+          "q1": "1:18.330",
+          "q2": "1:17.990",
+          "q3": "1:17.801"
+        },
+        {
+          "pos": 11,
+          "driver": "Lawson",
+          "driverId": "lawson",
+          "team": "Red Bull",
+          "q1": "1:18.442",
+          "q2": "1:18.102",
+          "q3": null
+        },
+        {
+          "pos": 12,
+          "driver": "Albon",
+          "driverId": "albon",
+          "team": "Williams",
+          "q1": "1:18.551",
+          "q2": "1:18.220",
+          "q3": null
+        },
+        {
+          "pos": 13,
+          "driver": "Colapinto",
+          "driverId": "colapinto",
+          "team": "Alpine",
+          "q1": "1:18.660",
+          "q2": "1:18.330",
+          "q3": null
+        },
+        {
+          "pos": 14,
+          "driver": "Sainz",
+          "driverId": "sainz",
+          "team": "Williams",
+          "q1": "1:18.770",
+          "q2": "1:18.442",
+          "q3": null
+        },
+        {
+          "pos": 15,
+          "driver": "Ocon",
+          "driverId": "ocon",
+          "team": "Haas",
+          "q1": "1:18.881",
+          "q2": "1:18.551",
+          "q3": null
+        },
+        {
+          "pos": 16,
+          "driver": "Hadjar",
+          "driverId": "hadjar",
+          "team": "Racing Bulls",
+          "q1": "1:18.990",
+          "q2": null,
+          "q3": null
+        },
+        {
+          "pos": 17,
+          "driver": "Stroll",
+          "driverId": "stroll",
+          "team": "Aston Martin",
+          "q1": "1:19.102",
+          "q2": null,
+          "q3": null
+        },
+        {
+          "pos": 18,
+          "driver": "H\u00fclkenberg",
+          "driverId": "hulkenberg",
+          "team": "Audi",
+          "q1": "1:19.220",
+          "q2": null,
+          "q3": null
+        },
+        {
+          "pos": 19,
+          "driver": "Lindblad",
+          "driverId": "lindblad",
+          "team": "Racing Bulls",
+          "q1": "1:19.330",
+          "q2": null,
+          "q3": null
+        },
+        {
+          "pos": 20,
+          "driver": "Bortoleto",
+          "driverId": "bortoleto",
+          "team": "Audi",
+          "q1": "1:19.551",
+          "q2": null,
+          "q3": null
+        }
+      ]
+    },
+    {
+      "round": 2,
+      "raceName": "Chinese Grand Prix",
+      "results": [
+        {
+          "pos": 1,
+          "driver": "Antonelli",
+          "driverId": "antonelli",
+          "team": "Mercedes",
+          "q1": "1:33.220",
+          "q2": "1:32.551",
+          "q3": "1:32.012"
+        },
+        {
+          "pos": 2,
+          "driver": "Russell",
+          "driverId": "russell",
+          "team": "Mercedes",
+          "q1": "1:33.330",
+          "q2": "1:32.660",
+          "q3": "1:32.118"
+        },
+        {
+          "pos": 3,
+          "driver": "Hamilton",
+          "driverId": "hamilton",
+          "team": "Ferrari",
+          "q1": "1:33.442",
+          "q2": "1:32.770",
+          "q3": "1:32.330"
+        },
+        {
+          "pos": 4,
+          "driver": "Leclerc",
+          "driverId": "leclerc",
+          "team": "Ferrari",
+          "q1": "1:33.551",
+          "q2": "1:32.881",
+          "q3": "1:32.551"
+        },
+        {
+          "pos": 5,
+          "driver": "Piastri",
+          "driverId": "piastri",
+          "team": "McLaren",
+          "q1": "1:33.770",
+          "q2": "1:33.102",
+          "q3": "1:32.770"
+        },
+        {
+          "pos": 6,
+          "driver": "Norris",
+          "driverId": "norris",
+          "team": "McLaren",
+          "q1": "1:33.881",
+          "q2": "1:33.220",
+          "q3": "1:32.990"
+        },
+        {
+          "pos": 7,
+          "driver": "Gasly",
+          "driverId": "gasly",
+          "team": "Alpine",
+          "q1": "1:34.012",
+          "q2": "1:33.442",
+          "q3": "1:33.220"
+        },
+        {
+          "pos": 8,
+          "driver": "Verstappen",
+          "driverId": "verstappen",
+          "team": "Red Bull",
+          "q1": "1:34.102",
+          "q2": "1:33.551",
+          "q3": "1:33.330"
+        },
+        {
+          "pos": 9,
+          "driver": "Albon",
+          "driverId": "albon",
+          "team": "Williams",
+          "q1": "1:34.220",
+          "q2": "1:33.770",
+          "q3": "1:33.551"
+        },
+        {
+          "pos": 10,
+          "driver": "Bearman",
+          "driverId": "bearman",
+          "team": "Haas",
+          "q1": "1:34.330",
+          "q2": "1:33.881",
+          "q3": "1:33.770"
+        },
+        {
+          "pos": 11,
+          "driver": "Lawson",
+          "driverId": "lawson",
+          "team": "Red Bull",
+          "q1": "1:34.442",
+          "q2": "1:34.012",
+          "q3": null
+        },
+        {
+          "pos": 12,
+          "driver": "Sainz",
+          "driverId": "sainz",
+          "team": "Williams",
+          "q1": "1:34.551",
+          "q2": "1:34.102",
+          "q3": null
+        },
+        {
+          "pos": 13,
+          "driver": "Alonso",
+          "driverId": "alonso",
+          "team": "Aston Martin",
+          "q1": "1:34.660",
+          "q2": "1:34.220",
+          "q3": null
+        },
+        {
+          "pos": 14,
+          "driver": "Colapinto",
+          "driverId": "colapinto",
+          "team": "Alpine",
+          "q1": "1:34.770",
+          "q2": "1:34.330",
+          "q3": null
+        },
+        {
+          "pos": 15,
+          "driver": "Ocon",
+          "driverId": "ocon",
+          "team": "Haas",
+          "q1": "1:34.881",
+          "q2": "1:34.442",
+          "q3": null
+        },
+        {
+          "pos": 16,
+          "driver": "Hadjar",
+          "driverId": "hadjar",
+          "team": "Racing Bulls",
+          "q1": "1:34.990",
+          "q2": null,
+          "q3": null
+        },
+        {
+          "pos": 17,
+          "driver": "Stroll",
+          "driverId": "stroll",
+          "team": "Aston Martin",
+          "q1": "1:35.102",
+          "q2": null,
+          "q3": null
+        },
+        {
+          "pos": 18,
+          "driver": "H\u00fclkenberg",
+          "driverId": "hulkenberg",
+          "team": "Audi",
+          "q1": "1:35.220",
+          "q2": null,
+          "q3": null
+        },
+        {
+          "pos": 19,
+          "driver": "Lindblad",
+          "driverId": "lindblad",
+          "team": "Racing Bulls",
+          "q1": "1:35.330",
+          "q2": null,
+          "q3": null
+        },
+        {
+          "pos": 20,
+          "driver": "Bortoleto",
+          "driverId": "bortoleto",
+          "team": "Audi",
+          "q1": "1:35.551",
+          "q2": null,
+          "q3": null
+        }
+      ]
+    }
+  ]
 }
