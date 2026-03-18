@@ -87,6 +87,19 @@ function transformData(raw) {
     return { p: d.pos, n: d.name, t: d.team, pts: d.pts, d: delta > 0 ? `+${delta}` : "—", mv: 0, did: d.driverId || "" };
   });
 
+  // Compute position movement: compare current standings vs what they'd be without last-round points
+  if (Object.keys(lastRacePtsMap).length > 0) {
+    const prevStandings = DS.map(d => {
+      const lastName = d.n.split(" ").pop();
+      const lastPts = lastRacePtsMap[lastName] || 0;
+      return { n: d.n, pts: d.pts - lastPts };
+    }).sort((a, b) => b.pts - a.pts || DS.findIndex(x=>x.n===a.n) - DS.findIndex(x=>x.n===b.n));
+    for (let i = 0; i < DS.length; i++) {
+      const prevPos = prevStandings.findIndex(x => x.n === DS[i].n) + 1;
+      DS[i].mv = prevPos - DS[i].p; // positive = gained positions
+    }
+  }
+
   // Constructor standings with driver breakdowns
   const CS = raw.constructors.map(c => ({
     p: c.pos, t: c.team, pts: c.pts,
@@ -435,6 +448,7 @@ export default function F1Dashboard(){
                       <div style={{fontSize:13,fontWeight:600,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{d.n}</div>
                       <div style={{fontSize:10,color:"rgba(255,255,255,0.35)",marginTop:1}}>{d.t}</div>
                     </div>
+                    <div style={{width:40,textAlign:"center",fontSize:11,fontWeight:600,color:d.mv>0?"#27F4D2":d.mv<0?"#E80020":"rgba(255,255,255,0.15)"}}>{d.mv>0?`▲${d.mv}`:d.mv<0?`▼${Math.abs(d.mv)}`:"—"}</div>
                     <div style={{width:40,textAlign:"center",fontSize:11,fontWeight:600,color:d.d!=="—"?"#27F4D2":"rgba(255,255,255,0.2)"}}>{d.d}</div>
                     <div style={{width:55,marginRight:8}}><div style={{height:4,width:`${d.pts>0?Math.max((d.pts/51)*100,3):0}%`,background:TC[d.t],borderRadius:2}}/></div>
                     <div style={{fontSize:14,fontWeight:700,width:32,textAlign:"right"}}>{d.pts}</div>
