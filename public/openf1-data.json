@@ -916,7 +916,7 @@
             },
             {
               "number": 27,
-              "name": "Nico Hülkenberg",
+              "name": "Nico H\u00fclkenberg",
               "acronym": "HUL",
               "team": "Audi",
               "teamColour": "#FF0000",
@@ -2636,7 +2636,7 @@
             },
             {
               "number": 27,
-              "name": "Nico Hülkenberg",
+              "name": "Nico H\u00fclkenberg",
               "acronym": "HUL",
               "team": "Audi",
               "teamColour": "#FF0000",
@@ -3948,7 +3948,7 @@
             },
             {
               "number": 27,
-              "name": "Nico Hülkenberg",
+              "name": "Nico H\u00fclkenberg",
               "acronym": "HUL",
               "team": "Audi",
               "teamColour": "#FF0000",
@@ -5464,7 +5464,7 @@
             },
             {
               "number": 27,
-              "name": "Nico Hülkenberg",
+              "name": "Nico H\u00fclkenberg",
               "acronym": "HUL",
               "team": "Audi",
               "teamColour": "#FF0000",
@@ -6436,7 +6436,7 @@
             },
             {
               "number": 27,
-              "name": "Nico Hülkenberg",
+              "name": "Nico H\u00fclkenberg",
               "acronym": "HUL",
               "team": "Audi",
               "teamColour": "#FF0000",
@@ -8421,7 +8421,7 @@
             },
             {
               "number": 27,
-              "name": "Nico Hülkenberg",
+              "name": "Nico H\u00fclkenberg",
               "acronym": "HUL",
               "team": "Audi",
               "teamColour": "#FF0000",
@@ -9801,7 +9801,7 @@
             },
             {
               "number": 27,
-              "name": "Nico Hülkenberg",
+              "name": "Nico H\u00fclkenberg",
               "acronym": "HUL",
               "team": "Audi",
               "teamColour": "#FF0000",
@@ -11249,7 +11249,7 @@
             },
             {
               "number": 27,
-              "name": "Nico Hülkenberg",
+              "name": "Nico H\u00fclkenberg",
               "acronym": "HUL",
               "team": "Audi",
               "teamColour": "#FF0000",
@@ -12629,7 +12629,7 @@
             },
             {
               "number": 27,
-              "name": "Nico Hülkenberg",
+              "name": "Nico H\u00fclkenberg",
               "acronym": "HUL",
               "team": "Audi",
               "teamColour": "#FF0000",
@@ -14077,7 +14077,7 @@
             },
             {
               "number": 27,
-              "name": "Nico Hülkenberg",
+              "name": "Nico H\u00fclkenberg",
               "acronym": "HUL",
               "team": "Audi",
               "teamColour": "#FF0000",
@@ -14469,5 +14469,147 @@
         }
       ]
     }
-  ]
+  ],
+  "driverHeadshots": {
+    "George Russell": {
+      "url": "https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/G/GEORUS01_George_Russell/georus01.png.transform/1col/image.png",
+      "number": 63,
+      "acronym": "RUS",
+      "team": "Mercedes",
+      "teamColour": "#27F4D2"
+    },
+    "Kimi Antonelli": {
+      "url": "https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/K/KIMANT01_Kimi_Antonelli/kimant01.png.transform/1col/image.png",
+      "number": 12,
+      "acronym": "ANT",
+      "team": "Mercedes",
+      "teamColour": "#27F4D2"
+    },
+    "Lewis Hamilton": {
+      "url": "https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/L/LEWHAM01_Lewis_Hamilton/lewham01.png.transform/1col/image.png",
+      "number": 44,
+      "acronym": "HAM",
+      "team": "Ferrari",
+      "teamColour": "#E80020"
+    },
+    "Charles Leclerc": {
+      "url": "https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/C/CHALEC01_Charles_Leclerc/chalec01.png.transform/1col/image.png",
+      "number": 16,
+      "acronym": "LEC",
+      "team": "Ferrari",
+      "teamColour": "#E80020"
+    },
+    "Lando Norris": {
+      "url": "https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/L/LANNOR01_Lando_Norris/lannor01.png.transform/1col/image.png",
+      "number": 1,
+      "acronym": "NOR",
+      "team": "McLaren",
+      "teamColour": "#FF8000"
+    },
+    "Oscar Piastri": {
+      "url": "https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/O/OSCPIA01_Oscar_Piastri/oscpia01.png.transform/1col/image.png",
+      "number": 81,
+      "acronym": "PIA",
+      "team": "McLaren",
+      "teamColour": "#FF8000"
+    },
+    "Max Verstappen": {
+      "url": "https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/M/MAXVER01_Max_Verstappen/maxver01.png.transform/1col/image.png",
+      "number": 3,
+      "acronym": "VER",
+      "team": "Red Bull Racing",
+      "teamColour": "#3671C6"
+    },
+    "Liam Lawson": {
+      "url": "https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/L/LIALAW01_Liam_Lawson/lialaw01.png.transform/1col/image.png",
+      "number": 30,
+      "acronym": "LAW",
+      "team": "Red Bull Racing",
+      "teamColour": "#3671C6"
+    },
+    "Pierre Gasly": {
+      "url": "https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/P/PIEGAS01_Pierre_Gasly/piegas01.png.transform/1col/image.png",
+      "number": 10,
+      "acronym": "GAS",
+      "team": "Alpine",
+      "teamColour": "#FF87BC"
+    },
+    "Franco Colapinto": {
+      "url": "https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/F/FRACOL01_Franco_Colapinto/fracol01.png.transform/1col/image.png",
+      "number": 43,
+      "acronym": "COL",
+      "team": "Alpine",
+      "teamColour": "#FF87BC"
+    },
+    "Fernando Alonso": {
+      "url": "https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/F/FERALO01_Fernando_Alonso/feralo01.png.transform/1col/image.png",
+      "number": 14,
+      "acronym": "ALO",
+      "team": "Aston Martin",
+      "teamColour": "#229971"
+    },
+    "Lance Stroll": {
+      "url": "https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/L/LANSTR01_Lance_Stroll/lanstr01.png.transform/1col/image.png",
+      "number": 18,
+      "acronym": "STR",
+      "team": "Aston Martin",
+      "teamColour": "#229971"
+    },
+    "Oliver Bearman": {
+      "url": "https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/O/OLIBEA01_Oliver_Bearman/olibea01.png.transform/1col/image.png",
+      "number": 87,
+      "acronym": "BEA",
+      "team": "Haas F1 Team",
+      "teamColour": "#B6BABD"
+    },
+    "Esteban Ocon": {
+      "url": "https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/E/ESTOCO01_Esteban_Ocon/estoco01.png.transform/1col/image.png",
+      "number": 31,
+      "acronym": "OCO",
+      "team": "Haas F1 Team",
+      "teamColour": "#B6BABD"
+    },
+    "Alexander Albon": {
+      "url": "https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/A/ALEALB01_Alexander_Albon/alealb01.png.transform/1col/image.png",
+      "number": 23,
+      "acronym": "ALB",
+      "team": "Williams",
+      "teamColour": "#64C4FF"
+    },
+    "Carlos Sainz": {
+      "url": "https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/C/CARSAI01_Carlos_Sainz/carsai01.png.transform/1col/image.png",
+      "number": 55,
+      "acronym": "SAI",
+      "team": "Williams",
+      "teamColour": "#64C4FF"
+    },
+    "Nico H\u00fclkenberg": {
+      "url": "https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/N/NICHUL01_Nico_Hulkenberg/nichul01.png.transform/1col/image.png",
+      "number": 27,
+      "acronym": "HUL",
+      "team": "Audi",
+      "teamColour": "#FF0000"
+    },
+    "Gabriel Bortoleto": {
+      "url": "https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/G/GABBOR01_Gabriel_Bortoleto/gabbor01.png.transform/1col/image.png",
+      "number": 5,
+      "acronym": "BOR",
+      "team": "Audi",
+      "teamColour": "#FF0000"
+    },
+    "Isack Hadjar": {
+      "url": "https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/I/ISAHAD01_Isack_Hadjar/isahad01.png.transform/1col/image.png",
+      "number": 6,
+      "acronym": "HAD",
+      "team": "Racing Bulls",
+      "teamColour": "#6692FF"
+    },
+    "Arvid Lindblad": {
+      "url": "https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/A/ARVLIN01_Arvid_Lindblad/arvlin01.png.transform/1col/image.png",
+      "number": 27,
+      "acronym": "LIN",
+      "team": "Racing Bulls",
+      "teamColour": "#6692FF"
+    }
+  }
 }
