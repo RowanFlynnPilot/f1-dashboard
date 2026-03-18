@@ -48,7 +48,7 @@ const TC = { Mercedes: "#27F4D2", Ferrari: "#E80020", McLaren: "#FF8000", "Red B
 const TB = { Mercedes: "rgba(39,244,210,0.10)", Ferrari: "rgba(232,0,32,0.10)", McLaren: "rgba(255,128,0,0.10)", "Red Bull": "rgba(54,113,198,0.10)", "Racing Bulls": "rgba(102,146,255,0.10)", Alpine: "rgba(255,135,188,0.10)", "Aston Martin": "rgba(34,153,113,0.10)", Haas: "rgba(182,186,189,0.10)", Williams: "rgba(100,196,255,0.10)", Audi: "rgba(255,0,0,0.06)", Cadillac: "rgba(120,120,120,0.10)" };
 
 // Normalize OpenF1 team names to match TC/TL keys
-function normTeam(t){if(!t)return"";return t.replace(" F1 Team","").replace(" Racing","").replace("Kick Sauber","Audi").trim();}
+function normTeam(t){if(!t)return"";return t.replace(" F1 Team","").replace("Red Bull Racing","Red Bull").replace("Kick Sauber","Audi").trim();}
 
 // Data is loaded dynamically from data.json (fetched from Jolpica API)
 // Transform functions convert API format to dashboard format
@@ -194,15 +194,19 @@ function transformData(raw) {
 
 
 function DH({name,size=32,headshots}){const[tryLevel,setTryLevel]=useState(0);
-  // Fallback chain: OpenF1 headshot URL (0) -> base64 DRIVER_IMAGES (1) -> initials (2)
-  // Multi-strategy lookup: exact -> case-insensitive -> accent-stripped
   const normName=(n)=>n.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
-  let of1Url=headshots&&headshots[name]?.url;
-  if(!of1Url&&headshots){const key=Object.keys(headshots).find(k=>k.toLowerCase()===name.toLowerCase()||normName(k)===normName(name));if(key)of1Url=headshots[key].url;}
+  let of1=headshots&&(headshots[name]||Object.values(headshots).find(v=>false));
+  if(!of1&&headshots){const key=Object.keys(headshots).find(k=>k.toLowerCase()===name.toLowerCase()||normName(k)===normName(name));if(key)of1=headshots[key];}
+  const of1Url=of1?.url;
   const b64Url=DRIVER_IMAGES[name];
   const urls=[of1Url,b64Url].filter(Boolean);
   const u=urls[tryLevel];
-  if(!u){const i=name.split(" ").map(n=>n[0]).join("");return (<div style={{width:size,height:size,borderRadius:"50%",background:"rgba(255,255,255,0.08)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:size*0.38,fontWeight:700,color:"rgba(255,255,255,0.5)",flexShrink:0}}>{i}</div>);}
+  if(!u){
+    // Team-colored acronym badge fallback
+    const acr=of1?.acronym||name.split(" ").map(n=>n[0]).join("").slice(0,3);
+    const tc=of1?.teamColour||TC[of1?.team]||"rgba(255,255,255,0.2)";
+    return (<div style={{width:size,height:size,borderRadius:"50%",background:`${tc}22`,border:`2px solid ${tc}66`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:size*0.32,fontWeight:800,color:tc,flexShrink:0,letterSpacing:0.5}}>{acr}</div>);
+  }
   const isData=u.startsWith("data:");
   return (<img src={u} alt={name} {...(isData?{crossOrigin:"anonymous"}:{})} onError={()=>setTryLevel(prev=>prev+1)} style={{width:size,height:size,borderRadius:"50%",objectFit:"cover",objectPosition:"top center",flexShrink:0,background:"rgba(255,255,255,0.05)"}}/>);}
 function TL({team,size=20}){const[e,sE]=useState(false);const u=TEAM_LOGOS[team];if(!u||e)return null;const isData=u.startsWith("data:");return (<img src={u} alt={team} {...(isData?{}:{referrerPolicy:"no-referrer",crossOrigin:"anonymous"})} onError={()=>sE(true)} style={{width:size,height:size,objectFit:"contain",flexShrink:0}}/>);}
@@ -560,7 +564,7 @@ export default function F1Dashboard(){
                           return(
                           <tr key={i} style={{borderBottom:"1px solid rgba(255,255,255,0.03)"}}>
                             <td style={{padding:"5px 8px",width:20,fontSize:11,fontWeight:700,color:i<3?"#fff":"rgba(255,255,255,0.35)"}}>{i+1}</td>
-                            <td style={{padding:"5px 8px"}}><div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:3,height:14,borderRadius:1,background:d.teamColour||"#555"}}/><span style={{fontWeight:600,fontSize:12}}>{d.acronym}</span><span style={{fontSize:10,color:"rgba(255,255,255,0.2)",margin:"0 2px"}}>|</span><span style={{fontSize:10,color:"rgba(255,255,255,0.35)"}}>{d.team?.split(" ")[0]}</span></div></td>
+                            <td style={{padding:"5px 8px"}}><div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:3,height:14,borderRadius:1,background:d.teamColour||"#555"}}/><span style={{fontWeight:600,fontSize:12}}>{d.acronym}</span><span style={{fontSize:10,color:"rgba(255,255,255,0.2)",margin:"0 2px"}}>|</span><span style={{fontSize:10,color:"rgba(255,255,255,0.35)"}}>{normTeam(d.team||"")}</span></div></td>
                             <td style={{padding:"5px 8px",textAlign:"right",fontVariantNumeric:"tabular-nums",color:isFS1?"#d946ef":"rgba(255,255,255,0.6)",fontWeight:isFS1?700:400}}>{fmtS(d.bestS1)}</td>
                             <td style={{padding:"5px 8px",textAlign:"right",fontVariantNumeric:"tabular-nums",color:isFS2?"#d946ef":"rgba(255,255,255,0.6)",fontWeight:isFS2?700:400}}>{fmtS(d.bestS2)}</td>
                             <td style={{padding:"5px 8px",textAlign:"right",fontVariantNumeric:"tabular-nums",color:isFS3?"#d946ef":"rgba(255,255,255,0.6)",fontWeight:isFS3?700:400}}>{fmtS(d.bestS3)}</td>
@@ -679,7 +683,7 @@ export default function F1Dashboard(){
                           <td style={{padding:"8px 10px",fontWeight:700,width:28,color:i<3?"#fff":"rgba(255,255,255,0.35)",fontSize:12,textAlign:"right"}}>{i+1}</td>
                           <td style={{padding:"8px 4px",width:24}}><div style={{width:3,height:18,borderRadius:2,background:d.teamColour||"#555"}}/></td>
                           <td style={{padding:"8px 10px",fontWeight:600,whiteSpace:"nowrap"}}>{d.acronym} <span style={{fontWeight:400,fontSize:11,color:"rgba(255,255,255,0.2)"}}>|</span> <span style={{fontWeight:400,fontSize:11,color:"rgba(255,255,255,0.35)"}}>{d.name?.split(" ").pop()}</span></td>
-                          <td style={{padding:"8px 10px",color:"rgba(255,255,255,0.4)",fontSize:11}}>{d.team?.split(" ")[0]}</td>
+                          <td style={{padding:"8px 10px",color:"rgba(255,255,255,0.4)",fontSize:11}}>{normTeam(d.team||"")}</td>
                           <td style={{padding:"8px 10px",textAlign:"right",fontVariantNumeric:"tabular-nums",color:sCol(isFS1),fontWeight:isFS1?700:400}}>{fmtS(d.bestS1)}</td>
                           <td style={{padding:"8px 10px",textAlign:"right",fontVariantNumeric:"tabular-nums",color:sCol(isFS2),fontWeight:isFS2?700:400}}>{fmtS(d.bestS2)}</td>
                           <td style={{padding:"8px 10px",textAlign:"right",fontVariantNumeric:"tabular-nums",color:sCol(isFS3),fontWeight:isFS3?700:400}}>{fmtS(d.bestS3)}</td>
