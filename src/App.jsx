@@ -57,7 +57,7 @@ function transformData(raw) {
 
   // Driver standings
   const DS = raw.drivers.map(d => ({
-    p: d.pos, n: d.name, t: d.team, pts: d.pts, d: "—", mv: 0,
+    p: d.pos, n: d.name, t: d.team, pts: d.pts, d: "—", mv: 0, did: d.driverId || "",
   }));
 
   // Constructor standings with driver breakdowns
@@ -128,7 +128,7 @@ function transformData(raw) {
   const qualifying = (raw.qualifying || []).map(q => ({
     round: q.round,
     name: q.raceName,
-    results: q.results.map(r => ({ pos: r.pos, d: r.driver, t: r.team })),
+    results: q.results.map(r => ({ pos: r.pos, d: r.driver, did: r.driverId || "", t: r.team })),
   }));
 
   // Head-to-head: group drivers by team, compute stats
@@ -144,9 +144,10 @@ function transformData(raw) {
     // Qualifying head-to-head
     let d1QualWins = 0, d2QualWins = 0;
     const qualDetails = [];
+    const d1Last=d1.n.split(" ").pop(), d2Last=d2.n.split(" ").pop();
     for (const q of qualifying) {
-      const r1 = q.results.find(r => r.d === d1.n.split(" ").pop());
-      const r2 = q.results.find(r => r.d === d2.n.split(" ").pop());
+      const r1 = q.results.find(r => r.d === d1Last || r.did === d1.did);
+      const r2 = q.results.find(r => r.d === d2Last || r.did === d2.did);
       if (r1 && r2) {
         if (r1.pos < r2.pos) d1QualWins++; else if (r2.pos < r1.pos) d2QualWins++;
         qualDetails.push({ race: q.name.replace(" Grand Prix",""), d1: r1.pos, d2: r2.pos });
@@ -158,8 +159,8 @@ function transformData(raw) {
     const d1Finishes = [], d2Finishes = [];
     const raceDetails = [];
     for (const race of allRaces.filter(r => !r.sprint)) {
-      const r1 = race.full.find(r => r.d === d1.n.split(" ").pop());
-      const r2 = race.full.find(r => r.d === d2.n.split(" ").pop());
+      const r1 = race.full.find(r => r.d === d1Last);
+      const r2 = race.full.find(r => r.d === d2Last);
       if (r1 && r2) {
         const p1 = typeof r1.p === "number" ? r1.p : 99;
         const p2 = typeof r2.p === "number" ? r2.p : 99;
@@ -191,7 +192,12 @@ function transformData(raw) {
 }
 
 
-function DH({name,size=32}){const[e,sE]=useState(false);const u=DRIVER_IMAGES[name];if(!u||e){const i=name.split(" ").map(n=>n[0]).join("");return (<div style={{width:size,height:size,borderRadius:"50%",background:"rgba(255,255,255,0.08)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:size*0.38,fontWeight:700,color:"rgba(255,255,255,0.5)",flexShrink:0}}>{i}</div>);}return (<img src={u} alt={name} referrerPolicy="no-referrer" crossOrigin="anonymous" onError={()=>sE(true)} style={{width:size,height:size,borderRadius:"50%",objectFit:"cover",objectPosition:"top center",flexShrink:0,background:"rgba(255,255,255,0.05)"}}/>);}
+function DH({name,size=32,headshots}){const[e,sE]=useState(false);
+  // Priority: OpenF1 headshot URL > base64 DRIVER_IMAGES fallback
+  const of1=headshots&&headshots[name];
+  const u=of1?.url||DRIVER_IMAGES[name];
+  if(!u||e){const i=name.split(" ").map(n=>n[0]).join("");return (<div style={{width:size,height:size,borderRadius:"50%",background:"rgba(255,255,255,0.08)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:size*0.38,fontWeight:700,color:"rgba(255,255,255,0.5)",flexShrink:0}}>{i}</div>);}
+  return (<img src={u} alt={name} referrerPolicy="no-referrer" crossOrigin="anonymous" onError={()=>sE(true)} style={{width:size,height:size,borderRadius:"50%",objectFit:"cover",objectPosition:"top center",flexShrink:0,background:"rgba(255,255,255,0.05)"}}/>);}
 function TL({team,size=20}){const[e,sE]=useState(false);const u=TEAM_LOGOS[team];if(!u||e)return null;const isData=u.startsWith("data:");return (<img src={u} alt={team} {...(isData?{}:{referrerPolicy:"no-referrer",crossOrigin:"anonymous"})} onError={()=>sE(true)} style={{width:size,height:size,objectFit:"contain",flexShrink:0}}/>);}
 
 function SC({label,value,sub,accent,icon}){return (<div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:10,padding:"14px 16px",flex:1,minWidth:130}}><div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:"rgba(255,255,255,0.4)",marginBottom:8,fontFamily:"'Outfit',sans-serif"}}>{label}</div><div style={{display:"flex",alignItems:"center",gap:8}}>{icon}{" "}<span style={{fontSize:22,fontWeight:700,color:accent||"#fff",lineHeight:1,fontFamily:"'Outfit',sans-serif"}}>{value}</span></div>{sub&&<div style={{fontSize:11,color:"rgba(255,255,255,0.5)",marginTop:6,fontFamily:"'Outfit',sans-serif"}}>{sub}</div>}</div>);}
@@ -237,6 +243,7 @@ export default function F1Dashboard(){
   const fastestPit=pits.length>0?pits[0]:null;
   const nextRace=sched.find(r=>r.st==="next");
   const lastRaceFL=fastestLap;
+  const headshots=openf1?.driverHeadshots||{};
 
   return(
     <div style={{minHeight:"100vh",background:"#0a0a0f",color:"#fff",fontFamily:"'Outfit',sans-serif"}}>
@@ -324,7 +331,7 @@ export default function F1Dashboard(){
                 {DS.map((d,i)=>(
                   <div key={d.n} className="dr">
                     <div style={{width:24,fontSize:14,fontWeight:700,color:i<3?"#fff":"rgba(255,255,255,0.4)"}}>{d.p}</div>
-                    <TL team={d.t} size={30}/>
+                    <DH name={d.n} size={30} headshots={headshots}/>
                     <div style={{width:3,height:22,borderRadius:2,background:TC[d.t],margin:"0 8px",opacity:.8}}/>
                     <div style={{flex:1,minWidth:0}}>
                       <div style={{fontSize:13,fontWeight:600,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{d.n}</div>
@@ -385,7 +392,7 @@ export default function F1Dashboard(){
                 {DS.map((d,i)=>(
                   <div key={d.n} className="dr" style={{background:i<3?TB[d.t]:"transparent",marginBottom:1}}>
                     <div style={{width:24,fontSize:13,fontWeight:700,color:i<3?"#fff":"rgba(255,255,255,0.35)"}}>{d.p}</div>
-                    <TL team={d.t} size={28}/>
+                    <DH name={d.n} size={28} headshots={headshots}/>
                     <div style={{width:3,height:20,borderRadius:2,background:TC[d.t],margin:"0 8px",opacity:.8}}/>
                     <div style={{flex:1,minWidth:0}}>
                       <div style={{fontSize:13,fontWeight:600,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{d.n}</div>
@@ -774,7 +781,7 @@ export default function F1Dashboard(){
                             <div style={{fontSize:15,fontWeight:700,color:d1Leads?"#fff":"rgba(255,255,255,0.5)"}}>{d1Last}</div>
                             <div style={{fontSize:20,fontWeight:800,color:d1Leads?tc:"rgba(255,255,255,0.4)"}}>{d1Label}</div>
                           </div>
-                          <DH name={battle.d1.n} size={44}/>
+                          <DH name={battle.d1.n} size={44} headshots={headshots}/>
                         </div>
                       </div>
 
@@ -784,7 +791,7 @@ export default function F1Dashboard(){
                       {/* Driver 2 */}
                       <div style={{flex:1}}>
                         <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
-                          <DH name={battle.d2.n} size={44}/>
+                          <DH name={battle.d2.n} size={44} headshots={headshots}/>
                           <div>
                             <div style={{fontSize:15,fontWeight:700,color:d2Leads?"#fff":"rgba(255,255,255,0.5)"}}>{d2Last}</div>
                             <div style={{fontSize:20,fontWeight:800,color:d2Leads?tc:"rgba(255,255,255,0.4)"}}>{d2Label}</div>
