@@ -238,10 +238,10 @@ function DH({name,size=32,headshots}){const[tryLevel,setTryLevel]=useState(0);
   if(!of1&&headshots){const key=Object.keys(headshots).find(k=>k.toLowerCase()===name.toLowerCase()||normName(k)===normName(name));if(key)of1=headshots[key];}
   const of1Url=of1?.url;
   const b64Url=DRIVER_IMAGES[name];
-  const urls=[of1Url,b64Url].filter(Boolean);
+  // Priority: base64 (guaranteed) -> external URL -> acronym badge
+  const urls=[b64Url,of1Url].filter(Boolean);
   const u=urls[tryLevel];
   if(!u){
-    // Team-colored acronym badge fallback
     const acr=of1?.acronym||name.split(" ").map(n=>n[0]).join("").slice(0,3);
     const tc=of1?.teamColour||TC[of1?.team]||"rgba(255,255,255,0.2)";
     return (<div style={{width:size,height:size,borderRadius:"50%",background:`${tc}22`,border:`2px solid ${tc}66`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:size*0.32,fontWeight:800,color:tc,flexShrink:0,letterSpacing:0.5}}>{acr}</div>);
