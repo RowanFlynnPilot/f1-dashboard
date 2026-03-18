@@ -141,7 +141,7 @@ function SC({label,value,sub,accent,icon}){return (<div style={{background:"rgba
 
 function SB({status}){const m={done:{bg:"rgba(39,244,210,0.12)",c:"#27F4D2",t:"COMPLETED"},next:{bg:"rgba(232,0,32,0.15)",c:"#E80020",t:"NEXT RACE"},postponed:{bg:"rgba(255,165,0,0.12)",c:"#FFA500",t:"POSTPONED"},upcoming:{bg:"rgba(255,255,255,0.05)",c:"rgba(255,255,255,0.4)",t:"UPCOMING"}};const s=m[status]||m.upcoming;return (<span style={{fontSize:10,fontWeight:700,letterSpacing:1,padding:"3px 8px",borderRadius:4,background:s.bg,color:s.c}}>{s.t}</span>);}
 
-const TABS=["Overview","Standings","Race Results","Sector Times","Pit Stops","Schedule"];
+const TABS=[{id:"Overview",label:"📊 Overview"},{id:"Standings",label:"🏆 Standings"},{id:"Race Results",label:"🏁 Race Results"},{id:"Sector Times",label:"⏱️ Sector Times"},{id:"Pit Stops",label:"🔧 Pit Stops"},{id:"Schedule",label:"📅 Schedule"}];
 
 export default function F1Dashboard(){
   const[tab,setTab]=useState("Overview");
@@ -189,8 +189,9 @@ export default function F1Dashboard(){
         @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
         @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
         .fu{animation:fadeUp .6s ease both}
-        .tb{cursor:pointer;padding:10px 18px;border:none;background:none;color:rgba(255,255,255,0.4);font-size:13px;font-weight:500;letter-spacing:.5px;font-family:'Outfit',sans-serif;transition:all .3s;border-bottom:2px solid transparent;white-space:nowrap}
-        .tb:hover{color:rgba(255,255,255,0.7)}.tb.a{color:#E80020;border-bottom-color:#E80020}
+        .tab-bar{display:flex;gap:0;margin-top:20px;border-bottom:1px solid rgba(255,255,255,0.06);overflow-x:auto}
+        .tb{cursor:pointer;padding:10px 18px;border:none;background:none;color:rgba(255,255,255,0.4);font-size:13px;font-weight:500;letter-spacing:.5px;font-family:'Outfit',sans-serif;transition:all .3s;border-bottom:2px solid transparent;white-space:nowrap;flex:1;text-align:center}
+        .tb:hover{color:rgba(255,255,255,0.7);background:rgba(255,255,255,0.02)}.tb.a{color:#E80020;border-bottom-color:#E80020;background:rgba(232,0,32,0.04)}
         .dr{display:flex;align-items:center;padding:8px 12px;border-radius:8px;transition:all .2s}.dr:hover{background:rgba(255,255,255,0.04)}
         .rc{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:20px;transition:all .3s}.rc:hover{border-color:rgba(255,255,255,0.12);background:rgba(255,255,255,0.05)}
         .sr{display:flex;align-items:center;padding:14px 16px;border-radius:10px;transition:all .2s;margin-bottom:4px}.sr:hover{background:rgba(255,255,255,0.04)}
@@ -204,7 +205,7 @@ export default function F1Dashboard(){
         @media(max-width:768px){
           .hdr{padding:16px 14px 0}
           .main{padding:16px 14px 32px}
-          .tb{padding:8px 12px;font-size:12px}
+          .tb{padding:8px 10px;font-size:11px;flex:1}
           .g2{grid-template-columns:1fr}
           .g3{grid-template-columns:1fr}
           .g4{grid-template-columns:1fr 1fr}
@@ -216,7 +217,7 @@ export default function F1Dashboard(){
         }
         @media(max-width:480px){
           .g4{grid-template-columns:1fr}
-          .tb{padding:7px 10px;font-size:11px}
+          .tb{padding:7px 6px;font-size:10px;flex:1}
         }
       `}</style>
 
@@ -237,8 +238,8 @@ export default function F1Dashboard(){
             <span style={{fontSize:12,color:"rgba(255,255,255,0.5)"}}>Updated {new Date(fetchedAt).toLocaleDateString()}</span>
           </div>
         </div>
-        <div style={{display:"flex",gap:0,marginTop:20,borderBottom:"1px solid rgba(255,255,255,0.06)",overflowX:"auto"}}>
-          {TABS.map(t=><button key={t} className={`tb ${tab===t?"a":""}`} onClick={()=>setTab(t)}>{t}</button>)}
+        <div className="tab-bar" style={{display:"flex",gap:0,marginTop:20,borderBottom:"1px solid rgba(255,255,255,0.06)",overflowX:"auto"}}>
+          {TABS.map(t=><button key={t.id} className={`tb ${tab===t.id?"a":""}`} onClick={()=>setTab(t.id)}>{t.label}</button>)}
         </div>
       </div>
 
@@ -252,7 +253,7 @@ export default function F1Dashboard(){
               <SC label="Last Race Winner" value={lastWinner?lastWinner.name:"TBD"} sub={lastWinner?`${lastWinner.race}`:"Season not started"} accent={TC[lastWinner?.team]||"#fff"} icon={lastWinner?<TL team={lastWinner.team} size={24}/>:null}/>
               <SC label="Fastest Lap" value={lastRaceFL?lastRaceFL.t||lastRaceFL.time:"N/A"} sub={lastRaceFL?`${lastRaceFL.d||lastRaceFL.driver} · ${lastRaceFL.tm||lastRaceFL.team}`:""} accent="#E80020" icon={lastRaceFL?<TL team={lastRaceFL.tm||lastRaceFL.team} size={24}/>:null}/>
               <SC label="Avg Pit Stop" value={`${avgP}s`} sub={pitRaceName||""} accent="#FFD700"/>
-              <SC label="Fastest Pit Stop" value={fastestPit?`${fastestPit.s.toFixed(3)}s`:"N/A"} sub={fastestPit?`${fastestPit.d}`:""} accent="#27F4D2"/>
+              <SC label="Fastest Pit Stop" value={fastestPit?`${fastestPit.s.toFixed(3)}s`:"N/A"} sub={fastestPit?`${fastestPit.d}`:""} accent="#27F4D2" icon={fastestPit&&fastestPit.t?<TL team={fastestPit.t} size={24}/>:null}/>
               <SC label="Completed Races" value={`${completedRounds}`} sub={`of ${totalRounds} scheduled`} accent="#d946ef"/>
             </div>
             <div className="g2">
@@ -656,9 +657,9 @@ export default function F1Dashboard(){
         {tab==="Pit Stops"&&(
           <div className="fu" style={{display:"flex",flexDirection:"column",gap:24}}>
             <div style={{display:"flex",gap:16,flexWrap:"wrap"}}>
-              <SC label="Fastest Pit Stop" value={fastestPit?`${fastestPit.s.toFixed(3)}s`:"N/A"} sub={fastestPit?`${fastestPit.d} · Lap ${fastestPit.l}`:""} accent="#FFD700"/>
+              <SC label="Fastest Pit Stop" value={fastestPit?`${fastestPit.s.toFixed(3)}s`:"N/A"} sub={fastestPit?`${fastestPit.d} · Lap ${fastestPit.l}`:""} accent="#FFD700" icon={fastestPit&&fastestPit.t?<TL team={fastestPit.t} size={24}/>:null}/>
               <SC label="Avg Pit Stop" value={`${avgP}s`} sub={`${pits.length} stops · ${pitRaceName}`} accent="#27F4D2"/>
-              <SC label="Slowest Pit Stop" value={pits.length>0?`${pits[pits.length-1].s.toFixed(3)}s`:"N/A"} sub={pits.length>0?`${pits[pits.length-1].d} · Lap ${pits[pits.length-1].l}`:""} accent="#E80020"/>
+              <SC label="Slowest Pit Stop" value={pits.length>0?`${pits[pits.length-1].s.toFixed(3)}s`:"N/A"} sub={pits.length>0?`${pits[pits.length-1].d} · Lap ${pits[pits.length-1].l}`:""} accent="#E80020" icon={pits.length>0&&pits[pits.length-1].t?<TL team={pits[pits.length-1].t} size={24}/>:null}/>
             </div>
             <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20}}>
               <div style={{fontSize:15,fontWeight:700,marginBottom:4}}>{pitRaceName + " — Pit Stop Times"}</div>
