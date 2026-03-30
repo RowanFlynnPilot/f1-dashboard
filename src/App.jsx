@@ -228,7 +228,43 @@ function transformData(raw) {
   const lastWinner = lastRace ? { name: lastRace.w, team: lastRace.wt, race: lastRace.nm } : null;
   const fastestLap = lastRace?.fl || null;
 
-  return { DS, CS, races: allRaces, pits, sched, qualifying, h2h, completedRounds, totalRounds, fetchedAt, pitRaceName, leader, lastWinner, fastestLap };
+  // Build season narrative from raw race data
+  const teamRaceStats={};
+  for(const r of raw.races){
+    for(const res of r.results){
+      if(!teamRaceStats[res.team])teamRaceStats[res.team]={wins:0,pods:0,dnfs:0,dns:0,bestFinish:99};
+      const s=teamRaceStats[res.team];
+      const pos=parseInt(res.pos);
+      if(!isNaN(pos)){if(pos===1)s.wins++;if(pos<=3)s.pods++;if(pos<s.bestFinish)s.bestFinish=pos;}
+      const st=(res.status||"").toUpperCase();
+      if(st==="DNF"||st==="RETIRED"||st==="ACCIDENT"||st==="COLLISION"||st==="ENGINE"||st==="MECHANICAL")s.dnfs++;
+      if(st==="DNS"||st==="DID NOT START")s.dns++;
+    }
+  }
+  const nRaces=raw.races.length;
+  const narrative=CS.slice(0,4).map((c,i)=>{
+    const s=teamRaceStats[c.t]||{wins:0,pods:0,dnfs:0,dns:0,bestFinish:99};
+    const pts=c.pts;
+    const gap=i===0?(CS[1]?pts-CS[1].pts:0):(CS[0].pts-pts);
+    const topDriver=c.dr[0]||{n:"?",pts:0};
+    let ti;
+    if(i===0){ti=s.wins>=nRaces*0.5&&gap>20?"Dominant Force":s.wins>0?"Championship Leaders":"Points Leaders";}
+    else if(i===1){ti=s.pods>0?"Best of the Rest":"Chasing the Leaders";}
+    else if(i===2){ti=s.dnfs+s.dns>0?"Under Pressure":"Midfield Battle";}
+    else{ti=s.dnfs+s.dns>=2?"In Crisis":s.bestFinish>10?"Struggling":"Work to Do";}
+    const parts=[];
+    if(s.wins>0)parts.push(`${s.wins} win${s.wins>1?"s":""} from ${nRaces} race${nRaces>1?"s":""}`);
+    if(s.pods>s.wins)parts.push(`${s.pods} podium${s.pods>1?"s":""}`);
+    if(i===0&&gap>0)parts.push(`${pts} pts, leads by ${gap}`);
+    else if(i>0)parts.push(`${pts} pts, ${gap} behind P1`);
+    if(s.dnfs>0)parts.push(`${s.dnfs} DNF${s.dnfs>1?"s":""}`);
+    if(s.dns>0)parts.push(`${s.dns} DNS`);
+    if(s.wins===0&&s.pods===0)parts.push(`Best finish: P${s.bestFinish}`);
+    parts.push(`${topDriver.n}: ${topDriver.pts} pts`);
+    return{t:c.t,ti,desc:parts.join(". ")+"."};
+  });
+
+  return { DS, CS, races: allRaces, pits, sched, qualifying, h2h, completedRounds, totalRounds, fetchedAt, pitRaceName, leader, lastWinner, fastestLap, narrative };
 }
 
 
@@ -292,7 +328,7 @@ export default function F1Dashboard(){
   if(loading)return(<div style={{minHeight:"100vh",background:"#0a0a0f",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Outfit',sans-serif"}}><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/><div style={{textAlign:"center"}}><div style={{fontSize:32,fontWeight:700,marginBottom:8}}>Loading F1 Data...</div><div style={{color:"rgba(255,255,255,0.4)"}}>Fetching from Jolpica API</div></div></div>);
   if(error||!data)return(<div style={{minHeight:"100vh",background:"#0a0a0f",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Outfit',sans-serif"}}><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/><div style={{textAlign:"center"}}><div style={{fontSize:32,fontWeight:700,color:"#E80020",marginBottom:8}}>Failed to Load Data</div><div style={{color:"rgba(255,255,255,0.5)"}}>{error||"No data available. Run: npm run fetch-data"}</div></div></div>);
 
-  const{DS,CS,races,pits,sched,qualifying,h2h,completedRounds,totalRounds,fetchedAt,pitRaceName,leader,lastWinner,fastestLap}=data;
+  const{DS,CS,races,pits,sched,qualifying,h2h,completedRounds,totalRounds,fetchedAt,pitRaceName,leader,lastWinner,fastestLap,narrative}=data;
   const avgP=pits.length>0?(pits.reduce((a,b)=>a+b.s,0)/pits.length).toFixed(3):"N/A";
   const fastestPit=pits.length>0?pits[0]:null;
   const nextRace=sched.find(r=>r.st==="next");
@@ -522,10 +558,11 @@ export default function F1Dashboard(){
               </div>
             </div>
             {/* Narrative */}
+            {narrative&&narrative.length>0&&(
             <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20}}>
               <div style={{fontSize:13,textTransform:"uppercase",letterSpacing:1.5,color:"rgba(255,255,255,0.4)",marginBottom:16}}>Season Narrative</div>
               <div className="g4">
-                {[{t:"Mercedes",ti:"Dominant Force",desc:"2 wins from 2 races. 1-2 in both GPs. 98 pts leads Ferrari by 31."},{t:"Ferrari",ti:"Best of the Rest",desc:"Hamilton's 1st Ferrari podium in China. Strong pace but no answer for Silver Arrows."},{t:"Red Bull",ti:"Struggling",desc:"Verstappen DNF in China. Only 8 pts for the 4× WDC. New Ford PU issues."},{t:"McLaren",ti:"Disaster",desc:"Both cars DNS in China. Defending constructors' champs drop to 3rd with 18 pts."}].map((n,i)=>(
+                {narrative.map((n,i)=>(
                   <div key={i} style={{padding:16,background:TB[n.t],borderRadius:10,border:`1px solid ${TC[n.t]}20`}}>
                     <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:8}}><TL team={n.t} size={18}/><span style={{fontSize:11,color:"rgba(255,255,255,0.4)",textTransform:"uppercase",letterSpacing:1}}>{n.ti}</span></div>
                     <div style={{fontSize:16,fontWeight:700,color:TC[n.t]}}>{n.t}</div>
@@ -534,6 +571,7 @@ export default function F1Dashboard(){
                 ))}
               </div>
             </div>
+            )}
           </div>
         )}
 
