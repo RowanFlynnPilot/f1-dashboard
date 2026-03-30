@@ -18,14 +18,18 @@ import argparse
 import io
 import json
 import os
+import re
 import sys
 import time
+import xml.etree.ElementTree as ET
 
 # Fix Windows console encoding for emoji output
 if sys.stdout.encoding != "utf-8":
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
 from pathlib import Path
+
+import requests
 
 try:
     from youtube_transcript_api import YouTubeTranscriptApi
@@ -43,8 +47,17 @@ except ImportError:
 SCRIPT_DIR = Path(__file__).parent
 PROJECT_DIR = SCRIPT_DIR.parent
 VIDEO_IDS_PATH = SCRIPT_DIR / "video-ids.json"
+DATA_JSON_PATH = PROJECT_DIR / "public" / "data.json"
 OUTPUT_PATH = PROJECT_DIR / "public" / "driver-quotes.json"
 SEASON = 2026
+
+# Official F1 YouTube channel
+F1_CHANNEL_ID = "UCB_qr75-ydFVKSF9Dmo6izg"
+F1_RSS_URL = f"https://www.youtube.com/feeds/videos.xml?channel_id={F1_CHANNEL_ID}"
+
+# Title patterns for driver reaction videos
+RACE_PATTERN = re.compile(r"Drivers React After The Race \| (\d{4}) (.+)")
+QUAL_PATTERN = re.compile(r"Drivers React To Qualifying \| (\d{4}) (.+)")
 
 EXTRACTION_PROMPT = """You are analyzing a transcript from an official Formula 1 YouTube video where drivers give their reactions after a {session_type} session at the {race_name}.
 
@@ -71,6 +84,88 @@ Use full driver names (e.g. "George Russell", "Lewis Hamilton", "Max Verstappen"
 Here is the transcript:
 
 {transcript}"""
+
+
+def discover_new_videos(season_videos: dict) -> int:
+    """Check the F1 YouTube RSS feed for new 'Drivers React' videos and update video-ids.json."""
+    # Build race name -> round number lookup from data.json
+    race_to_round = {}
+    if DATA_JSON_PATH.exists():
+        try:
+            with open(DATA_JSON_PATH) as f:
+                data = json.load(f)
+            for race in data.get("schedule", []):
+                race_to_round[race["name"]] = race["round"]
+        except Exception:
+            pass
+
+    if not race_to_round:
+        print("  ⚠️  Could not load race schedule from data.json, skipping auto-discovery")
+        return 0
+
+    # Fetch RSS feed
+    print("🔍 Checking F1 YouTube channel for new reaction videos...")
+    try:
+        resp = requests.get(F1_RSS_URL, timeout=15)
+        resp.raise_for_status()
+    except Exception as e:
+        print(f"  ⚠️  Could not fetch RSS feed: {e}")
+        return 0
+
+    # Parse XML — strip namespaces for easier parsing
+    root = ET.fromstring(resp.text)
+    ns = {"atom": "http://www.w3.org/2005/Atom", "yt": "http://www.youtube.com/xml/schemas/2015"}
+
+    found = 0
+    for entry in root.findall("atom:entry", ns):
+        title = entry.findtext("atom:title", "", ns)
+        video_id_el = entry.find("yt:videoId", ns)
+        if video_id_el is None:
+            continue
+        video_id = video_id_el.text
+
+        # Check race reaction pattern
+        m = RACE_PATTERN.match(title)
+        if m and int(m.group(1)) == SEASON:
+            race_name = m.group(2).strip()
+            round_num = race_to_round.get(race_name)
+            if round_num:
+                rkey = str(round_num)
+                if rkey not in season_videos:
+                    season_videos[rkey] = {"raceName": race_name}
+                if not season_videos[rkey].get("race"):
+                    season_videos[rkey]["race"] = video_id
+                    season_videos[rkey]["raceName"] = race_name
+                    print(f"  ✨ Discovered race video for R{round_num} {race_name}: {video_id}")
+                    found += 1
+
+        # Check qualifying reaction pattern
+        m = QUAL_PATTERN.match(title)
+        if m and int(m.group(1)) == SEASON:
+            race_name = m.group(2).strip()
+            round_num = race_to_round.get(race_name)
+            if round_num:
+                rkey = str(round_num)
+                if rkey not in season_videos:
+                    season_videos[rkey] = {"raceName": race_name}
+                if not season_videos[rkey].get("qualifying"):
+                    season_videos[rkey]["qualifying"] = video_id
+                    season_videos[rkey]["raceName"] = race_name
+                    print(f"  ✨ Discovered qualifying video for R{round_num} {race_name}: {video_id}")
+                    found += 1
+
+    if found > 0:
+        # Save updated video-ids.json
+        with open(VIDEO_IDS_PATH) as f:
+            all_ids = json.load(f)
+        all_ids[str(SEASON)] = season_videos
+        with open(VIDEO_IDS_PATH, "w") as f:
+            json.dump(all_ids, f, indent=2)
+        print(f"  📝 Updated video-ids.json with {found} new video(s)")
+    else:
+        print("  ℹ️  No new reaction videos found")
+
+    return found
 
 
 def get_transcript(video_id: str) -> str | None:
@@ -164,6 +259,10 @@ def main():
         video_ids = json.load(f)
 
     season_videos = video_ids.get(str(SEASON), {})
+
+    # Auto-discover new videos from the F1 YouTube RSS feed
+    if not args.video_id:
+        discover_new_videos(season_videos)
 
     # Single video mode
     if args.video_id:
