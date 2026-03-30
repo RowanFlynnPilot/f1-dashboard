@@ -203,15 +203,20 @@ def extract_quotes(transcript: str, race_name: str, session_type: str) -> list[d
             messages=[{"role": "user", "content": prompt}],
         )
         response_text = message.content[0].text.strip()
+        print(f"      📨 Claude response length: {len(response_text)} chars")
 
         # Parse JSON response
         data = json.loads(response_text)
         return data.get("quotes", [])
     except json.JSONDecodeError as e:
         print(f"      ⚠️  Failed to parse Claude response as JSON: {e}")
+        print(f"      ⚠️  Raw response: {response_text[:500]}")
+        return []
+    except anthropic.APIError as e:
+        print(f"      ⚠️  Claude API error ({e.status_code}): {e.message}")
         return []
     except Exception as e:
-        print(f"      ⚠️  Claude API error: {e}")
+        print(f"      ⚠️  Unexpected error: {type(e).__name__}: {e}")
         return []
 
 
