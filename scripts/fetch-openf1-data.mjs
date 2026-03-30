@@ -18,9 +18,16 @@ const BASE = "https://api.openf1.org/v1";
 // Sessions we care about
 const SESSION_TYPES = ["Practice 1", "Practice 2", "Practice 3", "Qualifying", "Sprint Qualifying", "Sprint", "Race"];
 
-async function fetchJSON(url) {
+async function fetchJSON(url, retries = 3) {
   console.log(`  Fetching: ${url}`);
   const res = await fetch(url);
+  if (res.status === 429 && retries > 0) {
+    const retryAfter = res.headers.get("Retry-After");
+    const waitSec = retryAfter ? Math.max(parseInt(retryAfter, 10), 10) : 10 * (4 - retries);
+    console.log(`      ⏳ Rate limited (429). Retrying in ${waitSec}s... (${retries} retries left)`);
+    await sleep(waitSec * 1000);
+    return fetchJSON(url, retries - 1);
+  }
   if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
   const data = await res.json();
   return data;
@@ -223,11 +230,11 @@ async function main() {
     }
 
     console.log(`\n🏁 Processing: ${meeting.meeting_name} (${meeting.location})`);
-    await sleep(350);
+    await sleep(2000);
 
     // Get sessions for this meeting
     const sessions = await getSessions(meeting.meeting_key);
-    await sleep(350);
+    await sleep(2000);
 
     if (!sessions || sessions.length === 0) {
       console.log("   No sessions found");
@@ -251,7 +258,7 @@ async function main() {
       try {
         // Fetch drivers
         const drivers = await getDrivers(session.session_key);
-        await sleep(350);
+        await sleep(2000);
 
         // Collect headshot URLs (latest session wins for each driver)
         if (drivers) {
@@ -271,7 +278,7 @@ async function main() {
 
         // Fetch laps
         const laps = await getLaps(session.session_key);
-        await sleep(350);
+        await sleep(2000);
 
         if (!laps || laps.length === 0) {
           console.log(`      No lap data available`);
@@ -280,7 +287,7 @@ async function main() {
 
         // Fetch stints
         const stints = await getStints(session.session_key);
-        await sleep(350);
+        await sleep(2000);
 
         // Process
         const driverStats = processLapData(laps, drivers || []);
