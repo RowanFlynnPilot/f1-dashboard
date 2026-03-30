@@ -247,7 +247,7 @@ function transformData(raw) {
   }
   // Last race per-team driver finishes
   const lastRaceData=raw.races[raw.races.length-1];
-  const lastRaceName=lastRaceData?lastRaceData.name.replace(" Grand Prix",""):"";
+  const lastRaceName=lastRaceData?lastRaceData.name:"";
   const lastRaceTeamFinish={};
   if(lastRaceData){
     for(const res of lastRaceData.results){
@@ -271,37 +271,38 @@ function transformData(raw) {
     else if(i===1){ti=s.pods>0?"Best of the Rest":"Chasing the Leaders";}
     else if(i===2){ti=s.dnfs+s.dns>0?"Under Pressure":"Midfield Battle";}
     else{ti=s.dnfs+s.dns>=2?"In Crisis":s.bestFinish>10?"Struggling":"Work to Do";}
-    // Description with driver details
-    const parts=[];
+    // Build concise sentence-based description
+    const lines=[];
+    // Season summary sentence
     if(s.wins>0){
-      const winNames=Object.entries(s.driverWins).map(([d,w])=>`${d} ${w}`).join(", ");
-      parts.push(`${s.wins} win${s.wins>1?"s":""} from ${nRaces} race${nRaces>1?"s":""} (${winNames})`);
+      const wd=Object.entries(s.driverWins);
+      if(wd.length===1)lines.push(`${wd[0][0]} has ${wd[0][1]===nRaces?"won every race":`taken ${wd[0][1]} win${wd[0][1]>1?"s":""}`} from ${nRaces} races.`);
+      else lines.push(`${wd.map(([d,w])=>`${d} (${w})`).join(" and ")} sharing ${s.wins} wins from ${nRaces} races.`);
     }
     if(s.pods>s.wins){
-      const podNames=Object.entries(s.driverPods).filter(([d])=>!s.driverWins[d]).map(([d,p])=>d);
-      if(podNames.length>0)parts.push(`${podNames.join(" & ")} on the podium`);
-      else parts.push(`${s.pods} podium${s.pods>1?"s":""}`);
+      const nonWinPod=Object.entries(s.driverPods).filter(([d])=>!s.driverWins[d]).map(([d])=>d);
+      if(nonWinPod.length>0)lines.push(`${nonWinPod.join(" and ")} ${nonWinPod.length>1?"have":"has"} also reached the podium.`);
     }
-    if(i===0&&gap>0)parts.push(`${pts} pts, leads by ${gap}`);
-    else if(i>0)parts.push(`${pts} pts, ${gap} behind P1`);
-    if(s.dnfs>0)parts.push(`${s.dnfs} DNF${s.dnfs>1?"s":""}`);
-    if(s.dns>0)parts.push(`${s.dns} DNS`);
-    if(s.wins===0&&s.pods===0)parts.push(`Best finish: P${s.bestFinish}`);
-    // Last race driver performance
+    // Points context
+    if(i===0&&gap>0)lines.push(`Leading the championship on ${pts} pts, ${gap} clear of ${CS[1]?.t||"P2"}.`);
+    else if(i>0)lines.push(`${gap} points behind ${CS[0].t} with ${pts} pts.`);
+    // Issues
+    if(s.dnfs>0||s.dns>0){const issues=[];if(s.dnfs>0)issues.push(`${s.dnfs} DNF${s.dnfs>1?"s":""}`);if(s.dns>0)issues.push(`${s.dns} DNS`);lines.push(`Reliability concerns with ${issues.join(" and ")} this season.`);}
+    if(s.wins===0&&s.pods===0)lines.push(`Best result so far is P${s.bestFinish}.`);
+    // Last race colour
     if(lrf.length>=2){
       lrf.sort((a,b)=>a.pos-b.pos);
       const best=lrf[0],worst=lrf[lrf.length-1];
-      if(best.pos<=3)parts.push(`${best.d} P${best.pos} in ${lastRaceName}`);
-      else if(best.pos<=10)parts.push(`${best.d} P${best.pos} in ${lastRaceName}`);
-      if(worst.dnf)parts.push(`${worst.d} ${worst.status.toUpperCase()} in ${lastRaceName}`);
-      else if(worst.pos>10&&worst.pos!==best.pos)parts.push(`${worst.d} P${worst.pos} in ${lastRaceName}`);
-    }else if(lrf.length===1){
-      const r=lrf[0];
-      parts.push(`${r.d} P${r.pos} in ${lastRaceName}`);
+      const lr=lastRaceName;
+      if(best.pos===1)lines.push(`${best.d} took victory at the ${lr}${worst.pos<=10?` with ${worst.d} in P${worst.pos}`:""}.`);
+      else if(best.pos<=3)lines.push(`${best.d} finished P${best.pos} at the ${lr}${worst.pos<=10?` and ${worst.d} P${worst.pos}`:""}.`);
+      else if(best.pos<=10)lines.push(`${best.d} finished P${best.pos} at the ${lr}${worst.pos>10?` but ${worst.d} struggled in P${worst.pos}`:` with ${worst.d} in P${worst.pos}`}.`);
+      else lines.push(`Both drivers finished outside the points at the ${lr}.`);
+      if(worst.dnf)lines.push(`${worst.d} ${worst.status.toLowerCase()} at the ${lr}.`);
     }
-    // Points breakdown
-    parts.push(`${d1.n}: ${d1.pts} pts, ${d2.n}: ${d2.pts} pts`);
-    return{t:c.t,ti,desc:parts.join(". ")+"."};
+    // Driver points
+    lines.push(`${d1.n} leads the team on ${d1.pts} pts, ${d2.n} on ${d2.pts}.`);
+    return{t:c.t,ti,desc:lines.join(" ")};
   });
 
   return { DS, CS, races: allRaces, pits, sched, qualifying, h2h, completedRounds, totalRounds, fetchedAt, pitRaceName, leader, lastWinner, fastestLap, narrative };
