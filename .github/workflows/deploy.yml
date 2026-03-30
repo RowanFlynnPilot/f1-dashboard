@@ -33,6 +33,20 @@ jobs:
         run: node scripts/fetch-f1-data.mjs
       - name: Fetch sector & speed data from OpenF1 API
         run: node scripts/fetch-openf1-data.mjs
+      - uses: actions/setup-python@v5
+        if: env.ANTHROPIC_API_KEY != ''
+        with:
+          python-version: '3.12'
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      - name: Fetch driver quotes from YouTube
+        if: env.ANTHROPIC_API_KEY != ''
+        continue-on-error: true
+        run: |
+          pip install youtube-transcript-api anthropic
+          python scripts/fetch-driver-quotes.py
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       - run: npm run build
       - uses: actions/configure-pages@v4
       - uses: actions/upload-pages-artifact@v3

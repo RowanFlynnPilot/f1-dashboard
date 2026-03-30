@@ -254,7 +254,7 @@ function SC({label,value,sub,accent,icon}){return (<div style={{background:"rgba
 
 function SB({status}){const m={done:{bg:"rgba(39,244,210,0.12)",c:"#27F4D2",t:"COMPLETED"},next:{bg:"rgba(232,0,32,0.15)",c:"#E80020",t:"NEXT RACE"},postponed:{bg:"rgba(255,165,0,0.12)",c:"#FFA500",t:"POSTPONED"},upcoming:{bg:"rgba(255,255,255,0.05)",c:"rgba(255,255,255,0.4)",t:"UPCOMING"}};const s=m[status]||m.upcoming;return (<span style={{fontSize:10,fontWeight:700,letterSpacing:1,padding:"3px 8px",borderRadius:4,background:s.bg,color:s.c}}>{s.t}</span>);}
 
-const TABS=[{id:"Overview",label:"📊 Overview"},{id:"Standings",label:"🏆 Standings"},{id:"Race Results",label:"🏁 Race Results"},{id:"Sector Times",label:"⏱️ Sector Times"},{id:"Head to Head",label:"🥊 Head to Head"},{id:"Pit Stops",label:"🔧 Pit Stops"},{id:"Schedule",label:"📅 Schedule"}];
+const TABS=[{id:"Overview",label:"📊 Overview"},{id:"Standings",label:"🏆 Standings"},{id:"Race Results",label:"🏁 Race Results"},{id:"Sector Times",label:"⏱️ Sector Times"},{id:"Head to Head",label:"🥊 Head to Head"},{id:"Pit Stops",label:"🔧 Pit Stops"},{id:"Quotes",label:"💬 Quotes"},{id:"Schedule",label:"📅 Schedule"}];
 
 export default function F1Dashboard(){
   const[tab,setTab]=useState("Overview");
@@ -267,12 +267,15 @@ export default function F1Dashboard(){
   const[selSession,setSelSession]=useState(null);
   const[selRace,setSelRace]=useState("all");
   const[h2hMetric,setH2hMetric]=useState("qual");
+  const[quotes,setQuotes]=useState(null);
+  const[quotesSession,setQuotesSession]=useState("race");
 
   useEffect(()=>{
     Promise.all([
       fetch(import.meta.env.BASE_URL + "data.json").then(r=>{if(!r.ok)throw new Error(`HTTP ${r.status}`);return r.json()}),
       fetch(import.meta.env.BASE_URL + "openf1-data.json").then(r=>r.ok?r.json():null).catch(()=>null),
-    ]).then(([raw,of1])=>{
+      fetch(import.meta.env.BASE_URL + "driver-quotes.json").then(r=>r.ok?r.json():null).catch(()=>null),
+    ]).then(([raw,of1,dq])=>{
       const d=transformData(raw);setData(d);
       if(of1&&of1.meetings&&of1.meetings.length>0){
         setOpenf1(of1);
@@ -281,6 +284,7 @@ export default function F1Dashboard(){
         const raceSess=lastMtg.sessions.find(s=>s.sessionName==="Race")||lastMtg.sessions[lastMtg.sessions.length-1];
         if(raceSess)setSelSession(raceSess.sessionKey);
       }
+      if(dq&&dq.rounds)setQuotes(dq);
       setLoading(false);
     }).catch(e=>{console.error("Failed to load data:",e);setError(e.message);setLoading(false)});
   },[]);
@@ -432,6 +436,39 @@ export default function F1Dashboard(){
               </div>
             </div>
             )}
+            {/* Driver Reactions */}
+            {quotes&&quotes.rounds&&quotes.rounds.length>0&&(()=>{
+              const lastRound=quotes.rounds[quotes.rounds.length-1];
+              const raceQuotes=lastRound.sessions?.race?.quotes||[];
+              const showQuotes=raceQuotes.slice(0,4);
+              if(showQuotes.length===0)return null;
+              return(
+                <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+                    <div>
+                      <div style={{fontSize:13,textTransform:"uppercase",letterSpacing:1.5,color:"rgba(255,255,255,0.4)"}}>Driver Reactions</div>
+                      <div style={{fontSize:11,color:"rgba(255,255,255,0.25)",marginTop:2}}>{lastRound.raceName}</div>
+                    </div>
+                    <div onClick={()=>setTab("Quotes")} style={{fontSize:11,color:"#E80020",cursor:"pointer",fontWeight:600}}>View all →</div>
+                  </div>
+                  <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:12}}>
+                    {showQuotes.map((q,i)=>(
+                      <div key={i} style={{background:"rgba(255,255,255,0.02)",border:`1px solid ${TC[q.team]||"rgba(255,255,255,0.06)"}33`,borderRadius:10,padding:14,display:"flex",gap:12}}>
+                        <DH name={q.driver} size={36} headshots={headshots}/>
+                        <div style={{flex:1,minWidth:0}}>
+                          <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
+                            <span style={{fontSize:12,fontWeight:600}}>{q.driver.split(" ").pop()}</span>
+                            <span style={{fontSize:10,color:TC[q.team]||"rgba(255,255,255,0.4)"}}>{q.team}</span>
+                          </div>
+                          <div style={{fontSize:11,color:"rgba(255,255,255,0.7)",lineHeight:1.5,fontStyle:"italic"}}>"{q.quote.length>120?q.quote.slice(0,120)+"…":q.quote}"</div>
+                          {q.context&&<div style={{fontSize:10,color:"rgba(255,255,255,0.3)",marginTop:4}}>{q.context}</div>}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         )}
 
@@ -930,6 +967,65 @@ export default function F1Dashboard(){
                 </tbody>
               </table></div>
             </div>
+          </div>
+        )}
+
+        {/* ═══ QUOTES ═══ */}
+        {tab==="Quotes"&&(
+          <div className="fu" style={{display:"flex",flexDirection:"column",gap:24}}>
+            {!quotes||!quotes.rounds||quotes.rounds.length===0?(
+              <div style={{textAlign:"center",padding:60,color:"rgba(255,255,255,0.4)"}}>
+                <div style={{fontSize:40,marginBottom:12}}>💬</div>
+                <div style={{fontSize:16,fontWeight:600,marginBottom:4}}>No driver quotes available yet</div>
+                <div style={{fontSize:13}}>Quotes are extracted from official F1 YouTube post-session videos</div>
+              </div>
+            ):(
+              <>
+                <div style={{display:"flex",gap:12,flexWrap:"wrap"}}>
+                  <SC label="Rounds with Quotes" value={String(quotes.rounds.length)} sub={quotes.rounds.map(r=>r.raceName.replace(" Grand Prix","")).join(" · ")} accent="#E80020"/>
+                  <SC label="Total Quotes" value={String(quotes.rounds.reduce((sum,r)=>sum+Object.values(r.sessions||{}).reduce((s2,sess)=>s2+(sess.quotes||[]).length,0),0))} sub="From race & qualifying" accent="#27F4D2"/>
+                </div>
+                <div style={{display:"flex",gap:8}}>
+                  {["race","qualifying"].map(s=>(
+                    <button key={s} onClick={()=>setQuotesSession(s)} style={{padding:"8px 20px",borderRadius:8,border:"1px solid "+(quotesSession===s?"#E80020":"rgba(255,255,255,0.08)"),background:quotesSession===s?"rgba(232,0,32,0.15)":"rgba(255,255,255,0.02)",color:quotesSession===s?"#fff":"rgba(255,255,255,0.5)",cursor:"pointer",fontSize:13,fontWeight:600,fontFamily:"'Outfit',sans-serif",textTransform:"capitalize"}}>{s}</button>
+                  ))}
+                </div>
+                {[...quotes.rounds].reverse().map(round=>{
+                  const sess=round.sessions?.[quotesSession];
+                  const roundQuotes=sess?.quotes||[];
+                  if(roundQuotes.length===0)return null;
+                  return(
+                    <div key={round.round} style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20}}>
+                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+                        <div>
+                          <div style={{fontSize:15,fontWeight:700}}>{round.raceName}</div>
+                          <div style={{fontSize:11,color:"rgba(255,255,255,0.35)",marginTop:2}}>Round {round.round} · Post-{quotesSession} reactions</div>
+                        </div>
+                        <div style={{fontSize:11,color:"rgba(255,255,255,0.25)"}}>{roundQuotes.length} quotes</div>
+                      </div>
+                      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(320px,1fr))",gap:12}}>
+                        {roundQuotes.map((q,i)=>(
+                          <div key={i} style={{background:`linear-gradient(135deg,${TC[q.team]||"#555"}11,rgba(255,255,255,0.02))`,border:`1px solid ${TC[q.team]||"rgba(255,255,255,0.06)"}33`,borderRadius:10,padding:16,display:"flex",gap:12}}>
+                            <div style={{flexShrink:0}}>
+                              <DH name={q.driver} size={40} headshots={headshots}/>
+                            </div>
+                            <div style={{flex:1,minWidth:0}}>
+                              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
+                                <span style={{fontSize:13,fontWeight:700}}>{q.driver}</span>
+                                <div style={{width:3,height:12,borderRadius:2,background:TC[q.team]||"#555",opacity:.7}}/>
+                                <span style={{fontSize:11,color:"rgba(255,255,255,0.4)"}}>{q.team}</span>
+                              </div>
+                              <div style={{fontSize:12,color:"rgba(255,255,255,0.8)",lineHeight:1.6,fontStyle:"italic"}}>"{q.quote}"</div>
+                              {q.context&&<div style={{fontSize:10,color:"rgba(255,255,255,0.3)",marginTop:6,textTransform:"uppercase",letterSpacing:.5}}>{q.context}</div>}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </>
+            )}
           </div>
         )}
 

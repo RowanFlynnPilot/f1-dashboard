@@ -1,0 +1,48 @@
+{
+  "season": 2026,
+  "fetchedAt": "2026-03-30T03:18:18Z",
+  "rounds": [
+    {
+      "round": 1,
+      "raceName": "Australian Grand Prix",
+      "sessions": {
+        "race": {
+          "videoId": "F3ZGnYQGnFI",
+          "quotes": []
+        },
+        "qualifying": {
+          "videoId": "FCZsrwmqQDM",
+          "quotes": []
+        }
+      }
+    },
+    {
+      "round": 2,
+      "raceName": "Chinese Grand Prix",
+      "sessions": {
+        "race": {
+          "videoId": "SsJ45omwkaY",
+          "quotes": []
+        },
+        "qualifying": {
+          "videoId": "bHd62679V8s",
+          "quotes": []
+        }
+      }
+    },
+    {
+      "round": 3,
+      "raceName": "Japanese Grand Prix",
+      "sessions": {
+        "race": {
+          "videoId": "ufI5ldkQu9w",
+          "quotes": []
+        },
+        "qualifying": {
+          "videoId": "OuXe2B6Hno4",
+          "quotes": []
+        }
+      }
+    }
+  ]
+}
