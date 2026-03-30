@@ -232,35 +232,75 @@ function transformData(raw) {
   const teamRaceStats={};
   for(const r of raw.races){
     for(const res of r.results){
-      if(!teamRaceStats[res.team])teamRaceStats[res.team]={wins:0,pods:0,dnfs:0,dns:0,bestFinish:99};
+      if(!teamRaceStats[res.team])teamRaceStats[res.team]={wins:0,pods:0,dnfs:0,dns:0,bestFinish:99,driverWins:{},driverPods:{}};
       const s=teamRaceStats[res.team];
       const pos=parseInt(res.pos);
-      if(!isNaN(pos)){if(pos===1)s.wins++;if(pos<=3)s.pods++;if(pos<s.bestFinish)s.bestFinish=pos;}
+      if(!isNaN(pos)){
+        if(pos===1){s.wins++;s.driverWins[res.driver]=(s.driverWins[res.driver]||0)+1;}
+        if(pos<=3){s.pods++;s.driverPods[res.driver]=(s.driverPods[res.driver]||0)+1;}
+        if(pos<s.bestFinish)s.bestFinish=pos;
+      }
       const st=(res.status||"").toUpperCase();
       if(st==="DNF"||st==="RETIRED"||st==="ACCIDENT"||st==="COLLISION"||st==="ENGINE"||st==="MECHANICAL")s.dnfs++;
       if(st==="DNS"||st==="DID NOT START")s.dns++;
     }
   }
+  // Last race per-team driver finishes
+  const lastRaceData=raw.races[raw.races.length-1];
+  const lastRaceName=lastRaceData?lastRaceData.name.replace(" Grand Prix",""):"";
+  const lastRaceTeamFinish={};
+  if(lastRaceData){
+    for(const res of lastRaceData.results){
+      if(!lastRaceTeamFinish[res.team])lastRaceTeamFinish[res.team]=[];
+      const pos=parseInt(res.pos);
+      const st=(res.status||"").toUpperCase();
+      const dnf=st==="DNF"||st==="RETIRED"||st==="ACCIDENT"||st==="DNS";
+      lastRaceTeamFinish[res.team].push({d:res.driver,pos:isNaN(pos)?99:pos,dnf,status:res.status});
+    }
+  }
   const nRaces=raw.races.length;
   const narrative=CS.slice(0,4).map((c,i)=>{
-    const s=teamRaceStats[c.t]||{wins:0,pods:0,dnfs:0,dns:0,bestFinish:99};
+    const s=teamRaceStats[c.t]||{wins:0,pods:0,dnfs:0,dns:0,bestFinish:99,driverWins:{},driverPods:{}};
     const pts=c.pts;
     const gap=i===0?(CS[1]?pts-CS[1].pts:0):(CS[0].pts-pts);
-    const topDriver=c.dr[0]||{n:"?",pts:0};
+    const d1=c.dr[0]||{n:"?",pts:0},d2=c.dr[1]||{n:"?",pts:0};
+    const lrf=lastRaceTeamFinish[c.t]||[];
+    // Title logic
     let ti;
     if(i===0){ti=s.wins>=nRaces*0.5&&gap>20?"Dominant Force":s.wins>0?"Championship Leaders":"Points Leaders";}
     else if(i===1){ti=s.pods>0?"Best of the Rest":"Chasing the Leaders";}
     else if(i===2){ti=s.dnfs+s.dns>0?"Under Pressure":"Midfield Battle";}
     else{ti=s.dnfs+s.dns>=2?"In Crisis":s.bestFinish>10?"Struggling":"Work to Do";}
+    // Description with driver details
     const parts=[];
-    if(s.wins>0)parts.push(`${s.wins} win${s.wins>1?"s":""} from ${nRaces} race${nRaces>1?"s":""}`);
-    if(s.pods>s.wins)parts.push(`${s.pods} podium${s.pods>1?"s":""}`);
+    if(s.wins>0){
+      const winNames=Object.entries(s.driverWins).map(([d,w])=>`${d} ${w}`).join(", ");
+      parts.push(`${s.wins} win${s.wins>1?"s":""} from ${nRaces} race${nRaces>1?"s":""} (${winNames})`);
+    }
+    if(s.pods>s.wins){
+      const podNames=Object.entries(s.driverPods).filter(([d])=>!s.driverWins[d]).map(([d,p])=>d);
+      if(podNames.length>0)parts.push(`${podNames.join(" & ")} on the podium`);
+      else parts.push(`${s.pods} podium${s.pods>1?"s":""}`);
+    }
     if(i===0&&gap>0)parts.push(`${pts} pts, leads by ${gap}`);
     else if(i>0)parts.push(`${pts} pts, ${gap} behind P1`);
     if(s.dnfs>0)parts.push(`${s.dnfs} DNF${s.dnfs>1?"s":""}`);
     if(s.dns>0)parts.push(`${s.dns} DNS`);
     if(s.wins===0&&s.pods===0)parts.push(`Best finish: P${s.bestFinish}`);
-    parts.push(`${topDriver.n}: ${topDriver.pts} pts`);
+    // Last race driver performance
+    if(lrf.length>=2){
+      lrf.sort((a,b)=>a.pos-b.pos);
+      const best=lrf[0],worst=lrf[lrf.length-1];
+      if(best.pos<=3)parts.push(`${best.d} P${best.pos} in ${lastRaceName}`);
+      else if(best.pos<=10)parts.push(`${best.d} P${best.pos} in ${lastRaceName}`);
+      if(worst.dnf)parts.push(`${worst.d} ${worst.status.toUpperCase()} in ${lastRaceName}`);
+      else if(worst.pos>10&&worst.pos!==best.pos)parts.push(`${worst.d} P${worst.pos} in ${lastRaceName}`);
+    }else if(lrf.length===1){
+      const r=lrf[0];
+      parts.push(`${r.d} P${r.pos} in ${lastRaceName}`);
+    }
+    // Points breakdown
+    parts.push(`${d1.n}: ${d1.pts} pts, ${d2.n}: ${d2.pts} pts`);
     return{t:c.t,ti,desc:parts.join(". ")+"."};
   });
 
