@@ -22,6 +22,8 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
+    env:
+      HAS_ANTHROPIC_KEY: ${{ secrets.ANTHROPIC_API_KEY != '' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -34,11 +36,11 @@ jobs:
       - name: Fetch sector & speed data from OpenF1 API
         run: node scripts/fetch-openf1-data.mjs
       - uses: actions/setup-python@v5
-        if: ${{ secrets.ANTHROPIC_API_KEY != '' }}
+        if: env.HAS_ANTHROPIC_KEY == 'true'
         with:
           python-version: '3.12'
       - name: Fetch driver quotes from YouTube
-        if: ${{ secrets.ANTHROPIC_API_KEY != '' }}
+        if: env.HAS_ANTHROPIC_KEY == 'true'
         continue-on-error: true
         run: |
           pip install youtube-transcript-api anthropic requests
