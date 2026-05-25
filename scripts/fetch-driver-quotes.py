@@ -64,30 +64,36 @@ F1_CHANNEL_ID = "UCB_qr75-ydFVKSF9Dmo6izg"
 F1_RSS_URL = f"https://www.youtube.com/feeds/videos.xml?channel_id={F1_CHANNEL_ID}"
 
 # Title patterns for driver reaction videos
-RACE_PATTERN = re.compile(r"Drivers React After The Race \| (\d{4}) (.+)")
-QUAL_PATTERN = re.compile(r"Drivers React To Qualifying \| (\d{4}) (.+)")
+# Note: F1 has been inconsistent with phrasing — "After The Race", "After To The Race",
+# etc. Match all reasonable variants.
+RACE_PATTERN = re.compile(r"Drivers React (?:After(?: To)? The Race|To The Race) \| (\d{4}) (.+)")
+QUAL_PATTERN = re.compile(r"Drivers React (?:To|After) Qualifying \| (\d{4}) (.+)")
 
 EXTRACTION_PROMPT = """You are analyzing a transcript from an official Formula 1 YouTube video where drivers give their reactions after a {session_type} session at the {race_name}.
 
-Extract 1-2 direct quotes from each driver mentioned in the transcript. For each quote:
-- The quote should be a complete, meaningful sentence or two that captures the driver's thoughts
-- Clean up any transcript artifacts (stuttering, filler words) but keep the quote faithful to what was said
-- Include brief context about what the quote is about
+This is the {season} season. The COMPLETE list of drivers competing in {season} is below — every quote you extract MUST be from a driver on this list, using the team shown here. Do NOT use driver/team pairings from previous seasons. Drivers like Tsunoda, Ricciardo, Magnussen, Bottas (unless listed below) are NOT in F1 this year. If you think you hear a driver who isn't on this list, you are mistaken — either it's a different driver on the list, or the speaker is unclear and you should omit the quote.
+
+OFFICIAL {season} DRIVER ROSTER (driver — team):
+{roster}
+
+Rules for extracting quotes:
+1. Auto-generated YouTube captions have NO speaker labels. You must identify the speaker from context: the host/interviewer addressing them by name, the driver self-identifying ("as a Ferrari driver…"), or unambiguous content (e.g. discussing their own finishing position which matches results).
+2. If you cannot confidently identify the speaker, OMIT the quote. Do not guess. It is much better to return fewer high-confidence quotes than to misattribute.
+3. The "team" field MUST match the roster above exactly. Never use a driver's prior-season team.
+4. The "driver" field MUST be a name from the roster above. Use the full name as shown.
+5. Aim for 1-2 quotes per identified driver. Quotes should be complete, meaningful sentences capturing the driver's actual point. Clean up filler words and stuttering but stay faithful to what was said.
 
 Return ONLY valid JSON in this exact format (no markdown, no extra text):
 {{
   "quotes": [
     {{
-      "driver": "Full Driver Name",
-      "team": "Team Name",
+      "driver": "Full Driver Name (must match roster)",
+      "team": "Team Name (must match roster)",
       "quote": "The actual quote from the driver",
       "context": "Brief 3-8 word description of what they're discussing"
     }}
   ]
 }}
-
-Use these official 2026 team names: Mercedes, Ferrari, McLaren, Red Bull, Racing Bulls, Alpine, Aston Martin, Haas, Williams, Audi.
-Use full driver names (e.g. "George Russell", "Lewis Hamilton", "Max Verstappen").
 
 Here is the transcript:
 
@@ -97,6 +103,61 @@ Here is the transcript:
 def transcript_path(video_id: str) -> Path:
     """Return the cached transcript file path for a video."""
     return TRANSCRIPTS_DIR / f"{video_id}.txt"
+
+
+def load_roster() -> tuple[str, dict[str, str]]:
+    """Load the current-season driver roster from data.json.
+
+    Returns (formatted_roster_block, {driver_name_lower: team}) for prompt
+    injection and post-filtering. Falls back to an empty roster (no filtering)
+    if data.json is missing — extraction still runs but loses the safety net.
+    """
+    if not DATA_JSON_PATH.exists():
+        print(f"  ⚠️  {DATA_JSON_PATH} not found — roster filter disabled")
+        return "(roster unavailable)", {}
+
+    with open(DATA_JSON_PATH, encoding="utf-8") as f:
+        data = json.load(f)
+
+    drivers = data.get("drivers", [])
+    if not drivers:
+        return "(roster unavailable)", {}
+
+    # Group by team for a readable prompt block
+    by_team: dict[str, list[str]] = {}
+    roster_map: dict[str, str] = {}
+    for d in drivers:
+        name = d.get("name", "").strip()
+        team = d.get("team", "").strip()
+        if not name or not team:
+            continue
+        by_team.setdefault(team, []).append(name)
+        roster_map[name.lower()] = team
+
+    lines = []
+    for team in sorted(by_team):
+        for name in sorted(by_team[team]):
+            lines.append(f"  - {name} — {team}")
+
+    return "\n".join(lines), roster_map
+
+
+def filter_quotes(quotes: list[dict], roster_map: dict[str, str]) -> list[dict]:
+    """Drop quotes whose driver isn't on the current roster; fix any team mismatch."""
+    if not roster_map:
+        return quotes
+    kept = []
+    for q in quotes:
+        name = (q.get("driver") or "").strip()
+        canonical_team = roster_map.get(name.lower())
+        if not canonical_team:
+            print(f"      🚫 Dropping quote — '{name}' not on {SEASON} roster")
+            continue
+        if q.get("team") != canonical_team:
+            print(f"      🔧 Correcting team for {name}: '{q.get('team')}' → '{canonical_team}'")
+            q["team"] = canonical_team
+        kept.append(q)
+    return kept
 
 
 def discover_new_videos(season_videos: dict) -> int:
@@ -191,7 +252,8 @@ def get_transcript(video_id: str) -> str | None:
     return None
 
 
-def extract_quotes(transcript: str, race_name: str, session_type: str) -> list[dict]:
+def extract_quotes(transcript: str, race_name: str, session_type: str,
+                   roster_block: str, roster_map: dict[str, str]) -> list[dict]:
     """Send transcript to Claude and extract driver quotes."""
     if anthropic is None:
         print("      ⚠️  anthropic not installed. Run: pip install anthropic")
@@ -205,22 +267,30 @@ def extract_quotes(transcript: str, race_name: str, session_type: str) -> list[d
     client = anthropic.Anthropic(api_key=api_key)
 
     prompt = EXTRACTION_PROMPT.format(
+        season=SEASON,
         session_type=session_type,
         race_name=race_name,
+        roster=roster_block,
         transcript=transcript[:15000],
     )
 
     try:
         message = client.messages.create(
-            model="claude-sonnet-4-20250514",
+            model="claude-sonnet-4-5",
             max_tokens=4096,
             messages=[{"role": "user", "content": prompt}],
         )
         response_text = message.content[0].text.strip()
         print(f"      📨 Claude response length: {len(response_text)} chars")
 
+        # Strip markdown code fences if Claude wrapped the JSON in them
+        if response_text.startswith("```"):
+            response_text = re.sub(r"^```(?:json)?\s*\n?", "", response_text)
+            response_text = re.sub(r"\n?\s*```\s*$", "", response_text)
+
         data = json.loads(response_text)
-        return data.get("quotes", [])
+        quotes = data.get("quotes", [])
+        return filter_quotes(quotes, roster_map)
     except json.JSONDecodeError as e:
         print(f"      ⚠️  Failed to parse Claude response as JSON: {e}")
         print(f"      ⚠️  Raw response: {response_text[:500]}")
@@ -230,7 +300,9 @@ def extract_quotes(transcript: str, race_name: str, session_type: str) -> list[d
         return []
 
 
-def process_video(video_id: str, race_name: str, session_type: str, fetch_only: bool = False) -> dict:
+def process_video(video_id: str, race_name: str, session_type: str,
+                  roster_block: str = "", roster_map: dict[str, str] | None = None,
+                  fetch_only: bool = False) -> dict:
     """Process a single video: get transcript (from cache or YouTube), optionally extract quotes."""
     print(f"    📹 {session_type}: {video_id}")
 
@@ -248,7 +320,7 @@ def process_video(video_id: str, race_name: str, session_type: str, fetch_only: 
     print(f"      🤖 Extracting quotes via Claude...")
     time.sleep(1)
 
-    quotes = extract_quotes(transcript, race_name, session_type)
+    quotes = extract_quotes(transcript, race_name, session_type, roster_block, roster_map or {})
     print(f"      ✅ Extracted {len(quotes)} quotes")
     return {"videoId": video_id, "quotes": quotes}
 
@@ -270,6 +342,8 @@ def main():
     parser.add_argument("--race", help="Process a specific race by name")
     parser.add_argument("--fetch-transcripts", action="store_true",
                         help="Only fetch and cache transcripts from YouTube (run locally, then commit)")
+    parser.add_argument("--force", action="store_true",
+                        help="Re-extract quotes for all rounds, ignoring existing driver-quotes.json")
     args = parser.parse_args()
 
     print(f"\n💬 F1 Driver Quotes — {SEASON} season\n")
@@ -289,13 +363,22 @@ def main():
 
     season_videos = video_ids.get(str(SEASON), {})
 
+    # Load roster once for the whole run (skip in fetch-only mode — no Claude call)
+    roster_block, roster_map = ("", {})
+    if not args.fetch_transcripts:
+        roster_block, roster_map = load_roster()
+        if roster_map:
+            print(f"📋 Loaded {SEASON} roster: {len(roster_map)} drivers\n")
+
     # Auto-discover new videos from RSS
     if not args.video_id:
         discover_new_videos(season_videos)
 
     # Single video mode
     if args.video_id:
-        result = process_video(args.video_id, "Unknown Race", "race", fetch_only=args.fetch_transcripts)
+        result = process_video(args.video_id, "Unknown Race", "race",
+                               roster_block=roster_block, roster_map=roster_map,
+                               fetch_only=args.fetch_transcripts)
         if not args.fetch_transcripts:
             print(json.dumps(result, indent=2))
         return
@@ -320,7 +403,7 @@ def main():
         print(f"🏁 Round {round_num}: {race_name}")
 
         # In extract mode, skip rounds we already have quotes for
-        if not args.fetch_transcripts and round_int in existing_rounds and not args.race:
+        if not args.fetch_transcripts and round_int in existing_rounds and not args.race and not args.force:
             existing_round = existing_rounds[round_int]
             has_race = existing_round.get("sessions", {}).get("race", {}).get("quotes", [])
             has_qual = existing_round.get("sessions", {}).get("qualifying", {}).get("quotes", [])
@@ -346,7 +429,10 @@ def main():
                         else:
                             missing_count += 1
                 else:
-                    sessions[session_type] = process_video(vid, race_name, session_type)
+                    sessions[session_type] = process_video(
+                        vid, race_name, session_type,
+                        roster_block=roster_block, roster_map=roster_map,
+                    )
                     time.sleep(2)
 
         if not args.fetch_transcripts:
