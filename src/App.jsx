@@ -271,37 +271,104 @@ function transformData(raw) {
     else if(i===1){ti=s.pods>0?"Best of the Rest":"Chasing the Leaders";}
     else if(i===2){ti=s.dnfs+s.dns>0?"Under Pressure":"Midfield Battle";}
     else{ti=s.dnfs+s.dns>=2?"In Crisis":s.bestFinish>10?"Struggling":"Work to Do";}
-    // Build concise sentence-based description
+    // Compose narrative — vary opening by rank, combine related facts to avoid template feel.
     const lines=[];
-    // Season summary sentence
+    const winEntries=Object.entries(s.driverWins);
+    const podEntries=Object.entries(s.driverPods);
+    // Sort last-race finish, pull DNF status off the worst entry
+    let best=null,worst=null;
+    if(lrf.length>=1){const sorted=[...lrf].sort((a,b)=>a.pos-b.pos);best=sorted[0];worst=sorted[sorted.length-1];}
+    const lr=lastRaceName;
+
+    // OPENING — wins, podiums, or struggles. Avoid the templated "X have also reached the podium."
     if(s.wins>0){
-      const wd=Object.entries(s.driverWins);
-      if(wd.length===1)lines.push(`${wd[0][0]} has ${wd[0][1]===nRaces?"won every race":`taken ${wd[0][1]} win${wd[0][1]>1?"s":""}`} from ${nRaces} races.`);
-      else lines.push(`${wd.map(([d,w])=>`${d} (${w})`).join(" and ")} sharing ${s.wins} wins from ${nRaces} races.`);
+      if(winEntries.length===1){
+        const[d,w]=winEntries[0];
+        lines.push(`${d} ${w===nRaces?"has swept every round":`has taken ${w} win${w>1?"s":""}`} from ${nRaces} race${nRaces>1?"s":""} so far.`);
+      } else {
+        const wlist=winEntries.map(([d,w])=>`${d} (${w})`).join(" and ");
+        lines.push(`${wlist} have shared ${s.wins} wins from ${nRaces} race${nRaces>1?"s":""}.`);
+      }
+      const nonWinPod=podEntries.filter(([d])=>!s.driverWins[d]).map(([d])=>d);
+      if(nonWinPod.length>0){
+        lines.push(`${nonWinPod.join(" and ")} ${nonWinPod.length>1?"have":"has"} added further podiums.`);
+      }
+    } else if(s.pods>0){
+      if(podEntries.length===2&&podEntries[0][1]===podEntries[1][1]){
+        const n=podEntries[0][1];
+        lines.push(`${podEntries[0][0]} and ${podEntries[1][0]} have each ${n===1?"scored a podium":`taken ${n} podiums`} so far.`);
+      } else if(podEntries.length===2){
+        const top=podEntries[0][1]>podEntries[1][1]?podEntries[0]:podEntries[1];
+        const bot=podEntries[0][1]>podEntries[1][1]?podEntries[1]:podEntries[0];
+        lines.push(`${top[0]} leads the way with ${top[1]} podium${top[1]>1?"s":""}, while ${bot[0]} has added ${bot[1]}.`);
+      } else {
+        const[d,n]=podEntries[0];
+        lines.push(`${d} ${n===1?"has been the team's lone podium scorer":`accounts for all ${n} of the team's podiums`} this season.`);
+      }
+    } else if(s.bestFinish<99){
+      lines.push(`No podiums yet — their best result is P${s.bestFinish}.`);
     }
-    if(s.pods>s.wins){
-      const nonWinPod=Object.entries(s.driverPods).filter(([d])=>!s.driverWins[d]).map(([d])=>d);
-      if(nonWinPod.length>0)lines.push(`${nonWinPod.join(" and ")} ${nonWinPod.length>1?"have":"has"} also reached the podium.`);
+
+    // POINTS / POSITION — vary the framing per rank to break the template feel
+    if(i===0){
+      if(gap>0)lines.push(`The team leads the constructors' standings on ${pts} pts, ${gap} clear of ${CS[1].t}.`);
+      else lines.push(`Tied at the top on ${pts} pts.`);
+    } else if(i===1){
+      lines.push(`That puts them ${gap} points behind ${CS[0].t} on ${pts}.`);
+    } else if(i===2){
+      lines.push(`The team sits ${gap} points adrift of ${CS[0].t} on ${pts}.`);
+    } else {
+      lines.push(`A ${gap}-point gap to ${CS[0].t} leaves them on just ${pts}.`);
     }
-    // Points context
-    if(i===0&&gap>0)lines.push(`Leading the championship on ${pts} pts, ${gap} clear of ${CS[1]?.t||"P2"}.`);
-    else if(i>0)lines.push(`${gap} points behind ${CS[0].t} with ${pts} pts.`);
-    // Issues
-    if(s.dnfs>0||s.dns>0){const issues=[];if(s.dnfs>0)issues.push(`${s.dnfs} DNF${s.dnfs>1?"s":""}`);if(s.dns>0)issues.push(`${s.dns} DNS`);lines.push(`Reliability concerns with ${issues.join(" and ")} this season.`);}
-    if(s.wins===0&&s.pods===0)lines.push(`Best result so far is P${s.bestFinish}.`);
-    // Last race colour
-    if(lrf.length>=2){
-      lrf.sort((a,b)=>a.pos-b.pos);
-      const best=lrf[0],worst=lrf[lrf.length-1];
-      const lr=lastRaceName;
-      if(best.pos===1)lines.push(`${best.d} took victory at the ${lr}${worst.pos<=10?` with ${worst.d} in P${worst.pos}`:""}.`);
-      else if(best.pos<=3)lines.push(`${best.d} finished P${best.pos} at the ${lr}${worst.pos<=10?` and ${worst.d} P${worst.pos}`:""}.`);
-      else if(best.pos<=10)lines.push(`${best.d} finished P${best.pos} at the ${lr}${worst.pos>10?` but ${worst.d} struggled in P${worst.pos}`:` with ${worst.d} in P${worst.pos}`}.`);
-      else lines.push(`Both drivers finished outside the points at the ${lr}.`);
-      if(worst.dnf)lines.push(`${worst.d} ${worst.status.toLowerCase()} at the ${lr}.`);
+
+    // RELIABILITY + LAST RACE — merge into one sentence when the last race featured a team retirement
+    const lastRaceDnf=!!(worst&&worst.dnf);
+    const hasReliability=(s.dnfs+s.dns)>0;
+    let lastRaceCovered=false;
+    if(hasReliability){
+      const issues=[];
+      if(s.dnfs>0)issues.push(`${s.dnfs} DNF${s.dnfs>1?"s":""}`);
+      if(s.dns>0)issues.push(`${s.dns} DNS`);
+      const issuesStr=issues.join(" and ");
+      if(lastRaceDnf&&best&&worst&&lr){
+        // Combine retirement with whatever the other driver did
+        let bestClause;
+        if(best.pos===1)bestClause=`${best.d} still took victory`;
+        else if(best.pos<=3)bestClause=`${best.d} salvaged ${best.pos===2?"P2":"P3"}`;
+        else if(best.pos<=10)bestClause=`${best.d} brought it home in P${best.pos}`;
+        else bestClause=`${best.d} also finished outside the points`;
+        lines.push(`Reliability has bitten with ${issuesStr} this season — ${worst.d} retired at the ${lr}, where ${bestClause}.`);
+        lastRaceCovered=true;
+      } else {
+        lines.push(`Reliability remains a concern, with ${issuesStr} so far this season.`);
+      }
     }
-    // Driver points
-    lines.push(`${d1.n} leads the team on ${d1.pts} pts, ${d2.n} on ${d2.pts}.`);
+
+    // STANDALONE LAST RACE — only when not already covered above
+    if(best&&worst&&lr&&!lastRaceCovered){
+      if(best.pos===1){
+        if(worst.pos<=10)lines.push(`${best.d} won the ${lr} with ${worst.d} home in P${worst.pos}.`);
+        else lines.push(`${best.d} won the ${lr}.`);
+      } else if(best.pos<=3){
+        const verb=best.pos===2?"finished runner-up":"rounded out the podium";
+        const worstClause=worst.pos===best.pos?"":worst.pos<=10?` while ${worst.d} took P${worst.pos}`:` though ${worst.d} fell back to P${worst.pos}`;
+        lines.push(`${best.d} ${verb} at the ${lr}${worstClause}.`);
+      } else if(best.pos<=10){
+        const worstClause=worst.pos===best.pos?"":worst.pos<=10?` and ${worst.d} P${worst.pos}`:` while ${worst.d} finished outside the points`;
+        lines.push(`${best.d} scraped points with P${best.pos} at the ${lr}${worstClause}.`);
+      } else {
+        lines.push(`Neither car troubled the points at the ${lr}.`);
+      }
+    }
+
+    // DRIVER SPLIT — handle equal points edge case
+    if(d1.pts===d2.pts){
+      if(d1.pts===0)lines.push(`Neither driver has scored yet.`);
+      else lines.push(`${d1.n} and ${d2.n} are level on ${d1.pts} pts apiece.`);
+    } else {
+      lines.push(`${d1.n} leads the garage on ${d1.pts} to ${d2.n}'s ${d2.pts}.`);
+    }
+
     return{t:c.t,ti,desc:lines.join(" ")};
   });
 
