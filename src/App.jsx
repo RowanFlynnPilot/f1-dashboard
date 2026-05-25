@@ -475,6 +475,18 @@ function DH({name,size=32,headshots}){const[tryLevel,setTryLevel]=useState(0);
   return (<img src={u} alt={name} onError={()=>setTryLevel(prev=>prev+1)} style={{width:size,height:size,borderRadius:"50%",objectFit:"cover",objectPosition:"top center",flexShrink:0,background:"rgba(255,255,255,0.05)"}}/>);}
 function TL({team,size=20}){const[e,sE]=useState(false);const u=TEAM_LOGOS[team];if(!u||e)return null;const isData=u.startsWith("data:");return (<img src={u} alt={team} {...(isData?{}:{referrerPolicy:"no-referrer",crossOrigin:"anonymous"})} onError={()=>sE(true)} style={{width:size,height:size,objectFit:"contain",flexShrink:0}}/>);}
 
+// Inline SVG circuit outline. Sourced from bacinger/f1-circuits via fetch-tracks.mjs.
+// Caller controls the container size — SVG scales to fit while preserving aspect.
+function TrackMap({raceName,tracks,stroke="#fff",strokeWidth=2,opacity=1,fill="none",height,width,style}){
+  const t=tracks?.[raceName];
+  if(!t)return null;
+  return(
+    <svg viewBox={t.viewBox} preserveAspectRatio="xMidYMid meet" style={{display:"block",height,width,overflow:"visible",...style}}>
+      <path d={t.path} fill={fill} stroke={stroke} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" opacity={opacity}/>
+    </svg>
+  );
+}
+
 function SC({label,value,sub,accent,icon}){return (<div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:10,padding:"14px 16px",flex:1,minWidth:130}}><div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:"rgba(255,255,255,0.4)",marginBottom:8,fontFamily:"'Outfit',sans-serif"}}>{label}</div><div style={{display:"flex",alignItems:"center",gap:8}}>{icon}{" "}<span style={{fontSize:22,fontWeight:700,color:accent||"#fff",lineHeight:1,fontFamily:"'Outfit',sans-serif"}}>{value}</span></div>{sub&&<div style={{fontSize:11,color:"rgba(255,255,255,0.5)",marginTop:6,fontFamily:"'Outfit',sans-serif"}}>{sub}</div>}</div>);}
 
 function SB({status}){const m={done:{bg:"rgba(39,244,210,0.12)",c:"#27F4D2",t:"COMPLETED"},next:{bg:"rgba(232,0,32,0.15)",c:"#E80020",t:"NEXT RACE"},postponed:{bg:"rgba(255,165,0,0.12)",c:"#FFA500",t:"POSTPONED"},upcoming:{bg:"rgba(255,255,255,0.05)",c:"rgba(255,255,255,0.4)",t:"UPCOMING"}};const s=m[status]||m.upcoming;return (<span style={{fontSize:10,fontWeight:700,letterSpacing:1,padding:"3px 8px",borderRadius:4,background:s.bg,color:s.c}}>{s.t}</span>);}
@@ -496,13 +508,15 @@ export default function F1Dashboard(){
   const[quotesSession,setQuotesSession]=useState("race");
   const[progHover,setProgHover]=useState(null);
   const[progHidden,setProgHidden]=useState(()=>new Set());
+  const[tracks,setTracks]=useState(null);
 
   useEffect(()=>{
     Promise.all([
       fetch(import.meta.env.BASE_URL + "data.json").then(r=>{if(!r.ok)throw new Error(`HTTP ${r.status}`);return r.json()}),
       fetch(import.meta.env.BASE_URL + "openf1-data.json").then(r=>r.ok?r.json():null).catch(()=>null),
       fetch(import.meta.env.BASE_URL + "driver-quotes.json").then(r=>r.ok?r.json():null).catch(()=>null),
-    ]).then(([raw,of1,dq])=>{
+      fetch(import.meta.env.BASE_URL + "tracks.json").then(r=>r.ok?r.json():null).catch(()=>null),
+    ]).then(([raw,of1,dq,tk])=>{
       const d=transformData(raw);setData(d);
       if(of1&&of1.meetings&&of1.meetings.length>0){
         setOpenf1(of1);
@@ -512,6 +526,7 @@ export default function F1Dashboard(){
         if(raceSess)setSelSession(raceSess.sessionKey);
       }
       if(dq&&dq.rounds)setQuotes(dq);
+      if(tk)setTracks(tk);
       setLoading(false);
     }).catch(e=>{console.error("Failed to load data:",e);setError(e.message);setLoading(false)});
   },[]);
@@ -672,11 +687,18 @@ export default function F1Dashboard(){
               const medals=["#FFD700","#C0C0C0","#CD7F32"];
               return(
                 <div style={{position:"relative",background:`linear-gradient(135deg, ${winnerTC}0c 0%, rgba(255,255,255,0.02) 60%)`,border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20,overflow:"hidden"}}>
-                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:16,flexWrap:"wrap",gap:8}}>
-                    <div>
-                      <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:"rgba(255,255,255,0.4)",fontWeight:600}}>Race Recap · Round {lastRaceFull.r}</div>
-                      <div style={{fontSize:18,fontWeight:700,marginTop:4}}>{lastRaceFull.nm}</div>
-                      <div style={{fontSize:11,color:"rgba(255,255,255,0.4)",marginTop:2}}>{lastRaceFull.ci} · {lastRaceFull.dt}</div>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16,flexWrap:"wrap",gap:16}}>
+                    <div style={{display:"flex",alignItems:"center",gap:18,flexWrap:"wrap"}}>
+                      {tracks&&tracks[lastRaceFull.nm]&&(
+                        <div style={{width:90,height:60,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                          <TrackMap raceName={lastRaceFull.nm} tracks={tracks} stroke={winnerTC} strokeWidth={2.5} opacity={0.9} height={60} width={90}/>
+                        </div>
+                      )}
+                      <div>
+                        <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:"rgba(255,255,255,0.4)",fontWeight:600}}>Race Recap · Round {lastRaceFull.r}</div>
+                        <div style={{fontSize:18,fontWeight:700,marginTop:4}}>{lastRaceFull.nm}</div>
+                        <div style={{fontSize:11,color:"rgba(255,255,255,0.4)",marginTop:2}}>{lastRaceFull.ci} · {lastRaceFull.dt}</div>
+                      </div>
                     </div>
                     <div style={{cursor:"pointer",fontSize:11,color:"#E80020",fontWeight:600}} onClick={()=>setTab("Race Results")}>Full results →</div>
                   </div>
@@ -772,10 +794,17 @@ export default function F1Dashboard(){
             {/* Next Race */}
             {nextRace&&(
             <div style={{background:"linear-gradient(135deg,rgba(232,0,32,0.08),rgba(255,255,255,0.02))",border:"1px solid rgba(232,0,32,0.15)",borderRadius:12,padding:24,display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:16}}>
-              <div>
-                <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:"#E80020",marginBottom:6}}>Next Race · Round {nextRace.r}</div>
-                <div style={{fontSize:22,fontWeight:700}}>{nextRace.nm}</div>
-                <div style={{fontSize:13,color:"rgba(255,255,255,0.5)",marginTop:4}}>{nextRace.ci} · {nextRace.dt}</div>
+              <div style={{display:"flex",alignItems:"center",gap:22,flexWrap:"wrap"}}>
+                {tracks&&tracks[nextRace.nm]&&(
+                  <div style={{width:130,height:90,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                    <TrackMap raceName={nextRace.nm} tracks={tracks} stroke="#E80020" strokeWidth={2.5} opacity={0.9} height={90} width={130}/>
+                  </div>
+                )}
+                <div>
+                  <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:"#E80020",marginBottom:6}}>Next Race · Round {nextRace.r}</div>
+                  <div style={{fontSize:22,fontWeight:700}}>{nextRace.nm}</div>
+                  <div style={{fontSize:13,color:"rgba(255,255,255,0.5)",marginTop:4}}>{nextRace.ci} · {nextRace.dt}</div>
+                </div>
               </div>
             </div>
             )}
@@ -1523,6 +1552,11 @@ export default function F1Dashboard(){
                 <div key={race.r} className="sr" style={{background:race.st==="next"?"rgba(232,0,32,0.08)":race.st==="postponed"?"rgba(255,165,0,0.04)":"transparent",border:race.st==="next"?"1px solid rgba(232,0,32,0.2)":"1px solid transparent"}}>
                   <div style={{width:36,fontSize:13,fontWeight:700,color:race.st==="done"?"#27F4D2":race.st==="next"?"#E80020":"rgba(255,255,255,0.3)",flexShrink:0}}>R{race.r}</div>
                   {race.fc && <div style={{width:36,height:24,borderRadius:3,flexShrink:0,marginRight:10,background:"rgba(255,255,255,0.06)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700,color:"rgba(255,255,255,0.4)",letterSpacing:.5,opacity:race.st==="postponed"?0.4:1}}>{race.fc}</div>}
+                  {tracks&&tracks[race.nm]&&(
+                    <div style={{width:44,height:32,marginRight:12,flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",opacity:race.st==="postponed"?0.3:0.75}}>
+                      <TrackMap raceName={race.nm} tracks={tracks} stroke={race.st==="next"?"#E80020":race.st==="done"?"#27F4D2":"rgba(255,255,255,0.55)"} strokeWidth={1.8} height={32} width={44}/>
+                    </div>
+                  )}
                   <div style={{flex:1,minWidth:0}}>
                     <div style={{display:"flex",alignItems:"center",gap:8}}>
                       <span style={{fontSize:14,fontWeight:600,color:race.st==="postponed"?"rgba(255,255,255,0.4)":"#fff"}}>{race.nm}</span>
