@@ -548,6 +548,8 @@ export default function F1Dashboard(){
   // Telemetry tab state
   const[telMeetingKey,setTelMeetingKey]=useState(null);
   const[telSelected,setTelSelected]=useState(()=>new Set());
+  const[telLapHover,setTelLapHover]=useState(null); // {x,lap} or null
+  const[telPosHover,setTelPosHover]=useState(null); // {x,lap} or null
 
   useEffect(()=>{
     Promise.all([
@@ -1593,28 +1595,71 @@ export default function F1Dashboard(){
                 const yTicks=[yMin,(yMin+yMax)/2,yMax].map(v=>Math.round(v));
                 const xTicks=Array.from({length:6},(_,i)=>Math.round(1+(i/5)*(maxLap-1)));
                 const fmtSec=(s)=>{const m=Math.floor(s/60);const r=(s%60).toFixed(1);return `${m}:${r.padStart(4,"0")}`;};
+                const fmtLapTime=(s)=>{if(!s)return"—";const m=Math.floor(s/60);const r=(s%60).toFixed(3);return `${m}:${r.padStart(6,"0")}`;};
+                const onMove=(e)=>{
+                  const rect=e.currentTarget.getBoundingClientRect();
+                  const xView=((e.clientX-rect.left)/rect.width)*W;
+                  let lap=Math.round(((xView-padL)/plotW)*(maxLap-1))+1;
+                  lap=Math.max(1,Math.min(maxLap,lap));
+                  setTelLapHover({lap});
+                };
+                const hoverLap=telLapHover?.lap||null;
                 return(
-                  <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20}}>
+                  <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20,position:"relative"}}>
                     <div style={{fontSize:15,fontWeight:700,marginBottom:4}}>Lap Times</div>
                     <div style={{fontSize:12,color:"rgba(255,255,255,0.35)",marginBottom:16}}>Lap-by-lap pace · low Y axis clipped to 5th-95th percentile to keep safety-car / pit laps from squashing the scale</div>
-                    <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{width:"100%",height:280,display:"block"}}>
-                      {yTicks.map((v,i)=>(
-                        <g key={i}>
-                          <line x1={padL} x2={W-padR} y1={yOf(v)} y2={yOf(v)} stroke="rgba(255,255,255,0.06)"/>
-                          <text x={padL-8} y={yOf(v)+4} textAnchor="end" fill="rgba(255,255,255,0.4)" fontSize="10" fontFamily="'Outfit',sans-serif">{fmtSec(v)}</text>
-                        </g>
-                      ))}
-                      {xTicks.map((l,i)=>(
-                        <text key={i} x={xOf(l)} y={H-padB+18} textAnchor="middle" fill="rgba(255,255,255,0.45)" fontSize="10" fontFamily="'Outfit',sans-serif">L{l}</text>
-                      ))}
-                      {visibleDrivers.map(d=>{
-                        const lt=(d.lapTimes||[]).filter(l=>l.l>1); // skip lap 1 (race start, weird)
-                        if(lt.length<2)return null;
-                        const color=d.teamColour||"#fff";
-                        const path=lt.map((p,i)=>`${i===0?"M":"L"}${xOf(p.l)},${yOf(p.t)}`).join(" ");
-                        return <path key={d.acronym} d={path} stroke={color} strokeWidth={1.6} fill="none" strokeLinecap="round" strokeLinejoin="round" opacity={0.85}/>;
-                      })}
-                    </svg>
+                    <div style={{position:"relative"}}>
+                      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{width:"100%",height:280,display:"block"}} onMouseMove={onMove} onMouseLeave={()=>setTelLapHover(null)}>
+                        {yTicks.map((v,i)=>(
+                          <g key={i}>
+                            <line x1={padL} x2={W-padR} y1={yOf(v)} y2={yOf(v)} stroke="rgba(255,255,255,0.06)"/>
+                            <text x={padL-8} y={yOf(v)+4} textAnchor="end" fill="rgba(255,255,255,0.4)" fontSize="10" fontFamily="'Outfit',sans-serif">{fmtSec(v)}</text>
+                          </g>
+                        ))}
+                        {xTicks.map((l,i)=>(
+                          <text key={i} x={xOf(l)} y={H-padB+18} textAnchor="middle" fill={hoverLap===l?"#fff":"rgba(255,255,255,0.45)"} fontWeight={hoverLap===l?600:400} fontSize="10" fontFamily="'Outfit',sans-serif">L{l}</text>
+                        ))}
+                        {hoverLap&&(
+                          <line x1={xOf(hoverLap)} x2={xOf(hoverLap)} y1={padT} y2={padT+plotH} stroke="rgba(255,255,255,0.25)" strokeWidth={1} strokeDasharray="3 3" pointerEvents="none"/>
+                        )}
+                        {visibleDrivers.map(d=>{
+                          const lt=(d.lapTimes||[]).filter(l=>l.l>1);
+                          if(lt.length<2)return null;
+                          const color=d.teamColour||"#fff";
+                          const path=lt.map((p,i)=>`${i===0?"M":"L"}${xOf(p.l)},${yOf(p.t)}`).join(" ");
+                          return(
+                            <g key={d.acronym} pointerEvents="none">
+                              <path d={path} stroke={color} strokeWidth={1.6} fill="none" strokeLinecap="round" strokeLinejoin="round" opacity={0.85}/>
+                              {hoverLap&&(()=>{const p=lt.find(x=>x.l===hoverLap);return p?<circle cx={xOf(p.l)} cy={yOf(p.t)} r={4} fill={color} stroke="#0a0a0f" strokeWidth={1.5}/>:null;})()}
+                            </g>
+                          );
+                        })}
+                      </svg>
+                      {hoverLap&&(()=>{
+                        const rows=visibleDrivers
+                          .map(d=>{
+                            const p=(d.lapTimes||[]).find(x=>x.l===hoverLap);
+                            return p?{acronym:d.acronym,team:d.team,teamColour:d.teamColour,time:p.t,pit:p.pit}:null;
+                          })
+                          .filter(Boolean)
+                          .sort((a,b)=>a.time-b.time);
+                        if(rows.length===0)return null;
+                        const leftPct=(xOf(hoverLap)/W)*100;
+                        const placeRight=leftPct<55;
+                        return(
+                          <div style={{position:"absolute",top:6,[placeRight?"left":"right"]:`${placeRight?leftPct+1.5:100-leftPct+1.5}%`,background:"rgba(14,14,22,0.96)",border:"1px solid rgba(255,255,255,0.10)",borderRadius:8,padding:"10px 12px",pointerEvents:"none",minWidth:200,boxShadow:"0 8px 24px rgba(0,0,0,0.5)"}}>
+                            <div style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:"rgba(255,255,255,0.4)",fontWeight:600,marginBottom:8}}>Lap {hoverLap}</div>
+                            {rows.map(r=>(
+                              <div key={r.acronym} style={{display:"flex",alignItems:"center",gap:8,marginBottom:4,fontSize:11}}>
+                                <div style={{width:3,height:11,background:r.teamColour||"#fff",borderRadius:1}}/>
+                                <div style={{flex:1,fontWeight:600}}>{r.acronym}</div>
+                                <div style={{fontVariantNumeric:"tabular-nums",fontWeight:700,color:r.pit?"#FFD700":"#fff"}}>{fmtLapTime(r.time)}{r.pit?" 🅿️":""}</div>
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      })()}
+                    </div>
                   </div>
                 );
               })()}
@@ -1681,28 +1726,70 @@ export default function F1Dashboard(){
                 if(!hasAny)return(
                   <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20,fontSize:12,color:"rgba(255,255,255,0.4)"}}>Position data not available for this race.</div>
                 );
+                const onMove=(e)=>{
+                  const rect=e.currentTarget.getBoundingClientRect();
+                  const xView=((e.clientX-rect.left)/rect.width)*W;
+                  let lap=Math.round(((xView-padL)/plotW)*(maxLap-1))+1;
+                  lap=Math.max(1,Math.min(maxLap,lap));
+                  setTelPosHover({lap});
+                };
+                const hoverLap=telPosHover?.lap||null;
                 return(
                   <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20}}>
                     <div style={{fontSize:15,fontWeight:700,marginBottom:4}}>Position by Lap</div>
                     <div style={{fontSize:12,color:"rgba(255,255,255,0.35)",marginBottom:16}}>Lines cross at overtakes — flat clusters = safety car, sharp drops = pit stops</div>
-                    <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{width:"100%",height:280,display:"block"}}>
-                      {yTicks.map(p=>(
-                        <g key={p}>
-                          <line x1={padL} x2={W-padR} y1={yOf(p)} y2={yOf(p)} stroke="rgba(255,255,255,0.05)"/>
-                          <text x={padL-8} y={yOf(p)+4} textAnchor="end" fill="rgba(255,255,255,0.4)" fontSize="10" fontFamily="'Outfit',sans-serif">P{p}</text>
-                        </g>
-                      ))}
-                      {xTicks.map((l,i)=>(
-                        <text key={i} x={xOf(l)} y={H-padB+18} textAnchor="middle" fill="rgba(255,255,255,0.45)" fontSize="10" fontFamily="'Outfit',sans-serif">L{l}</text>
-                      ))}
-                      {visibleDrivers.map(d=>{
-                        const pts=d.positions||[];
-                        if(pts.length<2)return null;
-                        const color=d.teamColour||"#fff";
-                        const path=pts.map((p,i)=>`${i===0?"M":"L"}${xOf(p.l)},${yOf(p.p)}`).join(" ");
-                        return <path key={d.acronym} d={path} stroke={color} strokeWidth={2} fill="none" strokeLinecap="round" strokeLinejoin="round" opacity={0.85}/>;
-                      })}
-                    </svg>
+                    <div style={{position:"relative"}}>
+                      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{width:"100%",height:280,display:"block"}} onMouseMove={onMove} onMouseLeave={()=>setTelPosHover(null)}>
+                        {yTicks.map(p=>(
+                          <g key={p}>
+                            <line x1={padL} x2={W-padR} y1={yOf(p)} y2={yOf(p)} stroke="rgba(255,255,255,0.05)"/>
+                            <text x={padL-8} y={yOf(p)+4} textAnchor="end" fill="rgba(255,255,255,0.4)" fontSize="10" fontFamily="'Outfit',sans-serif">P{p}</text>
+                          </g>
+                        ))}
+                        {xTicks.map((l,i)=>(
+                          <text key={i} x={xOf(l)} y={H-padB+18} textAnchor="middle" fill={hoverLap===l?"#fff":"rgba(255,255,255,0.45)"} fontWeight={hoverLap===l?600:400} fontSize="10" fontFamily="'Outfit',sans-serif">L{l}</text>
+                        ))}
+                        {hoverLap&&(
+                          <line x1={xOf(hoverLap)} x2={xOf(hoverLap)} y1={padT} y2={padT+plotH} stroke="rgba(255,255,255,0.25)" strokeWidth={1} strokeDasharray="3 3" pointerEvents="none"/>
+                        )}
+                        {visibleDrivers.map(d=>{
+                          const pts=d.positions||[];
+                          if(pts.length<2)return null;
+                          const color=d.teamColour||"#fff";
+                          const path=pts.map((p,i)=>`${i===0?"M":"L"}${xOf(p.l)},${yOf(p.p)}`).join(" ");
+                          return(
+                            <g key={d.acronym} pointerEvents="none">
+                              <path d={path} stroke={color} strokeWidth={2} fill="none" strokeLinecap="round" strokeLinejoin="round" opacity={0.85}/>
+                              {hoverLap&&(()=>{const p=pts.find(x=>x.l===hoverLap);return p?<circle cx={xOf(p.l)} cy={yOf(p.p)} r={4} fill={color} stroke="#0a0a0f" strokeWidth={1.5}/>:null;})()}
+                            </g>
+                          );
+                        })}
+                      </svg>
+                      {hoverLap&&(()=>{
+                        const rows=visibleDrivers
+                          .map(d=>{
+                            const p=(d.positions||[]).find(x=>x.l===hoverLap);
+                            return p?{acronym:d.acronym,teamColour:d.teamColour,pos:p.p}:null;
+                          })
+                          .filter(Boolean)
+                          .sort((a,b)=>a.pos-b.pos);
+                        if(rows.length===0)return null;
+                        const leftPct=(xOf(hoverLap)/W)*100;
+                        const placeRight=leftPct<55;
+                        return(
+                          <div style={{position:"absolute",top:6,[placeRight?"left":"right"]:`${placeRight?leftPct+1.5:100-leftPct+1.5}%`,background:"rgba(14,14,22,0.96)",border:"1px solid rgba(255,255,255,0.10)",borderRadius:8,padding:"10px 12px",pointerEvents:"none",minWidth:180,boxShadow:"0 8px 24px rgba(0,0,0,0.5)"}}>
+                            <div style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:"rgba(255,255,255,0.4)",fontWeight:600,marginBottom:8}}>Lap {hoverLap}</div>
+                            {rows.map(r=>(
+                              <div key={r.acronym} style={{display:"flex",alignItems:"center",gap:8,marginBottom:4,fontSize:11}}>
+                                <div style={{width:18,color:"rgba(255,255,255,0.45)",fontWeight:600,fontVariantNumeric:"tabular-nums"}}>P{r.pos}</div>
+                                <div style={{width:3,height:11,background:r.teamColour||"#fff",borderRadius:1}}/>
+                                <div style={{flex:1,fontWeight:600}}>{r.acronym}</div>
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      })()}
+                    </div>
                   </div>
                 );
               })()}
