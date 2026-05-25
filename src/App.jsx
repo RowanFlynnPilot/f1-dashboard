@@ -372,12 +372,18 @@ function transformData(raw) {
     return{t:c.t,ti,desc:lines.join(" ")};
   });
 
-  // Points progression — cumulative top-6 driver points after each race
+  // Points progression — cumulative points by round. Track top-6 for chart lines
+  // and ALL drivers for tooltip rankings.
   const RACE_PTS_TABLE=[25,18,15,12,10,8,6,4,2,1];
   const SPRINT_PTS_TABLE=[8,7,6,5,4,3,2,1];
   const topNames=DS.slice(0,6).map(d=>d.n);
-  const cumPts=Object.fromEntries(topNames.map(n=>[n,0]));
+  const allRosterNames=DS.map(d=>d.n);
+  const cumAll=Object.fromEntries(allRosterNames.map(n=>[n,0]));
   const progressionLabels=["Start"];
+  const progressionRaceNames=["Season start"];
+  const progressionStandings=[
+    allRosterNames.map((n,idx)=>({name:n,pts:0,pos:idx+1})),
+  ];
   const progressionSeries=topNames.map(n=>{
     const driver=DS.find(x=>x.n===n);
     return{name:n,team:driver?.t||"",points:[0]};
@@ -387,17 +393,24 @@ function transformData(raw) {
     for(const res of race.full){
       const p=parseInt(res.p);
       if(isNaN(p)||p>table.length)continue;
-      const match=topNames.find(n=>n.split(" ").pop()===res.d||n===res.d);
+      const match=allRosterNames.find(n=>n.split(" ").pop()===res.d||n===res.d);
       if(!match)continue;
-      cumPts[match]+=table[p-1];
-      if(!race.sprint&&p<=10&&race.fl?.d===res.d)cumPts[match]+=1;
+      cumAll[match]+=table[p-1];
+      if(!race.sprint&&p<=10&&race.fl?.d===res.d)cumAll[match]+=1;
     }
     if(!race.sprint){
       progressionLabels.push("R"+race.r);
-      progressionSeries.forEach(s=>s.points.push(cumPts[s.name]));
+      progressionRaceNames.push(race.nm);
+      // Snapshot current standings (sorted by pts, ties broken by original DS order)
+      const ranked=allRosterNames
+        .map(n=>({name:n,pts:cumAll[n],dsIdx:allRosterNames.indexOf(n)}))
+        .sort((a,b)=>b.pts-a.pts||a.dsIdx-b.dsIdx)
+        .map((d,i)=>({name:d.name,pts:d.pts,pos:i+1}));
+      progressionStandings.push(ranked);
+      progressionSeries.forEach(s=>s.points.push(cumAll[s.name]));
     }
   }
-  const progression={labels:progressionLabels,series:progressionSeries};
+  const progression={labels:progressionLabels,raceNames:progressionRaceNames,series:progressionSeries,standings:progressionStandings};
 
   return { DS, CS, races: allRaces, pits, sched, qualifying, h2h, completedRounds, totalRounds, fetchedAt, pitRaceName, leader, lastWinner, fastestLap, narrative, progression };
 }
@@ -481,6 +494,8 @@ export default function F1Dashboard(){
   const[h2hMetric,setH2hMetric]=useState("qual");
   const[quotes,setQuotes]=useState(null);
   const[quotesSession,setQuotesSession]=useState("race");
+  const[progHover,setProgHover]=useState(null);
+  const[progHidden,setProgHidden]=useState(()=>new Set());
 
   useEffect(()=>{
     Promise.all([
@@ -808,57 +823,113 @@ export default function F1Dashboard(){
               const W=800,H=240,padL=44,padR=24,padT=20,padB=32;
               const plotW=W-padL-padR,plotH=H-padT-padB;
               const n=progression.labels.length;
+              // Y-max from ALL series, not just visible ones — keeps the chart from
+              // jumping around when toggling drivers off.
               const maxY=Math.max(10,...progression.series.flatMap(s=>s.points));
               const xOf=i=>padL+(i/(n-1))*plotW;
               const yOf=v=>padT+plotH-(v/maxY)*plotH;
               const yTicks=[0,Math.round(maxY*0.25),Math.round(maxY*0.5),Math.round(maxY*0.75),Math.round(maxY)];
+              const isVisible=(name)=>!progHidden.has(name);
+              const onMove=(e)=>{
+                const rect=e.currentTarget.getBoundingClientRect();
+                const xPx=e.clientX-rect.left;
+                const xView=(xPx/rect.width)*W;
+                let i=Math.round(((xView-padL)/plotW)*(n-1));
+                i=Math.max(0,Math.min(n-1,i));
+                setProgHover(i);
+              };
+              const toggle=(name)=>{
+                setProgHidden(prev=>{
+                  const next=new Set(prev);
+                  if(next.has(name))next.delete(name); else next.add(name);
+                  return next;
+                });
+              };
+              const hoverIdx=progHover;
+              const standingsNow=hoverIdx!==null?progression.standings[hoverIdx]:null;
               return(
-                <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20}}>
+                <div style={{position:"relative",background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20}}>
                   <div style={{fontSize:15,fontWeight:700,marginBottom:4}}>Points Progression</div>
-                  <div style={{fontSize:12,color:"rgba(255,255,255,0.35)",marginBottom:16}}>Top 6 drivers · cumulative points by round</div>
-                  <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{width:"100%",height:240,display:"block"}}>
-                    {/* Y gridlines + labels */}
-                    {yTicks.map(t=>(
-                      <g key={t}>
-                        <line x1={padL} x2={W-padR} y1={yOf(t)} y2={yOf(t)} stroke="rgba(255,255,255,0.06)" strokeWidth={1}/>
-                        <text x={padL-8} y={yOf(t)+4} textAnchor="end" fill="rgba(255,255,255,0.4)" fontSize="10" fontFamily="'Outfit',sans-serif">{t}</text>
-                      </g>
-                    ))}
-                    {/* X labels */}
-                    {progression.labels.map((label,i)=>(
-                      <text key={i} x={xOf(i)} y={H-padB+18} textAnchor="middle" fill="rgba(255,255,255,0.45)" fontSize="10" fontFamily="'Outfit',sans-serif">{label}</text>
-                    ))}
-                    {/* Lines — second driver per team rendered dashed so teammates are distinguishable */}
-                    {(()=>{const seenTeam={};return progression.series.map(s=>{
-                      const color=TC[s.team]||"#fff";
-                      const isSecond=!!seenTeam[s.team];
-                      seenTeam[s.team]=true;
-                      const path=s.points.map((v,i)=>`${i===0?"M":"L"}${xOf(i)},${yOf(v)}`).join(" ");
-                      return(
-                        <g key={s.name}>
-                          <path d={path} stroke={color} strokeWidth={2.5} fill="none" strokeLinecap="round" strokeLinejoin="round" strokeDasharray={isSecond?"5 4":"none"} opacity={isSecond?0.85:1}/>
-                          {s.points.map((v,i)=>i>0&&(
-                            <circle key={i} cx={xOf(i)} cy={yOf(v)} r={3.5} fill={isSecond?"#0a0a0f":color} stroke={color} strokeWidth={1.5}/>
-                          ))}
+                  <div style={{fontSize:12,color:"rgba(255,255,255,0.35)",marginBottom:16}}>Top 6 drivers · cumulative points by round · hover for details, click legend to filter</div>
+                  <div style={{position:"relative"}}>
+                    <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{width:"100%",height:240,display:"block"}} onMouseMove={onMove} onMouseLeave={()=>setProgHover(null)}>
+                      {/* Y gridlines + labels */}
+                      {yTicks.map(t=>(
+                        <g key={t}>
+                          <line x1={padL} x2={W-padR} y1={yOf(t)} y2={yOf(t)} stroke="rgba(255,255,255,0.06)" strokeWidth={1}/>
+                          <text x={padL-8} y={yOf(t)+4} textAnchor="end" fill="rgba(255,255,255,0.4)" fontSize="10" fontFamily="'Outfit',sans-serif">{t}</text>
                         </g>
+                      ))}
+                      {/* X labels */}
+                      {progression.labels.map((label,i)=>(
+                        <text key={i} x={xOf(i)} y={H-padB+18} textAnchor="middle" fill={hoverIdx===i?"#fff":"rgba(255,255,255,0.45)"} fontWeight={hoverIdx===i?600:400} fontSize="10" fontFamily="'Outfit',sans-serif">{label}</text>
+                      ))}
+                      {/* Hover vertical line */}
+                      {hoverIdx!==null&&hoverIdx>0&&(
+                        <line x1={xOf(hoverIdx)} x2={xOf(hoverIdx)} y1={padT} y2={padT+plotH} stroke="rgba(255,255,255,0.25)" strokeWidth={1} strokeDasharray="3 3" pointerEvents="none"/>
+                      )}
+                      {/* Lines */}
+                      {(()=>{const seenTeam={};return progression.series.map(s=>{
+                        const visible=isVisible(s.name);
+                        const color=TC[s.team]||"#fff";
+                        const isSecond=!!seenTeam[s.team];
+                        seenTeam[s.team]=true;
+                        if(!visible)return null;
+                        const path=s.points.map((v,i)=>`${i===0?"M":"L"}${xOf(i)},${yOf(v)}`).join(" ");
+                        return(
+                          <g key={s.name} pointerEvents="none">
+                            <path d={path} stroke={color} strokeWidth={2.5} fill="none" strokeLinecap="round" strokeLinejoin="round" strokeDasharray={isSecond?"5 4":"none"} opacity={isSecond?0.85:1}/>
+                            {s.points.map((v,i)=>i>0&&(
+                              <circle key={i} cx={xOf(i)} cy={yOf(v)} r={hoverIdx===i?5:3.5} fill={isSecond?"#0a0a0f":color} stroke={color} strokeWidth={1.5}/>
+                            ))}
+                          </g>
+                        );
+                      })})()}
+                    </svg>
+                    {/* Tooltip */}
+                    {hoverIdx!==null&&hoverIdx>0&&standingsNow&&(()=>{
+                      const visibleSeries=progression.series.filter(s=>isVisible(s.name));
+                      if(visibleSeries.length===0)return null;
+                      const rows=visibleSeries
+                        .map(s=>{
+                          const entry=standingsNow.find(x=>x.name===s.name);
+                          return{name:s.name,team:s.team,pts:entry?.pts??0,pos:entry?.pos??0};
+                        })
+                        .sort((a,b)=>a.pos-b.pos);
+                      const leftPct=(xOf(hoverIdx)/W)*100;
+                      const placeRight=leftPct<60;
+                      return(
+                        <div style={{position:"absolute",top:8,[placeRight?"left":"right"]:`${placeRight?leftPct+1.5:100-leftPct+1.5}%`,background:"rgba(14,14,22,0.96)",border:"1px solid rgba(255,255,255,0.10)",borderRadius:8,padding:"10px 12px",pointerEvents:"none",minWidth:200,boxShadow:"0 8px 24px rgba(0,0,0,0.5)"}}>
+                          <div style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:"rgba(255,255,255,0.4)",fontWeight:600,marginBottom:2}}>{progression.labels[hoverIdx]}</div>
+                          <div style={{fontSize:12,fontWeight:700,marginBottom:10}}>{progression.raceNames[hoverIdx]}</div>
+                          {rows.map(r=>(
+                            <div key={r.name} style={{display:"flex",alignItems:"center",gap:8,marginBottom:4,fontSize:11}}>
+                              <div style={{width:18,color:"rgba(255,255,255,0.45)",fontWeight:600,fontVariantNumeric:"tabular-nums"}}>P{r.pos}</div>
+                              <div style={{width:3,height:11,background:TC[r.team]||"#fff",borderRadius:1,opacity:0.85}}/>
+                              <div style={{flex:1,color:"#fff",fontWeight:500}}>{r.name.split(" ").pop()}</div>
+                              <div style={{color:"rgba(255,255,255,0.85)",fontWeight:700,fontVariantNumeric:"tabular-nums"}}>{r.pts}</div>
+                            </div>
+                          ))}
+                        </div>
                       );
-                    })})()}
-                  </svg>
-                  {/* Legend — solid swatch for first driver per team, dashed for second */}
+                    })()}
+                  </div>
+                  {/* Legend — click to toggle visibility */}
                   <div style={{display:"flex",flexWrap:"wrap",gap:14,marginTop:12,justifyContent:"center"}}>
                     {(()=>{const seenTeam={};return progression.series.map(s=>{
                       const isSecond=!!seenTeam[s.team];
                       seenTeam[s.team]=true;
                       const color=TC[s.team]||"#fff";
+                      const visible=isVisible(s.name);
                       return(
-                        <div key={s.name} style={{display:"flex",alignItems:"center",gap:6,fontSize:11}}>
+                        <button key={s.name} onClick={()=>toggle(s.name)} style={{display:"flex",alignItems:"center",gap:6,fontSize:11,background:"none",border:"none",color:"inherit",cursor:"pointer",padding:"3px 6px",borderRadius:4,opacity:visible?1:0.35,transition:"opacity 0.2s",fontFamily:"'Outfit',sans-serif"}}>
                           {isSecond?(
                             <svg width={16} height={4} style={{display:"block"}}><line x1={0} y1={2} x2={16} y2={2} stroke={color} strokeWidth={2.5} strokeDasharray="4 3"/></svg>
                           ):(
                             <div style={{width:14,height:2.5,background:color,borderRadius:1}}/>
                           )}
-                          <span style={{color:"rgba(255,255,255,0.65)",fontWeight:500}}>{s.name.split(" ").pop()}</span>
-                        </div>
+                          <span style={{color:"rgba(255,255,255,0.75)",fontWeight:500,textDecoration:visible?"none":"line-through"}}>{s.name.split(" ").pop()}</span>
+                        </button>
                       );
                     })})()}
                   </div>
