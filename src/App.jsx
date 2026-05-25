@@ -427,13 +427,30 @@ function AnimatedNum({value, duration=1200, decimals=0, prefix="", suffix=""}) {
   return <>{prefix}{decimals>0?v.toFixed(decimals):v}{suffix}</>;
 }
 
-// Drivers whose external CDN headshots fail silently — use base64 only
+// Drivers whose OpenF1 headshot_url is missing or points to a fallback image —
+// the manual map below supplies working high-res URLs found on
+// formula1.com/en/drivers.html.
 const DH_USE_B64 = new Set(["Kimi Antonelli","Andrea Kimi Antonelli","Arvid Lindblad"]);
+const MANUAL_HEADSHOT_URLS = {
+  "Andrea Kimi Antonelli": "https://media.formula1.com/image/upload/c_lfill,w_440/q_auto/d_common:f1:2026:fallback:driver:2026fallbackdriverright.webp/v1740000001/common/f1/2026/mercedes/andant01/2026mercedesandant01right.webp",
+  "Kimi Antonelli":        "https://media.formula1.com/image/upload/c_lfill,w_440/q_auto/d_common:f1:2026:fallback:driver:2026fallbackdriverright.webp/v1740000001/common/f1/2026/mercedes/andant01/2026mercedesandant01right.webp",
+  "Arvid Lindblad":        "https://media.formula1.com/image/upload/c_lfill,w_440/q_auto/d_common:f1:2026:fallback:driver:2026fallbackdriverright.webp/v1740000001/common/f1/2026/racingbulls/arvlin01/2026racingbullsarvlin01right.webp",
+};
+// Rewrite F1.com Cloudinary URLs to request a higher-res image. Source has w_240
+// which is fine for tiny avatars but blurry in the 140px hero. Only ever upsize
+// — never downsize — so smaller standings rows keep the existing 240px source.
+function upscaleHeadshotUrl(url, displaySize){
+  if(!url||!url.includes("formula1.com/image"))return url;
+  if(displaySize>=64)return url.replace(/c_lfill,w_\d+/, "c_lfill,w_480");
+  return url;
+}
 function DH({name,size=32,headshots}){const[tryLevel,setTryLevel]=useState(0);
   const normName=(n)=>n.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
   let of1=headshots&&(headshots[name]||Object.values(headshots).find(v=>false));
   if(!of1&&headshots){const key=Object.keys(headshots).find(k=>k.toLowerCase()===name.toLowerCase()||normName(k)===normName(name));if(key)of1=headshots[key];}
-  const of1Url=DH_USE_B64.has(name)?null:of1?.url;
+  const manualUrl=MANUAL_HEADSHOT_URLS[name];
+  const baseCdn=manualUrl||(DH_USE_B64.has(name)?null:of1?.url);
+  const of1Url=upscaleHeadshotUrl(baseCdn,size);
   const b64Url=DRIVER_IMAGES[name];
   const urls=[of1Url,b64Url].filter(Boolean);
   const u=urls[tryLevel];
