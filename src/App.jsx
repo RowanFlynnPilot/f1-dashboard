@@ -487,6 +487,36 @@ function TrackMap({raceName,tracks,stroke="#fff",strokeWidth=2,opacity=1,fill="n
   );
 }
 
+// Split a TrackMap path into three equal-length segments. Used for the sector
+// overlay on Sector Times. Returns three path strings, the start point of each
+// sector boundary (for label dots), and the original viewBox.
+function splitTrackIntoSectors(track){
+  if(!track)return null;
+  const matches=[...(track.path||"").matchAll(/[ML]([0-9.]+),([0-9.]+)/g)];
+  const pts=matches.map(m=>[parseFloat(m[1]),parseFloat(m[2])]);
+  if(pts.length<6)return null;
+  let total=0;
+  const cum=[0];
+  for(let i=1;i<pts.length;i++){
+    const dx=pts[i][0]-pts[i-1][0],dy=pts[i][1]-pts[i-1][1];
+    total+=Math.sqrt(dx*dx+dy*dy);
+    cum.push(total);
+  }
+  const t1=total/3,t2=(total*2)/3;
+  let i1=cum.findIndex(l=>l>=t1);
+  let i2=cum.findIndex(l=>l>=t2);
+  if(i1<1)i1=Math.floor(pts.length/3);
+  if(i2<i1+1)i2=Math.floor((pts.length*2)/3);
+  const build=(a,b)=>pts.slice(a,b+1).map((p,i)=>`${i===0?"M":"L"}${p[0]},${p[1]}`).join(" ");
+  return{
+    s1:build(0,i1),
+    s2:build(i1,i2),
+    s3:build(i2,pts.length-1),
+    boundaries:[pts[i1],pts[i2]],
+    viewBox:track.viewBox,
+  };
+}
+
 function SC({label,value,sub,accent,icon}){return (<div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:10,padding:"14px 16px",flex:1,minWidth:130}}><div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:"rgba(255,255,255,0.4)",marginBottom:8,fontFamily:"'Outfit',sans-serif"}}>{label}</div><div style={{display:"flex",alignItems:"center",gap:8}}>{icon}{" "}<span style={{fontSize:22,fontWeight:700,color:accent||"#fff",lineHeight:1,fontFamily:"'Outfit',sans-serif"}}>{value}</span></div>{sub&&<div style={{fontSize:11,color:"rgba(255,255,255,0.5)",marginTop:6,fontFamily:"'Outfit',sans-serif"}}>{sub}</div>}</div>);}
 
 function SB({status}){const m={done:{bg:"rgba(39,244,210,0.12)",c:"#27F4D2",t:"COMPLETED"},next:{bg:"rgba(232,0,32,0.15)",c:"#E80020",t:"NEXT RACE"},postponed:{bg:"rgba(255,165,0,0.12)",c:"#FFA500",t:"POSTPONED"},upcoming:{bg:"rgba(255,255,255,0.05)",c:"rgba(255,255,255,0.4)",t:"UPCOMING"}};const s=m[status]||m.upcoming;return (<span style={{fontSize:10,fontWeight:700,letterSpacing:1,padding:"3px 8px",borderRadius:4,background:s.bg,color:s.c}}>{s.t}</span>);}
@@ -1229,6 +1259,65 @@ export default function F1Dashboard(){
                   ))}
                 </div>
               </div>
+
+              {/* Sector Track Overlay */}
+              {(()=>{
+                const mtgName=curMtg.meetingName||"";
+                const track=tracks?.[mtgName];
+                const sectors=track?splitTrackIntoSectors(track):null;
+                if(!sectors)return null;
+                const findSecDriver=(key,best)=>drivers.find(d=>d[key]&&best&&Math.abs(d[key]-best)<0.001);
+                const sDrivers=[
+                  findSecDriver("bestS1",sb.fastestS1),
+                  findSecDriver("bestS2",sb.fastestS2),
+                  findSecDriver("bestS3",sb.fastestS3),
+                ];
+                const sColors=sDrivers.map(d=>d?.teamColour||"rgba(255,255,255,0.4)");
+                const paths=[sectors.s1,sectors.s2,sectors.s3];
+                return(
+                  <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:4,flexWrap:"wrap",gap:8}}>
+                      <div style={{fontSize:15,fontWeight:700}}>Sector Map</div>
+                      <div style={{fontSize:11,color:"rgba(255,255,255,0.4)"}}>{mtgName} · {curSess.sessionName}</div>
+                    </div>
+                    <div style={{fontSize:12,color:"rgba(255,255,255,0.35)",marginBottom:16}}>Each third of the lap coloured by the team that set the fastest sector time</div>
+                    <div style={{display:"flex",gap:24,alignItems:"center",flexWrap:"wrap"}}>
+                      <div style={{flex:"1 1 320px",minWidth:280,height:200,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                        <svg viewBox={sectors.viewBox} preserveAspectRatio="xMidYMid meet" style={{display:"block",width:"100%",height:200,overflow:"visible"}}>
+                          {/* Underlay base track for continuity */}
+                          <path d={track.path} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={5} strokeLinecap="round" strokeLinejoin="round"/>
+                          {/* Sector segments */}
+                          {paths.map((p,i)=>(
+                            <path key={i} d={p} fill="none" stroke={sColors[i]} strokeWidth={3.5} strokeLinecap="round" strokeLinejoin="round" opacity={0.95}/>
+                          ))}
+                          {/* Boundary markers */}
+                          {sectors.boundaries.map((pt,i)=>(
+                            <circle key={i} cx={pt[0]} cy={pt[1]} r={1.8} fill="#fff" stroke="rgba(0,0,0,0.6)" strokeWidth={0.6}/>
+                          ))}
+                        </svg>
+                      </div>
+                      <div style={{flex:"0 1 260px",display:"flex",flexDirection:"column",gap:8}}>
+                        {[1,2,3].map(idx=>{
+                          const i=idx-1;
+                          const d=sDrivers[i];
+                          const time=[sb.fastestS1,sb.fastestS2,sb.fastestS3][i];
+                          return(
+                            <div key={idx} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 12px",borderRadius:8,background:"rgba(255,255,255,0.02)",border:`1px solid ${sColors[i]}30`}}>
+                              <div style={{fontSize:10,fontWeight:700,letterSpacing:1,padding:"4px 8px",borderRadius:4,background:`${sColors[i]}22`,color:sColors[i],minWidth:32,textAlign:"center"}}>S{idx}</div>
+                              <div style={{flex:1,minWidth:0}}>
+                                <div style={{fontSize:13,fontWeight:600,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{d?.name||"—"}</div>
+                                <div style={{fontSize:10,color:"rgba(255,255,255,0.4)",marginTop:1}}>{d?normTeam(d.team||""):""}</div>
+                              </div>
+                              <div style={{fontSize:13,fontWeight:700,fontVariantNumeric:"tabular-nums",color:sColors[i]}}>{fmtS(time)}s</div>
+                            </div>
+                          );
+                        })}
+                        <div style={{fontSize:10,color:"rgba(255,255,255,0.3)",marginTop:4,fontStyle:"italic"}}>Sectors split by track length, not official timing-line positions</div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Summary Cards */}
               <div style={{display:"flex",gap:12,flexWrap:"wrap"}}>
