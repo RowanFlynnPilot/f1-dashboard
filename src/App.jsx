@@ -1058,19 +1058,24 @@ export default function F1Dashboard(){
                 <div style={{fontSize:16,fontWeight:600,marginBottom:4}}>No driver quotes available yet</div>
                 <div style={{fontSize:13}}>Quotes are extracted from official F1 YouTube post-session videos</div>
               </div>
-            ):(
+            ):(()=>{
+              const SESSION_ORDER=["race","sprint","qualifying","sprintQualifying"];
+              const SESSION_LABELS={race:"Race",sprint:"Sprint",qualifying:"Qualifying",sprintQualifying:"Sprint Quali"};
+              const availableSessions=SESSION_ORDER.filter(s=>quotes.rounds.some(r=>(r.sessions?.[s]?.quotes||[]).length>0));
+              const activeSession=availableSessions.includes(quotesSession)?quotesSession:(availableSessions[0]||"race");
+              return(
               <>
                 <div style={{display:"flex",gap:12,flexWrap:"wrap"}}>
                   <SC label="Rounds with Quotes" value={String(quotes.rounds.length)} sub={quotes.rounds.map(r=>r.raceName.replace(" Grand Prix","")).join(" · ")} accent="#E80020"/>
-                  <SC label="Total Quotes" value={String(quotes.rounds.reduce((sum,r)=>sum+Object.values(r.sessions||{}).reduce((s2,sess)=>s2+(sess.quotes||[]).length,0),0))} sub="From race & qualifying" accent="#27F4D2"/>
+                  <SC label="Total Quotes" value={String(quotes.rounds.reduce((sum,r)=>sum+Object.values(r.sessions||{}).reduce((s2,sess)=>s2+(sess.quotes||[]).length,0),0))} sub={"Across "+availableSessions.map(s=>SESSION_LABELS[s].toLowerCase()).join(", ")} accent="#27F4D2"/>
                 </div>
-                <div style={{display:"flex",gap:8}}>
-                  {["race","qualifying"].map(s=>(
-                    <button key={s} onClick={()=>setQuotesSession(s)} style={{padding:"8px 20px",borderRadius:8,border:"1px solid "+(quotesSession===s?"#E80020":"rgba(255,255,255,0.08)"),background:quotesSession===s?"rgba(232,0,32,0.15)":"rgba(255,255,255,0.02)",color:quotesSession===s?"#fff":"rgba(255,255,255,0.5)",cursor:"pointer",fontSize:13,fontWeight:600,fontFamily:"'Outfit',sans-serif",textTransform:"capitalize"}}>{s}</button>
+                <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+                  {availableSessions.map(s=>(
+                    <button key={s} onClick={()=>setQuotesSession(s)} style={{padding:"8px 20px",borderRadius:8,border:"1px solid "+(activeSession===s?"#E80020":"rgba(255,255,255,0.08)"),background:activeSession===s?"rgba(232,0,32,0.15)":"rgba(255,255,255,0.02)",color:activeSession===s?"#fff":"rgba(255,255,255,0.5)",cursor:"pointer",fontSize:13,fontWeight:600,fontFamily:"'Outfit',sans-serif"}}>{SESSION_LABELS[s]}</button>
                   ))}
                 </div>
                 {[...quotes.rounds].reverse().map(round=>{
-                  const sess=round.sessions?.[quotesSession];
+                  const sess=round.sessions?.[activeSession];
                   const roundQuotes=sess?.quotes||[];
                   if(roundQuotes.length===0)return null;
                   return(
@@ -1078,7 +1083,7 @@ export default function F1Dashboard(){
                       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
                         <div>
                           <div style={{fontSize:15,fontWeight:700}}>{round.raceName}</div>
-                          <div style={{fontSize:11,color:"rgba(255,255,255,0.35)",marginTop:2}}>Round {round.round} · Post-{quotesSession} reactions</div>
+                          <div style={{fontSize:11,color:"rgba(255,255,255,0.35)",marginTop:2}}>Round {round.round} · Post-{SESSION_LABELS[activeSession].toLowerCase()} reactions</div>
                         </div>
                         <div style={{fontSize:11,color:"rgba(255,255,255,0.25)"}}>{roundQuotes.length} quotes</div>
                       </div>
@@ -1104,7 +1109,8 @@ export default function F1Dashboard(){
                   );
                 })}
               </>
-            )}
+              );
+            })()}
           </div>
         )}
 

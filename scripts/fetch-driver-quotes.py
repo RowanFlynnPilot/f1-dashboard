@@ -54,6 +54,7 @@ except ImportError:
 SCRIPT_DIR = Path(__file__).parent
 PROJECT_DIR = SCRIPT_DIR.parent
 VIDEO_IDS_PATH = SCRIPT_DIR / "video-ids.json"
+OVERRIDES_PATH = SCRIPT_DIR / "quote-overrides.json"
 TRANSCRIPTS_DIR = SCRIPT_DIR / "transcripts"
 DATA_JSON_PATH = PROJECT_DIR / "public" / "data.json"
 OUTPUT_PATH = PROJECT_DIR / "public" / "driver-quotes.json"
@@ -65,9 +66,15 @@ F1_RSS_URL = f"https://www.youtube.com/feeds/videos.xml?channel_id={F1_CHANNEL_I
 
 # Title patterns for driver reaction videos
 # Note: F1 has been inconsistent with phrasing — "After The Race", "After To The Race",
-# etc. Match all reasonable variants.
-RACE_PATTERN = re.compile(r"Drivers React (?:After(?: To)? The Race|To The Race) \| (\d{4}) (.+)")
-QUAL_PATTERN = re.compile(r"Drivers React (?:To|After) Qualifying \| (\d{4}) (.+)")
+# etc. Match all reasonable variants. Order in SESSION_PATTERNS matters: more specific
+# patterns (sprintQualifying) must come before less specific ones (sprint, qualifying).
+SESSION_PATTERNS: list[tuple[str, re.Pattern]] = [
+    ("sprintQualifying", re.compile(r"Drivers React (?:After|To) Sprint Qualifying \| (\d{4}) (.+)")),
+    ("sprint",           re.compile(r"Drivers React (?:After|To) Sprint \| (\d{4}) (.+)")),
+    ("qualifying",       re.compile(r"Drivers React (?:To|After) Qualifying \| (\d{4}) (.+)")),
+    ("race",             re.compile(r"Drivers React (?:After(?: To)? The Race|To The Race) \| (\d{4}) (.+)")),
+]
+SESSION_TYPES = [name for name, _ in SESSION_PATTERNS]
 
 EXTRACTION_PROMPT = """You are analyzing a transcript from an official Formula 1 YouTube video where drivers give their reactions after a {session_type} session at the {race_name}.
 
@@ -142,6 +149,46 @@ def load_roster() -> tuple[str, dict[str, str]]:
     return "\n".join(lines), roster_map
 
 
+def load_overrides() -> list[dict]:
+    """Load manual quote overrides; empty list if file missing or malformed."""
+    if not OVERRIDES_PATH.exists():
+        return []
+    try:
+        with open(OVERRIDES_PATH, encoding="utf-8") as f:
+            data = json.load(f)
+        return data.get("overrides", [])
+    except (json.JSONDecodeError, OSError) as e:
+        print(f"  ⚠️  Could not load {OVERRIDES_PATH}: {e}")
+        return []
+
+
+def apply_overrides(rounds_data: list[dict], overrides: list[dict]) -> int:
+    """Apply manual driver/team overrides to extracted quotes. Returns count applied."""
+    if not overrides:
+        return 0
+    applied = 0
+    for r in rounds_data:
+        for session_name, session in r.get("sessions", {}).items():
+            for q in session.get("quotes", []):
+                quote_text = (q.get("quote") or "").lower()
+                for rule in overrides:
+                    if rule.get("round") != r.get("round"):
+                        continue
+                    if rule.get("session") != session_name:
+                        continue
+                    match = (rule.get("matchText") or "").lower()
+                    if match and match in quote_text:
+                        old_driver = q.get("driver")
+                        q["driver"] = rule["newDriver"]
+                        q["team"] = rule["newTeam"]
+                        print(f"      ✍️  Override applied: R{r['round']} {session_name} — "
+                              f"'{old_driver}' → '{rule['newDriver']}' "
+                              f"(matched: '{rule.get('matchText')}')")
+                        applied += 1
+                        break
+    return applied
+
+
 def filter_quotes(quotes: list[dict], roster_map: dict[str, str]) -> list[dict]:
     """Drop quotes whose driver isn't on the current roster; fix any team mismatch."""
     if not roster_map:
@@ -195,7 +242,7 @@ def discover_new_videos(season_videos: dict) -> int:
             continue
         video_id = video_id_el.text
 
-        for pattern, session_type in [(RACE_PATTERN, "race"), (QUAL_PATTERN, "qualifying")]:
+        for session_type, pattern in SESSION_PATTERNS:
             m = pattern.match(title)
             if m and int(m.group(1)) == SEASON:
                 race_name = m.group(2).strip()
@@ -209,6 +256,7 @@ def discover_new_videos(season_videos: dict) -> int:
                         season_videos[rkey]["raceName"] = race_name
                         print(f"  ✨ Discovered {session_type} video for R{round_num} {race_name}: {video_id}")
                         found += 1
+                break  # Don't try less-specific patterns against the same title
 
     if found > 0:
         with open(VIDEO_IDS_PATH) as f:
@@ -402,38 +450,64 @@ def main():
 
         print(f"🏁 Round {round_num}: {race_name}")
 
-        # In extract mode, skip rounds we already have quotes for
+        # Sessions that have video IDs configured for this round
+        configured_sessions = [s for s in SESSION_TYPES if videos.get(s)]
+
+        # In extract mode, skip rounds where every configured session already has quotes
         if not args.fetch_transcripts and round_int in existing_rounds and not args.race and not args.force:
             existing_round = existing_rounds[round_int]
-            has_race = existing_round.get("sessions", {}).get("race", {}).get("quotes", [])
-            has_qual = existing_round.get("sessions", {}).get("qualifying", {}).get("quotes", [])
-            if has_race and has_qual:
-                print(f"  ⏭️  Already have quotes, skipping (use --race to re-fetch)")
+            existing_sessions = existing_round.get("sessions", {})
+            all_done = all(
+                existing_sessions.get(s, {}).get("quotes")
+                for s in configured_sessions
+            )
+            if configured_sessions and all_done:
+                print(f"  ⏭️  Already have quotes for all configured sessions, skipping (use --race to re-fetch)")
                 rounds_data.append(existing_round)
                 continue
 
         sessions = {}
+        existing_session_data = existing_rounds.get(round_int, {}).get("sessions", {}) if round_int in existing_rounds else {}
 
-        for session_type in ["race", "qualifying"]:
+        for session_type in configured_sessions:
             vid = videos.get(session_type)
-            if vid:
-                if args.fetch_transcripts:
-                    # Only check if we need to fetch
+            if not vid:
+                continue
+
+            if args.fetch_transcripts:
+                # Only check if we need to fetch
+                if transcript_path(vid).exists():
+                    print(f"    📂 {session_type}: {vid} (already cached)")
+                    cached_count += 1
+                else:
+                    result = process_video(vid, race_name, session_type, fetch_only=True)
                     if transcript_path(vid).exists():
-                        print(f"    📂 {session_type}: {vid} (already cached)")
                         cached_count += 1
                     else:
-                        result = process_video(vid, race_name, session_type, fetch_only=True)
-                        if transcript_path(vid).exists():
-                            cached_count += 1
-                        else:
-                            missing_count += 1
-                else:
-                    sessions[session_type] = process_video(
-                        vid, race_name, session_type,
-                        roster_block=roster_block, roster_map=roster_map,
-                    )
-                    time.sleep(2)
+                        missing_count += 1
+                continue
+
+            # Preserve existing per-session quotes unless --force or --race targets this round
+            existing_quotes = existing_session_data.get(session_type, {}).get("quotes")
+            if existing_quotes and not args.force and not args.race:
+                print(f"    📂 {session_type}: preserving {len(existing_quotes)} existing quote(s)")
+                sessions[session_type] = existing_session_data[session_type]
+                continue
+
+            # Warn loudly if a transcript will need to be fetched here — CI usually
+            # can't reach YouTube. Local runs are fine.
+            if not transcript_path(vid).exists():
+                in_ci = os.environ.get("GITHUB_ACTIONS") == "true"
+                if in_ci:
+                    print(f"    ⚠️  {session_type}: {vid} not cached. "
+                          f"YouTube likely blocks CI — transcript fetch will fail. "
+                          f"Run 'python scripts/fetch-driver-quotes.py --fetch-transcripts' "
+                          f"locally and commit scripts/transcripts/.")
+            sessions[session_type] = process_video(
+                vid, race_name, session_type,
+                roster_block=roster_block, roster_map=roster_map,
+            )
+            time.sleep(2)
 
         if not args.fetch_transcripts:
             rounds_data.append({
@@ -446,6 +520,13 @@ def main():
         print(f"\n✅ Transcripts: {cached_count} cached, {missing_count} failed")
         print(f"   Commit scripts/transcripts/ and push to let CI extract quotes.\n")
         return
+
+    # Apply manual overrides (for misattributions Claude can't resolve from captions alone)
+    overrides = load_overrides()
+    if overrides:
+        applied = apply_overrides(rounds_data, overrides)
+        if applied:
+            print(f"\n✍️  Applied {applied} manual override(s) from quote-overrides.json")
 
     # Write output
     output = {

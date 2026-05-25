@@ -18,12 +18,16 @@
     "4": {
       "raceName": "Miami Grand Prix",
       "race": "0QyBQJWsQk4",
-      "qualifying": "_xW81tjO3X8"
+      "qualifying": "_xW81tjO3X8",
+      "sprint": "iR0Wju0QkNc",
+      "sprintQualifying": "bvcNs8BuKOA"
     },
     "5": {
       "raceName": "Canadian Grand Prix",
       "race": "SW_ROPQPxMw",
-      "qualifying": "88gDTJs1j94"
+      "qualifying": "88gDTJs1j94",
+      "sprint": "GseDkNNzHMo",
+      "sprintQualifying": "JwMaJw6B868"
     }
   }
 }

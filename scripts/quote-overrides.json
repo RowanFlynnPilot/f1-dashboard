@@ -1,0 +1,21 @@
+{
+  "_comment": "Manual corrections applied after Claude extraction. Each rule replaces a quote's driver/team if its quote text contains 'matchText' (case-insensitive substring) and the round/session match. Use this for misattributions that Claude can't catch from caption-only transcripts (e.g. speaker confusion within the same team or across teams). Keep this list short — prefer fixing the prompt when possible.",
+  "overrides": [
+    {
+      "round": 5,
+      "session": "race",
+      "matchText": "Lewis in the same car",
+      "newDriver": "Charles Leclerc",
+      "newTeam": "Ferrari",
+      "reason": "Speaker is Hamilton's Ferrari teammate (Leclerc), not Antonelli. Transcript: 'Lewis has done an incredible job... I've got Lewis in the same car'."
+    },
+    {
+      "round": 5,
+      "session": "race",
+      "matchText": "horrible horrible weekend",
+      "newDriver": "Charles Leclerc",
+      "newTeam": "Ferrari",
+      "reason": "Same speaker as above (continuous interview): Leclerc describing his difficult Canadian weekend while praising teammate Hamilton's podium."
+    }
+  ]
+}

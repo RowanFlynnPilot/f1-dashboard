@@ -59,6 +59,40 @@ f1-dashboard/
 - Output: `public/driver-quotes.json`
 - Can run manually: `python3 scripts/fetch-driver-quotes.py --video-id <ID>`
 
+#### Quote workflow — adding quotes for a new race weekend
+
+YouTube blocks GitHub Actions IPs, so transcripts cannot be fetched in CI. The flow is split:
+
+1. **Locally**, after a race weekend airs reaction videos:
+   ```powershell
+   python scripts/fetch-driver-quotes.py --fetch-transcripts
+   ```
+   This auto-discovers new "Drivers React" videos from the F1 YouTube RSS feed and caches their transcripts to `scripts/transcripts/`. May also write to `scripts/video-ids.json`.
+
+2. **If videos have aged off RSS** (older than ~15 most recent F1 uploads), find the IDs manually and add to `scripts/video-ids.json`, then re-run step 1.
+
+3. **Commit and push**:
+   ```bash
+   git add scripts/transcripts/ scripts/video-ids.json
+   git commit -m "Cache transcripts for [Race Name]"
+   git push
+   ```
+
+4. **CI takes over** — it reads cached transcripts, calls Claude, writes `public/driver-quotes.json` into the deploy artifact, and ships it.
+
+5. **To pull fresh quotes locally** (or after a CI deploy):
+   ```powershell
+   curl -o public/driver-quotes.json https://rowanflynnpilot.github.io/f1-dashboard/driver-quotes.json
+   ```
+   Or run extraction locally with `ANTHROPIC_API_KEY` set:
+   ```powershell
+   python scripts/fetch-driver-quotes.py
+   ```
+
+#### Manual quote overrides
+
+`scripts/quote-overrides.json` holds per-quote corrections for misattributions Claude can't catch from speaker-less auto-captions (e.g. one driver praising their teammate by name and being confused for a different driver). Each rule matches by `round`, `session`, and a `matchText` substring; it rewrites the `driver` and `team` fields. Overrides are applied after every extraction, so they survive `--force` re-runs.
+
 ## Dashboard Tabs
 
 | Tab | Emoji | Content |
