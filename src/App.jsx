@@ -84,7 +84,7 @@ function transformData(raw) {
   const DS = raw.drivers.map(d => {
     const lastName = d.name.split(" ").pop();
     const delta = lastRacePtsMap[lastName] || 0;
-    return { p: d.pos, n: d.name, t: d.team, pts: d.pts, d: delta > 0 ? `+${delta}` : "—", mv: 0, did: d.driverId || "" };
+    return { p: d.pos, n: d.name, t: d.team, pts: d.pts, wins: d.wins || 0, d: delta > 0 ? `+${delta}` : "—", mv: 0, did: d.driverId || "" };
   });
 
   // Compute position movement: compare current standings vs what they'd be without last-round points
@@ -465,6 +465,10 @@ export default function F1Dashboard(){
         .g4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
         .pod{display:flex;gap:12px}
         .tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -4px;padding:0 4px}
+        .hero-pts{font-size:72px;letter-spacing:-3px}
+        .hero-sub{font-size:36px}
+        .hero-name{font-size:36px}
+        .hero-avatar{width:140px;height:140px}
         @media(max-width:768px){
           .hdr{padding:16px 14px 0}
           .main{padding:16px 14px 32px}
@@ -477,10 +481,18 @@ export default function F1Dashboard(){
           .sr{padding:10px 12px;flex-wrap:wrap;gap:6px}
           .sr>div:nth-child(4){width:auto!important}
           .dr{padding:6px 8px}
+          .hero{padding:24px 20px!important}
+          .hero-pts{font-size:54px;letter-spacing:-2px}
+          .hero-sub{font-size:28px}
+          .hero-name{font-size:26px}
+          .hero-avatar{width:96px;height:96px}
         }
         @media(max-width:480px){
           .g4{grid-template-columns:1fr}
           .tb{padding:7px 6px;font-size:10px;flex:1}
+          .hero-pts{font-size:44px}
+          .hero-name{font-size:22px}
+          .hero-avatar{width:80px;height:80px}
         }
       `}</style>
 
@@ -514,8 +526,51 @@ export default function F1Dashboard(){
         {/* ═══ OVERVIEW ═══ */}
         {tab==="Overview"&&(
           <div className="fu" style={{display:"flex",flexDirection:"column",gap:24}}>
+            {/* Championship Leader Hero */}
+            {leader&&leader.pts>0&&(()=>{
+              const p2=DS[1];
+              const gap=p2?leader.pts-p2.pts:0;
+              const tc=TC[leader.t]||"#E80020";
+              return(
+                <div className="hero" style={{position:"relative",background:`linear-gradient(135deg, ${tc}22 0%, ${tc}0a 40%, rgba(255,255,255,0.02) 100%)`,border:`1px solid ${tc}40`,borderRadius:16,padding:"32px 36px",overflow:"hidden"}}>
+                  <div style={{position:"absolute",right:-30,top:-40,opacity:0.07,pointerEvents:"none",transform:"scale(1.2)"}}>
+                    <TL team={leader.t} size={280}/>
+                  </div>
+                  <div style={{position:"relative",display:"flex",alignItems:"center",gap:32,flexWrap:"wrap"}}>
+                    <div className="hero-avatar" style={{flexShrink:0,borderRadius:"50%",border:`3px solid ${tc}`,boxShadow:`0 0 40px ${tc}33`,overflow:"hidden",background:"rgba(0,0,0,0.3)"}}>
+                      <DH name={leader.n} size={140} headshots={headshots}/>
+                    </div>
+                    <div style={{flex:1,minWidth:240}}>
+                      <div style={{fontSize:10,textTransform:"uppercase",letterSpacing:2.5,color:tc,fontWeight:700,marginBottom:10,opacity:0.9}}>Championship Leader · After Round {completedRounds}</div>
+                      <div className="hero-name" style={{fontWeight:800,lineHeight:1.05,marginBottom:8,letterSpacing:-0.5}}>{leader.n}</div>
+                      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:24}}>
+                        <TL team={leader.t} size={22}/>
+                        <span style={{fontSize:14,color:"rgba(255,255,255,0.65)",fontWeight:500}}>{leader.t}</span>
+                      </div>
+                      <div style={{display:"flex",gap:36,flexWrap:"wrap",alignItems:"baseline"}}>
+                        <div>
+                          <div className="hero-pts" style={{fontWeight:900,color:tc,lineHeight:0.9,textShadow:`0 0 32px ${tc}50`}}>{leader.pts}</div>
+                          <div style={{fontSize:10,textTransform:"uppercase",letterSpacing:2.5,color:"rgba(255,255,255,0.4)",marginTop:8,fontWeight:600}}>Points</div>
+                        </div>
+                        {p2&&gap>0&&(
+                          <div>
+                            <div className="hero-sub" style={{fontWeight:800,color:"#27F4D2",lineHeight:1}}>+{gap}</div>
+                            <div style={{fontSize:10,textTransform:"uppercase",letterSpacing:2.5,color:"rgba(255,255,255,0.4)",marginTop:8,fontWeight:600}}>over {p2.n.split(" ").pop()}</div>
+                          </div>
+                        )}
+                        {leader.wins>0&&(
+                          <div>
+                            <div className="hero-sub" style={{fontWeight:800,color:"#fff",lineHeight:1}}>{leader.wins}</div>
+                            <div style={{fontSize:10,textTransform:"uppercase",letterSpacing:2.5,color:"rgba(255,255,255,0.4)",marginTop:8,fontWeight:600}}>Race Win{leader.wins>1?"s":""}</div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
             <div style={{display:"flex",gap:12,flexWrap:"wrap"}}>
-              <SC label="Championship Leader" value={leader.n.split(" ").pop()} sub={`${leader.pts} pts · ${leader.t}`} accent={TC[leader.t]||"#fff"} icon={<TL team={leader.t} size={24}/>}/>
               <SC label="Last Race Winner" value={lastWinner?lastWinner.name:"TBD"} sub={lastWinner?`${lastWinner.race}`:"Season not started"} accent={TC[lastWinner?.team]||"#fff"} icon={lastWinner?<TL team={lastWinner.team} size={24}/>:null}/>
               <SC label="Fastest Lap" value={lastRaceFL?lastRaceFL.t||lastRaceFL.time:"N/A"} sub={lastRaceFL?`${lastRaceFL.d||lastRaceFL.driver} · ${lastRaceFL.tm||lastRaceFL.team}`:""} accent="#E80020" icon={lastRaceFL?<TL team={lastRaceFL.tm||lastRaceFL.team} size={24}/>:null}/>
               <SC label="Avg Pit Stop" value={`${avgP}s`} sub={pitRaceName||""} accent="#FFD700"/>
