@@ -372,7 +372,34 @@ function transformData(raw) {
     return{t:c.t,ti,desc:lines.join(" ")};
   });
 
-  return { DS, CS, races: allRaces, pits, sched, qualifying, h2h, completedRounds, totalRounds, fetchedAt, pitRaceName, leader, lastWinner, fastestLap, narrative };
+  // Points progression — cumulative top-6 driver points after each race
+  const RACE_PTS_TABLE=[25,18,15,12,10,8,6,4,2,1];
+  const SPRINT_PTS_TABLE=[8,7,6,5,4,3,2,1];
+  const topNames=DS.slice(0,6).map(d=>d.n);
+  const cumPts=Object.fromEntries(topNames.map(n=>[n,0]));
+  const progressionLabels=["Start"];
+  const progressionSeries=topNames.map(n=>{
+    const driver=DS.find(x=>x.n===n);
+    return{name:n,team:driver?.t||"",points:[0]};
+  });
+  for(const race of allRaces){
+    const table=race.sprint?SPRINT_PTS_TABLE:RACE_PTS_TABLE;
+    for(const res of race.full){
+      const p=parseInt(res.p);
+      if(isNaN(p)||p>table.length)continue;
+      const match=topNames.find(n=>n.split(" ").pop()===res.d||n===res.d);
+      if(!match)continue;
+      cumPts[match]+=table[p-1];
+      if(!race.sprint&&p<=10&&race.fl?.d===res.d)cumPts[match]+=1;
+    }
+    if(!race.sprint){
+      progressionLabels.push("R"+race.r);
+      progressionSeries.forEach(s=>s.points.push(cumPts[s.name]));
+    }
+  }
+  const progression={labels:progressionLabels,series:progressionSeries};
+
+  return { DS, CS, races: allRaces, pits, sched, qualifying, h2h, completedRounds, totalRounds, fetchedAt, pitRaceName, leader, lastWinner, fastestLap, narrative, progression };
 }
 
 
@@ -436,7 +463,7 @@ export default function F1Dashboard(){
   if(loading)return(<div style={{minHeight:"100vh",background:"#0a0a0f",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Outfit',sans-serif"}}><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/><div style={{textAlign:"center"}}><div style={{fontSize:32,fontWeight:700,marginBottom:8}}>Loading F1 Data...</div><div style={{color:"rgba(255,255,255,0.4)"}}>Fetching from Jolpica API</div></div></div>);
   if(error||!data)return(<div style={{minHeight:"100vh",background:"#0a0a0f",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Outfit',sans-serif"}}><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/><div style={{textAlign:"center"}}><div style={{fontSize:32,fontWeight:700,color:"#E80020",marginBottom:8}}>Failed to Load Data</div><div style={{color:"rgba(255,255,255,0.5)"}}>{error||"No data available. Run: npm run fetch-data"}</div></div></div>);
 
-  const{DS,CS,races,pits,sched,qualifying,h2h,completedRounds,totalRounds,fetchedAt,pitRaceName,leader,lastWinner,fastestLap,narrative}=data;
+  const{DS,CS,races,pits,sched,qualifying,h2h,completedRounds,totalRounds,fetchedAt,pitRaceName,leader,lastWinner,fastestLap,narrative,progression}=data;
   const avgP=pits.length>0?(pits.reduce((a,b)=>a+b.s,0)/pits.length).toFixed(3):"N/A";
   const fastestPit=pits.length>0?pits[0]:null;
   const nextRace=sched.find(r=>r.st==="next");
@@ -674,6 +701,68 @@ export default function F1Dashboard(){
         {/* ═══ STANDINGS ═══ */}
         {tab==="Standings"&&(
           <div className="fu" style={{display:"flex",flexDirection:"column",gap:24}}>
+            {/* Points Progression Chart */}
+            {progression&&progression.labels.length>=3&&(()=>{
+              const W=800,H=240,padL=44,padR=24,padT=20,padB=32;
+              const plotW=W-padL-padR,plotH=H-padT-padB;
+              const n=progression.labels.length;
+              const maxY=Math.max(10,...progression.series.flatMap(s=>s.points));
+              const xOf=i=>padL+(i/(n-1))*plotW;
+              const yOf=v=>padT+plotH-(v/maxY)*plotH;
+              const yTicks=[0,Math.round(maxY*0.25),Math.round(maxY*0.5),Math.round(maxY*0.75),Math.round(maxY)];
+              return(
+                <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20}}>
+                  <div style={{fontSize:15,fontWeight:700,marginBottom:4}}>Points Progression</div>
+                  <div style={{fontSize:12,color:"rgba(255,255,255,0.35)",marginBottom:16}}>Top 6 drivers · cumulative points by round</div>
+                  <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{width:"100%",height:240,display:"block"}}>
+                    {/* Y gridlines + labels */}
+                    {yTicks.map(t=>(
+                      <g key={t}>
+                        <line x1={padL} x2={W-padR} y1={yOf(t)} y2={yOf(t)} stroke="rgba(255,255,255,0.06)" strokeWidth={1}/>
+                        <text x={padL-8} y={yOf(t)+4} textAnchor="end" fill="rgba(255,255,255,0.4)" fontSize="10" fontFamily="'Outfit',sans-serif">{t}</text>
+                      </g>
+                    ))}
+                    {/* X labels */}
+                    {progression.labels.map((label,i)=>(
+                      <text key={i} x={xOf(i)} y={H-padB+18} textAnchor="middle" fill="rgba(255,255,255,0.45)" fontSize="10" fontFamily="'Outfit',sans-serif">{label}</text>
+                    ))}
+                    {/* Lines — second driver per team rendered dashed so teammates are distinguishable */}
+                    {(()=>{const seenTeam={};return progression.series.map(s=>{
+                      const color=TC[s.team]||"#fff";
+                      const isSecond=!!seenTeam[s.team];
+                      seenTeam[s.team]=true;
+                      const path=s.points.map((v,i)=>`${i===0?"M":"L"}${xOf(i)},${yOf(v)}`).join(" ");
+                      return(
+                        <g key={s.name}>
+                          <path d={path} stroke={color} strokeWidth={2.5} fill="none" strokeLinecap="round" strokeLinejoin="round" strokeDasharray={isSecond?"5 4":"none"} opacity={isSecond?0.85:1}/>
+                          {s.points.map((v,i)=>i>0&&(
+                            <circle key={i} cx={xOf(i)} cy={yOf(v)} r={3.5} fill={isSecond?"#0a0a0f":color} stroke={color} strokeWidth={1.5}/>
+                          ))}
+                        </g>
+                      );
+                    })})()}
+                  </svg>
+                  {/* Legend — solid swatch for first driver per team, dashed for second */}
+                  <div style={{display:"flex",flexWrap:"wrap",gap:14,marginTop:12,justifyContent:"center"}}>
+                    {(()=>{const seenTeam={};return progression.series.map(s=>{
+                      const isSecond=!!seenTeam[s.team];
+                      seenTeam[s.team]=true;
+                      const color=TC[s.team]||"#fff";
+                      return(
+                        <div key={s.name} style={{display:"flex",alignItems:"center",gap:6,fontSize:11}}>
+                          {isSecond?(
+                            <svg width={16} height={4} style={{display:"block"}}><line x1={0} y1={2} x2={16} y2={2} stroke={color} strokeWidth={2.5} strokeDasharray="4 3"/></svg>
+                          ):(
+                            <div style={{width:14,height:2.5,background:color,borderRadius:1}}/>
+                          )}
+                          <span style={{color:"rgba(255,255,255,0.65)",fontWeight:500}}>{s.name.split(" ").pop()}</span>
+                        </div>
+                      );
+                    })})()}
+                  </div>
+                </div>
+              );
+            })()}
             <div className="g2">
               <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20}}>
                 <div style={{fontSize:15,fontWeight:700,marginBottom:4}}>Drivers' World Championship</div>
