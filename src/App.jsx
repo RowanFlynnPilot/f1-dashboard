@@ -556,7 +556,7 @@ export default function F1Dashboard(){
               <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20}}>
                 <div style={{fontSize:15,fontWeight:700,marginBottom:4}}>Drivers' World Championship</div>
                 <div style={{fontSize:12,color:"rgba(255,255,255,0.35)",marginBottom:16}}>{"After Round " + completedRounds}</div>
-                {DS.map((d,i)=>(
+                {(()=>{const maxPts=Math.max(1,...DS.map(d=>d.pts||0));return DS.map((d,i)=>(
                   <div key={d.n} className="dr" style={{background:i<3?TB[d.t]:"transparent",marginBottom:1}}>
                     <div style={{width:24,fontSize:13,fontWeight:700,color:i<3?"#fff":"rgba(255,255,255,0.35)"}}>{d.p}</div>
                     <DH name={d.n} size={28} headshots={headshots}/>
@@ -567,15 +567,15 @@ export default function F1Dashboard(){
                     </div>
                     <div style={{width:40,textAlign:"center",fontSize:11,fontWeight:600,color:d.mv>0?"#27F4D2":d.mv<0?"#E80020":"rgba(255,255,255,0.15)"}}>{d.mv>0?`▲${d.mv}`:d.mv<0?`▼${Math.abs(d.mv)}`:"—"}</div>
                     <div style={{width:40,textAlign:"center",fontSize:11,fontWeight:600,color:d.d!=="—"?"#27F4D2":"rgba(255,255,255,0.2)"}}>{d.d}</div>
-                    <div style={{width:55,marginRight:8}}><div style={{height:4,width:`${d.pts>0?Math.max((d.pts/51)*100,3):0}%`,background:TC[d.t],borderRadius:2}}/></div>
+                    <div style={{width:55,marginRight:8,overflow:"hidden"}}><div style={{height:4,width:`${d.pts>0?Math.max((d.pts/maxPts)*100,3):0}%`,background:TC[d.t],borderRadius:2}}/></div>
                     <div style={{fontSize:14,fontWeight:700,width:32,textAlign:"right"}}>{d.pts}</div>
                   </div>
-                ))}
+                ))})()}
               </div>
               <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20}}>
                 <div style={{fontSize:15,fontWeight:700,marginBottom:4}}>Constructors' World Championship</div>
                 <div style={{fontSize:12,color:"rgba(255,255,255,0.35)",marginBottom:16}}>{"After Round " + completedRounds}</div>
-                {CS.map((c,i)=>(
+                {(()=>{const maxDriverPts=Math.max(1,...CS.flatMap(c=>(c.dr||[]).map(d=>d.pts||0)));return CS.map((c,i)=>(
                   <div key={c.t} style={{padding:"14px 16px",borderRadius:10,marginBottom:4,background:i<3?TB[c.t]:"transparent",border:i<3?`1px solid ${TC[c.t]}22`:"1px solid transparent"}}>
                     <div style={{display:"flex",alignItems:"center",marginBottom:8}}>
                       <div style={{width:24,fontSize:16,fontWeight:800,color:i<3?TC[c.t]:"rgba(255,255,255,0.3)"}}>{c.p}</div>
@@ -588,14 +588,14 @@ export default function F1Dashboard(){
                         <div key={di} style={{display:"flex",alignItems:"center",gap:8,marginBottom:3}}>
                           <div style={{width:70,fontSize:11,color:"rgba(255,255,255,0.5)",textAlign:"right"}}>{d.n}</div>
                           <div style={{flex:1,height:4,background:"rgba(255,255,255,0.04)",borderRadius:2,overflow:"hidden"}}>
-                            <div style={{height:"100%",width:`${d.pts>0?Math.max((d.pts/98)*100,2):0}%`,background:TC[c.t],borderRadius:2,opacity:di===0?1:0.55}}/>
+                            <div style={{height:"100%",width:`${d.pts>0?Math.max((d.pts/maxDriverPts)*100,2):0}%`,background:TC[c.t],borderRadius:2,opacity:di===0?1:0.55}}/>
                           </div>
                           <div style={{width:24,fontSize:11,fontWeight:600,color:"rgba(255,255,255,0.6)",textAlign:"right"}}>{d.pts}</div>
                         </div>
                       ))}
                     </div>
                   </div>
-                ))}
+                ))})()}
               </div>
             </div>
             {/* Narrative */}
