@@ -82,6 +82,50 @@ async function getStints(sessionKey) {
 }
 
 /**
+ * Get position events for a session. Each event is (date, driver_number, position).
+ */
+async function getPositions(sessionKey) {
+  try {
+    const data = await fetchJSON(`${BASE}/position?session_key=${sessionKey}`);
+    return data || [];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Reduce raw /position events to per-lap position snapshots per driver.
+ * For each driver lap, takes the most recent position record at or before
+ * the lap's end time (date_start + duration).
+ */
+function processPositionsByLap(positions, lapsByDriver) {
+  // Sort position events by date once
+  const sorted = [...positions]
+    .filter(p => p.date && p.driver_number && p.position)
+    .map(p => ({ d: new Date(p.date).getTime(), dn: p.driver_number, p: p.position }))
+    .sort((a, b) => a.d - b.d);
+
+  const byDriver = {};
+  for (const [dn, laps] of Object.entries(lapsByDriver)) {
+    const driverEvents = sorted.filter(e => e.dn === parseInt(dn));
+    const out = [];
+    for (const lap of laps) {
+      if (!lap.dateStart || !lap.lapTime) continue;
+      const endMs = new Date(lap.dateStart).getTime() + lap.lapTime * 1000;
+      // Find the latest event at or before endMs (binary-search-friendly but linear is fine here)
+      let pos = null;
+      for (const e of driverEvents) {
+        if (e.d <= endMs) pos = e.p;
+        else break;
+      }
+      if (pos !== null) out.push({ l: lap.lap, p: pos });
+    }
+    byDriver[dn] = out;
+  }
+  return byDriver;
+}
+
+/**
  * Process lap data into a structured format per driver
  */
 function processLapData(laps, drivers) {
@@ -112,6 +156,7 @@ function processLapData(laps, drivers) {
       i2Speed: lap.i2_speed,
       stSpeed: lap.st_speed,
       isPitOut: lap.is_pit_out_lap,
+      dateStart: lap.date_start,
       segments: {
         s1: lap.segments_sector_1,
         s2: lap.segments_sector_2,
@@ -289,9 +334,24 @@ async function main() {
         const stints = await getStints(session.session_key);
         await sleep(2000);
 
+        // For Race / Sprint sessions only, fetch position events for the telemetry tab.
+        const isRaceLike = session.session_name === "Race" || session.session_name === "Sprint";
+        let positions = [];
+        if (isRaceLike) {
+          positions = await getPositions(session.session_key);
+          await sleep(2000);
+        }
+
         // Process
         const driverStats = processLapData(laps, drivers || []);
         const sessionBests = computeSessionBests(driverStats);
+
+        // For race-likes, build per-driver per-lap position snapshots
+        let positionsByDriver = {};
+        if (isRaceLike && positions.length > 0) {
+          const lapsByDriver = Object.fromEntries(driverStats.map(d => [d.number, d.laps]));
+          positionsByDriver = processPositionsByLap(positions, lapsByDriver);
+        }
 
         meetingSessions.push({
           sessionKey: session.session_key,
@@ -332,6 +392,16 @@ async function main() {
                 i2: l.i2Speed,
                 st: l.stSpeed,
               })),
+            // Full lap-time series for the race telemetry chart. Only stored on
+            // Race / Sprint sessions to keep the file size down on practice/quali.
+            lapTimes: isRaceLike
+              ? d.laps
+                  .filter(l => l.lap && l.lapTime)
+                  .sort((a, b) => a.lap - b.lap)
+                  .map(l => ({ l: l.lap, t: +l.lapTime.toFixed(3), pit: !!l.isPitOut }))
+              : null,
+            // Per-lap position snapshots for the position-evolution chart.
+            positions: isRaceLike ? (positionsByDriver[d.number] || []) : null,
           })),
           stints: stints.map(s => ({
             driverNumber: s.driver_number,

@@ -521,7 +521,10 @@ function SC({label,value,sub,accent,icon}){return (<div style={{background:"rgba
 
 function SB({status}){const m={done:{bg:"rgba(39,244,210,0.12)",c:"#27F4D2",t:"COMPLETED"},next:{bg:"rgba(232,0,32,0.15)",c:"#E80020",t:"NEXT RACE"},postponed:{bg:"rgba(255,165,0,0.12)",c:"#FFA500",t:"POSTPONED"},upcoming:{bg:"rgba(255,255,255,0.05)",c:"rgba(255,255,255,0.4)",t:"UPCOMING"}};const s=m[status]||m.upcoming;return (<span style={{fontSize:10,fontWeight:700,letterSpacing:1,padding:"3px 8px",borderRadius:4,background:s.bg,color:s.c}}>{s.t}</span>);}
 
-const TABS=[{id:"Overview",label:"📊 Overview"},{id:"Standings",label:"🏆 Standings"},{id:"Race Results",label:"🏁 Race Results"},{id:"Sector Times",label:"⏱️ Sector Times"},{id:"Head to Head",label:"🥊 Head to Head"},{id:"Pit Stops",label:"🔧 Pit Stops"},{id:"Quotes",label:"💬 Quotes"},{id:"Schedule",label:"📅 Schedule"}];
+const TABS=[{id:"Overview",label:"📊 Overview"},{id:"Standings",label:"🏆 Standings"},{id:"Race Results",label:"🏁 Race Results"},{id:"Sector Times",label:"⏱️ Sector Times"},{id:"Telemetry",label:"📈 Telemetry"},{id:"Head to Head",label:"🥊 Head to Head"},{id:"Pit Stops",label:"🔧 Pit Stops"},{id:"Quotes",label:"💬 Quotes"},{id:"Schedule",label:"📅 Schedule"}];
+
+// F1 tire compound color map (broadcast graphics convention)
+const COMPOUND_COLORS={SOFT:"#FF3344",MEDIUM:"#FFDA00",HARD:"#EEEEEE",INTERMEDIATE:"#43B02A",WET:"#0067AD",UNKNOWN:"#888"};
 
 export default function F1Dashboard(){
   const[tab,setTab]=useState("Overview");
@@ -542,6 +545,9 @@ export default function F1Dashboard(){
   // Per-session driver selection for the Sector Times compare panel.
   // Map: sessionKey -> array of acronyms. Empty/missing means "auto: top 3".
   const[compareBySession,setCompareBySession]=useState({});
+  // Telemetry tab state
+  const[telMeetingKey,setTelMeetingKey]=useState(null);
+  const[telSelected,setTelSelected]=useState(()=>new Set());
 
   useEffect(()=>{
     Promise.all([
@@ -1495,6 +1501,211 @@ export default function F1Dashboard(){
               <div style={{fontSize:11,color:"rgba(255,255,255,0.25)",textAlign:"center",padding:8}}>
                 Sector times & speed trap data sourced from <a href="https://openf1.org" target="_blank" rel="noopener noreferrer" style={{color:"rgba(255,255,255,0.35)",textDecoration:"underline"}}>OpenF1 API</a> · Last updated {new Date(openf1.fetchedAt).toLocaleDateString()}
               </div>
+            </div>
+          );
+        })()}
+
+        {/* ═══ TELEMETRY ═══ */}
+        {tab==="Telemetry"&&(()=>{
+          // Collect race sessions across meetings (only racing sessions have lap series + positions)
+          const raceMeetings=(openf1?.meetings||[])
+            .map(m=>{
+              const race=m.sessions.find(s=>s.sessionName==="Race");
+              return race?{meeting:m,race}:null;
+            })
+            .filter(Boolean);
+          if(raceMeetings.length===0)return(
+            <div className="fu" style={{textAlign:"center",padding:60,color:"rgba(255,255,255,0.4)"}}>
+              <div style={{fontSize:40,marginBottom:12}}>📈</div>
+              <div style={{fontSize:16,fontWeight:600,marginBottom:4}}>No race telemetry available yet</div>
+              <div style={{fontSize:13}}>Run <code style={{background:"rgba(255,255,255,0.08)",padding:"2px 8px",borderRadius:4}}>npm run fetch-openf1</code> after a race finishes.</div>
+            </div>
+          );
+          const activeKey=telMeetingKey&&raceMeetings.find(rm=>rm.meeting.meetingKey===telMeetingKey)?telMeetingKey:raceMeetings[raceMeetings.length-1].meeting.meetingKey;
+          const cur=raceMeetings.find(rm=>rm.meeting.meetingKey===activeKey);
+          const race=cur.race;
+          const allDrivers=race.drivers||[];
+          // Default selection — finishing top 5. Use final position from per-lap snapshots.
+          const finalPos=(d)=>{
+            const ps=d.positions;
+            if(!ps||ps.length===0)return 99;
+            return ps[ps.length-1].p;
+          };
+          const sortedByFinish=[...allDrivers].sort((a,b)=>finalPos(a)-finalPos(b));
+          const defaultSel=new Set(sortedByFinish.slice(0,5).map(d=>d.acronym));
+          const selected=telSelected.size>0?telSelected:defaultSel;
+          const toggleTel=(acr)=>{
+            setTelSelected(prev=>{
+              const cur=prev.size>0?new Set(prev):new Set(defaultSel);
+              if(cur.has(acr)){if(cur.size<=1)return cur;cur.delete(acr);}
+              else if(cur.size<8){cur.add(acr);}
+              return cur;
+            });
+          };
+          const visibleDrivers=allDrivers.filter(d=>selected.has(d.acronym));
+          // Max lap across all drivers — derive race length
+          const maxLap=Math.max(1,...allDrivers.flatMap(d=>(d.lapTimes||[]).map(l=>l.l)));
+          // For lap-time chart, ignore extreme outliers (safety car / first lap can skew scale)
+          const allValidTimes=visibleDrivers.flatMap(d=>(d.lapTimes||[]).filter(l=>!l.pit).map(l=>l.t));
+          allValidTimes.sort((a,b)=>a-b);
+          const p10=allValidTimes[Math.floor(allValidTimes.length*0.05)]||0;
+          const p95=allValidTimes[Math.floor(allValidTimes.length*0.95)]||1;
+          const yMin=Math.max(0,p10-1);
+          const yMax=p95+3; // tail above for slow laps
+          return(
+            <div className="fu" style={{display:"flex",flexDirection:"column",gap:24}}>
+              {/* Meeting selector */}
+              <div style={{display:"flex",alignItems:"center",gap:14,flexWrap:"wrap"}}>
+                <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:"rgba(255,255,255,0.4)"}}>Race</div>
+                <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
+                  {raceMeetings.map(rm=>(
+                    <button key={rm.meeting.meetingKey} onClick={()=>{setTelMeetingKey(rm.meeting.meetingKey);setTelSelected(new Set());}} style={{cursor:"pointer",padding:"6px 14px",borderRadius:6,border:activeKey===rm.meeting.meetingKey?"1px solid rgba(232,0,32,0.4)":"1px solid rgba(255,255,255,0.08)",background:activeKey===rm.meeting.meetingKey?"rgba(232,0,32,0.12)":"rgba(255,255,255,0.03)",color:activeKey===rm.meeting.meetingKey?"#E80020":"rgba(255,255,255,0.5)",fontSize:12,fontWeight:activeKey===rm.meeting.meetingKey?600:400,fontFamily:"'Outfit',sans-serif"}}>{rm.meeting.meetingName.replace(" Grand Prix","")}</button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Driver chips */}
+              <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:16}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:10}}>
+                  <div style={{fontSize:12,color:"rgba(255,255,255,0.5)",fontWeight:500}}>Drivers (click to toggle · max 8)</div>
+                  <div style={{fontSize:10,color:"rgba(255,255,255,0.3)"}}>{visibleDrivers.length} selected</div>
+                </div>
+                <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                  {sortedByFinish.map(d=>{
+                    const on=selected.has(d.acronym);
+                    const tc=d.teamColour||"#fff";
+                    return(
+                      <button key={d.acronym} onClick={()=>toggleTel(d.acronym)} style={{display:"flex",alignItems:"center",gap:6,padding:"5px 10px",borderRadius:6,border:`1px solid ${on?tc:"rgba(255,255,255,0.08)"}`,background:on?`${tc}1a`:"rgba(255,255,255,0.02)",color:on?"#fff":"rgba(255,255,255,0.5)",cursor:"pointer",fontSize:11,fontWeight:on?700:500,fontFamily:"'Outfit',sans-serif"}}>
+                        <div style={{width:3,height:11,background:tc,borderRadius:1,opacity:on?1:0.5}}/>
+                        <span style={{letterSpacing:0.5}}>{d.acronym}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Lap Times Chart */}
+              {(()=>{
+                const W=800,H=280,padL=50,padR=20,padT=18,padB=34;
+                const plotW=W-padL-padR,plotH=H-padT-padB;
+                const xOf=l=>padL+((l-1)/Math.max(1,maxLap-1))*plotW;
+                const yOf=t=>padT+plotH-((Math.min(t,yMax)-yMin)/(yMax-yMin))*plotH;
+                const yTicks=[yMin,(yMin+yMax)/2,yMax].map(v=>Math.round(v));
+                const xTicks=Array.from({length:6},(_,i)=>Math.round(1+(i/5)*(maxLap-1)));
+                const fmtSec=(s)=>{const m=Math.floor(s/60);const r=(s%60).toFixed(1);return `${m}:${r.padStart(4,"0")}`;};
+                return(
+                  <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20}}>
+                    <div style={{fontSize:15,fontWeight:700,marginBottom:4}}>Lap Times</div>
+                    <div style={{fontSize:12,color:"rgba(255,255,255,0.35)",marginBottom:16}}>Lap-by-lap pace · low Y axis clipped to 5th-95th percentile to keep safety-car / pit laps from squashing the scale</div>
+                    <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{width:"100%",height:280,display:"block"}}>
+                      {yTicks.map((v,i)=>(
+                        <g key={i}>
+                          <line x1={padL} x2={W-padR} y1={yOf(v)} y2={yOf(v)} stroke="rgba(255,255,255,0.06)"/>
+                          <text x={padL-8} y={yOf(v)+4} textAnchor="end" fill="rgba(255,255,255,0.4)" fontSize="10" fontFamily="'Outfit',sans-serif">{fmtSec(v)}</text>
+                        </g>
+                      ))}
+                      {xTicks.map((l,i)=>(
+                        <text key={i} x={xOf(l)} y={H-padB+18} textAnchor="middle" fill="rgba(255,255,255,0.45)" fontSize="10" fontFamily="'Outfit',sans-serif">L{l}</text>
+                      ))}
+                      {visibleDrivers.map(d=>{
+                        const lt=(d.lapTimes||[]).filter(l=>l.l>1); // skip lap 1 (race start, weird)
+                        if(lt.length<2)return null;
+                        const color=d.teamColour||"#fff";
+                        const path=lt.map((p,i)=>`${i===0?"M":"L"}${xOf(p.l)},${yOf(p.t)}`).join(" ");
+                        return <path key={d.acronym} d={path} stroke={color} strokeWidth={1.6} fill="none" strokeLinecap="round" strokeLinejoin="round" opacity={0.85}/>;
+                      })}
+                    </svg>
+                  </div>
+                );
+              })()}
+
+              {/* Tire Stints */}
+              {(()=>{
+                const allStints=race.stints||[];
+                if(allStints.length===0)return null;
+                return(
+                  <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20}}>
+                    <div style={{fontSize:15,fontWeight:700,marginBottom:4}}>Tire Strategy</div>
+                    <div style={{fontSize:12,color:"rgba(255,255,255,0.35)",marginBottom:16}}>Stints by compound — Soft, Medium, Hard, Intermediate, Wet</div>
+                    <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                      {visibleDrivers.map(d=>{
+                        const myStints=allStints.filter(s=>s.driverNumber===d.number).sort((a,b)=>a.stintNumber-b.stintNumber);
+                        return(
+                          <div key={d.acronym} style={{display:"flex",alignItems:"center",gap:12}}>
+                            <div style={{width:60,fontSize:11,fontWeight:700,letterSpacing:0.5,display:"flex",alignItems:"center",gap:6,flexShrink:0}}>
+                              <div style={{width:3,height:14,background:d.teamColour||"#fff",borderRadius:1}}/>
+                              {d.acronym}
+                            </div>
+                            <div style={{flex:1,display:"flex",height:22,background:"rgba(255,255,255,0.03)",borderRadius:4,overflow:"hidden",position:"relative"}}>
+                              {myStints.map((s,i)=>{
+                                const start=Math.max(1,s.lapStart||1);
+                                const end=Math.min(maxLap,s.lapEnd||maxLap);
+                                const lapsInStint=end-start+1;
+                                const pct=(lapsInStint/maxLap)*100;
+                                const c=(s.compound||"UNKNOWN").toUpperCase();
+                                const col=COMPOUND_COLORS[c]||COMPOUND_COLORS.UNKNOWN;
+                                const dark=c==="HARD";
+                                return(
+                                  <div key={i} title={`${c} · L${start}-L${end} (${lapsInStint} laps)`} style={{width:`${pct}%`,background:col,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:800,color:dark?"#111":"#fff",letterSpacing:0.5,borderRight:i<myStints.length-1?"2px solid rgba(0,0,0,0.4)":"none"}}>
+                                    {pct>4?c[0]:""}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div style={{display:"flex",gap:14,marginTop:14,flexWrap:"wrap",fontSize:10,color:"rgba(255,255,255,0.5)"}}>
+                      {Object.entries(COMPOUND_COLORS).filter(([k])=>k!=="UNKNOWN").map(([k,v])=>(
+                        <div key={k} style={{display:"flex",alignItems:"center",gap:6}}>
+                          <div style={{width:14,height:8,background:v,borderRadius:2}}/>
+                          <span>{k[0]+k.slice(1).toLowerCase()}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Position Evolution */}
+              {(()=>{
+                const W=800,H=280,padL=44,padR=20,padT=18,padB=34;
+                const plotW=W-padL-padR,plotH=H-padT-padB;
+                const totalPositions=22;
+                const xOf=l=>padL+((l-1)/Math.max(1,maxLap-1))*plotW;
+                const yOf=p=>padT+((p-1)/(totalPositions-1))*plotH;
+                const xTicks=Array.from({length:6},(_,i)=>Math.round(1+(i/5)*(maxLap-1)));
+                const yTicks=[1,5,10,15,20];
+                const hasAny=visibleDrivers.some(d=>(d.positions||[]).length>0);
+                if(!hasAny)return(
+                  <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20,fontSize:12,color:"rgba(255,255,255,0.4)"}}>Position data not available for this race.</div>
+                );
+                return(
+                  <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20}}>
+                    <div style={{fontSize:15,fontWeight:700,marginBottom:4}}>Position by Lap</div>
+                    <div style={{fontSize:12,color:"rgba(255,255,255,0.35)",marginBottom:16}}>Lines cross at overtakes — flat clusters = safety car, sharp drops = pit stops</div>
+                    <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{width:"100%",height:280,display:"block"}}>
+                      {yTicks.map(p=>(
+                        <g key={p}>
+                          <line x1={padL} x2={W-padR} y1={yOf(p)} y2={yOf(p)} stroke="rgba(255,255,255,0.05)"/>
+                          <text x={padL-8} y={yOf(p)+4} textAnchor="end" fill="rgba(255,255,255,0.4)" fontSize="10" fontFamily="'Outfit',sans-serif">P{p}</text>
+                        </g>
+                      ))}
+                      {xTicks.map((l,i)=>(
+                        <text key={i} x={xOf(l)} y={H-padB+18} textAnchor="middle" fill="rgba(255,255,255,0.45)" fontSize="10" fontFamily="'Outfit',sans-serif">L{l}</text>
+                      ))}
+                      {visibleDrivers.map(d=>{
+                        const pts=d.positions||[];
+                        if(pts.length<2)return null;
+                        const color=d.teamColour||"#fff";
+                        const path=pts.map((p,i)=>`${i===0?"M":"L"}${xOf(p.l)},${yOf(p.p)}`).join(" ");
+                        return <path key={d.acronym} d={path} stroke={color} strokeWidth={2} fill="none" strokeLinecap="round" strokeLinejoin="round" opacity={0.85}/>;
+                      })}
+                    </svg>
+                  </div>
+                );
+              })()}
             </div>
           );
         })()}
