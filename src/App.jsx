@@ -821,14 +821,19 @@ export default function F1Dashboard(){
                 <div style={{fontSize:15,fontWeight:700,marginBottom:4}}>Constructors' World Championship</div>
                 <div style={{fontSize:12,color:"rgba(255,255,255,0.35)",marginBottom:16}}>{"After Round " + completedRounds}</div>
                 {(()=>{const maxDriverPts=Math.max(1,...CS.flatMap(c=>(c.dr||[]).map(d=>d.pts||0)));return CS.map((c,i)=>(
-                  <div key={c.t} style={{padding:"14px 16px",borderRadius:10,marginBottom:4,background:i<3?TB[c.t]:"transparent",border:i<3?`1px solid ${TC[c.t]}22`:"1px solid transparent"}}>
-                    <div style={{display:"flex",alignItems:"center",marginBottom:8}}>
+                  <div key={c.t} style={{position:"relative",padding:"14px 16px",borderRadius:10,marginBottom:4,background:i<3?TB[c.t]:"transparent",border:i<3?`1px solid ${TC[c.t]}22`:"1px solid transparent",overflow:"hidden"}}>
+                    {i<3&&(
+                      <div style={{position:"absolute",right:-10,top:-18,opacity:0.10,pointerEvents:"none"}}>
+                        <TL team={c.t} size={120}/>
+                      </div>
+                    )}
+                    <div style={{position:"relative",display:"flex",alignItems:"center",marginBottom:8}}>
                       <div style={{width:24,fontSize:16,fontWeight:800,color:i<3?TC[c.t]:"rgba(255,255,255,0.3)"}}>{c.p}</div>
                       <TL team={c.t} size={26}/>
                       <div style={{flex:1,marginLeft:10}}><span style={{fontSize:15,fontWeight:700}}>{c.t}</span></div>
                       <div style={{fontSize:20,fontWeight:800}}>{c.pts}<span style={{fontSize:11,fontWeight:400,color:"rgba(255,255,255,0.4)",marginLeft:4}}>PTS</span></div>
                     </div>
-                    <div style={{marginLeft:24}}>
+                    <div style={{position:"relative",marginLeft:24}}>
                       {c.dr.map((d,di)=>(
                         <div key={di} style={{display:"flex",alignItems:"center",gap:8,marginBottom:3}}>
                           <div style={{width:70,fontSize:11,color:"rgba(255,255,255,0.5)",textAlign:"right"}}>{d.n}</div>
@@ -849,10 +854,13 @@ export default function F1Dashboard(){
               <div style={{fontSize:13,textTransform:"uppercase",letterSpacing:1.5,color:"rgba(255,255,255,0.4)",marginBottom:16}}>Season Narrative</div>
               <div className="g4">
                 {narrative.map((n,i)=>(
-                  <div key={i} style={{padding:16,background:TB[n.t],borderRadius:10,border:`1px solid ${TC[n.t]}20`}}>
-                    <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:8}}><TL team={n.t} size={18}/><span style={{fontSize:11,color:"rgba(255,255,255,0.4)",textTransform:"uppercase",letterSpacing:1}}>{n.ti}</span></div>
-                    <div style={{fontSize:16,fontWeight:700,color:TC[n.t]}}>{n.t}</div>
-                    <div style={{fontSize:12,color:"rgba(255,255,255,0.5)",marginTop:4,lineHeight:1.4}}>{n.desc}</div>
+                  <div key={i} style={{position:"relative",padding:16,background:TB[n.t],borderRadius:10,border:`1px solid ${TC[n.t]}20`,overflow:"hidden"}}>
+                    <div style={{position:"absolute",right:-14,bottom:-14,opacity:0.10,pointerEvents:"none",transform:"scale(1.1)"}}>
+                      <TL team={n.t} size={130}/>
+                    </div>
+                    <div style={{position:"relative",display:"flex",alignItems:"center",gap:6,marginBottom:8}}><TL team={n.t} size={18}/><span style={{fontSize:11,color:"rgba(255,255,255,0.4)",textTransform:"uppercase",letterSpacing:1}}>{n.ti}</span></div>
+                    <div style={{position:"relative",fontSize:16,fontWeight:700,color:TC[n.t]}}>{n.t}</div>
+                    <div style={{position:"relative",fontSize:12,color:"rgba(255,255,255,0.5)",marginTop:4,lineHeight:1.4}}>{n.desc}</div>
                   </div>
                 ))}
               </div>
