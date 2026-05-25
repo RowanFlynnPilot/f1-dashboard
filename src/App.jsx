@@ -403,6 +403,30 @@ function transformData(raw) {
 }
 
 
+// Animated count-up for stat hero numbers. Returns the eased value at this render frame.
+function useCountUp(target, duration = 1200, decimals = 0) {
+  const [value, setValue] = useState(decimals > 0 ? 0 : 0);
+  useEffect(() => {
+    let raf;
+    const start = performance.now();
+    const tick = (now) => {
+      const t = Math.min(1, (now - start) / duration);
+      const eased = 1 - Math.pow(1 - t, 3); // easeOutCubic
+      const v = target * eased;
+      setValue(decimals > 0 ? v : Math.round(v));
+      if (t < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target, duration, decimals]);
+  return value;
+}
+
+function AnimatedNum({value, duration=1200, decimals=0, prefix="", suffix=""}) {
+  const v = useCountUp(value, duration, decimals);
+  return <>{prefix}{decimals>0?v.toFixed(decimals):v}{suffix}</>;
+}
+
 // Drivers whose external CDN headshots fail silently — use base64 only
 const DH_USE_B64 = new Set(["Kimi Antonelli","Andrea Kimi Antonelli","Arvid Lindblad"]);
 function DH({name,size=32,headshots}){const[tryLevel,setTryLevel]=useState(0);
@@ -478,7 +502,17 @@ export default function F1Dashboard(){
         ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:2px}
         @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
         @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
+        @keyframes pulseOnce{0%{transform:scale(1)}30%{transform:scale(1.18)}100%{transform:scale(1)}}
+        @keyframes barGrow{from{transform:scaleX(0);transform-origin:left}to{transform:scaleX(1);transform-origin:left}}
         .fu{animation:fadeUp .6s ease both}
+        .fu > *{animation:fadeUp .55s ease both}
+        .fu > *:nth-child(1){animation-delay:60ms}
+        .fu > *:nth-child(2){animation-delay:140ms}
+        .fu > *:nth-child(3){animation-delay:220ms}
+        .fu > *:nth-child(4){animation-delay:300ms}
+        .fu > *:nth-child(5){animation-delay:360ms}
+        .fu > *:nth-child(n+6){animation-delay:420ms}
+        .pulse-once{animation:pulseOnce 1.6s ease-out 1}
         .tab-bar{display:flex;gap:0;margin-top:20px;border-bottom:1px solid rgba(255,255,255,0.06);overflow-x:auto}
         .tb{cursor:pointer;padding:10px 18px;border:none;background:none;color:rgba(255,255,255,0.4);font-size:13px;font-weight:500;letter-spacing:.5px;font-family:'Outfit',sans-serif;transition:all .3s;border-bottom:2px solid transparent;white-space:nowrap;flex:1;text-align:center}
         .tb:hover{color:rgba(255,255,255,0.7);background:rgba(255,255,255,0.02)}.tb.a{color:#E80020;border-bottom-color:#E80020;background:rgba(232,0,32,0.04)}
@@ -576,18 +610,18 @@ export default function F1Dashboard(){
                       </div>
                       <div style={{display:"flex",gap:36,flexWrap:"wrap",alignItems:"baseline"}}>
                         <div>
-                          <div className="hero-pts" style={{fontWeight:900,color:tc,lineHeight:0.9,textShadow:`0 0 32px ${tc}50`}}>{leader.pts}</div>
+                          <div className="hero-pts" style={{fontWeight:900,color:tc,lineHeight:0.9,textShadow:`0 0 32px ${tc}50`}}><AnimatedNum value={leader.pts} duration={1400}/></div>
                           <div style={{fontSize:10,textTransform:"uppercase",letterSpacing:2.5,color:"rgba(255,255,255,0.4)",marginTop:8,fontWeight:600}}>Points</div>
                         </div>
                         {p2&&gap>0&&(
                           <div>
-                            <div className="hero-sub" style={{fontWeight:800,color:"#27F4D2",lineHeight:1}}>+{gap}</div>
+                            <div className="hero-sub" style={{fontWeight:800,color:"#27F4D2",lineHeight:1}}><AnimatedNum value={gap} duration={1400} prefix="+"/></div>
                             <div style={{fontSize:10,textTransform:"uppercase",letterSpacing:2.5,color:"rgba(255,255,255,0.4)",marginTop:8,fontWeight:600}}>over {p2.n.split(" ").pop()}</div>
                           </div>
                         )}
                         {leader.wins>0&&(
                           <div>
-                            <div className="hero-sub" style={{fontWeight:800,color:"#fff",lineHeight:1}}>{leader.wins}</div>
+                            <div className="hero-sub" style={{fontWeight:800,color:"#fff",lineHeight:1}}><AnimatedNum value={leader.wins} duration={1100}/></div>
                             <div style={{fontSize:10,textTransform:"uppercase",letterSpacing:2.5,color:"rgba(255,255,255,0.4)",marginTop:8,fontWeight:600}}>Race Win{leader.wins>1?"s":""}</div>
                           </div>
                         )}
@@ -776,9 +810,9 @@ export default function F1Dashboard(){
                       <div style={{fontSize:13,fontWeight:600,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{d.n}</div>
                       <div style={{fontSize:10,color:"rgba(255,255,255,0.35)",marginTop:1}}>{d.t}</div>
                     </div>
-                    <div style={{width:40,textAlign:"center",fontSize:11,fontWeight:600,color:d.mv>0?"#27F4D2":d.mv<0?"#E80020":"rgba(255,255,255,0.15)"}}>{d.mv>0?`▲${d.mv}`:d.mv<0?`▼${Math.abs(d.mv)}`:"—"}</div>
+                    <div className={d.mv!==0?"pulse-once":""} style={{width:40,textAlign:"center",fontSize:11,fontWeight:600,color:d.mv>0?"#27F4D2":d.mv<0?"#E80020":"rgba(255,255,255,0.15)",display:"inline-block"}}>{d.mv>0?`▲${d.mv}`:d.mv<0?`▼${Math.abs(d.mv)}`:"—"}</div>
                     <div style={{width:40,textAlign:"center",fontSize:11,fontWeight:600,color:d.d!=="—"?"#27F4D2":"rgba(255,255,255,0.2)"}}>{d.d}</div>
-                    <div style={{width:55,marginRight:8,overflow:"hidden"}}><div style={{height:4,width:`${d.pts>0?Math.max((d.pts/maxPts)*100,3):0}%`,background:TC[d.t],borderRadius:2}}/></div>
+                    <div style={{width:55,marginRight:8,overflow:"hidden"}}><div style={{height:4,width:`${d.pts>0?Math.max((d.pts/maxPts)*100,3):0}%`,background:TC[d.t],borderRadius:2,transformOrigin:"left",animation:"barGrow 1.1s cubic-bezier(0.22,1,0.36,1) both",animationDelay:`${600+i*40}ms`}}/></div>
                     <div style={{fontSize:14,fontWeight:700,width:32,textAlign:"right"}}>{d.pts}</div>
                   </div>
                 ))})()}
@@ -799,7 +833,7 @@ export default function F1Dashboard(){
                         <div key={di} style={{display:"flex",alignItems:"center",gap:8,marginBottom:3}}>
                           <div style={{width:70,fontSize:11,color:"rgba(255,255,255,0.5)",textAlign:"right"}}>{d.n}</div>
                           <div style={{flex:1,height:4,background:"rgba(255,255,255,0.04)",borderRadius:2,overflow:"hidden"}}>
-                            <div style={{height:"100%",width:`${d.pts>0?Math.max((d.pts/maxDriverPts)*100,2):0}%`,background:TC[c.t],borderRadius:2,opacity:di===0?1:0.55}}/>
+                            <div style={{height:"100%",width:`${d.pts>0?Math.max((d.pts/maxDriverPts)*100,2):0}%`,background:TC[c.t],borderRadius:2,opacity:di===0?1:0.55,transformOrigin:"left",animation:"barGrow 1.1s cubic-bezier(0.22,1,0.36,1) both",animationDelay:`${700+i*60+di*40}ms`}}/>
                           </div>
                           <div style={{width:24,fontSize:11,fontWeight:600,color:"rgba(255,255,255,0.6)",textAlign:"right"}}>{d.pts}</div>
                         </div>
