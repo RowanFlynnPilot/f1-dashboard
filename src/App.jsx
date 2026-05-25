@@ -631,9 +631,60 @@ export default function F1Dashboard(){
                 </div>
               );
             })()}
+            {/* Race Recap */}
+            {(()=>{
+              const lastRaceFull=races.filter(r=>!r.sprint).slice(-1)[0];
+              if(!lastRaceFull||!lastRaceFull.pod||lastRaceFull.pod.length<3)return null;
+              const fullName=(lastName)=>DS.find(d=>d.n.split(" ").pop()===lastName)?.n||lastName;
+              const winnerTC=TC[lastRaceFull.pod[0].t]||"#E80020";
+              const medals=["#FFD700","#C0C0C0","#CD7F32"];
+              return(
+                <div style={{position:"relative",background:`linear-gradient(135deg, ${winnerTC}0c 0%, rgba(255,255,255,0.02) 60%)`,border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20,overflow:"hidden"}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:16,flexWrap:"wrap",gap:8}}>
+                    <div>
+                      <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:"rgba(255,255,255,0.4)",fontWeight:600}}>Race Recap · Round {lastRaceFull.r}</div>
+                      <div style={{fontSize:18,fontWeight:700,marginTop:4}}>{lastRaceFull.nm}</div>
+                      <div style={{fontSize:11,color:"rgba(255,255,255,0.4)",marginTop:2}}>{lastRaceFull.ci} · {lastRaceFull.dt}</div>
+                    </div>
+                    <div style={{cursor:"pointer",fontSize:11,color:"#E80020",fontWeight:600}} onClick={()=>setTab("Race Results")}>Full results →</div>
+                  </div>
+                  <div style={{display:"grid",gridTemplateColumns:"repeat(3, 1fr)",gap:12}}>
+                    {lastRaceFull.pod.map((p,idx)=>{
+                      const tc=TC[p.t]||"#fff";
+                      const medal=medals[idx];
+                      return(
+                        <div key={idx} style={{position:"relative",padding:14,paddingLeft:18,background:`linear-gradient(135deg, ${tc}1a 0%, ${tc}05 100%)`,border:`1px solid ${tc}35`,borderRadius:10,overflow:"hidden"}}>
+                          <div style={{position:"absolute",top:0,left:0,width:4,height:"100%",background:medal,boxShadow:`0 0 12px ${medal}66`}}/>
+                          <div style={{position:"absolute",right:-8,top:-12,opacity:0.08,pointerEvents:"none"}}><TL team={p.t} size={70}/></div>
+                          <div style={{position:"relative",display:"flex",alignItems:"center",gap:12}}>
+                            <div style={{fontSize:26,fontWeight:900,color:medal,width:22,textAlign:"center",textShadow:`0 0 14px ${medal}66`}}>{idx+1}</div>
+                            <DH name={fullName(p.d)} size={48} headshots={headshots}/>
+                            <div style={{flex:1,minWidth:0}}>
+                              <div style={{fontSize:13,fontWeight:700,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{p.d}</div>
+                              <div style={{fontSize:10,color:tc,marginTop:2,fontWeight:500}}>{p.t}</div>
+                              <div style={{fontSize:10,color:"rgba(255,255,255,0.5)",marginTop:2,fontVariantNumeric:"tabular-nums"}}>{p.g}</div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {(()=>{const fl=lastRaceFull.fl;const flDriver=fl?.driver||fl?.d;const flTeam=fl?.team||fl?.tm;const flTime=fl?.time||fl?.t;if(!flDriver||flDriver==="N/A")return null;return(
+                    <div style={{marginTop:12,padding:"10px 14px",background:"rgba(232,0,32,0.06)",border:"1px solid rgba(232,0,32,0.18)",borderRadius:8,display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
+                      <div style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:"#E80020",fontWeight:800,padding:"3px 8px",background:"rgba(232,0,32,0.14)",borderRadius:4}}>⚡ FASTEST LAP</div>
+                      <div style={{fontSize:13,fontWeight:700}}>{flDriver}</div>
+                      <div style={{display:"flex",alignItems:"center",gap:6}}>
+                        <TL team={flTeam} size={16}/>
+                        <span style={{fontSize:11,color:"rgba(255,255,255,0.55)"}}>{flTeam}</span>
+                      </div>
+                      <div style={{flex:1}}/>
+                      <div style={{fontSize:14,fontWeight:700,fontVariantNumeric:"tabular-nums",color:"#fff"}}>{flTime||""}</div>
+                    </div>
+                  );})()}
+                </div>
+              );
+            })()}
             <div style={{display:"flex",gap:12,flexWrap:"wrap"}}>
-              <SC label="Last Race Winner" value={lastWinner?lastWinner.name:"TBD"} sub={lastWinner?`${lastWinner.race}`:"Season not started"} accent={TC[lastWinner?.team]||"#fff"} icon={lastWinner?<TL team={lastWinner.team} size={24}/>:null}/>
-              <SC label="Fastest Lap" value={lastRaceFL?lastRaceFL.t||lastRaceFL.time:"N/A"} sub={lastRaceFL?`${lastRaceFL.d||lastRaceFL.driver} · ${lastRaceFL.tm||lastRaceFL.team}`:""} accent="#E80020" icon={lastRaceFL?<TL team={lastRaceFL.tm||lastRaceFL.team} size={24}/>:null}/>
               <SC label="Avg Pit Stop" value={`${avgP}s`} sub={pitRaceName||""} accent="#FFD700"/>
               <SC label="Fastest Pit Stop" value={fastestPit?`${fastestPit.s.toFixed(3)}s`:"N/A"} sub={fastestPit?`${fastestPit.d}`:""} accent="#27F4D2" icon={fastestPit&&fastestPit.t?<TL team={fastestPit.t} size={24}/>:null}/>
               <SC label="Completed Races" value={`${completedRounds}`} sub={`of ${totalRounds} scheduled`} accent="#d946ef"/>
