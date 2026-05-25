@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, Fragment } from "react";
 
 const SEASON = 2026;
 
@@ -539,6 +539,9 @@ export default function F1Dashboard(){
   const[progHover,setProgHover]=useState(null);
   const[progHidden,setProgHidden]=useState(()=>new Set());
   const[tracks,setTracks]=useState(null);
+  // Per-session driver selection for the Sector Times compare panel.
+  // Map: sessionKey -> array of acronyms. Empty/missing means "auto: top 3".
+  const[compareBySession,setCompareBySession]=useState({});
 
   useEffect(()=>{
     Promise.all([
@@ -1328,6 +1331,104 @@ export default function F1Dashboard(){
                 {(()=>{const di=drivers.find(d=>d.maxI2Speed===sb.topI2Speed);return <SC label="Top Speed (I2)" value={`${sb.topI2Speed||"—"} km/h`} sub={di?.acronym||""} accent="#FF8000" icon={di?<TL team={normTeam(di.team)} size={22}/>:null}/>;})()}
                 {(()=>{const di=drivers.find(d=>d.maxSTSpeed===sb.topSTSpeed);return <SC label="Top Speed (ST)" value={`${sb.topSTSpeed||"—"} km/h`} sub={di?.acronym||""} accent="#FF8000" icon={di?<TL team={normTeam(di.team)} size={22}/>:null}/>;})()}
               </div>
+
+              {/* Driver Compare — pick 2-4 drivers, see bars per sector with deltas */}
+              {(()=>{
+                if(drivers.length<2)return null;
+                const sessionKey=curSess.sessionKey;
+                const userSel=(compareBySession[sessionKey]||[]).filter(a=>drivers.find(d=>d.acronym===a));
+                const defaultSel=drivers.slice(0,3).map(d=>d.acronym);
+                const selected=userSel.length>0?userSel:defaultSel;
+                const toggle=(acr)=>{
+                  setCompareBySession(prev=>{
+                    const current=(prev[sessionKey]||defaultSel).filter(a=>drivers.find(d=>d.acronym===a));
+                    let next;
+                    if(current.includes(acr)){
+                      if(current.length<=1)return prev; // keep at least one
+                      next=current.filter(a=>a!==acr);
+                    } else {
+                      if(current.length>=4)return prev; // cap at 4
+                      next=[...current,acr];
+                    }
+                    return{...prev,[sessionKey]:next};
+                  });
+                };
+                const selectedDrivers=selected.map(a=>drivers.find(d=>d.acronym===a)).filter(Boolean);
+                // For bar scaling — use max time across selected drivers for each sector
+                const maxS=[
+                  Math.max(...selectedDrivers.map(d=>d.bestS1||0)),
+                  Math.max(...selectedDrivers.map(d=>d.bestS2||0)),
+                  Math.max(...selectedDrivers.map(d=>d.bestS3||0)),
+                ];
+                const minS=[
+                  Math.min(...selectedDrivers.filter(d=>d.bestS1).map(d=>d.bestS1))||0,
+                  Math.min(...selectedDrivers.filter(d=>d.bestS2).map(d=>d.bestS2))||0,
+                  Math.min(...selectedDrivers.filter(d=>d.bestS3).map(d=>d.bestS3))||0,
+                ];
+                return(
+                  <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:4,flexWrap:"wrap",gap:8}}>
+                      <div style={{fontSize:15,fontWeight:700}}>Driver Compare</div>
+                      <div style={{fontSize:11,color:"rgba(255,255,255,0.4)"}}>{selectedDrivers.length} of 4 max selected · Click to toggle</div>
+                    </div>
+                    <div style={{fontSize:12,color:"rgba(255,255,255,0.35)",marginBottom:16}}>Pick drivers to see their best sectors side-by-side. Bars are scaled relative to the slowest in each sector.</div>
+                    {/* Driver picker */}
+                    <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:18}}>
+                      {drivers.map(d=>{
+                        const on=selected.includes(d.acronym);
+                        const tc=d.teamColour||"#fff";
+                        const atMax=!on&&selected.length>=4;
+                        return(
+                          <button key={d.acronym} disabled={atMax} onClick={()=>toggle(d.acronym)} style={{display:"flex",alignItems:"center",gap:6,padding:"5px 10px",borderRadius:6,border:`1px solid ${on?tc:"rgba(255,255,255,0.08)"}`,background:on?`${tc}1a`:"rgba(255,255,255,0.02)",color:on?"#fff":"rgba(255,255,255,0.55)",cursor:atMax?"not-allowed":"pointer",fontSize:11,fontWeight:on?700:500,fontFamily:"'Outfit',sans-serif",opacity:atMax?0.35:1,transition:"all .15s"}}>
+                            <div style={{width:3,height:11,background:tc,borderRadius:1,opacity:on?1:0.5}}/>
+                            <span style={{letterSpacing:0.5}}>{d.acronym}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {/* Compare grid */}
+                    <div style={{display:"grid",gridTemplateColumns:"minmax(110px,140px) repeat(3, 1fr)",gap:"10px 16px",alignItems:"center"}}>
+                      <div style={{fontSize:10,textTransform:"uppercase",letterSpacing:1,color:"rgba(255,255,255,0.3)",fontWeight:600}}>Driver</div>
+                      {["Sector 1","Sector 2","Sector 3"].map(h=>(
+                        <div key={h} style={{fontSize:10,textTransform:"uppercase",letterSpacing:1,color:"rgba(255,255,255,0.3)",fontWeight:600}}>{h}</div>
+                      ))}
+                      {selectedDrivers.map(d=>{
+                        const tc=d.teamColour||"#fff";
+                        return(
+                          <Fragment key={d.acronym}>
+                            <div style={{display:"flex",alignItems:"center",gap:8,minWidth:0}}>
+                              <div style={{width:3,height:24,background:tc,borderRadius:1.5,flexShrink:0}}/>
+                              <div style={{minWidth:0}}>
+                                <div style={{fontSize:13,fontWeight:700,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{d.acronym}</div>
+                                <div style={{fontSize:10,color:"rgba(255,255,255,0.4)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{normTeam(d.team||"")}</div>
+                              </div>
+                            </div>
+                            {[1,2,3].map(si=>{
+                              const time=d[`bestS${si}`];
+                              const max=maxS[si-1];
+                              const min=minS[si-1];
+                              const isFastest=time&&min&&Math.abs(time-min)<0.001;
+                              const delta=time&&min?time-min:0;
+                              const pct=time&&max?(time/max)*100:0;
+                              return(
+                                <div key={si} style={{display:"flex",alignItems:"center",gap:8}}>
+                                  <div style={{flex:1,height:14,background:"rgba(255,255,255,0.04)",borderRadius:3,overflow:"hidden",position:"relative"}}>
+                                    <div style={{position:"absolute",left:0,top:0,bottom:0,width:`${pct}%`,background:`linear-gradient(90deg, ${tc}c0 0%, ${tc}80 100%)`,borderRadius:3,transformOrigin:"left",animation:"barGrow 0.7s cubic-bezier(0.22,1,0.36,1) both"}}/>
+                                  </div>
+                                  <div style={{minWidth:78,textAlign:"right"}}>
+                                    <div style={{fontSize:12,fontWeight:700,fontVariantNumeric:"tabular-nums",color:isFastest?"#d946ef":"#fff"}}>{time?time.toFixed(3):"—"}</div>
+                                    <div style={{fontSize:9,color:isFastest?"#d946ef":"rgba(255,255,255,0.4)",fontVariantNumeric:"tabular-nums",marginTop:1}}>{isFastest?"FASTEST":delta>0?`+${delta.toFixed(3)}`:""}</div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </Fragment>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Driver Sector Comparison Table */}
               <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20}}>
