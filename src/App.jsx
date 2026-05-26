@@ -757,13 +757,18 @@ export default function F1Dashboard(){
         const startIso=new Date(startMs).toISOString();
         const endIso=new Date(endMs).toISOString();
         const base=`https://api.openf1.org/v1`;
-        const [carRes,locRes]=await Promise.all([
-          fetch(`${base}/car_data?session_key=${sessionKey}&driver_number=${drv.number}&date>=${startIso}&date<=${endIso}`),
-          fetch(`${base}/location?session_key=${sessionKey}&driver_number=${drv.number}&date>=${startIso}&date<=${endIso}`),
-        ]);
-        if(!carRes.ok||!locRes.ok)throw new Error("Network");
-        const [carData,location]=await Promise.all([carRes.json(),locRes.json()]);
+        // Sequence the two requests instead of running parallel — OpenF1 free tier
+        // rate limit is 3 req/s and 4 parallel (2 drivers × car_data + location) can
+        // breach it for back-to-back lap picks.
+        const carRes=await fetch(`${base}/car_data?session_key=${sessionKey}&driver_number=${drv.number}&date>=${startIso}&date<=${endIso}`);
+        if(!carRes.ok)throw new Error(`car_data HTTP ${carRes.status}`);
+        const carData=await carRes.json();
+        const locRes=await fetch(`${base}/location?session_key=${sessionKey}&driver_number=${drv.number}&date>=${startIso}&date<=${endIso}`);
+        if(!locRes.ok)throw new Error(`location HTTP ${locRes.status}`);
+        const location=await locRes.json();
+        if(!carData||carData.length===0||!location||location.length<3)throw new Error("No samples returned (lap may predate live data)");
         const samples=processLapTelemetry(carData,location);
+        if(samples.length<3)throw new Error("Could not align speed and location samples");
         setLapCompareData(prev=>({...prev,[key]:{samples,loading:false}}));
       }catch(err){
         setLapCompareData(prev=>({...prev,[key]:{loading:false,error:err.message||"fetch failed"}}));
@@ -2028,13 +2033,15 @@ export default function F1Dashboard(){
                     const startIso=new Date(startMs).toISOString();
                     const endIso=new Date(endMs).toISOString();
                     const base=`https://api.openf1.org/v1`;
-                    const [carRes,locRes]=await Promise.all([
-                      fetch(`${base}/car_data?session_key=${cur.race.sessionKey}&driver_number=${drv.number}&date>=${startIso}&date<=${endIso}`),
-                      fetch(`${base}/location?session_key=${cur.race.sessionKey}&driver_number=${drv.number}&date>=${startIso}&date<=${endIso}`),
-                    ]);
-                    if(!carRes.ok||!locRes.ok)throw new Error("Network");
-                    const [carData,location]=await Promise.all([carRes.json(),locRes.json()]);
+                    const carRes=await fetch(`${base}/car_data?session_key=${cur.race.sessionKey}&driver_number=${drv.number}&date>=${startIso}&date<=${endIso}`);
+                    if(!carRes.ok)throw new Error(`car_data HTTP ${carRes.status}`);
+                    const carData=await carRes.json();
+                    const locRes=await fetch(`${base}/location?session_key=${cur.race.sessionKey}&driver_number=${drv.number}&date>=${startIso}&date<=${endIso}`);
+                    if(!locRes.ok)throw new Error(`location HTTP ${locRes.status}`);
+                    const location=await locRes.json();
+                    if(!carData||carData.length===0||!location||location.length<3)throw new Error("No samples returned");
                     const samples=processLapTelemetry(carData,location);
+                    if(samples.length<3)throw new Error("Could not align speed/location");
                     setLapCompareData(prev=>({...prev,[key]:{samples,loading:false}}));
                   }catch(err){
                     setLapCompareData(prev=>({...prev,[key]:{loading:false,error:err.message||"fetch failed"}}));
@@ -2083,8 +2090,34 @@ export default function F1Dashboard(){
                         );})}
                       </div>
                     </div>
+                    {/* Lap dropdown selector */}
+                    <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10,flexWrap:"wrap"}}>
+                      <span style={{fontSize:10,textTransform:"uppercase",letterSpacing:1,color:"rgba(255,255,255,0.4)",fontWeight:600}}>Lap</span>
+                      <select value={lapCompareLap||""} onChange={(e)=>onPickLap(parseInt(e.target.value))} style={{appearance:"none",WebkitAppearance:"none",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.10)",borderRadius:6,padding:"6px 28px 6px 12px",color:"#fff",fontSize:12,fontWeight:500,fontFamily:"'Outfit',sans-serif",cursor:"pointer",outline:"none",minWidth:200}}>
+                        {(()=>{
+                          // Union of usable laps across both drivers
+                          const lapSet=new Set();
+                          for(const l of lapsA)lapSet.add(l.l);
+                          for(const l of lapsB)lapSet.add(l.l);
+                          const sortedLaps=[...lapSet].sort((a,b)=>a-b);
+                          return sortedLaps.map(lap=>{
+                            const ta=lapsA.find(x=>x.l===lap)?.t;
+                            const tb=lapsB.find(x=>x.l===lap)?.t;
+                            const isFastestA=ta&&fastestA.l===lap;
+                            const isFastestB=tb&&fastestB.l===lap;
+                            const star=isFastestA||isFastestB?" ★":"";
+                            const taStr=ta?fmtLapTime(ta):"—";
+                            const tbStr=tb?fmtLapTime(tb):"—";
+                            return<option key={lap} value={lap} style={{background:"#14141f",color:"#fff"}}>{`Lap ${lap}${star} — ${drA.acronym} ${taStr} · ${drB.acronym} ${tbStr}`}</option>;
+                          });
+                        })()}
+                      </select>
+                      {lapCompareLap&&(dataA?.error||dataB?.error)&&(
+                        <button onClick={()=>{const k1=keyFor(drA,lapCompareLap),k2=keyFor(drB,lapCompareLap);setLapCompareData(prev=>{const n={...prev};delete n[k1];delete n[k2];return n;});fetchLapData(drA,lapCompareLap);fetchLapData(drB,lapCompareLap);}} style={{padding:"5px 12px",borderRadius:6,border:"1px solid rgba(232,0,32,0.4)",background:"rgba(232,0,32,0.15)",color:"#fff",cursor:"pointer",fontSize:11,fontWeight:600,fontFamily:"'Outfit',sans-serif"}}>↻ Retry</button>
+                      )}
+                    </div>
                     {/* Lap selector chart */}
-                    <div style={{fontSize:10,textTransform:"uppercase",letterSpacing:1,color:"rgba(255,255,255,0.4)",fontWeight:600,marginBottom:6}}>Switch laps · click any marker</div>
+                    <div style={{fontSize:10,textTransform:"uppercase",letterSpacing:1,color:"rgba(255,255,255,0.4)",fontWeight:600,marginBottom:6}}>Or click any marker on the chart</div>
                     <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{width:"100%",height:140,display:"block"}}>
                       {yTicks.map((v,i)=>(
                         <g key={i}>
