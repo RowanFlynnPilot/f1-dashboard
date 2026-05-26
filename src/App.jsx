@@ -655,8 +655,11 @@ export default function F1Dashboard(){
   const[lapComparePlayTime,setLapComparePlayTime]=useState(0);
   const[lapComparePlaying,setLapComparePlaying]=useState(false);
   const[lapCompareRetry,setLapCompareRetry]=useState(0); // bump to force effect re-fire
+  const[lapZoom,setLapZoom]=useState(1.6); // viewBox zoom multiplier
+  const[lapPan,setLapPan]=useState({x:0,y:0}); // viewBox pan in fitted-vb units
   const lapCompareRaf=useRef(null);
   const lapCompareLastTick=useRef(null);
+  const lapDragRef=useRef(null);
 
   useEffect(()=>{
     Promise.all([
@@ -713,7 +716,9 @@ export default function F1Dashboard(){
   },[lapComparePlaying]);
 
   // Reset lap compare selection when meeting changes
-  useEffect(()=>{setLapCompareLap(null);setLapComparePlaying(false);setLapComparePlayTime(0);},[telMeetingKey]);
+  useEffect(()=>{setLapCompareLap(null);setLapComparePlaying(false);setLapComparePlayTime(0);setLapZoom(1.6);setLapPan({x:0,y:0});},[telMeetingKey]);
+  // Reset zoom/pan when lap or drivers change
+  useEffect(()=>{setLapZoom(1.6);setLapPan({x:0,y:0});},[lapCompareLap,lapCompareA,lapCompareB]);
 
   // Auto-load Lap Compare: when meeting / picked drivers change AND no lap selected,
   // default to Driver A's fastest valid lap and trigger the OpenF1 fetch for both
@@ -2144,14 +2149,24 @@ export default function F1Dashboard(){
                           const xs=allPts.map(p=>p.x),ys=allPts.map(p=>p.y);
                           const minX=Math.min(...xs),maxX=Math.max(...xs);
                           const minY=Math.min(...ys),maxY=Math.max(...ys);
+                          // Auto-rotate: if the track is taller than wide in source coords,
+                          // rotate 90° so the long axis fills horizontal space
+                          const rotate=(maxY-minY)>(maxX-minX);
                           const padPct=0.04;
-                          const spanX=maxX-minX||1,spanY=maxY-minY||1;
-                          const px=spanX*padPct,py=spanY*padPct;
-                          const vbW=spanX+px*2,vbH=spanY+py*2;
-                          // Functions to plot a sample's (x, y) into the SVG
+                          // Project a (x, y) sample into "fitted" local coords
                           // OpenF1 location is north-positive Y, SVG is top-positive Y → flip Y
-                          const projX=(x)=>(x-minX+px);
-                          const projY=(y)=>(maxY-y+py);
+                          const toLocal=(x,y)=>rotate?[maxY-y-(maxY-minY)*0,(x-minX)]:[(x-minX),(maxY-y)];
+                          const localSpanX=rotate?(maxY-minY):(maxX-minX)||1;
+                          const localSpanY=rotate?(maxX-minX):(maxY-minY)||1;
+                          const px=localSpanX*padPct,py=localSpanY*padPct;
+                          const fittedW=localSpanX+px*2,fittedH=localSpanY+py*2;
+                          // Apply zoom/pan to the viewBox (smaller vb = zoomed in)
+                          const z=Math.max(1,Math.min(6,lapZoom));
+                          const vbW=fittedW/z,vbH=fittedH/z;
+                          const vbX=(fittedW-vbW)/2+lapPan.x;
+                          const vbY=(fittedH-vbH)/2+lapPan.y;
+                          const projX=(x,y)=>toLocal(x,y)[0]+px;
+                          const projY=(x,y)=>toLocal(x,y)[1]+py;
                           const findAtTime=(samples,t)=>{
                             if(!samples||samples.length===0)return null;
                             if(t<=samples[0].t)return samples[0];
@@ -2189,18 +2204,30 @@ export default function F1Dashboard(){
                                 <button onClick={()=>{setLapComparePlaying(false);setLapComparePlayTime(0);}} style={{width:28,height:28,borderRadius:5,border:"1px solid rgba(255,255,255,0.08)",background:"rgba(255,255,255,0.03)",color:"rgba(255,255,255,0.55)",cursor:"pointer",fontSize:11,fontFamily:"'Outfit',sans-serif"}}>⏮</button>
                                 <div style={{fontSize:11,color:"rgba(255,255,255,0.7)",fontVariantNumeric:"tabular-nums",minWidth:90}}>{playT.toFixed(2)}s / {playDuration.toFixed(2)}s</div>
                                 <input type="range" min={0} max={playDuration} step={0.05} value={playT} onChange={(e)=>{setLapComparePlaying(false);setLapComparePlayTime(parseFloat(e.target.value));}} style={{flex:1,minWidth:200,height:24,margin:0,appearance:"none",WebkitAppearance:"none",cursor:"pointer",background:"transparent"}}/>
+                                {/* Zoom controls */}
+                                <div style={{display:"flex",gap:2,border:"1px solid rgba(255,255,255,0.08)",borderRadius:6,padding:2,background:"rgba(255,255,255,0.02)"}}>
+                                  <button onClick={()=>setLapZoom(z=>Math.max(1,z*0.8))} style={{width:24,height:24,borderRadius:4,border:"none",background:"transparent",color:"rgba(255,255,255,0.6)",cursor:"pointer",fontSize:12,fontFamily:"'Outfit',sans-serif"}}>−</button>
+                                  <button onClick={()=>{setLapZoom(1.6);setLapPan({x:0,y:0});}} title="Reset zoom" style={{padding:"3px 8px",borderRadius:4,border:"none",background:"transparent",color:"rgba(255,255,255,0.55)",cursor:"pointer",fontSize:10,fontFamily:"'Outfit',sans-serif"}}>{(lapZoom*100|0)}%</button>
+                                  <button onClick={()=>setLapZoom(z=>Math.min(6,z*1.25))} style={{width:24,height:24,borderRadius:4,border:"none",background:"transparent",color:"rgba(255,255,255,0.6)",cursor:"pointer",fontSize:12,fontFamily:"'Outfit',sans-serif"}}>+</button>
+                                </div>
                               </div>
                               {/* Track view (live x/y) */}
                               <div style={{display:"grid",gridTemplateColumns:"1fr 200px",gap:14,alignItems:"start"}} className="lap-compare-grid">
-                                <svg viewBox={`0 0 ${vbW} ${vbH}`} preserveAspectRatio="xMidYMid meet" style={{width:"100%",height:340,display:"block"}}>
-                                  {/* Track outline from samples (Driver A's path as the reference racing line) */}
-                                  <path d={samplesA.map((p,i)=>`${i===0?"M":"L"}${projX(p.x)},${projY(p.y)}`).join(" ")} stroke={tcA} strokeOpacity={0.25} strokeWidth={Math.max(vbW,vbH)*0.008} fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-                                  <path d={samplesB.map((p,i)=>`${i===0?"M":"L"}${projX(p.x)},${projY(p.y)}`).join(" ")} stroke={tcB} strokeOpacity={0.25} strokeWidth={Math.max(vbW,vbH)*0.008} fill="none" strokeLinecap="round" strokeLinejoin="round" strokeDasharray={`${Math.max(vbW,vbH)*0.01} ${Math.max(vbW,vbH)*0.008}`}/>
+                                <svg viewBox={`${vbX} ${vbY} ${vbW} ${vbH}`} preserveAspectRatio="xMidYMid meet"
+                                  onWheel={(e)=>{e.preventDefault();const f=e.deltaY<0?1.12:0.88;setLapZoom(z=>Math.max(1,Math.min(6,z*f)));}}
+                                  onMouseDown={(e)=>{lapDragRef.current={x:e.clientX,y:e.clientY,panX:lapPan.x,panY:lapPan.y,vbW};}}
+                                  onMouseMove={(e)=>{if(!lapDragRef.current)return;const dx=(e.clientX-lapDragRef.current.x);const dy=(e.clientY-lapDragRef.current.y);const rect=e.currentTarget.getBoundingClientRect();const scale=lapDragRef.current.vbW/rect.width;setLapPan({x:lapDragRef.current.panX-dx*scale,y:lapDragRef.current.panY-dy*scale});}}
+                                  onMouseUp={()=>{lapDragRef.current=null;}}
+                                  onMouseLeave={()=>{lapDragRef.current=null;}}
+                                  style={{width:"100%",height:420,display:"block",cursor:lapDragRef.current?"grabbing":"grab",touchAction:"none"}}>
+                                  {/* Track outline from samples (stroke widths use fitted dims so they stay consistent across zoom) */}
+                                  <path d={samplesA.map((p,i)=>`${i===0?"M":"L"}${projX(p.x,p.y)},${projY(p.x,p.y)}`).join(" ")} stroke={tcA} strokeOpacity={0.3} strokeWidth={Math.max(fittedW,fittedH)*0.008/Math.sqrt(lapZoom)} fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                                  <path d={samplesB.map((p,i)=>`${i===0?"M":"L"}${projX(p.x,p.y)},${projY(p.x,p.y)}`).join(" ")} stroke={tcB} strokeOpacity={0.3} strokeWidth={Math.max(fittedW,fittedH)*0.008/Math.sqrt(lapZoom)} fill="none" strokeLinecap="round" strokeLinejoin="round" strokeDasharray={`${Math.max(fittedW,fittedH)*0.01/Math.sqrt(lapZoom)} ${Math.max(fittedW,fittedH)*0.008/Math.sqrt(lapZoom)}`}/>
                                   {/* Start marker */}
-                                  <circle cx={projX(samplesA[0].x)} cy={projY(samplesA[0].y)} r={Math.max(vbW,vbH)*0.008} fill="rgba(255,255,255,0.3)"/>
+                                  <circle cx={projX(samplesA[0].x,samplesA[0].y)} cy={projY(samplesA[0].x,samplesA[0].y)} r={Math.max(fittedW,fittedH)*0.008/Math.sqrt(lapZoom)} fill="rgba(255,255,255,0.4)"/>
                                   {/* Dots at current playT */}
-                                  {ptA&&<g><circle cx={projX(ptA.x)} cy={projY(ptA.y)} r={Math.max(vbW,vbH)*0.018} fill={tcA} stroke="#0a0a0f" strokeWidth={Math.max(vbW,vbH)*0.005}/></g>}
-                                  {ptB&&<g><circle cx={projX(ptB.x)} cy={projY(ptB.y)} r={Math.max(vbW,vbH)*0.018} fill={tcB} stroke="#0a0a0f" strokeWidth={Math.max(vbW,vbH)*0.005}/></g>}
+                                  {ptA&&<g><circle cx={projX(ptA.x,ptA.y)} cy={projY(ptA.x,ptA.y)} r={Math.max(fittedW,fittedH)*0.018/Math.sqrt(lapZoom)} fill={tcA} stroke="#0a0a0f" strokeWidth={Math.max(fittedW,fittedH)*0.005/Math.sqrt(lapZoom)}/></g>}
+                                  {ptB&&<g><circle cx={projX(ptB.x,ptB.y)} cy={projY(ptB.x,ptB.y)} r={Math.max(fittedW,fittedH)*0.018/Math.sqrt(lapZoom)} fill={tcB} stroke="#0a0a0f" strokeWidth={Math.max(fittedW,fittedH)*0.005/Math.sqrt(lapZoom)}/></g>}
                                 </svg>
                                 {/* Side panel — current readouts */}
                                 <div style={{display:"flex",flexDirection:"column",gap:8}}>
