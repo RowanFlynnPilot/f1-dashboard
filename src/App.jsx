@@ -647,6 +647,11 @@ export default function F1Dashboard(){
           .hero-pts{font-size:44px}
           .hero-name{font-size:22px}
           .hero-avatar{width:80px;height:80px}
+          .recap-podium{grid-template-columns:1fr!important}
+          .compare-grid-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+          .compare-grid{min-width:520px}
+          .tire-bars{overflow-x:auto;-webkit-overflow-scrolling:touch}
+          .tire-bars-inner{min-width:520px}
         }
       `}</style>
 
@@ -748,7 +753,7 @@ export default function F1Dashboard(){
                     </div>
                     <div style={{cursor:"pointer",fontSize:11,color:"#E80020",fontWeight:600}} onClick={()=>setTab("Race Results")}>Full results →</div>
                   </div>
-                  <div style={{display:"grid",gridTemplateColumns:"repeat(3, 1fr)",gap:12}}>
+                  <div className="recap-podium" style={{display:"grid",gridTemplateColumns:"repeat(3, 1fr)",gap:12}}>
                     {lastRaceFull.pod.map((p,idx)=>{
                       const tc=TC[p.t]||"#fff";
                       const medal=medals[idx];
@@ -1400,7 +1405,8 @@ export default function F1Dashboard(){
                       })}
                     </div>
                     {/* Compare grid */}
-                    <div style={{display:"grid",gridTemplateColumns:"minmax(110px,140px) repeat(3, 1fr)",gap:"10px 16px",alignItems:"center"}}>
+                    <div className="compare-grid-wrap">
+                    <div className="compare-grid" style={{display:"grid",gridTemplateColumns:"minmax(110px,140px) repeat(3, 1fr)",gap:"10px 16px",alignItems:"center"}}>
                       <div style={{fontSize:10,textTransform:"uppercase",letterSpacing:1,color:"rgba(255,255,255,0.3)",fontWeight:600}}>Driver</div>
                       {["Sector 1","Sector 2","Sector 3"].map(h=>(
                         <div key={h} style={{fontSize:10,textTransform:"uppercase",letterSpacing:1,color:"rgba(255,255,255,0.3)",fontWeight:600}}>{h}</div>
@@ -1438,6 +1444,7 @@ export default function F1Dashboard(){
                           </Fragment>
                         );
                       })}
+                    </div>
                     </div>
                   </div>
                 );
@@ -1880,7 +1887,8 @@ export default function F1Dashboard(){
                     {/* DEGRADATION CHART */}
                     <div style={{marginBottom:24}}>
                       <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.2,color:"rgba(255,255,255,0.5)",marginBottom:10,fontWeight:600}}>Degradation per stint</div>
-                      <div style={{display:"flex",alignItems:"flex-end",gap:3,height:140,padding:"0 2px"}}>
+                      <div className="tire-bars">
+                      <div className="tire-bars-inner" style={{display:"flex",alignItems:"flex-end",gap:3,height:140,padding:"0 2px"}}>
                         {driverRows.map(({driver,stints})=>(
                           <div key={driver.number} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,flex:"1 1 0",minWidth:0}}>
                             <div style={{flex:1,display:"flex",alignItems:"flex-end",justifyContent:"center",gap:1.5,height:100,width:"100%"}}>
@@ -1905,6 +1913,7 @@ export default function F1Dashboard(){
                           </div>
                         ))}
                       </div>
+                      </div>
                       <div style={{fontSize:10,color:"rgba(255,255,255,0.3)",marginTop:6,fontStyle:"italic"}}>Bar height = absolute lap-time drift per lap (lower = more consistent). Drivers sorted by best-managed stint.</div>
                     </div>
 
@@ -1928,7 +1937,8 @@ export default function F1Dashboard(){
                             );
                           })}
                         </div>
-                        <div style={{display:"flex",alignItems:"flex-end",gap:3,height:160,padding:"0 2px"}}>
+                        <div className="tire-bars">
+                        <div className="tire-bars-inner" style={{display:"flex",alignItems:"flex-end",gap:3,height:160,padding:"0 2px"}}>
                           {benchmarkStints.map(a=>{
                             const gap=a.avg-benchmarks[activeCompound];
                             const h=Math.max(2,Math.min(140,(gap/maxGap)*140));
@@ -1951,6 +1961,7 @@ export default function F1Dashboard(){
                               </div>
                             );
                           })}
+                        </div>
                         </div>
                         <div style={{fontSize:10,color:"rgba(255,255,255,0.3)",marginTop:6,fontStyle:"italic"}}>Gap to the fastest stint average on this compound. Hover any bar for details.</div>
                       </div>
