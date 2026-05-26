@@ -551,7 +551,7 @@ async function main() {
               ? d.laps
                   .filter(l => l.lap && l.lapTime)
                   .sort((a, b) => a.lap - b.lap)
-                  .map(l => ({ l: l.lap, t: +l.lapTime.toFixed(3), pit: !!l.isPitOut }))
+                  .map(l => ({ l: l.lap, t: +l.lapTime.toFixed(3), pit: !!l.isPitOut, ds: l.dateStart || null }))
               : null,
             // Per-lap position snapshots for the position-evolution chart.
             positions: isRaceLike ? (positionsByDriver[d.number] || []) : null,

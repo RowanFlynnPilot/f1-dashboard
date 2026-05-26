@@ -515,6 +515,36 @@ function buildTrackSampler(track){
   };
 }
 
+// Join live /car_data and /location samples for a single lap window into a
+// time-aligned series [{t, x, y, d, speed}, ...] used by Lap Compare.
+function processLapTelemetry(carData, location){
+  if(!carData||!location||location.length<3)return [];
+  const carSorted=[...carData].filter(c=>c.date).sort((a,b)=>new Date(a.date)-new Date(b.date));
+  const locSorted=[...location].filter(l=>l.date&&l.x!=null&&l.y!=null).sort((a,b)=>new Date(a.date)-new Date(b.date));
+  if(locSorted.length<3)return [];
+  const startMs=new Date(locSorted[0].date).getTime();
+  // Cumulative XY distance + retain x/y per sample
+  const samples=[];
+  let cum=0;
+  for(let i=0;i<locSorted.length;i++){
+    if(i>0){
+      const dx=locSorted[i].x-locSorted[i-1].x;
+      const dy=locSorted[i].y-locSorted[i-1].y;
+      cum+=Math.sqrt(dx*dx+dy*dy);
+    }
+    const t=(new Date(locSorted[i].date).getTime()-startMs)/1000;
+    samples.push({t,x:locSorted[i].x,y:locSorted[i].y,d:cum,speed:0});
+  }
+  // Walk car_data with two pointers to attach nearest speed
+  let ci=0;
+  for(const s of samples){
+    const targetMs=startMs+s.t*1000;
+    while(ci+1<carSorted.length&&Math.abs(new Date(carSorted[ci+1].date).getTime()-targetMs)<Math.abs(new Date(carSorted[ci].date).getTime()-targetMs))ci++;
+    s.speed=carSorted[ci]?.speed||0;
+  }
+  return samples;
+}
+
 // Given a driver's lapTimes array and a race time (seconds), returns
 // { lap: laps_completed_with_fraction, lapInProgress, fracOfLap, finished }.
 // lap is a float — integer part = laps completed, fractional = progress into
@@ -617,6 +647,15 @@ export default function F1Dashboard(){
   const[replayDotHover,setReplayDotHover]=useState(null); // {driverNumber, x, y}
   const replayRaf=useRef(null);
   const replayLastTick=useRef(null);
+  // Lap Compare state — pick two drivers, click a lap, live-fetch /car_data + /location
+  const[lapCompareA,setLapCompareA]=useState(null); // acronym
+  const[lapCompareB,setLapCompareB]=useState(null);
+  const[lapCompareLap,setLapCompareLap]=useState(null);
+  const[lapCompareData,setLapCompareData]=useState({}); // cache: key `${session}-${driverNum}-${lap}` → {samples, error, loading}
+  const[lapComparePlayTime,setLapComparePlayTime]=useState(0);
+  const[lapComparePlaying,setLapComparePlaying]=useState(false);
+  const lapCompareRaf=useRef(null);
+  const lapCompareLastTick=useRef(null);
 
   useEffect(()=>{
     Promise.all([
@@ -657,6 +696,24 @@ export default function F1Dashboard(){
   // Reset replay when meeting changes
   useEffect(()=>{setReplayTime(0);setReplayPlaying(false);},[telMeetingKey]);
 
+  // Lap Compare animation tick
+  useEffect(()=>{
+    if(!lapComparePlaying)return;
+    const tick=(now)=>{
+      if(lapCompareLastTick.current!=null){
+        const dt=(now-lapCompareLastTick.current)/1000;
+        setLapComparePlayTime(t=>t+dt);
+      }
+      lapCompareLastTick.current=now;
+      lapCompareRaf.current=requestAnimationFrame(tick);
+    };
+    lapCompareRaf.current=requestAnimationFrame(tick);
+    return()=>{cancelAnimationFrame(lapCompareRaf.current);lapCompareLastTick.current=null;};
+  },[lapComparePlaying]);
+
+  // Reset lap compare selection when meeting changes
+  useEffect(()=>{setLapCompareLap(null);setLapComparePlaying(false);setLapComparePlayTime(0);},[telMeetingKey]);
+
   if(loading)return(<div style={{minHeight:"100vh",background:"#0a0a0f",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Outfit',sans-serif"}}><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/><div style={{textAlign:"center"}}><div style={{fontSize:32,fontWeight:700,marginBottom:8}}>Loading F1 Data...</div><div style={{color:"rgba(255,255,255,0.4)"}}>Fetching from Jolpica API</div></div></div>);
   if(error||!data)return(<div style={{minHeight:"100vh",background:"#0a0a0f",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Outfit',sans-serif"}}><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/><div style={{textAlign:"center"}}><div style={{fontSize:32,fontWeight:700,color:"#E80020",marginBottom:8}}>Failed to Load Data</div><div style={{color:"rgba(255,255,255,0.5)"}}>{error||"No data available. Run: npm run fetch-data"}</div></div></div>);
 
@@ -688,7 +745,7 @@ export default function F1Dashboard(){
         .pulse-once{animation:pulseOnce 1.6s ease-out 1}
         .heatmap-cell{transition:filter .15s, transform .15s, box-shadow .15s; cursor:default}
         .heatmap-cell:hover{filter:brightness(1.35) saturate(1.1); transform:translateY(-1px); box-shadow:0 4px 14px rgba(0,0,0,0.4)}
-        @media(max-width:768px){.replay-grid{grid-template-columns:1fr!important}}
+        @media(max-width:768px){.replay-grid{grid-template-columns:1fr!important}.lap-compare-grid{grid-template-columns:1fr!important}}
         .tab-bar{display:flex;gap:0;margin-top:20px;border-bottom:1px solid rgba(255,255,255,0.06);overflow-x:auto}
         .tb{cursor:pointer;padding:10px 18px;border:none;background:none;color:rgba(255,255,255,0.4);font-size:13px;font-weight:500;letter-spacing:.5px;font-family:'Outfit',sans-serif;transition:all .3s;border-bottom:2px solid transparent;white-space:nowrap;flex:1;text-align:center}
         .tb:hover{color:rgba(255,255,255,0.7);background:rgba(255,255,255,0.02)}.tb.a{color:#E80020;border-bottom-color:#E80020;background:rgba(232,0,32,0.04)}
@@ -1857,6 +1914,278 @@ export default function F1Dashboard(){
                         })}
                       </div>
                     </div>
+                  </div>
+                );
+              })()}
+
+              {/* Lap Compare — pick 2 drivers + 1 lap, live-fetch /car_data + /location */}
+              {(()=>{
+                const usable=allDrivers.filter(d=>(d.lapTimes||[]).filter(l=>l.ds).length>=3);
+                if(usable.length<2)return null;
+                // Default to top 2 finishers
+                const finalPos=(d)=>{const ps=d.positions;if(!ps||ps.length===0)return 99;return ps[ps.length-1].p;};
+                const sortedByFinish=[...usable].sort((a,b)=>finalPos(a)-finalPos(b));
+                const acrA=lapCompareA&&usable.find(d=>d.acronym===lapCompareA)?lapCompareA:sortedByFinish[0]?.acronym;
+                const acrB=lapCompareB&&usable.find(d=>d.acronym===lapCompareB)?lapCompareB:sortedByFinish[1]?.acronym;
+                const drA=usable.find(d=>d.acronym===acrA);
+                const drB=usable.find(d=>d.acronym===acrB);
+                if(!drA||!drB||drA.acronym===drB.acronym)return null;
+                const tcA=drA.teamColour||"#27F4D2";
+                const tcB=drB.teamColour||"#E80020";
+                // Build lap-time series for each
+                const lapsA=(drA.lapTimes||[]).filter(l=>l.ds&&!l.pit).sort((a,b)=>a.l-b.l);
+                const lapsB=(drB.lapTimes||[]).filter(l=>l.ds&&!l.pit).sort((a,b)=>a.l-b.l);
+                if(lapsA.length===0||lapsB.length===0)return null;
+                const minLap=Math.min(lapsA[0].l,lapsB[0].l);
+                const maxLapCmp=Math.max(lapsA[lapsA.length-1].l,lapsB[lapsB.length-1].l);
+                // Find driver-specific fastest lap for marker
+                const fastestA=lapsA.reduce((a,b)=>a.t<b.t?a:b);
+                const fastestB=lapsB.reduce((a,b)=>a.t<b.t?a:b);
+                // Y range
+                const allTimes=[...lapsA.map(l=>l.t),...lapsB.map(l=>l.t)].sort((a,b)=>a-b);
+                const p5=allTimes[Math.floor(allTimes.length*0.03)]||60;
+                const p95=allTimes[Math.floor(allTimes.length*0.95)]||120;
+                const yLo=p5*0.99,yHi=p95*1.03;
+                const W=800,H=200,padL=44,padR=24,padT=18,padB=30;
+                const plotW=W-padL-padR,plotH=H-padT-padB;
+                const xOf=l=>padL+((l-minLap)/Math.max(1,maxLapCmp-minLap))*plotW;
+                const yOf=t=>padT+plotH-((Math.min(t,yHi)-yLo)/(yHi-yLo))*plotH;
+                const xTicks=Array.from({length:6},(_,i)=>Math.round(minLap+(i/5)*(maxLapCmp-minLap)));
+                const yTicks=[yLo,(yLo+yHi)/2,yHi];
+                const fmtLapTime=(s)=>{if(!s)return"—";const m=Math.floor(s/60);const r=(s%60).toFixed(3);return `${m}:${r.padStart(6,"0")}`;};
+                // Cache key helper + fetcher
+                const keyFor=(drv,lap)=>`${cur.race.sessionKey}-${drv.number}-${lap}`;
+                const fetchLapData=async(drv,lap)=>{
+                  const key=keyFor(drv,lap);
+                  if(lapCompareData[key])return;
+                  setLapCompareData(prev=>({...prev,[key]:{loading:true}}));
+                  try{
+                    const ltEntry=(drv.lapTimes||[]).find(l=>l.l===lap);
+                    if(!ltEntry||!ltEntry.ds)throw new Error("No date_start for this lap");
+                    const startMs=new Date(ltEntry.ds).getTime();
+                    const endMs=startMs+ltEntry.t*1000+500;
+                    const startIso=new Date(startMs).toISOString();
+                    const endIso=new Date(endMs).toISOString();
+                    const base=`https://api.openf1.org/v1`;
+                    const [carRes,locRes]=await Promise.all([
+                      fetch(`${base}/car_data?session_key=${cur.race.sessionKey}&driver_number=${drv.number}&date>=${startIso}&date<=${endIso}`),
+                      fetch(`${base}/location?session_key=${cur.race.sessionKey}&driver_number=${drv.number}&date>=${startIso}&date<=${endIso}`),
+                    ]);
+                    if(!carRes.ok||!locRes.ok)throw new Error("Network");
+                    const [carData,location]=await Promise.all([carRes.json(),locRes.json()]);
+                    const samples=processLapTelemetry(carData,location);
+                    setLapCompareData(prev=>({...prev,[key]:{samples,loading:false}}));
+                  }catch(err){
+                    setLapCompareData(prev=>({...prev,[key]:{loading:false,error:err.message||"fetch failed"}}));
+                  }
+                };
+                const onPickLap=(lap)=>{
+                  setLapCompareLap(lap);
+                  setLapComparePlayTime(0);
+                  setLapComparePlaying(false);
+                  fetchLapData(drA,lap);
+                  fetchLapData(drB,lap);
+                };
+                const keyA=lapCompareLap?keyFor(drA,lapCompareLap):null;
+                const keyB=lapCompareLap?keyFor(drB,lapCompareLap):null;
+                const dataA=keyA?lapCompareData[keyA]:null;
+                const dataB=keyB?lapCompareData[keyB]:null;
+                const samplesA=dataA?.samples||null;
+                const samplesB=dataB?.samples||null;
+                const bothLoaded=samplesA&&samplesB;
+                // Lap times for selected lap
+                const lapATime=drA.lapTimes?.find(l=>l.l===lapCompareLap)?.t;
+                const lapBTime=drB.lapTimes?.find(l=>l.l===lapCompareLap)?.t;
+                // For playback: max lap duration across both
+                const playDuration=Math.max(lapATime||0,lapBTime||0)||90;
+                const playT=Math.max(0,Math.min(playDuration,lapComparePlayTime));
+                return(
+                  <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:18}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:4,flexWrap:"wrap",gap:8}}>
+                      <div>
+                        <div style={{fontSize:15,fontWeight:700}}>Lap Compare</div>
+                        <div style={{fontSize:11,color:"rgba(255,255,255,0.4)",marginTop:2}}>Pick two drivers and click any lap marker · live telemetry loads on demand</div>
+                      </div>
+                    </div>
+                    {/* Driver pickers */}
+                    <div style={{display:"flex",gap:14,marginTop:12,marginBottom:14,flexWrap:"wrap"}}>
+                      <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
+                        <span style={{fontSize:10,color:"rgba(255,255,255,0.4)",textTransform:"uppercase",letterSpacing:1}}>A</span>
+                        {usable.map(d=>{const on=d.acronym===acrA;const dc=d.teamColour||"#fff";return(
+                          <button key={"lcA-"+d.acronym} onClick={()=>{setLapCompareA(d.acronym);setLapCompareLap(null);}} style={{padding:"3px 8px",borderRadius:4,border:`1px solid ${on?dc:"rgba(255,255,255,0.08)"}`,background:on?`${dc}1a`:"rgba(255,255,255,0.02)",color:on?"#fff":"rgba(255,255,255,0.55)",cursor:"pointer",fontSize:10,fontWeight:on?700:500,fontFamily:"'Outfit',sans-serif",letterSpacing:0.4}}>{d.acronym}</button>
+                        );})}
+                      </div>
+                      <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
+                        <span style={{fontSize:10,color:"rgba(255,255,255,0.4)",textTransform:"uppercase",letterSpacing:1}}>B</span>
+                        {usable.map(d=>{const on=d.acronym===acrB;const dc=d.teamColour||"#fff";return(
+                          <button key={"lcB-"+d.acronym} onClick={()=>{setLapCompareB(d.acronym);setLapCompareLap(null);}} style={{padding:"3px 8px",borderRadius:4,border:`1px solid ${on?dc:"rgba(255,255,255,0.08)"}`,background:on?`${dc}1a`:"rgba(255,255,255,0.02)",color:on?"#fff":"rgba(255,255,255,0.55)",cursor:"pointer",fontSize:10,fontWeight:on?700:500,fontFamily:"'Outfit',sans-serif",letterSpacing:0.4}}>{d.acronym}</button>
+                        );})}
+                      </div>
+                    </div>
+                    {/* Lap selector chart */}
+                    <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{width:"100%",height:200,display:"block"}}>
+                      {yTicks.map((v,i)=>(
+                        <g key={i}>
+                          <line x1={padL} x2={W-padR} y1={yOf(v)} y2={yOf(v)} stroke="rgba(255,255,255,0.06)"/>
+                          <text x={padL-8} y={yOf(v)+4} textAnchor="end" fill="rgba(255,255,255,0.4)" fontSize="9" fontFamily="'Outfit',sans-serif">{fmtLapTime(v)}</text>
+                        </g>
+                      ))}
+                      {xTicks.map((l,i)=>(<text key={i} x={xOf(l)} y={H-padB+16} textAnchor="middle" fill="rgba(255,255,255,0.45)" fontSize="9" fontFamily="'Outfit',sans-serif">L{l}</text>))}
+                      {/* Lines */}
+                      <path d={lapsA.map((p,i)=>`${i===0?"M":"L"}${xOf(p.l)},${yOf(p.t)}`).join(" ")} stroke={tcA} strokeWidth={1.8} fill="none" strokeLinecap="round" strokeLinejoin="round" opacity={0.9}/>
+                      <path d={lapsB.map((p,i)=>`${i===0?"M":"L"}${xOf(p.l)},${yOf(p.t)}`).join(" ")} stroke={tcB} strokeWidth={1.8} fill="none" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="4 3" opacity={0.9}/>
+                      {/* Dots — clickable */}
+                      {lapsA.map(p=><circle key={"a"+p.l} cx={xOf(p.l)} cy={yOf(p.t)} r={p===fastestA?4:2.5} fill={tcA} stroke={lapCompareLap===p.l?"#fff":(p===fastestA?"#27F4D2":"#0a0a0f")} strokeWidth={lapCompareLap===p.l?2:(p===fastestA?1.5:0.5)} style={{cursor:"pointer"}} onClick={()=>onPickLap(p.l)}/>)}
+                      {lapsB.map(p=><circle key={"b"+p.l} cx={xOf(p.l)} cy={yOf(p.t)} r={p===fastestB?4:2.5} fill={tcB} stroke={lapCompareLap===p.l?"#fff":(p===fastestB?"#27F4D2":"#0a0a0f")} strokeWidth={lapCompareLap===p.l?2:(p===fastestB?1.5:0.5)} style={{cursor:"pointer"}} onClick={()=>onPickLap(p.l)}/>)}
+                    </svg>
+                    {/* Legend */}
+                    <div style={{display:"flex",gap:14,marginTop:8,flexWrap:"wrap",fontSize:11}}>
+                      <div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:14,height:2,background:tcA}}/><span style={{fontWeight:600}}>{drA.acronym}</span><span style={{color:"rgba(255,255,255,0.4)",fontVariantNumeric:"tabular-nums"}}>{fmtLapTime(fastestA.t)} L{fastestA.l}</span></div>
+                      <div style={{display:"flex",alignItems:"center",gap:6}}><svg width={14} height={2}><line x1={0} y1={1} x2={14} y2={1} stroke={tcB} strokeWidth={2} strokeDasharray="3 2"/></svg><span style={{fontWeight:600}}>{drB.acronym}</span><span style={{color:"rgba(255,255,255,0.4)",fontVariantNumeric:"tabular-nums"}}>{fmtLapTime(fastestB.t)} L{fastestB.l}</span></div>
+                      <div style={{display:"flex",alignItems:"center",gap:6,color:"rgba(255,255,255,0.5)"}}><div style={{width:8,height:8,borderRadius:"50%",border:"1.5px solid #27F4D2"}}/><span>fastest lap</span></div>
+                    </div>
+                    {/* Live telemetry viewer once a lap is picked */}
+                    {lapCompareLap&&(
+                      <div style={{marginTop:18,padding:14,background:"rgba(0,0,0,0.25)",border:"1px solid rgba(255,255,255,0.04)",borderRadius:10}}>
+                        <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:10,flexWrap:"wrap",gap:8}}>
+                          <div style={{fontSize:13,fontWeight:700}}>Lap {lapCompareLap} telemetry · {drA.acronym} <span style={{fontVariantNumeric:"tabular-nums",color:tcA,marginLeft:4}}>{fmtLapTime(lapATime)}</span> vs {drB.acronym} <span style={{fontVariantNumeric:"tabular-nums",color:tcB,marginLeft:4}}>{fmtLapTime(lapBTime)}</span></div>
+                          <div style={{fontSize:11,color:"rgba(255,255,255,0.4)"}}>
+                            {dataA?.loading||dataB?.loading?"Loading from OpenF1…":dataA?.error||dataB?.error?`Error: ${dataA?.error||dataB?.error}`:bothLoaded?`${samplesA.length}/${samplesB.length} samples loaded`:"Waiting…"}
+                          </div>
+                        </div>
+                        {bothLoaded?(()=>{
+                          // Combined bbox of both drivers' (x,y) coords
+                          const allPts=[...samplesA,...samplesB];
+                          if(allPts.length<3)return<div style={{padding:24,textAlign:"center",fontSize:12,color:"rgba(255,255,255,0.4)"}}>Insufficient data</div>;
+                          const xs=allPts.map(p=>p.x),ys=allPts.map(p=>p.y);
+                          const minX=Math.min(...xs),maxX=Math.max(...xs);
+                          const minY=Math.min(...ys),maxY=Math.max(...ys);
+                          const padPct=0.04;
+                          const spanX=maxX-minX||1,spanY=maxY-minY||1;
+                          const px=spanX*padPct,py=spanY*padPct;
+                          const vbW=spanX+px*2,vbH=spanY+py*2;
+                          // Functions to plot a sample's (x, y) into the SVG
+                          // OpenF1 location is north-positive Y, SVG is top-positive Y → flip Y
+                          const projX=(x)=>(x-minX+px);
+                          const projY=(y)=>(maxY-y+py);
+                          const findAtTime=(samples,t)=>{
+                            if(!samples||samples.length===0)return null;
+                            if(t<=samples[0].t)return samples[0];
+                            if(t>=samples[samples.length-1].t)return samples[samples.length-1];
+                            for(let i=1;i<samples.length;i++){
+                              if(samples[i].t>=t){
+                                const prev=samples[i-1],next=samples[i];
+                                const f=(t-prev.t)/(next.t-prev.t||1);
+                                return{
+                                  x:prev.x+f*(next.x-prev.x),
+                                  y:prev.y+f*(next.y-prev.y),
+                                  speed:prev.speed+f*((next.speed||0)-(prev.speed||0)),
+                                  t,
+                                };
+                              }
+                            }
+                            return samples[samples.length-1];
+                          };
+                          const ptA=findAtTime(samplesA,playT);
+                          const ptB=findAtTime(samplesB,playT);
+                          // Delta: A's time when B is at this point. Approximate: where A and B's positions match in time within their laps.
+                          // Simpler: delta = B's current cumulative distance vs A's. Higher = A ahead at this moment.
+                          // For now, just show t-delta (negative if A finishes lap sooner)
+                          const deltaToB=lapATime&&lapBTime?(lapATime*(playT/playDuration))-(lapBTime*(playT/playDuration)):0;
+                          // Speed-vs-distance for chart below
+                          const samplesAdist=samplesA.map(s=>({d:s.d/(samplesA[samplesA.length-1].d||1),s:s.speed}));
+                          const samplesBdist=samplesB.map(s=>({d:s.d/(samplesB[samplesB.length-1].d||1),s:s.speed}));
+                          const maxSpeed=Math.max(...samplesA.map(s=>s.speed||0),...samplesB.map(s=>s.speed||0),100)*1.05;
+                          const minSpeedY=Math.min(...samplesA.map(s=>s.speed||9999),...samplesB.map(s=>s.speed||9999),30)*0.9;
+                          return(
+                            <>
+                              {/* Playback controls */}
+                              <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10,flexWrap:"wrap"}}>
+                                <button onClick={()=>{if(playT>=playDuration-0.05)setLapComparePlayTime(0);setLapComparePlaying(p=>!p);}} style={{width:32,height:32,borderRadius:"50%",border:"1px solid rgba(255,255,255,0.15)",background:lapComparePlaying?"rgba(232,0,32,0.18)":"rgba(255,255,255,0.06)",color:"#fff",cursor:"pointer",fontSize:12,fontFamily:"'Outfit',sans-serif",display:"flex",alignItems:"center",justifyContent:"center"}}>{lapComparePlaying?"⏸":"▶"}</button>
+                                <button onClick={()=>{setLapComparePlaying(false);setLapComparePlayTime(0);}} style={{width:28,height:28,borderRadius:5,border:"1px solid rgba(255,255,255,0.08)",background:"rgba(255,255,255,0.03)",color:"rgba(255,255,255,0.55)",cursor:"pointer",fontSize:11,fontFamily:"'Outfit',sans-serif"}}>⏮</button>
+                                <div style={{fontSize:11,color:"rgba(255,255,255,0.7)",fontVariantNumeric:"tabular-nums",minWidth:90}}>{playT.toFixed(2)}s / {playDuration.toFixed(2)}s</div>
+                                <input type="range" min={0} max={playDuration} step={0.05} value={playT} onChange={(e)=>{setLapComparePlaying(false);setLapComparePlayTime(parseFloat(e.target.value));}} style={{flex:1,minWidth:200,height:24,margin:0,appearance:"none",WebkitAppearance:"none",cursor:"pointer",background:"transparent"}}/>
+                              </div>
+                              {/* Track view (live x/y) */}
+                              <div style={{display:"grid",gridTemplateColumns:"1fr 200px",gap:14,alignItems:"start"}} className="lap-compare-grid">
+                                <svg viewBox={`0 0 ${vbW} ${vbH}`} preserveAspectRatio="xMidYMid meet" style={{width:"100%",height:340,display:"block"}}>
+                                  {/* Track outline from samples (Driver A's path as the reference racing line) */}
+                                  <path d={samplesA.map((p,i)=>`${i===0?"M":"L"}${projX(p.x)},${projY(p.y)}`).join(" ")} stroke={tcA} strokeOpacity={0.25} strokeWidth={Math.max(vbW,vbH)*0.008} fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                                  <path d={samplesB.map((p,i)=>`${i===0?"M":"L"}${projX(p.x)},${projY(p.y)}`).join(" ")} stroke={tcB} strokeOpacity={0.25} strokeWidth={Math.max(vbW,vbH)*0.008} fill="none" strokeLinecap="round" strokeLinejoin="round" strokeDasharray={`${Math.max(vbW,vbH)*0.01} ${Math.max(vbW,vbH)*0.008}`}/>
+                                  {/* Start marker */}
+                                  <circle cx={projX(samplesA[0].x)} cy={projY(samplesA[0].y)} r={Math.max(vbW,vbH)*0.008} fill="rgba(255,255,255,0.3)"/>
+                                  {/* Dots at current playT */}
+                                  {ptA&&<g><circle cx={projX(ptA.x)} cy={projY(ptA.y)} r={Math.max(vbW,vbH)*0.018} fill={tcA} stroke="#0a0a0f" strokeWidth={Math.max(vbW,vbH)*0.005}/></g>}
+                                  {ptB&&<g><circle cx={projX(ptB.x)} cy={projY(ptB.y)} r={Math.max(vbW,vbH)*0.018} fill={tcB} stroke="#0a0a0f" strokeWidth={Math.max(vbW,vbH)*0.005}/></g>}
+                                </svg>
+                                {/* Side panel — current readouts */}
+                                <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                                  <div style={{padding:"10px 12px",background:`${tcA}10`,border:`1px solid ${tcA}40`,borderRadius:8}}>
+                                    <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
+                                      <div style={{width:3,height:14,background:tcA,borderRadius:1.5}}/>
+                                      <div style={{fontSize:13,fontWeight:700}}>{drA.acronym}</div>
+                                    </div>
+                                    <div style={{fontSize:10,color:"rgba(255,255,255,0.45)",marginBottom:2}}>Speed</div>
+                                    <div style={{fontSize:18,fontWeight:800,fontVariantNumeric:"tabular-nums",color:tcA}}>{ptA?Math.round(ptA.speed):0}<span style={{fontSize:10,color:"rgba(255,255,255,0.5)",marginLeft:3,fontWeight:500}}>km/h</span></div>
+                                  </div>
+                                  <div style={{padding:"10px 12px",background:`${tcB}10`,border:`1px solid ${tcB}40`,borderRadius:8}}>
+                                    <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
+                                      <div style={{width:3,height:14,background:tcB,borderRadius:1.5}}/>
+                                      <div style={{fontSize:13,fontWeight:700}}>{drB.acronym}</div>
+                                    </div>
+                                    <div style={{fontSize:10,color:"rgba(255,255,255,0.45)",marginBottom:2}}>Speed</div>
+                                    <div style={{fontSize:18,fontWeight:800,fontVariantNumeric:"tabular-nums",color:tcB}}>{ptB?Math.round(ptB.speed):0}<span style={{fontSize:10,color:"rgba(255,255,255,0.5)",marginLeft:3,fontWeight:500}}>km/h</span></div>
+                                  </div>
+                                  <div style={{padding:"10px 12px",background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:8}}>
+                                    <div style={{fontSize:10,color:"rgba(255,255,255,0.45)",marginBottom:2,textTransform:"uppercase",letterSpacing:1}}>Speed Δ (A−B)</div>
+                                    <div style={{fontSize:18,fontWeight:800,fontVariantNumeric:"tabular-nums",color:ptA&&ptB?(ptA.speed-ptB.speed>0?"#27F4D2":"#FF6B6B"):"#fff"}}>{ptA&&ptB?(ptA.speed-ptB.speed>=0?"+":"")+Math.round(ptA.speed-ptB.speed):"—"}<span style={{fontSize:10,color:"rgba(255,255,255,0.5)",marginLeft:3,fontWeight:500}}>km/h</span></div>
+                                  </div>
+                                </div>
+                              </div>
+                              {/* Speed-vs-distance comparison */}
+                              {(()=>{
+                                const cW=800,cH=180,cPadL=44,cPadR=20,cPadT=16,cPadB=28;
+                                const cPlotW=cW-cPadL-cPadR,cPlotH=cH-cPadT-cPadB;
+                                const xOfD=d=>cPadL+d*cPlotW;
+                                const yOfS=s=>cPadT+cPlotH-((s-minSpeedY)/(maxSpeed-minSpeedY))*cPlotH;
+                                const yTicksS=[Math.round(minSpeedY),Math.round((minSpeedY+maxSpeed)/2),Math.round(maxSpeed)];
+                                const xTicksD=[0,0.25,0.5,0.75,1];
+                                return(
+                                  <div style={{marginTop:14}}>
+                                    <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.2,color:"rgba(255,255,255,0.5)",fontWeight:600,marginBottom:8}}>Speed Trace</div>
+                                    <svg viewBox={`0 0 ${cW} ${cH}`} preserveAspectRatio="none" style={{width:"100%",height:180,display:"block"}}>
+                                      {yTicksS.map((v,i)=>(<g key={i}>
+                                        <line x1={cPadL} x2={cW-cPadR} y1={yOfS(v)} y2={yOfS(v)} stroke="rgba(255,255,255,0.06)"/>
+                                        <text x={cPadL-8} y={yOfS(v)+4} textAnchor="end" fill="rgba(255,255,255,0.4)" fontSize="9" fontFamily="'Outfit',sans-serif">{v} km/h</text>
+                                      </g>))}
+                                      {xTicksD.map((v,i)=>(<text key={i} x={xOfD(v)} y={cH-cPadB+15} textAnchor="middle" fill="rgba(255,255,255,0.45)" fontSize="9" fontFamily="'Outfit',sans-serif">{Math.round(v*100)}%</text>))}
+                                      <path d={samplesAdist.map((p,i)=>`${i===0?"M":"L"}${xOfD(p.d)},${yOfS(p.s)}`).join(" ")} stroke={tcA} strokeWidth={2} fill="none" strokeLinecap="round" strokeLinejoin="round" opacity={0.92}/>
+                                      <path d={samplesBdist.map((p,i)=>`${i===0?"M":"L"}${xOfD(p.d)},${yOfS(p.s)}`).join(" ")} stroke={tcB} strokeWidth={2} fill="none" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="4 3" opacity={0.92}/>
+                                      {/* Vertical line at current playback % */}
+                                      {(()=>{const fA=playT/playDuration;return<line x1={xOfD(fA)} x2={xOfD(fA)} y1={cPadT} y2={cPadT+cPlotH} stroke="rgba(255,255,255,0.4)" strokeWidth={1} strokeDasharray="3 3"/>;})()}
+                                    </svg>
+                                  </div>
+                                );
+                              })()}
+                            </>
+                          );
+                        })():(
+                          <div style={{padding:40,textAlign:"center",fontSize:12,color:"rgba(255,255,255,0.5)"}}>
+                            {dataA?.error||dataB?.error?(
+                              <>
+                                <div style={{fontSize:14,fontWeight:700,color:"#FF6B6B",marginBottom:6}}>Could not load telemetry</div>
+                                <div>{dataA?.error||dataB?.error}</div>
+                              </>
+                            ):(
+                              <>
+                                <div style={{fontSize:14,fontWeight:700,marginBottom:6}}>Loading telemetry from OpenF1…</div>
+                                <div>~2-4 seconds depending on connection.</div>
+                              </>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 );
               })()}
