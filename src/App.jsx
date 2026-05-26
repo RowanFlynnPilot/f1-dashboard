@@ -1614,6 +1614,7 @@ export default function F1Dashboard(){
                 const fmtSec=(s)=>{const m=Math.floor(s/60);const r=(s%60).toFixed(1);return `${m}:${r.padStart(4,"0")}`;};
                 const fmtLapTime=(s)=>{if(!s)return"—";const m=Math.floor(s/60);const r=(s%60).toFixed(3);return `${m}:${r.padStart(6,"0")}`;};
                 const periods=race.raceControlPeriods||[];
+                const yellowLaps=race.yellowFlagLaps||[];
                 const periodStyle={SC:{fill:"rgba(255,218,0,0.10)",border:"rgba(255,218,0,0.45)",label:"SC",color:"#FFDA00"},VSC:{fill:"rgba(255,152,0,0.08)",border:"rgba(255,152,0,0.40)",label:"VSC",color:"#FF9800"},RED:{fill:"rgba(232,0,32,0.14)",border:"rgba(232,0,32,0.55)",label:"RED",color:"#E80020"}};
                 const onMove=(e)=>{
                   const rect=e.currentTarget.getBoundingClientRect();
@@ -1634,7 +1635,14 @@ export default function F1Dashboard(){
                 return(
                   <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20,position:"relative"}}>
                     <div style={{fontSize:15,fontWeight:700,marginBottom:4}}>Lap Times</div>
-                    <div style={{fontSize:12,color:"rgba(255,255,255,0.35)",marginBottom:16}}>Lap-by-lap pace · low Y axis clipped to 5th-95th percentile · hover for crosshair readout</div>
+                    <div style={{fontSize:12,color:"rgba(255,255,255,0.35)",marginBottom:8}}>Lap-by-lap pace · low Y axis clipped to 5th-95th percentile · hover for crosshair readout</div>
+                    {/* Race-control legend */}
+                    <div style={{display:"flex",gap:14,flexWrap:"wrap",marginBottom:14,fontSize:10,color:"rgba(255,255,255,0.5)"}}>
+                      <div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:14,height:8,background:"rgba(255,218,0,0.45)",borderRadius:2}}/><span>Safety Car</span></div>
+                      <div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:14,height:8,background:"rgba(255,152,0,0.45)",borderRadius:2}}/><span>Virtual SC</span></div>
+                      <div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:14,height:8,background:"rgba(232,0,32,0.55)",borderRadius:2}}/><span>Red Flag</span></div>
+                      <div style={{display:"flex",alignItems:"center",gap:6}}><svg width={14} height={8}><line x1={7} y1={0} x2={7} y2={8} stroke="rgba(255,200,0,0.7)" strokeWidth={1.5} strokeDasharray="2 2"/><circle cx={7} cy={2} r={2} fill="#FFC800"/></svg><span>Local yellow flag</span></div>
+                    </div>
                     <div style={{position:"relative"}}>
                       <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{width:"100%",height:280,display:"block"}} onMouseMove={onMove} onMouseLeave={()=>setTelLapHover(null)}>
                         {/* Race control bands — behind gridlines */}
@@ -1650,6 +1658,13 @@ export default function F1Dashboard(){
                             </g>
                           );
                         })}
+                        {/* Localised yellow-flag markers — thin dashed line per lap (skip lap 0/1 noise) */}
+                        {yellowLaps.filter(l=>l>=2).map((l,i)=>(
+                          <g key={"yf"+i}>
+                            <line x1={xOf(l)} x2={xOf(l)} y1={padT+12} y2={padT+plotH} stroke="rgba(255,200,0,0.45)" strokeWidth={1} strokeDasharray="2 3"/>
+                            <circle cx={xOf(l)} cy={padT+6} r={2.5} fill="#FFC800"/>
+                          </g>
+                        ))}
                         {yTicks.map((v,i)=>(
                           <g key={i}>
                             <line x1={padL} x2={W-padR} y1={yOf(v)} y2={yOf(v)} stroke="rgba(255,255,255,0.06)"/>
@@ -1695,7 +1710,12 @@ export default function F1Dashboard(){
                         const placeRight=leftPct<55;
                         return(
                           <div style={{position:"absolute",top:6,[placeRight?"left":"right"]:`${placeRight?leftPct+1.5:100-leftPct+1.5}%`,background:"rgba(14,14,22,0.96)",border:"1px solid rgba(255,255,255,0.10)",borderRadius:8,padding:"10px 12px",pointerEvents:"none",minWidth:200,boxShadow:"0 8px 24px rgba(0,0,0,0.5)"}}>
-                            <div style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:"rgba(255,255,255,0.4)",fontWeight:600,marginBottom:8}}>Lap {hoverLap}</div>
+                            <div style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:"rgba(255,255,255,0.4)",fontWeight:600,marginBottom:4}}>Lap {hoverLap}</div>
+                            {yellowLaps.includes(hoverLap)&&(
+                              <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6,padding:"3px 7px",background:"rgba(255,200,0,0.10)",border:"1px solid rgba(255,200,0,0.35)",borderRadius:4,fontSize:9,fontWeight:700,color:"#FFC800",letterSpacing:0.5}}>
+                                <div style={{width:6,height:6,background:"#FFC800",borderRadius:"50%"}}/>YELLOW FLAG
+                              </div>
+                            )}
                             {rows.map(r=>(
                               <div key={r.acronym} style={{display:"flex",alignItems:"center",gap:8,marginBottom:4,fontSize:11}}>
                                 <div style={{width:3,height:11,background:r.teamColour||"#fff",borderRadius:1}}/>

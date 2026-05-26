@@ -166,13 +166,16 @@ function buildSpeedTrace(carData, location, targetSamples = 80) {
 /**
  * Scan race-control events chronologically and emit safety-car / VSC / red-flag
  * periods as { type, lapStart, lapEnd } so the lap-time chart can shade them.
+ * Also returns the de-duplicated list of laps that had any localized yellow-flag
+ * (sector wave) so the chart can drop thin reference markers on those laps.
  */
 function processRaceControlPeriods(events, maxLap) {
-  if (!events || events.length === 0) return [];
+  if (!events || events.length === 0) return { periods: [], yellowLaps: [] };
   const sorted = [...events]
     .filter(e => e.date)
     .sort((a, b) => new Date(a.date) - new Date(b.date));
   const periods = [];
+  const yellowLapSet = new Set();
   let scStart = null, vscStart = null, rfStart = null;
   for (const e of sorted) {
     const msg = (e.message || "").toUpperCase();
@@ -196,13 +199,15 @@ function processRaceControlPeriods(events, maxLap) {
     } else if (e.flag === "GREEN" && rfStart != null) {
       periods.push({ type: "RED", lapStart: rfStart, lapEnd: lap || rfStart });
       rfStart = null;
+    } else if (e.flag === "YELLOW" && lap != null) {
+      // Localized sector yellow — record the lap so the chart can mark it
+      yellowLapSet.add(lap);
     }
   }
-  // Close any unfinished periods at race end
   if (scStart != null) periods.push({ type: "SC", lapStart: scStart, lapEnd: maxLap });
   if (vscStart != null) periods.push({ type: "VSC", lapStart: vscStart, lapEnd: maxLap });
   if (rfStart != null) periods.push({ type: "RED", lapStart: rfStart, lapEnd: maxLap });
-  return periods;
+  return { periods, yellowLaps: [...yellowLapSet].sort((a, b) => a - b) };
 }
 
 /**
@@ -470,7 +475,9 @@ async function main() {
 
         // Compute max lap from driver data for race-control period closure
         const sessionMaxLap = Math.max(0, ...driverStats.flatMap(d => d.laps.map(l => l.lap || 0)));
-        const raceControlPeriods = isRaceLike ? processRaceControlPeriods(raceControl, sessionMaxLap) : [];
+        const rcResult = isRaceLike ? processRaceControlPeriods(raceControl, sessionMaxLap) : { periods: [], yellowLaps: [] };
+        const raceControlPeriods = rcResult.periods;
+        const yellowFlagLaps = rcResult.yellowLaps;
 
         // For race-likes, build speed-vs-distance traces for the top 6 drivers'
         // fastest laps. Each driver costs 2 API calls (/car_data + /location).
@@ -561,6 +568,8 @@ async function main() {
           })),
           // Safety car / VSC / red flag periods, race-likes only
           raceControlPeriods,
+          // Laps with at least one localized yellow flag (sector wave)
+          yellowFlagLaps,
         });
 
         console.log(`      ✅ ${laps.length} laps, ${driverStats.length} drivers`);

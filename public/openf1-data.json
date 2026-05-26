@@ -1,6 +1,6 @@
 {
   "season": 2026,
-  "fetchedAt": "2026-05-26T00:35:05.978Z",
+  "fetchedAt": "2026-05-26T01:15:42.183Z",
   "meetingCount": 5,
   "meetings": [
     {
@@ -21084,7 +21084,12 @@
               "tyreAge": 0
             }
           ],
-          "raceControlPeriods": []
+          "raceControlPeriods": [],
+          "yellowFlagLaps": [
+            1,
+            12,
+            18
+          ]
         }
       ]
     },
@@ -31985,6 +31990,10 @@
               "lapStart": 13,
               "lapEnd": 16
             }
+          ],
+          "yellowFlagLaps": [
+            0,
+            13
           ]
         },
         {
@@ -45826,6 +45835,11 @@
               "lapStart": 10,
               "lapEnd": 13
             }
+          ],
+          "yellowFlagLaps": [
+            1,
+            10,
+            53
           ]
         }
       ]
@@ -69043,6 +69057,9 @@
               "lapStart": 22,
               "lapEnd": 27
             }
+          ],
+          "yellowFlagLaps": [
+            22
           ]
         }
       ]
@@ -80521,7 +80538,11 @@
               "tyreAge": 0
             }
           ],
-          "raceControlPeriods": []
+          "raceControlPeriods": [],
+          "yellowFlagLaps": [
+            1,
+            19
+          ]
         },
         {
           "sessionKey": 11276,
@@ -96155,6 +96176,14 @@
               "lapStart": 6,
               "lapEnd": 11
             }
+          ],
+          "yellowFlagLaps": [
+            1,
+            6,
+            10,
+            16,
+            48,
+            57
           ]
         }
       ]
@@ -108350,7 +108379,11 @@
               "tyreAge": 0
             }
           ],
-          "raceControlPeriods": []
+          "raceControlPeriods": [],
+          "yellowFlagLaps": [
+            1,
+            23
+          ]
         },
         {
           "sessionKey": 11287,
@@ -125489,7 +125522,15 @@
               "tyreAge": 0
             }
           ],
-          "raceControlPeriods": []
+          "raceControlPeriods": [],
+          "yellowFlagLaps": [
+            1,
+            13,
+            19,
+            30,
+            40,
+            61
+          ]
         }
       ]
     }
