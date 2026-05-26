@@ -551,6 +551,8 @@ export default function F1Dashboard(){
   const[telLapHover,setTelLapHover]=useState(null); // {x,lap} or null
   const[telPosHover,setTelPosHover]=useState(null); // {x,lap} or null
   const[telStintHover,setTelStintHover]=useState(null); // {driverNumber, stintNumber, x, y} or null
+  const[telTraceSel,setTelTraceSel]=useState(()=>new Set()); // acronyms selected for speed trace
+  const[telTraceHover,setTelTraceHover]=useState(null); // {dist} or null
 
   useEffect(()=>{
     Promise.all([
@@ -1897,6 +1899,128 @@ export default function F1Dashboard(){
                                 <div style={{width:18,color:"rgba(255,255,255,0.45)",fontWeight:600,fontVariantNumeric:"tabular-nums"}}>P{r.pos}</div>
                                 <div style={{width:3,height:11,background:r.teamColour||"#fff",borderRadius:1}}/>
                                 <div style={{flex:1,fontWeight:600}}>{r.acronym}</div>
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Speed Trace */}
+              {(()=>{
+                const traceable=allDrivers.filter(d=>d.fastLapTrace&&d.fastLapTrace.trace&&d.fastLapTrace.trace.length>0);
+                if(traceable.length===0)return null;
+                const defaultSel=new Set(traceable.slice(0,2).map(d=>d.acronym));
+                const selected=telTraceSel.size>0?telTraceSel:defaultSel;
+                const visible=traceable.filter(d=>selected.has(d.acronym));
+                const toggle=(acr)=>{
+                  setTelTraceSel(prev=>{
+                    const cur=prev.size>0?new Set(prev):new Set(defaultSel);
+                    if(cur.has(acr)){if(cur.size<=1)return cur;cur.delete(acr);}
+                    else if(cur.size<4){cur.add(acr);}
+                    return cur;
+                  });
+                };
+                // Normalize each driver's trace to 0-1 percent of lap (raw distance
+                // units from OpenF1 location aren't meters and vary slightly per
+                // driver due to racing line). Percent-of-lap makes comparison
+                // unitless and aligns the lines for visual comparison.
+                const normalized=visible.map(d=>{
+                  const t=d.fastLapTrace.trace;
+                  const dMax=Math.max(1,...t.map(p=>p.d));
+                  return{
+                    driver:d,
+                    points:t.map(p=>({pct:p.d/dMax,s:p.s})),
+                  };
+                });
+                const allSpeed=normalized.flatMap(n=>n.points.map(p=>p.s));
+                const maxSpeed=Math.max(10,...allSpeed)*1.05;
+                const minSpeed=Math.min(30,...allSpeed)*0.92;
+                const W=800,H=280,padL=58,padR=20,padT=18,padB=34;
+                const plotW=W-padL-padR,plotH=H-padT-padB;
+                const xOf=pct=>padL+pct*plotW;
+                const yOf=s=>padT+plotH-((s-minSpeed)/(maxSpeed-minSpeed))*plotH;
+                const xTicks=[0,0.25,0.5,0.75,1];
+                const yTicks=[Math.round(minSpeed),Math.round((minSpeed+maxSpeed)/2),Math.round(maxSpeed)];
+                const onMove=(e)=>{
+                  const rect=e.currentTarget.getBoundingClientRect();
+                  const xView=((e.clientX-rect.left)/rect.width)*W;
+                  let pct=(xView-padL)/plotW;
+                  pct=Math.max(0,Math.min(1,pct));
+                  setTelTraceHover({pct});
+                };
+                const hoverPct=telTraceHover?.pct??null;
+                const findNearest=(points,pct)=>{
+                  if(!points.length)return null;
+                  let best=points[0],bestGap=Math.abs(points[0].pct-pct);
+                  for(const p of points){const g=Math.abs(p.pct-pct);if(g<bestGap){best=p;bestGap=g;}}
+                  return best;
+                };
+                return(
+                  <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:4,flexWrap:"wrap",gap:8}}>
+                      <div style={{fontSize:15,fontWeight:700}}>Speed Trace · Fastest race lap</div>
+                      <div style={{fontSize:11,color:"rgba(255,255,255,0.4)"}}>Top 6 drivers · pick up to 4 to compare</div>
+                    </div>
+                    <div style={{fontSize:12,color:"rgba(255,255,255,0.35)",marginBottom:14}}>Speed (km/h) vs % of lap distance · each driver's fastest race lap · dips = braking zones, peaks = straights</div>
+                    <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:14}}>
+                      {traceable.map(d=>{
+                        const on=selected.has(d.acronym);
+                        const tc=d.teamColour||"#fff";
+                        return(
+                          <button key={d.acronym} onClick={()=>toggle(d.acronym)} style={{display:"flex",alignItems:"center",gap:6,padding:"5px 10px",borderRadius:6,border:`1px solid ${on?tc:"rgba(255,255,255,0.08)"}`,background:on?`${tc}1a`:"rgba(255,255,255,0.02)",color:on?"#fff":"rgba(255,255,255,0.55)",cursor:"pointer",fontSize:11,fontWeight:on?700:500,fontFamily:"'Outfit',sans-serif"}}>
+                            <div style={{width:3,height:11,background:tc,borderRadius:1,opacity:on?1:0.5}}/>
+                            <span style={{letterSpacing:0.5}}>{d.acronym}</span>
+                            <span style={{fontSize:9,color:"rgba(255,255,255,0.4)",fontWeight:400,fontVariantNumeric:"tabular-nums"}}>{d.fastLapTrace.lapTime.toFixed(3)}s</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <div style={{position:"relative"}}>
+                      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{width:"100%",height:280,display:"block"}} onMouseMove={onMove} onMouseLeave={()=>setTelTraceHover(null)}>
+                        {yTicks.map(v=>(
+                          <g key={v}>
+                            <line x1={padL} x2={W-padR} y1={yOf(v)} y2={yOf(v)} stroke="rgba(255,255,255,0.06)"/>
+                            <text x={padL-8} y={yOf(v)+4} textAnchor="end" fill="rgba(255,255,255,0.4)" fontSize="10" fontFamily="'Outfit',sans-serif">{v} km/h</text>
+                          </g>
+                        ))}
+                        {xTicks.map((v,i)=>(
+                          <text key={i} x={xOf(v)} y={H-padB+18} textAnchor="middle" fill="rgba(255,255,255,0.45)" fontSize="10" fontFamily="'Outfit',sans-serif">{Math.round(v*100)}%</text>
+                        ))}
+                        {hoverPct!==null&&(
+                          <line x1={xOf(hoverPct)} x2={xOf(hoverPct)} y1={padT} y2={padT+plotH} stroke="rgba(255,255,255,0.25)" strokeWidth={1} strokeDasharray="3 3" pointerEvents="none"/>
+                        )}
+                        {normalized.map(n=>{
+                          if(n.points.length<2)return null;
+                          const color=n.driver.teamColour||"#fff";
+                          const path=n.points.map((p,i)=>`${i===0?"M":"L"}${xOf(p.pct)},${yOf(p.s)}`).join(" ");
+                          return(
+                            <g key={n.driver.acronym} pointerEvents="none">
+                              <path d={path} stroke={color} strokeWidth={2} fill="none" strokeLinecap="round" strokeLinejoin="round" opacity={0.9}/>
+                              {hoverPct!==null&&(()=>{const p=findNearest(n.points,hoverPct);return p?<circle cx={xOf(p.pct)} cy={yOf(p.s)} r={4} fill={color} stroke="#0a0a0f" strokeWidth={1.5}/>:null;})()}
+                            </g>
+                          );
+                        })}
+                      </svg>
+                      {hoverPct!==null&&(()=>{
+                        const rows=normalized
+                          .map(n=>{const p=findNearest(n.points,hoverPct);return p?{acronym:n.driver.acronym,teamColour:n.driver.teamColour,speed:p.s}:null;})
+                          .filter(Boolean)
+                          .sort((a,b)=>b.speed-a.speed);
+                        if(rows.length===0)return null;
+                        const leftPct=(xOf(hoverPct)/W)*100;
+                        const placeRight=leftPct<55;
+                        return(
+                          <div style={{position:"absolute",top:6,[placeRight?"left":"right"]:`${placeRight?leftPct+1.5:100-leftPct+1.5}%`,background:"rgba(14,14,22,0.96)",border:"1px solid rgba(255,255,255,0.10)",borderRadius:8,padding:"10px 12px",pointerEvents:"none",minWidth:180,boxShadow:"0 8px 24px rgba(0,0,0,0.5)"}}>
+                            <div style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:"rgba(255,255,255,0.4)",fontWeight:600,marginBottom:8,fontVariantNumeric:"tabular-nums"}}>{Math.round(hoverPct*100)}% of lap</div>
+                            {rows.map(r=>(
+                              <div key={r.acronym} style={{display:"flex",alignItems:"center",gap:8,marginBottom:4,fontSize:11}}>
+                                <div style={{width:3,height:11,background:r.teamColour||"#fff",borderRadius:1}}/>
+                                <div style={{flex:1,fontWeight:600}}>{r.acronym}</div>
+                                <div style={{fontVariantNumeric:"tabular-nums",fontWeight:700}}>{r.speed} km/h</div>
                               </div>
                             ))}
                           </div>

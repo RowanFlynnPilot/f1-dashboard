@@ -106,6 +106,64 @@ async function getRaceControl(sessionKey) {
 }
 
 /**
+ * Get high-frequency car telemetry (speed, throttle, brake, gear, rpm, drs)
+ * for a single driver within a date range. Used to build per-lap speed traces.
+ */
+async function getCarData(sessionKey, driverNumber, dateStartIso, dateEndIso) {
+  const url = `${BASE}/car_data?session_key=${sessionKey}&driver_number=${driverNumber}&date>=${dateStartIso}&date<=${dateEndIso}`;
+  try { return await fetchJSON(url); } catch { return []; }
+}
+
+/**
+ * Get 3D location samples (x/y/z) for a single driver within a date range.
+ */
+async function getLocation(sessionKey, driverNumber, dateStartIso, dateEndIso) {
+  const url = `${BASE}/location?session_key=${sessionKey}&driver_number=${driverNumber}&date>=${dateStartIso}&date<=${dateEndIso}`;
+  try { return await fetchJSON(url); } catch { return []; }
+}
+
+/**
+ * Align speed samples to distance-traveled by joining /car_data and /location on
+ * timestamp, then decimate to roughly `targetSamples` evenly-spaced points so the
+ * payload stays small. Returns [{ d: distance_meters, s: speed_kmh }, ...].
+ */
+function buildSpeedTrace(carData, location, targetSamples = 80) {
+  if (!carData || carData.length === 0 || !location || location.length < 2) return [];
+  const carSorted = [...carData].sort((a, b) => new Date(a.date) - new Date(b.date));
+  const locSorted = [...location].sort((a, b) => new Date(a.date) - new Date(b.date));
+  // Cumulative XY distance along the location samples
+  const cumDist = [0];
+  const locTs = [new Date(locSorted[0].date).getTime()];
+  for (let i = 1; i < locSorted.length; i++) {
+    const a = locSorted[i - 1], b = locSorted[i];
+    const dx = (b.x ?? 0) - (a.x ?? 0);
+    const dy = (b.y ?? 0) - (a.y ?? 0);
+    cumDist.push(cumDist[i - 1] + Math.sqrt(dx * dx + dy * dy));
+    locTs.push(new Date(b.date).getTime());
+  }
+  // For each speed sample, binary-search the nearest location by timestamp
+  const trace = [];
+  for (const cd of carSorted) {
+    if (cd.speed == null) continue;
+    const t = new Date(cd.date).getTime();
+    let lo = 0, hi = locTs.length - 1;
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1;
+      if (locTs[mid] < t) lo = mid + 1;
+      else hi = mid;
+    }
+    trace.push({ d: +cumDist[lo].toFixed(1), s: cd.speed });
+  }
+  if (trace.length === 0) return [];
+  // Decimate evenly to targetSamples
+  if (trace.length <= targetSamples) return trace;
+  const step = trace.length / targetSamples;
+  const out = [];
+  for (let i = 0; i < targetSamples; i++) out.push(trace[Math.floor(i * step)]);
+  return out;
+}
+
+/**
  * Scan race-control events chronologically and emit safety-car / VSC / red-flag
  * periods as { type, lapStart, lapEnd } so the lap-time chart can shade them.
  */
@@ -414,6 +472,33 @@ async function main() {
         const sessionMaxLap = Math.max(0, ...driverStats.flatMap(d => d.laps.map(l => l.lap || 0)));
         const raceControlPeriods = isRaceLike ? processRaceControlPeriods(raceControl, sessionMaxLap) : [];
 
+        // For race-likes, build speed-vs-distance traces for the top 6 drivers'
+        // fastest laps. Each driver costs 2 API calls (/car_data + /location).
+        const speedTraces = {};
+        if (isRaceLike) {
+          const top6 = driverStats.filter(d => d.bestLap && d.bestS1).slice(0, 6);
+          for (const ds of top6) {
+            const fastLap = ds.laps.find(l => l.lapTime === ds.bestLap && l.dateStart);
+            if (!fastLap) continue;
+            const startMs = new Date(fastLap.dateStart).getTime();
+            const endMs = startMs + fastLap.lapTime * 1000;
+            const startIso = new Date(startMs).toISOString();
+            const endIso = new Date(endMs).toISOString();
+            console.log(`      🛰️  Fetching speed trace for ${ds.acronym} (lap ${fastLap.lap}, ${fastLap.lapTime.toFixed(3)}s)...`);
+            const carData = await getCarData(session.session_key, ds.number, startIso, endIso);
+            await sleep(1500);
+            const loc = await getLocation(session.session_key, ds.number, startIso, endIso);
+            await sleep(1500);
+            const trace = buildSpeedTrace(carData, loc);
+            if (trace.length > 0) {
+              speedTraces[ds.number] = { lap: fastLap.lap, lapTime: fastLap.lapTime, trace };
+              console.log(`         ✅ ${trace.length} samples`);
+            } else {
+              console.log(`         ⚠️  empty trace (car_data: ${carData.length}, loc: ${loc.length})`);
+            }
+          }
+        }
+
         meetingSessions.push({
           sessionKey: session.session_key,
           sessionName: session.session_name,
@@ -463,6 +548,8 @@ async function main() {
               : null,
             // Per-lap position snapshots for the position-evolution chart.
             positions: isRaceLike ? (positionsByDriver[d.number] || []) : null,
+            // Speed-vs-distance trace from this driver's fastest race lap (top 6 only).
+            fastLapTrace: isRaceLike ? (speedTraces[d.number] || null) : null,
           })),
           stints: stints.map(s => ({
             driverNumber: s.driver_number,
