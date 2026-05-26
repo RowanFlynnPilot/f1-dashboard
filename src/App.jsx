@@ -714,6 +714,67 @@ export default function F1Dashboard(){
   // Reset lap compare selection when meeting changes
   useEffect(()=>{setLapCompareLap(null);setLapComparePlaying(false);setLapComparePlayTime(0);},[telMeetingKey]);
 
+  // Auto-load Lap Compare: when meeting / picked drivers change AND no lap selected,
+  // default to Driver A's fastest valid lap and trigger the OpenF1 fetch for both
+  // drivers so the playback view shows immediately.
+  useEffect(()=>{
+    if(!openf1)return;
+    const raceMeetings=(openf1.meetings||[])
+      .map(m=>({meeting:m,race:m.sessions.find(s=>s.sessionName==="Race")}))
+      .filter(x=>x.race);
+    if(raceMeetings.length===0)return;
+    const activeKey=telMeetingKey&&raceMeetings.find(rm=>rm.meeting.meetingKey===telMeetingKey)?telMeetingKey:raceMeetings[raceMeetings.length-1].meeting.meetingKey;
+    const cur=raceMeetings.find(rm=>rm.meeting.meetingKey===activeKey);
+    if(!cur)return;
+    const usable=(cur.race.drivers||[]).filter(d=>(d.lapTimes||[]).filter(l=>l.ds).length>=3);
+    if(usable.length<2)return;
+    const finalPos=(d)=>{const ps=d.positions;if(!ps||ps.length===0)return 99;return ps[ps.length-1].p;};
+    const sortedByFinish=[...usable].sort((a,b)=>finalPos(a)-finalPos(b));
+    const acrA=lapCompareA&&usable.find(d=>d.acronym===lapCompareA)?lapCompareA:sortedByFinish[0]?.acronym;
+    const acrB=lapCompareB&&usable.find(d=>d.acronym===lapCompareB)?lapCompareB:sortedByFinish[1]?.acronym;
+    const drA=usable.find(d=>d.acronym===acrA);
+    const drB=usable.find(d=>d.acronym===acrB);
+    if(!drA||!drB||drA.acronym===drB.acronym)return;
+    // Pick default lap if none chosen yet
+    let lapToUse=lapCompareLap;
+    if(!lapToUse){
+      const fastestA=(drA.lapTimes||[]).filter(l=>l.ds&&!l.pit).reduce((a,b)=>(!a||b.t<a.t)?b:a,null);
+      lapToUse=fastestA?.l;
+      if(lapToUse)setLapCompareLap(lapToUse);
+    }
+    if(!lapToUse)return;
+    // Trigger fetch for both if not cached
+    const sessionKey=cur.race.sessionKey;
+    const ensureFetch=async(drv)=>{
+      const key=`${sessionKey}-${drv.number}-${lapToUse}`;
+      if(lapCompareData[key])return;
+      const ltEntry=(drv.lapTimes||[]).find(l=>l.l===lapToUse);
+      if(!ltEntry?.ds)return;
+      setLapCompareData(prev=>prev[key]?prev:{...prev,[key]:{loading:true}});
+      try{
+        const startMs=new Date(ltEntry.ds).getTime();
+        const endMs=startMs+ltEntry.t*1000+500;
+        const startIso=new Date(startMs).toISOString();
+        const endIso=new Date(endMs).toISOString();
+        const base=`https://api.openf1.org/v1`;
+        const [carRes,locRes]=await Promise.all([
+          fetch(`${base}/car_data?session_key=${sessionKey}&driver_number=${drv.number}&date>=${startIso}&date<=${endIso}`),
+          fetch(`${base}/location?session_key=${sessionKey}&driver_number=${drv.number}&date>=${startIso}&date<=${endIso}`),
+        ]);
+        if(!carRes.ok||!locRes.ok)throw new Error("Network");
+        const [carData,location]=await Promise.all([carRes.json(),locRes.json()]);
+        const samples=processLapTelemetry(carData,location);
+        setLapCompareData(prev=>({...prev,[key]:{samples,loading:false}}));
+      }catch(err){
+        setLapCompareData(prev=>({...prev,[key]:{loading:false,error:err.message||"fetch failed"}}));
+      }
+    };
+    ensureFetch(drA);
+    ensureFetch(drB);
+  // Intentionally exclude lapCompareData from deps — only run on meeting/driver/lap change
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[openf1,telMeetingKey,lapCompareA,lapCompareB,lapCompareLap]);
+
   if(loading)return(<div style={{minHeight:"100vh",background:"#0a0a0f",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Outfit',sans-serif"}}><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/><div style={{textAlign:"center"}}><div style={{fontSize:32,fontWeight:700,marginBottom:8}}>Loading F1 Data...</div><div style={{color:"rgba(255,255,255,0.4)"}}>Fetching from Jolpica API</div></div></div>);
   if(error||!data)return(<div style={{minHeight:"100vh",background:"#0a0a0f",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Outfit',sans-serif"}}><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/><div style={{textAlign:"center"}}><div style={{fontSize:32,fontWeight:700,color:"#E80020",marginBottom:8}}>Failed to Load Data</div><div style={{color:"rgba(255,255,255,0.5)"}}>{error||"No data available. Run: npm run fetch-data"}</div></div></div>);
 
@@ -2023,7 +2084,8 @@ export default function F1Dashboard(){
                       </div>
                     </div>
                     {/* Lap selector chart */}
-                    <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{width:"100%",height:200,display:"block"}}>
+                    <div style={{fontSize:10,textTransform:"uppercase",letterSpacing:1,color:"rgba(255,255,255,0.4)",fontWeight:600,marginBottom:6}}>Switch laps · click any marker</div>
+                    <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{width:"100%",height:140,display:"block"}}>
                       {yTicks.map((v,i)=>(
                         <g key={i}>
                           <line x1={padL} x2={W-padR} y1={yOf(v)} y2={yOf(v)} stroke="rgba(255,255,255,0.06)"/>
