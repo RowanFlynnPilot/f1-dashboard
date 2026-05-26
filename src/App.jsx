@@ -553,6 +553,8 @@ export default function F1Dashboard(){
   const[telStintHover,setTelStintHover]=useState(null); // {driverNumber, stintNumber, x, y} or null
   const[telTraceSel,setTelTraceSel]=useState(()=>new Set()); // acronyms selected for speed trace
   const[telTraceHover,setTelTraceHover]=useState(null); // {dist} or null
+  const[tireCompound,setTireCompound]=useState(null); // selected compound key for benchmark chart
+  const[tireHover,setTireHover]=useState(null); // {key, x, y} for stint bar tooltip
 
   useEffect(()=>{
     Promise.all([
@@ -1810,6 +1812,173 @@ export default function F1Dashboard(){
                         </div>
                       );
                     })()}
+                  </div>
+                );
+              })()}
+
+              {/* Tire Management — degradation rates + stint pace vs compound benchmark */}
+              {(()=>{
+                const allStints=race.stints||[];
+                if(allStints.length===0)return null;
+                const fmtLapTime=(s)=>{if(!s)return"—";const m=Math.floor(s/60);const r=(s%60).toFixed(3);return `${m}:${r.padStart(6,"0")}`;};
+                // Analyze every stint with enough data — output [{driver, stint, compound, validLaps, avg, best, slope}]
+                const analyzed=[];
+                for(const driver of allDrivers){
+                  const myStints=allStints.filter(s=>s.driverNumber===driver.number);
+                  for(const s of myStints){
+                    const start=Math.max(1,s.lapStart||1);
+                    const end=Math.min(maxLap,s.lapEnd||maxLap);
+                    const lapData=(driver.lapTimes||[]).filter(l=>l.l>=start&&l.l<=end&&!l.pit&&l.t>0);
+                    if(lapData.length<3)continue;
+                    // Drop outliers > median + 5s (safety car laps etc)
+                    const sortedT=[...lapData].map(l=>l.t).sort((a,b)=>a-b);
+                    const median=sortedT[Math.floor(sortedT.length/2)];
+                    const clean=lapData.filter(l=>l.t<=median+5);
+                    if(clean.length<3)continue;
+                    const avg=clean.reduce((a,b)=>a+b.t,0)/clean.length;
+                    const best=Math.min(...clean.map(l=>l.t));
+                    // Linear regression: slope of lap_time vs lap_in_stint
+                    const xMean=clean.reduce((a,b)=>a+(b.l-start),0)/clean.length;
+                    let num=0,den=0;
+                    for(const l of clean){const x=l.l-start;num+=(x-xMean)*(l.t-avg);den+=(x-xMean)**2;}
+                    const slope=den>0?num/den:0;
+                    analyzed.push({
+                      driver,stint:s,compound:(s.compound||"UNKNOWN").toUpperCase(),
+                      validLaps:clean.length,totalLaps:end-start+1,avg,best,slope,
+                      lapStart:start,lapEnd:end,
+                    });
+                  }
+                }
+                if(analyzed.length===0)return null;
+                // Compounds actually used
+                const compounds=[...new Set(analyzed.map(a=>a.compound))].filter(c=>COMPOUND_COLORS[c]);
+                const activeCompound=tireCompound&&compounds.includes(tireCompound)?tireCompound:compounds[0];
+                // Benchmark: best stint-avg per compound
+                const benchmarks={};
+                for(const c of compounds){
+                  const stintsForC=analyzed.filter(a=>a.compound===c);
+                  benchmarks[c]=Math.min(...stintsForC.map(a=>a.avg));
+                }
+                // Group analyzed by driver for the degradation chart, sort drivers by their best (lowest) degradation slope
+                const byDriver={};
+                for(const a of analyzed){const k=a.driver.number;byDriver[k]=byDriver[k]||{driver:a.driver,stints:[]};byDriver[k].stints.push(a);}
+                const driverRows=Object.values(byDriver).sort((a,b)=>Math.min(...a.stints.map(s=>s.slope))-Math.min(...b.stints.map(s=>s.slope)));
+                // Y scale for degradation chart — use max abs slope as ceiling
+                const maxSlope=Math.max(0.05,...analyzed.map(a=>Math.abs(a.slope)));
+                // Active compound stints for benchmark chart, sorted by gap ascending
+                const benchmarkStints=analyzed.filter(a=>a.compound===activeCompound).sort((a,b)=>(a.avg-benchmarks[activeCompound])-(b.avg-benchmarks[activeCompound]));
+                const maxGap=Math.max(0.5,...benchmarkStints.map(a=>a.avg-benchmarks[activeCompound]));
+
+                // Hover lookup
+                const hoveredEntry=tireHover?analyzed.find(a=>a.driver.number+"-"+a.stint.stintNumber===tireHover.key):null;
+
+                return(
+                  <div data-tire-card style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20,position:"relative"}}>
+                    <div style={{fontSize:15,fontWeight:700,marginBottom:4}}>Tire Management</div>
+                    <div style={{fontSize:12,color:"rgba(255,255,255,0.35)",marginBottom:20}}>Pace consistency &amp; compound benchmarks · low slope = better tire management</div>
+
+                    {/* DEGRADATION CHART */}
+                    <div style={{marginBottom:24}}>
+                      <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.2,color:"rgba(255,255,255,0.5)",marginBottom:10,fontWeight:600}}>Degradation per stint</div>
+                      <div style={{display:"flex",alignItems:"flex-end",gap:8,height:140,padding:"0 4px",overflowX:"auto"}}>
+                        {driverRows.map(({driver,stints})=>(
+                          <div key={driver.number} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,minWidth:40,flexShrink:0}}>
+                            <div style={{flex:1,display:"flex",alignItems:"flex-end",gap:2,height:100}}>
+                              {stints.sort((a,b)=>a.stint.stintNumber-b.stint.stintNumber).map(a=>{
+                                const col=COMPOUND_COLORS[a.compound]||"#888";
+                                const dark=a.compound==="HARD";
+                                const h=Math.max(2,Math.min(100,(Math.abs(a.slope)/maxSlope)*100));
+                                const key=a.driver.number+"-"+a.stint.stintNumber;
+                                const isHovered=tireHover?.key===key;
+                                return(
+                                  <div key={a.stint.stintNumber}
+                                    onMouseEnter={(e)=>{const r=e.currentTarget.getBoundingClientRect();const card=e.currentTarget.closest('[data-tire-card]').getBoundingClientRect();setTireHover({key,x:(r.left-card.left)+r.width/2,y:(r.top-card.top)});}}
+                                    onMouseLeave={()=>setTireHover(null)}
+                                    style={{width:11,height:h,background:`linear-gradient(180deg, ${col} 0%, ${col}99 100%)`,borderRadius:"2px 2px 0 0",cursor:"default",outline:isHovered?"1.5px solid rgba(255,255,255,0.7)":"none",outlineOffset:isHovered?-1:0,position:"relative",border:dark?"1px solid rgba(0,0,0,0.4)":"none"}}/>
+                                );
+                              })}
+                            </div>
+                            <div style={{display:"flex",alignItems:"center",gap:3}}>
+                              <div style={{width:3,height:9,background:driver.teamColour||"#fff",borderRadius:1}}/>
+                              <div style={{fontSize:10,fontWeight:700,letterSpacing:0.4,color:"rgba(255,255,255,0.75)"}}>{driver.acronym}</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      <div style={{fontSize:10,color:"rgba(255,255,255,0.3)",marginTop:6,fontStyle:"italic"}}>Bar height = absolute lap-time drift per lap (lower = more consistent). Drivers sorted by best-managed stint.</div>
+                    </div>
+
+                    {/* COMPOUND PACE BENCHMARK */}
+                    {compounds.length>0&&(
+                      <div>
+                        <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:10,flexWrap:"wrap",gap:8}}>
+                          <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.2,color:"rgba(255,255,255,0.5)",fontWeight:600}}>Stint Pace vs Benchmark</div>
+                          <div style={{fontSize:11,color:"rgba(255,255,255,0.4)",fontVariantNumeric:"tabular-nums"}}>Benchmark {fmtLapTime(benchmarks[activeCompound])}</div>
+                        </div>
+                        <div style={{display:"flex",gap:6,marginBottom:14,flexWrap:"wrap"}}>
+                          {compounds.map(c=>{
+                            const col=COMPOUND_COLORS[c]||"#888";
+                            const on=activeCompound===c;
+                            const dark=c==="HARD";
+                            return(
+                              <button key={c} onClick={()=>setTireCompound(c)} style={{display:"flex",alignItems:"center",gap:6,padding:"5px 10px",borderRadius:6,border:`1px solid ${on?col:"rgba(255,255,255,0.08)"}`,background:on?`${col}22`:"rgba(255,255,255,0.02)",color:on?"#fff":"rgba(255,255,255,0.55)",cursor:"pointer",fontSize:11,fontWeight:on?700:500,fontFamily:"'Outfit',sans-serif"}}>
+                                <div style={{width:14,height:14,borderRadius:3,background:col,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:800,color:dark?"#111":"#fff"}}>{c[0]}</div>
+                                <span style={{letterSpacing:0.5}}>{c[0]+c.slice(1).toLowerCase()}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                        <div style={{display:"flex",alignItems:"flex-end",gap:6,height:160,padding:"0 2px",overflowX:"auto"}}>
+                          {benchmarkStints.map(a=>{
+                            const gap=a.avg-benchmarks[activeCompound];
+                            const h=Math.max(2,Math.min(140,(gap/maxGap)*140));
+                            const tc=a.driver.teamColour||"#888";
+                            const isBest=gap<0.001;
+                            const key=a.driver.number+"-"+a.stint.stintNumber;
+                            const isHovered=tireHover?.key===key;
+                            return(
+                              <div key={key} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,minWidth:44,flexShrink:0}}>
+                                <div style={{fontSize:9,fontWeight:700,color:isBest?"#27F4D2":"rgba(255,255,255,0.5)",fontVariantNumeric:"tabular-nums"}}>{isBest?"FASTEST":`+${gap.toFixed(2)}`}</div>
+                                <div
+                                  onMouseEnter={(e)=>{const r=e.currentTarget.getBoundingClientRect();const card=e.currentTarget.closest('[data-tire-card]').getBoundingClientRect();setTireHover({key,x:(r.left-card.left)+r.width/2,y:(r.top-card.top)});}}
+                                  onMouseLeave={()=>setTireHover(null)}
+                                  style={{width:24,height:h,background:`linear-gradient(180deg, ${tc} 0%, ${tc}99 100%)`,borderRadius:"3px 3px 0 0",cursor:"default",outline:isHovered?"1.5px solid rgba(255,255,255,0.7)":"none",outlineOffset:isHovered?-1:0}}
+                                />
+                                <div style={{textAlign:"center"}}>
+                                  <div style={{fontSize:10,fontWeight:700,letterSpacing:0.4,color:isBest?"#27F4D2":"rgba(255,255,255,0.75)"}}>{a.driver.acronym}</div>
+                                  <div style={{fontSize:8,color:"rgba(255,255,255,0.35)",fontVariantNumeric:"tabular-nums"}}>S{a.stint.stintNumber}</div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                        <div style={{fontSize:10,color:"rgba(255,255,255,0.3)",marginTop:6,fontStyle:"italic"}}>Gap to the fastest stint average on this compound. Hover any bar for details.</div>
+                      </div>
+                    )}
+
+                    {/* Shared hover tooltip */}
+                    {hoveredEntry&&(
+                      <div style={{position:"absolute",left:tireHover.x,top:tireHover.y-90,transform:"translateX(-50%)",background:"rgba(14,14,22,0.97)",border:`1px solid ${COMPOUND_COLORS[hoveredEntry.compound]||"#888"}40`,borderRadius:8,padding:"10px 12px",pointerEvents:"none",minWidth:220,boxShadow:"0 8px 24px rgba(0,0,0,0.5)",zIndex:10}}>
+                        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
+                          <div style={{fontSize:9,fontWeight:800,letterSpacing:1.2,padding:"3px 8px",borderRadius:4,background:COMPOUND_COLORS[hoveredEntry.compound],color:hoveredEntry.compound==="HARD"?"#111":"#fff"}}>{hoveredEntry.compound}</div>
+                          <div style={{fontSize:11,color:"rgba(255,255,255,0.7)",fontWeight:600}}>{hoveredEntry.driver.acronym} · Stint {hoveredEntry.stint.stintNumber}</div>
+                        </div>
+                        <div style={{display:"grid",gridTemplateColumns:"auto 1fr",gap:"5px 14px",fontSize:11}}>
+                          <div style={{color:"rgba(255,255,255,0.4)"}}>Laps</div>
+                          <div style={{fontWeight:600,fontVariantNumeric:"tabular-nums"}}>L{hoveredEntry.lapStart} – L{hoveredEntry.lapEnd} <span style={{color:"rgba(255,255,255,0.4)",fontWeight:400}}>({hoveredEntry.validLaps} clean)</span></div>
+                          <div style={{color:"rgba(255,255,255,0.4)"}}>Avg pace</div>
+                          <div style={{fontWeight:700,fontVariantNumeric:"tabular-nums"}}>{fmtLapTime(hoveredEntry.avg)}</div>
+                          <div style={{color:"rgba(255,255,255,0.4)"}}>Best lap</div>
+                          <div style={{fontWeight:700,fontVariantNumeric:"tabular-nums",color:"#27F4D2"}}>{fmtLapTime(hoveredEntry.best)}</div>
+                          <div style={{color:"rgba(255,255,255,0.4)"}}>Degradation</div>
+                          <div style={{fontWeight:700,fontVariantNumeric:"tabular-nums",color:hoveredEntry.slope>0.05?"#FF6B6B":hoveredEntry.slope<-0.02?"#27F4D2":"#fff"}}>{hoveredEntry.slope>=0?"+":""}{(hoveredEntry.slope*1000).toFixed(0)}ms / lap</div>
+                          {benchmarks[hoveredEntry.compound]&&(<>
+                            <div style={{color:"rgba(255,255,255,0.4)"}}>vs benchmark</div>
+                            <div style={{fontWeight:700,fontVariantNumeric:"tabular-nums",color:(hoveredEntry.avg-benchmarks[hoveredEntry.compound])<0.05?"#27F4D2":"#FFD700"}}>+{(hoveredEntry.avg-benchmarks[hoveredEntry.compound]).toFixed(3)}s</div>
+                          </>)}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 );
               })()}
