@@ -614,6 +614,7 @@ export default function F1Dashboard(){
   const[replayTime,setReplayTime]=useState(0); // seconds into the race
   const[replayPlaying,setReplayPlaying]=useState(false);
   const[replaySpeed,setReplaySpeed]=useState(8); // 1x, 2x, 4x, 8x, 16x — default 8 since real time is slow
+  const[replayDotHover,setReplayDotHover]=useState(null); // {driverNumber, x, y}
   const replayRaf=useRef(null);
   const replayLastTick=useRef(null);
 
@@ -1767,26 +1768,32 @@ export default function F1Dashboard(){
                       );
                     })()}
                     {/* Main: track + leaderboard */}
-                    <div style={{display:"grid",gridTemplateColumns:"1fr 340px",gap:18,alignItems:"start"}} className="replay-grid">
+                    <div style={{display:"grid",gridTemplateColumns:"1fr 280px",gap:18,alignItems:"start"}} className="replay-grid">
                       {/* Track with driver dots */}
-                      <div style={{position:"relative",background:"rgba(0,0,0,0.25)",border:"1px solid rgba(255,255,255,0.04)",borderRadius:10,padding:14,minHeight:300}}>
+                      <div data-replay-track style={{position:"relative",background:"rgba(0,0,0,0.25)",border:"1px solid rgba(255,255,255,0.04)",borderRadius:10,padding:14}}>
                         {sampler&&tracks?.[trackKey]?(()=>{
                           const t=tracks[trackKey];
                           // Compute pixel positions per driver
                           const dotPositions=driverStates
                             .filter(s=>s.onTrack||s.finished)
                             .map(s=>({...s,pt:sampler.sample(s.fracOfLap)}));
+                          const hovered=replayDotHover?driverStates.find(s=>s.driver.number===replayDotHover.driverNumber):null;
                           return(
-                            <svg viewBox={t.viewBox} preserveAspectRatio="xMidYMid meet" style={{width:"100%",height:340,display:"block",overflow:"visible"}}>
-                              <path d={t.path} fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"/>
+                            <svg viewBox={t.viewBox} preserveAspectRatio="xMidYMid meet" style={{width:"100%",height:440,display:"block",overflow:"visible"}}>
+                              <path d={t.path} fill="none" stroke="rgba(255,255,255,0.14)" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"/>
                               {/* Dots */}
                               {dotPositions.map(s=>{
                                 const tc=s.driver.teamColour||"#fff";
                                 const isLeader=ranked[0]?.driver?.number===s.driver.number;
+                                const isHovered=replayDotHover?.driverNumber===s.driver.number;
                                 return(
-                                  <g key={s.driver.number} style={{transition:"transform 0.15s linear"}}>
-                                    <circle cx={s.pt[0]} cy={s.pt[1]} r={isLeader?1.6:1.2} fill={tc} stroke="#0a0a0f" strokeWidth={0.5} opacity={s.finished?0.4:1}/>
-                                    {isLeader&&<circle cx={s.pt[0]} cy={s.pt[1]} r={2.6} fill="none" stroke={tc} strokeWidth={0.4} opacity={0.7}/>}
+                                  <g key={s.driver.number} style={{transition:"transform 0.15s linear",cursor:"pointer"}}
+                                    onMouseEnter={(e)=>{const r=e.currentTarget.getBoundingClientRect();const card=e.currentTarget.closest('[data-replay-track]').getBoundingClientRect();setReplayDotHover({driverNumber:s.driver.number,x:(r.left-card.left)+r.width/2,y:(r.top-card.top)});}}
+                                    onMouseLeave={()=>setReplayDotHover(null)}>
+                                    {/* Larger transparent hit area for easier hovering */}
+                                    <circle cx={s.pt[0]} cy={s.pt[1]} r={3.5} fill="transparent"/>
+                                    <circle cx={s.pt[0]} cy={s.pt[1]} r={(isLeader?1.9:1.5)*(isHovered?1.4:1)} fill={tc} stroke="#0a0a0f" strokeWidth={0.5} opacity={s.finished?0.4:1}/>
+                                    {(isLeader||isHovered)&&<circle cx={s.pt[0]} cy={s.pt[1]} r={isHovered?3.6:2.8} fill="none" stroke={tc} strokeWidth={isHovered?0.7:0.4} opacity={isHovered?0.9:0.7}/>}
                                   </g>
                                 );
                               })}
@@ -1795,12 +1802,36 @@ export default function F1Dashboard(){
                         })():(
                           <div style={{textAlign:"center",padding:80,color:"rgba(255,255,255,0.3)",fontSize:12}}>Track outline not available</div>
                         )}
+                        {/* Dot hover tooltip */}
+                        {replayDotHover&&(()=>{
+                          const s=driverStates.find(x=>x.driver.number===replayDotHover.driverNumber);
+                          if(!s)return null;
+                          const d=s.driver;
+                          const stint=stintForDriver(d.number,s.lapInProgress||Math.floor(s.progress)+1);
+                          const compound=(stint?.compound||"").toUpperCase();
+                          const ccol=COMPOUND_COLORS[compound]||"#888";
+                          const cdark=compound==="HARD";
+                          const rank=ranked.findIndex(r=>r.driver.number===d.number)+1;
+                          return(
+                            <div style={{position:"absolute",left:replayDotHover.x,top:replayDotHover.y-58,transform:"translateX(-50%)",background:"rgba(14,14,22,0.97)",border:`1px solid ${d.teamColour||"#fff"}55`,borderRadius:8,padding:"8px 12px",pointerEvents:"none",boxShadow:"0 8px 24px rgba(0,0,0,0.55)",zIndex:20,minWidth:140}}>
+                              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
+                                <div style={{fontSize:10,fontWeight:800,color:"rgba(255,255,255,0.4)",fontVariantNumeric:"tabular-nums",minWidth:18}}>P{rank}</div>
+                                <div style={{width:3,height:14,background:d.teamColour||"#fff",borderRadius:1}}/>
+                                <div style={{fontSize:13,fontWeight:700,letterSpacing:0.3}}>{d.acronym}</div>
+                                {compound&&<div style={{marginLeft:"auto",display:"inline-flex",alignItems:"center",justifyContent:"center",width:18,height:18,borderRadius:3,background:ccol,fontSize:9,fontWeight:800,color:cdark?"#111":"#fff"}}>{compound[0]}</div>}
+                              </div>
+                              <div style={{fontSize:11,color:"rgba(255,255,255,0.6)",marginBottom:3,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{d.name||d.acronym}</div>
+                              <div style={{fontSize:10,color:d.teamColour||"rgba(255,255,255,0.5)",fontWeight:600}}>{normTeam(d.team||"")}</div>
+                              <div style={{fontSize:10,color:"rgba(255,255,255,0.45)",marginTop:4,fontVariantNumeric:"tabular-nums"}}>{s.finished?"Finished":`Lap ${(s.lapInProgress||Math.floor(s.progress)+1)} · ${Math.round(s.fracOfLap*100)}% around`}</div>
+                            </div>
+                          );
+                        })()}
                         <div style={{position:"absolute",bottom:8,right:12,fontSize:10,color:"rgba(255,255,255,0.3)",fontStyle:"italic"}}>Dots interpolated from cumulative lap times</div>
                       </div>
-                      {/* Leaderboard */}
-                      <div style={{display:"flex",flexDirection:"column",gap:3,minHeight:300,overflow:"hidden"}}>
-                        <div style={{display:"grid",gridTemplateColumns:"22px 30px 1fr 56px 56px",gap:6,padding:"2px 8px",fontSize:9,textTransform:"uppercase",letterSpacing:0.8,color:"rgba(255,255,255,0.3)",fontWeight:600}}>
-                          <div>P</div><div/><div>Driver</div><div style={{textAlign:"right"}}>Tire</div><div style={{textAlign:"right"}}>Gap</div>
+                      {/* Leaderboard — fixed height matching track, scrollable if needed */}
+                      <div style={{display:"flex",flexDirection:"column",gap:2,height:468,overflowY:"auto",paddingRight:4}}>
+                        <div style={{display:"grid",gridTemplateColumns:"20px 26px 1fr 22px 50px",gap:5,padding:"2px 7px",fontSize:9,textTransform:"uppercase",letterSpacing:0.8,color:"rgba(255,255,255,0.3)",fontWeight:600,position:"sticky",top:0,background:"rgba(10,10,15,0.95)",zIndex:1}}>
+                          <div>P</div><div/><div>Driver</div><div style={{textAlign:"center"}}>T</div><div style={{textAlign:"right"}}>Gap</div>
                         </div>
                         {ranked.map((s,idx)=>{
                           const d=s.driver;
@@ -1810,15 +1841,15 @@ export default function F1Dashboard(){
                           const ccol=COMPOUND_COLORS[compound]||"rgba(255,255,255,0.2)";
                           const cdark=compound==="HARD";
                           return(
-                            <div key={d.number} style={{display:"grid",gridTemplateColumns:"22px 30px 1fr 56px 56px",gap:6,padding:"6px 8px",alignItems:"center",background:idx<3?`${tc}10`:"rgba(255,255,255,0.02)",border:idx<3?`1px solid ${tc}30`:"1px solid rgba(255,255,255,0.04)",borderRadius:6,opacity:s.finished?0.55:1,transition:"opacity 0.2s"}}>
-                              <div style={{fontSize:12,fontWeight:800,color:idx<3?tc:"rgba(255,255,255,0.4)",fontVariantNumeric:"tabular-nums"}}>{idx+1}</div>
-                              <div style={{width:3,height:18,background:tc,borderRadius:1.5}}/>
+                            <div key={d.number} style={{display:"grid",gridTemplateColumns:"20px 26px 1fr 22px 50px",gap:5,padding:"4px 7px",alignItems:"center",background:idx<3?`${tc}14`:"rgba(255,255,255,0.02)",border:idx<3?`1px solid ${tc}30`:"1px solid rgba(255,255,255,0.04)",borderRadius:5,opacity:s.finished?0.55:1,transition:"opacity 0.2s"}}>
+                              <div style={{fontSize:11,fontWeight:800,color:idx<3?tc:"rgba(255,255,255,0.4)",fontVariantNumeric:"tabular-nums"}}>{idx+1}</div>
+                              <div style={{width:3,height:16,background:tc,borderRadius:1.5}}/>
                               <div style={{minWidth:0}}>
-                                <div style={{fontSize:11,fontWeight:700,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{d.acronym}</div>
-                                <div style={{fontSize:9,color:"rgba(255,255,255,0.4)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>L{Math.floor(s.progress)+(s.finished?0:1)}{s.finished?" · FIN":""}</div>
+                                <div style={{fontSize:11,fontWeight:700,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",lineHeight:1.1}}>{d.acronym}</div>
+                                <div style={{fontSize:8,color:"rgba(255,255,255,0.4)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",lineHeight:1.1,marginTop:1}}>L{Math.floor(s.progress)+(s.finished?0:1)}{s.finished?" · FIN":""}</div>
                               </div>
-                              <div style={{textAlign:"right"}}>
-                                {compound&&<div style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:18,height:18,borderRadius:3,background:ccol,fontSize:9,fontWeight:800,color:cdark?"#111":"#fff"}}>{compound[0]}</div>}
+                              <div style={{textAlign:"center"}}>
+                                {compound&&<div style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:16,height:16,borderRadius:3,background:ccol,fontSize:9,fontWeight:800,color:cdark?"#111":"#fff"}}>{compound[0]}</div>}
                               </div>
                               <div style={{textAlign:"right",fontSize:10,fontWeight:600,fontVariantNumeric:"tabular-nums",color:idx===0?"#27F4D2":"rgba(255,255,255,0.6)"}}>{fmtGapToLeader(s)}</div>
                             </div>
