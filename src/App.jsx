@@ -1,4 +1,4 @@
-import { useState, useEffect, Fragment } from "react";
+import { useState, useEffect, useRef, Fragment } from "react";
 
 const SEASON = 2026;
 
@@ -487,6 +487,54 @@ function TrackMap({raceName,tracks,stroke="#fff",strokeWidth=2,opacity=1,fill="n
   );
 }
 
+// Build a closed-loop sampler from a TrackMap path. Given a fraction in [0,1]
+// returns the (x, y) point that fraction of the way around the lap. Used by the
+// Race Replay panel to position driver dots on the circuit outline.
+function buildTrackSampler(track){
+  if(!track)return null;
+  const matches=[...(track.path||"").matchAll(/[ML]([0-9.]+),([0-9.]+)/g)];
+  const pts=matches.map(m=>[parseFloat(m[1]),parseFloat(m[2])]);
+  if(pts.length<2)return null;
+  const cumDist=[0];
+  for(let i=1;i<pts.length;i++){
+    const dx=pts[i][0]-pts[i-1][0],dy=pts[i][1]-pts[i-1][1];
+    cumDist.push(cumDist[i-1]+Math.sqrt(dx*dx+dy*dy));
+  }
+  const total=cumDist[cumDist.length-1];
+  return{
+    total,
+    sample(frac){
+      const t=((frac%1)+1)%1*total;
+      // Binary search for segment containing t
+      let lo=0,hi=cumDist.length-1;
+      while(lo<hi-1){const mid=(lo+hi)>>1;if(cumDist[mid]<=t)lo=mid;else hi=mid;}
+      const segLen=cumDist[hi]-cumDist[lo]||1;
+      const f=(t-cumDist[lo])/segLen;
+      return[pts[lo][0]+f*(pts[hi][0]-pts[lo][0]),pts[lo][1]+f*(pts[hi][1]-pts[lo][1])];
+    },
+  };
+}
+
+// Given a driver's lapTimes array and a race time (seconds), returns
+// { lap: laps_completed_with_fraction, lapInProgress, fracOfLap, finished }.
+// lap is a float — integer part = laps completed, fractional = progress into
+// the current lap. Used to position dots and rank drivers.
+function driverProgressAtTime(driver,raceTime){
+  const laps=[...(driver.lapTimes||[])].sort((a,b)=>a.l-b.l);
+  if(laps.length===0)return null;
+  let cum=0;
+  for(let i=0;i<laps.length;i++){
+    const l=laps[i];
+    if(raceTime<=cum+l.t){
+      const frac=Math.max(0,Math.min(1,(raceTime-cum)/l.t));
+      return{lap:(l.l-1)+frac,lapInProgress:l.l,fracOfLap:frac,finished:false};
+    }
+    cum+=l.t;
+  }
+  // Past the last lap — driver finished or retired
+  return{lap:laps[laps.length-1].l,lapInProgress:laps[laps.length-1].l,fracOfLap:1,finished:true,finishedAt:cum};
+}
+
 // Split a TrackMap path into three equal-length segments. Used for the sector
 // overlay on Sector Times. Returns three path strings, the start point of each
 // sector boundary (for label dots), and the original viewBox.
@@ -562,6 +610,12 @@ export default function F1Dashboard(){
   const[overlayHover,setOverlayHover]=useState(null); // {lapInStint}
   const[overlayCompoundFilter,setOverlayCompoundFilter]=useState("ALL"); // compound key or "ALL"
   const[overlayDriverFilter,setOverlayDriverFilter]=useState("ALL"); // driverNumber or "ALL"
+  // Race Replay state
+  const[replayTime,setReplayTime]=useState(0); // seconds into the race
+  const[replayPlaying,setReplayPlaying]=useState(false);
+  const[replaySpeed,setReplaySpeed]=useState(8); // 1x, 2x, 4x, 8x, 16x — default 8 since real time is slow
+  const replayRaf=useRef(null);
+  const replayLastTick=useRef(null);
 
   useEffect(()=>{
     Promise.all([
@@ -583,6 +637,24 @@ export default function F1Dashboard(){
       setLoading(false);
     }).catch(e=>{console.error("Failed to load data:",e);setError(e.message);setLoading(false)});
   },[]);
+
+  // Race Replay animation tick — advance replayTime each frame while playing
+  useEffect(()=>{
+    if(!replayPlaying)return;
+    const tick=(now)=>{
+      if(replayLastTick.current!=null){
+        const dt=(now-replayLastTick.current)/1000;
+        setReplayTime(t=>t+dt*replaySpeed);
+      }
+      replayLastTick.current=now;
+      replayRaf.current=requestAnimationFrame(tick);
+    };
+    replayRaf.current=requestAnimationFrame(tick);
+    return()=>{cancelAnimationFrame(replayRaf.current);replayLastTick.current=null;};
+  },[replayPlaying,replaySpeed]);
+
+  // Reset replay when meeting changes
+  useEffect(()=>{setReplayTime(0);setReplayPlaying(false);},[telMeetingKey]);
 
   if(loading)return(<div style={{minHeight:"100vh",background:"#0a0a0f",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Outfit',sans-serif"}}><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/><div style={{textAlign:"center"}}><div style={{fontSize:32,fontWeight:700,marginBottom:8}}>Loading F1 Data...</div><div style={{color:"rgba(255,255,255,0.4)"}}>Fetching from Jolpica API</div></div></div>);
   if(error||!data)return(<div style={{minHeight:"100vh",background:"#0a0a0f",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Outfit',sans-serif"}}><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/><div style={{textAlign:"center"}}><div style={{fontSize:32,fontWeight:700,color:"#E80020",marginBottom:8}}>Failed to Load Data</div><div style={{color:"rgba(255,255,255,0.5)"}}>{error||"No data available. Run: npm run fetch-data"}</div></div></div>);
@@ -615,6 +687,7 @@ export default function F1Dashboard(){
         .pulse-once{animation:pulseOnce 1.6s ease-out 1}
         .heatmap-cell{transition:filter .15s, transform .15s, box-shadow .15s; cursor:default}
         .heatmap-cell:hover{filter:brightness(1.35) saturate(1.1); transform:translateY(-1px); box-shadow:0 4px 14px rgba(0,0,0,0.4)}
+        @media(max-width:768px){.replay-grid{grid-template-columns:1fr!important}}
         .tab-bar{display:flex;gap:0;margin-top:20px;border-bottom:1px solid rgba(255,255,255,0.06);overflow-x:auto}
         .tb{cursor:pointer;padding:10px 18px;border:none;background:none;color:rgba(255,255,255,0.4);font-size:13px;font-weight:500;letter-spacing:.5px;font-family:'Outfit',sans-serif;transition:all .3s;border-bottom:2px solid transparent;white-space:nowrap;flex:1;text-align:center}
         .tb:hover{color:rgba(255,255,255,0.7);background:rgba(255,255,255,0.02)}.tb.a{color:#E80020;border-bottom-color:#E80020;background:rgba(232,0,32,0.04)}
@@ -1586,6 +1659,176 @@ export default function F1Dashboard(){
                   ))}
                 </div>
               </div>
+
+              {/* Race Replay — track dots + animated leaderboard + scrubber */}
+              {(()=>{
+                const trackKey=cur.meeting.meetingName;
+                const sampler=tracks?buildTrackSampler(tracks[trackKey]):null;
+                // Race duration = max cumulative race time across drivers
+                const lapsByDriver=Object.fromEntries(allDrivers.map(d=>{
+                  const sorted=[...(d.lapTimes||[])].sort((a,b)=>a.l-b.l);
+                  let cum=0;const cumArr=[];for(const l of sorted){cum+=l.t;cumArr.push({l:l.l,cum,t:l.t});}
+                  return[d.number,{cumArr,total:cum}];
+                }));
+                const raceDuration=Math.max(1,...Object.values(lapsByDriver).map(x=>x.total));
+                const tClamped=Math.max(0,Math.min(raceDuration,replayTime));
+                // Compute state per driver at tClamped
+                const driverStates=allDrivers.map(d=>{
+                  const lb=lapsByDriver[d.number];
+                  if(!lb||lb.cumArr.length===0)return{driver:d,progress:0,lap:0,fracOfLap:0,finished:false,onTrack:false};
+                  let cum=0,lapDone=0,fracOfLap=0,curLapTime=0,finished=false;
+                  for(let i=0;i<lb.cumArr.length;i++){
+                    const e=lb.cumArr[i];
+                    if(tClamped<=e.cum){
+                      lapDone=e.l-1;
+                      curLapTime=e.t;
+                      fracOfLap=(tClamped-(cum))/e.t;
+                      break;
+                    }
+                    cum=e.cum;
+                    lapDone=e.l;
+                  }
+                  if(tClamped>lb.total){finished=true;fracOfLap=1;}
+                  const progress=lapDone+fracOfLap;
+                  return{driver:d,progress,lap:lapDone,fracOfLap:Math.max(0,Math.min(1,fracOfLap)),finished,onTrack:!finished&&progress>0};
+                });
+                // Rank by progress descending — higher progress = further ahead
+                const ranked=[...driverStates].sort((a,b)=>b.progress-a.progress);
+                const leaderProgress=ranked[0]?.progress||0;
+                // Compute current stint (compound) per driver at this race time
+                const stintForDriver=(driverNumber,lapNum)=>{
+                  const stints=(race.stints||[]).filter(s=>s.driverNumber===driverNumber);
+                  return stints.find(s=>lapNum>=(s.lapStart||1)&&lapNum<=(s.lapEnd||999))||null;
+                };
+                // Race-control state at current time — need to map race time back to lap of leader (rough)
+                const leaderLap=Math.floor(ranked[0]?.progress||0)+1;
+                const periods=race.raceControlPeriods||[];
+                const yellowLaps=race.yellowFlagLaps||[];
+                const activePeriod=periods.find(p=>leaderLap>=p.lapStart&&leaderLap<=p.lapEnd);
+                const yellowActive=!activePeriod&&yellowLaps.includes(leaderLap);
+                // Format helpers
+                const fmtTime=(s)=>{const m=Math.floor(s/60);const sec=Math.floor(s%60);return`${m}:${String(sec).padStart(2,"0")}`;};
+                const fmtGapToLeader=(d)=>{
+                  if(d===ranked[0])return"LEADER";
+                  const lapsBehind=Math.floor(leaderProgress)-Math.floor(d.progress);
+                  if(lapsBehind>=1)return`+${lapsBehind} lap${lapsBehind>1?"s":""}`;
+                  // Same lap — approximate seconds gap using leader's current lap pace
+                  const leadCurLapTime=ranked[0]?(ranked[0].finished?lapsByDriver[ranked[0].driver.number]?.cumArr.slice(-1)[0]?.t||90:(lapsByDriver[ranked[0].driver.number]?.cumArr[ranked[0].lap]?.t||90)):90;
+                  const fracGap=leaderProgress-d.progress;
+                  return`+${(fracGap*leadCurLapTime).toFixed(2)}s`;
+                };
+                // Scrubber period bars
+                const scrubberPeriods=periods.map(p=>{
+                  // Find race time at start and end of period (use leader's pace approximation)
+                  const leadCum=lapsByDriver[ranked[0]?.driver?.number]?.cumArr||[];
+                  const tAt=(lap)=>{const e=leadCum.find(x=>x.l===lap);return e?e.cum:null;};
+                  const ts=tAt(p.lapStart),te=tAt(p.lapEnd);
+                  return ts!=null&&te!=null?{type:p.type,start:ts,end:te}:null;
+                }).filter(Boolean);
+                const periodStyle={SC:{fill:"#FFDA00",label:"SC"},VSC:{fill:"#FF9800",label:"VSC"},RED:{fill:"#E80020",label:"RED"}};
+                return(
+                  <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:18,marginBottom:16}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:14,flexWrap:"wrap",gap:8}}>
+                      <div>
+                        <div style={{fontSize:15,fontWeight:700}}>Race Replay</div>
+                        <div style={{fontSize:11,color:"rgba(255,255,255,0.4)",marginTop:2}}>{cur.meeting.meetingName} · Lap {leaderLap} of {Math.ceil(raceDuration/(raceDuration/Math.max(1,Math.max(...Object.values(lapsByDriver).map(x=>x.cumArr.length||0)))))} · {fmtTime(tClamped)}</div>
+                      </div>
+                      <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
+                        <button onClick={()=>{if(replayTime>=raceDuration-0.5)setReplayTime(0);setReplayPlaying(p=>!p);}} style={{width:38,height:38,borderRadius:"50%",border:"1px solid rgba(255,255,255,0.15)",background:replayPlaying?"rgba(232,0,32,0.18)":"rgba(255,255,255,0.06)",color:"#fff",cursor:"pointer",fontSize:14,fontFamily:"'Outfit',sans-serif",display:"flex",alignItems:"center",justifyContent:"center"}}>{replayPlaying?"⏸":"▶"}</button>
+                        <button onClick={()=>{setReplayPlaying(false);setReplayTime(0);}} title="Restart" style={{width:30,height:30,borderRadius:6,border:"1px solid rgba(255,255,255,0.08)",background:"rgba(255,255,255,0.03)",color:"rgba(255,255,255,0.55)",cursor:"pointer",fontSize:12,fontFamily:"'Outfit',sans-serif"}}>⏮</button>
+                        <div style={{display:"flex",gap:3,border:"1px solid rgba(255,255,255,0.08)",borderRadius:6,padding:2,background:"rgba(255,255,255,0.02)"}}>
+                          {[1,2,4,8,16].map(s=>(
+                            <button key={s} onClick={()=>setReplaySpeed(s)} style={{padding:"3px 9px",borderRadius:4,border:"none",background:replaySpeed===s?"rgba(232,0,32,0.18)":"transparent",color:replaySpeed===s?"#fff":"rgba(255,255,255,0.5)",cursor:"pointer",fontSize:10,fontWeight:replaySpeed===s?700:500,fontFamily:"'Outfit',sans-serif"}}>{s}×</button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                    {/* Scrubber */}
+                    <div style={{position:"relative",height:28,marginBottom:14}}>
+                      <div style={{position:"absolute",inset:"12px 0",borderRadius:3,background:"rgba(255,255,255,0.04)"}}/>
+                      {scrubberPeriods.map((p,i)=>{
+                        const st=periodStyle[p.type];if(!st)return null;
+                        const left=(p.start/raceDuration)*100;
+                        const width=((p.end-p.start)/raceDuration)*100;
+                        return<div key={i} title={`${st.label} L${periods[i]?.lapStart}-${periods[i]?.lapEnd}`} style={{position:"absolute",top:11,left:`${left}%`,width:`${Math.max(0.5,width)}%`,height:6,background:st.fill,opacity:0.45,borderRadius:1}}/>;
+                      })}
+                      <input type="range" min={0} max={Math.floor(raceDuration)} step={0.5} value={tClamped} onChange={(e)=>{setReplayPlaying(false);setReplayTime(parseFloat(e.target.value));}} style={{position:"absolute",inset:0,width:"100%",height:28,margin:0,background:"transparent",appearance:"none",WebkitAppearance:"none",cursor:"pointer"}}/>
+                      <style>{`input[type=range]::-webkit-slider-thumb{appearance:none;width:14px;height:22px;border-radius:3px;background:#E80020;border:2px solid #fff;cursor:pointer;box-shadow:0 0 8px rgba(232,0,32,0.6)}input[type=range]::-moz-range-thumb{width:14px;height:22px;border-radius:3px;background:#E80020;border:2px solid #fff;cursor:pointer}input[type=range]::-webkit-slider-runnable-track{background:transparent}input[type=range]::-moz-range-track{background:transparent}`}</style>
+                    </div>
+                    {/* Race control banner */}
+                    {(activePeriod||yellowActive)&&(()=>{
+                      let label,color,bg;
+                      if(activePeriod){const st=periodStyle[activePeriod.type];label=st?.label||activePeriod.type;color=st?.fill||"#fff";bg=`${color}22`;}
+                      else{label="LOCAL YELLOW";color="#FFC800";bg="rgba(255,200,0,0.10)";}
+                      return(
+                        <div style={{padding:"6px 12px",background:bg,border:`1px solid ${color}55`,borderRadius:6,marginBottom:14,fontSize:11,fontWeight:700,letterSpacing:1,color,textTransform:"uppercase",display:"flex",alignItems:"center",gap:8}}>
+                          <div style={{width:8,height:8,background:color,borderRadius:"50%",animation:"pulse 1.2s ease-in-out infinite"}}/>{label} active
+                        </div>
+                      );
+                    })()}
+                    {/* Main: track + leaderboard */}
+                    <div style={{display:"grid",gridTemplateColumns:"1fr 340px",gap:18,alignItems:"start"}} className="replay-grid">
+                      {/* Track with driver dots */}
+                      <div style={{position:"relative",background:"rgba(0,0,0,0.25)",border:"1px solid rgba(255,255,255,0.04)",borderRadius:10,padding:14,minHeight:300}}>
+                        {sampler&&tracks?.[trackKey]?(()=>{
+                          const t=tracks[trackKey];
+                          // Compute pixel positions per driver
+                          const dotPositions=driverStates
+                            .filter(s=>s.onTrack||s.finished)
+                            .map(s=>({...s,pt:sampler.sample(s.fracOfLap)}));
+                          return(
+                            <svg viewBox={t.viewBox} preserveAspectRatio="xMidYMid meet" style={{width:"100%",height:340,display:"block",overflow:"visible"}}>
+                              <path d={t.path} fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"/>
+                              {/* Dots */}
+                              {dotPositions.map(s=>{
+                                const tc=s.driver.teamColour||"#fff";
+                                const isLeader=ranked[0]?.driver?.number===s.driver.number;
+                                return(
+                                  <g key={s.driver.number} style={{transition:"transform 0.15s linear"}}>
+                                    <circle cx={s.pt[0]} cy={s.pt[1]} r={isLeader?1.6:1.2} fill={tc} stroke="#0a0a0f" strokeWidth={0.5} opacity={s.finished?0.4:1}/>
+                                    {isLeader&&<circle cx={s.pt[0]} cy={s.pt[1]} r={2.6} fill="none" stroke={tc} strokeWidth={0.4} opacity={0.7}/>}
+                                  </g>
+                                );
+                              })}
+                            </svg>
+                          );
+                        })():(
+                          <div style={{textAlign:"center",padding:80,color:"rgba(255,255,255,0.3)",fontSize:12}}>Track outline not available</div>
+                        )}
+                        <div style={{position:"absolute",bottom:8,right:12,fontSize:10,color:"rgba(255,255,255,0.3)",fontStyle:"italic"}}>Dots interpolated from cumulative lap times</div>
+                      </div>
+                      {/* Leaderboard */}
+                      <div style={{display:"flex",flexDirection:"column",gap:3,minHeight:300,overflow:"hidden"}}>
+                        <div style={{display:"grid",gridTemplateColumns:"22px 30px 1fr 56px 56px",gap:6,padding:"2px 8px",fontSize:9,textTransform:"uppercase",letterSpacing:0.8,color:"rgba(255,255,255,0.3)",fontWeight:600}}>
+                          <div>P</div><div/><div>Driver</div><div style={{textAlign:"right"}}>Tire</div><div style={{textAlign:"right"}}>Gap</div>
+                        </div>
+                        {ranked.map((s,idx)=>{
+                          const d=s.driver;
+                          const tc=d.teamColour||"#fff";
+                          const stint=stintForDriver(d.number,s.lapInProgress||Math.floor(s.progress)+1);
+                          const compound=(stint?.compound||"").toUpperCase();
+                          const ccol=COMPOUND_COLORS[compound]||"rgba(255,255,255,0.2)";
+                          const cdark=compound==="HARD";
+                          return(
+                            <div key={d.number} style={{display:"grid",gridTemplateColumns:"22px 30px 1fr 56px 56px",gap:6,padding:"6px 8px",alignItems:"center",background:idx<3?`${tc}10`:"rgba(255,255,255,0.02)",border:idx<3?`1px solid ${tc}30`:"1px solid rgba(255,255,255,0.04)",borderRadius:6,opacity:s.finished?0.55:1,transition:"opacity 0.2s"}}>
+                              <div style={{fontSize:12,fontWeight:800,color:idx<3?tc:"rgba(255,255,255,0.4)",fontVariantNumeric:"tabular-nums"}}>{idx+1}</div>
+                              <div style={{width:3,height:18,background:tc,borderRadius:1.5}}/>
+                              <div style={{minWidth:0}}>
+                                <div style={{fontSize:11,fontWeight:700,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{d.acronym}</div>
+                                <div style={{fontSize:9,color:"rgba(255,255,255,0.4)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>L{Math.floor(s.progress)+(s.finished?0:1)}{s.finished?" · FIN":""}</div>
+                              </div>
+                              <div style={{textAlign:"right"}}>
+                                {compound&&<div style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:18,height:18,borderRadius:3,background:ccol,fontSize:9,fontWeight:800,color:cdark?"#111":"#fff"}}>{compound[0]}</div>}
+                              </div>
+                              <div style={{textAlign:"right",fontSize:10,fontWeight:600,fontVariantNumeric:"tabular-nums",color:idx===0?"#27F4D2":"rgba(255,255,255,0.6)"}}>{fmtGapToLeader(s)}</div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Driver chips */}
               <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:16}}>
