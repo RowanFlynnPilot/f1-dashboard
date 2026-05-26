@@ -550,6 +550,7 @@ export default function F1Dashboard(){
   const[telSelected,setTelSelected]=useState(()=>new Set());
   const[telLapHover,setTelLapHover]=useState(null); // {x,lap} or null
   const[telPosHover,setTelPosHover]=useState(null); // {x,lap} or null
+  const[telStintHover,setTelStintHover]=useState(null); // {driverNumber, stintNumber, x, y} or null
 
   useEffect(()=>{
     Promise.all([
@@ -1599,15 +1600,23 @@ export default function F1Dashboard(){
                 const onMove=(e)=>{
                   const rect=e.currentTarget.getBoundingClientRect();
                   const xView=((e.clientX-rect.left)/rect.width)*W;
+                  const yView=((e.clientY-rect.top)/rect.height)*H;
                   let lap=Math.round(((xView-padL)/plotW)*(maxLap-1))+1;
                   lap=Math.max(1,Math.min(maxLap,lap));
-                  setTelLapHover({lap});
+                  // Invert yView back to a time value (only when inside plot area)
+                  let timeAtY=null;
+                  if(yView>=padT&&yView<=padT+plotH){
+                    timeAtY=yMax-((yView-padT)/plotH)*(yMax-yMin);
+                  }
+                  setTelLapHover({lap,yView,timeAtY});
                 };
                 const hoverLap=telLapHover?.lap||null;
+                const hoverYView=telLapHover?.yView??null;
+                const hoverTimeAtY=telLapHover?.timeAtY??null;
                 return(
                   <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20,position:"relative"}}>
                     <div style={{fontSize:15,fontWeight:700,marginBottom:4}}>Lap Times</div>
-                    <div style={{fontSize:12,color:"rgba(255,255,255,0.35)",marginBottom:16}}>Lap-by-lap pace · low Y axis clipped to 5th-95th percentile to keep safety-car / pit laps from squashing the scale</div>
+                    <div style={{fontSize:12,color:"rgba(255,255,255,0.35)",marginBottom:16}}>Lap-by-lap pace · low Y axis clipped to 5th-95th percentile · hover for crosshair readout</div>
                     <div style={{position:"relative"}}>
                       <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{width:"100%",height:280,display:"block"}} onMouseMove={onMove} onMouseLeave={()=>setTelLapHover(null)}>
                         {yTicks.map((v,i)=>(
@@ -1621,6 +1630,13 @@ export default function F1Dashboard(){
                         ))}
                         {hoverLap&&(
                           <line x1={xOf(hoverLap)} x2={xOf(hoverLap)} y1={padT} y2={padT+plotH} stroke="rgba(255,255,255,0.25)" strokeWidth={1} strokeDasharray="3 3" pointerEvents="none"/>
+                        )}
+                        {hoverYView!==null&&hoverTimeAtY!==null&&(
+                          <g pointerEvents="none">
+                            <line x1={padL} x2={W-padR} y1={hoverYView} y2={hoverYView} stroke="rgba(255,255,255,0.22)" strokeWidth={1} strokeDasharray="3 3"/>
+                            <rect x={padL-46} y={hoverYView-9} width={42} height={18} rx={3} fill="rgba(14,14,22,0.95)" stroke="rgba(255,255,255,0.15)" strokeWidth={0.6}/>
+                            <text x={padL-25} y={hoverYView+4} textAnchor="middle" fill="#27F4D2" fontSize="10" fontFamily="'Outfit',sans-serif" fontWeight={700}>{fmtLapTime(hoverTimeAtY)}</text>
+                          </g>
                         )}
                         {visibleDrivers.map(d=>{
                           const lt=(d.lapTimes||[]).filter(l=>l.l>1);
@@ -1668,11 +1684,32 @@ export default function F1Dashboard(){
               {(()=>{
                 const allStints=race.stints||[];
                 if(allStints.length===0)return null;
+                const fmtLapTime=(s)=>{if(!s)return"—";const m=Math.floor(s/60);const r=(s%60).toFixed(3);return `${m}:${r.padStart(6,"0")}`;};
+                const computeStintStats=(driver,stint)=>{
+                  const start=Math.max(1,stint.lapStart||1);
+                  const end=Math.min(maxLap,stint.lapEnd||maxLap);
+                  const inRange=(driver.lapTimes||[]).filter(l=>l.l>=start&&l.l<=end&&!l.pit&&l.t>0);
+                  if(inRange.length===0)return{lapsRun:end-start+1,validLaps:0,avg:null,best:null,start,end};
+                  const times=inRange.map(l=>l.t).sort((a,b)=>a-b);
+                  return{lapsRun:end-start+1,validLaps:times.length,avg:times.reduce((a,b)=>a+b,0)/times.length,best:times[0],start,end};
+                };
+                const hovered=telStintHover;
+                let hoveredData=null;
+                if(hovered){
+                  const driver=allDrivers.find(d=>d.number===hovered.driverNumber);
+                  const stint=allStints.find(s=>s.driverNumber===hovered.driverNumber&&s.stintNumber===hovered.stintNumber);
+                  if(driver&&stint){
+                    const stats=computeStintStats(driver,stint);
+                    const overall=(driver.lapTimes||[]).filter(l=>!l.pit&&l.t>0);
+                    const overallAvg=overall.length?overall.reduce((a,b)=>a+b.t,0)/overall.length:null;
+                    hoveredData={driver,stint,stats,overallAvg};
+                  }
+                }
                 return(
-                  <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20}}>
+                  <div data-stint-card style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20,position:"relative"}}>
                     <div style={{fontSize:15,fontWeight:700,marginBottom:4}}>Tire Strategy</div>
-                    <div style={{fontSize:12,color:"rgba(255,255,255,0.35)",marginBottom:16}}>Stints by compound — Soft, Medium, Hard, Intermediate, Wet</div>
-                    <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                    <div style={{fontSize:12,color:"rgba(255,255,255,0.35)",marginBottom:16}}>Stints by compound — hover any segment for pace stats</div>
+                    <div style={{display:"flex",flexDirection:"column",gap:6,position:"relative"}}>
                       {visibleDrivers.map(d=>{
                         const myStints=allStints.filter(s=>s.driverNumber===d.number).sort((a,b)=>a.stintNumber-b.stintNumber);
                         return(
@@ -1690,8 +1727,12 @@ export default function F1Dashboard(){
                                 const c=(s.compound||"UNKNOWN").toUpperCase();
                                 const col=COMPOUND_COLORS[c]||COMPOUND_COLORS.UNKNOWN;
                                 const dark=c==="HARD";
+                                const isHovered=hovered&&hovered.driverNumber===d.number&&hovered.stintNumber===s.stintNumber;
                                 return(
-                                  <div key={i} title={`${c} · L${start}-L${end} (${lapsInStint} laps)`} style={{width:`${pct}%`,background:col,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:800,color:dark?"#111":"#fff",letterSpacing:0.5,borderRight:i<myStints.length-1?"2px solid rgba(0,0,0,0.4)":"none"}}>
+                                  <div key={i}
+                                    onMouseEnter={(e)=>{const r=e.currentTarget.getBoundingClientRect();const card=e.currentTarget.closest('[data-stint-card]');if(!card)return;const cr=card.getBoundingClientRect();setTelStintHover({driverNumber:d.number,stintNumber:s.stintNumber,x:(r.left-cr.left)+r.width/2,y:(r.bottom-cr.top)});}}
+                                    onMouseLeave={()=>setTelStintHover(null)}
+                                    style={{width:`${pct}%`,background:col,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:800,color:dark?"#111":"#fff",letterSpacing:0.5,borderRight:i<myStints.length-1?"2px solid rgba(0,0,0,0.4)":"none",cursor:"default",outline:isHovered?"2px solid rgba(255,255,255,0.55)":"none",outlineOffset:isHovered?-2:0,transition:"outline-color 0.12s"}}>
                                     {pct>4?c[0]:""}
                                   </div>
                                 );
@@ -1709,6 +1750,49 @@ export default function F1Dashboard(){
                         </div>
                       ))}
                     </div>
+                    {hoveredData&&(()=>{
+                      const{driver,stint,stats,overallAvg}=hoveredData;
+                      const c=(stint.compound||"UNKNOWN").toUpperCase();
+                      const col=COMPOUND_COLORS[c]||COMPOUND_COLORS.UNKNOWN;
+                      const dark=c==="HARD";
+                      const delta=(stats.avg&&overallAvg)?stats.avg-overallAvg:null;
+                      return(
+                        <div style={{position:"absolute",left:hovered.x,top:hovered.y+6,transform:"translateX(-50%)",background:"rgba(14,14,22,0.97)",border:`1px solid ${col}40`,borderRadius:8,padding:"12px 14px",pointerEvents:"none",minWidth:220,boxShadow:"0 8px 24px rgba(0,0,0,0.55)",zIndex:10}}>
+                          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
+                            <div style={{fontSize:9,fontWeight:800,letterSpacing:1.2,padding:"3px 8px",borderRadius:4,background:col,color:dark?"#111":"#fff"}}>{c}</div>
+                            <div style={{fontSize:11,color:"rgba(255,255,255,0.7)",fontWeight:600}}>{driver.acronym} · Stint {stint.stintNumber}</div>
+                          </div>
+                          <div style={{display:"grid",gridTemplateColumns:"auto 1fr",gap:"5px 14px",fontSize:11}}>
+                            <div style={{color:"rgba(255,255,255,0.4)"}}>Laps</div>
+                            <div style={{fontWeight:600,fontVariantNumeric:"tabular-nums"}}>L{stats.start} – L{stats.end} <span style={{color:"rgba(255,255,255,0.4)",fontWeight:400}}>({stats.lapsRun})</span></div>
+                            {stint.tyreAge!=null&&(
+                              <>
+                                <div style={{color:"rgba(255,255,255,0.4)"}}>Tire age</div>
+                                <div style={{fontWeight:600}}>{stint.tyreAge===0?"Fresh":`${stint.tyreAge} laps old`}</div>
+                              </>
+                            )}
+                            {stats.best!=null&&(
+                              <>
+                                <div style={{color:"rgba(255,255,255,0.4)"}}>Best lap</div>
+                                <div style={{fontWeight:700,fontVariantNumeric:"tabular-nums",color:"#27F4D2"}}>{fmtLapTime(stats.best)}</div>
+                              </>
+                            )}
+                            {stats.avg!=null&&(
+                              <>
+                                <div style={{color:"rgba(255,255,255,0.4)"}}>Avg pace</div>
+                                <div style={{fontWeight:600,fontVariantNumeric:"tabular-nums"}}>{fmtLapTime(stats.avg)}</div>
+                              </>
+                            )}
+                            {delta!=null&&(
+                              <>
+                                <div style={{color:"rgba(255,255,255,0.4)"}}>vs race avg</div>
+                                <div style={{fontWeight:700,fontVariantNumeric:"tabular-nums",color:delta<0?"#27F4D2":"#FF6B6B"}}>{delta>=0?"+":""}{delta.toFixed(3)}s</div>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </div>
                 );
               })()}
