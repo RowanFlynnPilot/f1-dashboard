@@ -1,6 +1,6 @@
 {
   "season": 2026,
-  "fetchedAt": "2026-05-25T22:40:35.914Z",
+  "fetchedAt": "2026-05-26T00:19:15.055Z",
   "meetingCount": 5,
   "meetings": [
     {
@@ -2096,7 +2096,8 @@
               "lapEnd": 33,
               "tyreAge": 8
             }
-          ]
+          ],
+          "raceControlPeriods": []
         },
         {
           "sessionKey": 11228,
@@ -4294,7 +4295,8 @@
               "lapEnd": 32,
               "tyreAge": 0
             }
-          ]
+          ],
+          "raceControlPeriods": []
         },
         {
           "sessionKey": 11229,
@@ -6358,7 +6360,8 @@
               "lapEnd": 19,
               "tyreAge": 2
             }
-          ]
+          ],
+          "raceControlPeriods": []
         },
         {
           "sessionKey": 11230,
@@ -8460,7 +8463,8 @@
               "lapEnd": 24,
               "tyreAge": 0
             }
-          ]
+          ],
+          "raceControlPeriods": []
         },
         {
           "sessionKey": 11234,
@@ -19023,7 +19027,8 @@
               "lapEnd": 43,
               "tyreAge": 0
             }
-          ]
+          ],
+          "raceControlPeriods": []
         }
       ]
     },
@@ -20882,7 +20887,8 @@
               "lapEnd": 19,
               "tyreAge": 0
             }
-          ]
+          ],
+          "raceControlPeriods": []
         },
         {
           "sessionKey": 11236,
@@ -22555,7 +22561,8 @@
               "lapEnd": 12,
               "tyreAge": 0
             }
-          ]
+          ],
+          "raceControlPeriods": []
         },
         {
           "sessionKey": 11240,
@@ -27900,6 +27907,13 @@
               "lapEnd": 11,
               "tyreAge": 6
             }
+          ],
+          "raceControlPeriods": [
+            {
+              "type": "SC",
+              "lapStart": 13,
+              "lapEnd": 16
+            }
           ]
         },
         {
@@ -29787,7 +29801,8 @@
               "lapEnd": 17,
               "tyreAge": 0
             }
-          ]
+          ],
+          "raceControlPeriods": []
         },
         {
           "sessionKey": 11245,
@@ -39741,6 +39756,13 @@
               "lapEnd": 55,
               "tyreAge": 0
             }
+          ],
+          "raceControlPeriods": [
+            {
+              "type": "SC",
+              "lapStart": 10,
+              "lapEnd": 13
+            }
           ]
         }
       ]
@@ -42066,7 +42088,8 @@
               "lapEnd": 22,
               "tyreAge": 0
             }
-          ]
+          ],
+          "raceControlPeriods": []
         },
         {
           "sessionKey": 11247,
@@ -44288,7 +44311,8 @@
               "lapEnd": 28,
               "tyreAge": 0
             }
-          ]
+          ],
+          "raceControlPeriods": []
         },
         {
           "sessionKey": 11248,
@@ -46585,7 +46609,8 @@
               "lapEnd": 18,
               "tyreAge": 9
             }
-          ]
+          ],
+          "raceControlPeriods": []
         },
         {
           "sessionKey": 11249,
@@ -48920,7 +48945,8 @@
               "lapEnd": 18,
               "tyreAge": 0
             }
-          ]
+          ],
+          "raceControlPeriods": []
         },
         {
           "sessionKey": 11253,
@@ -60887,6 +60913,13 @@
               "lapEnd": 53,
               "tyreAge": 0
             }
+          ],
+          "raceControlPeriods": [
+            {
+              "type": "SC",
+              "lapStart": 22,
+              "lapEnd": 27
+            }
           ]
         }
       ]
@@ -63340,7 +63373,8 @@
               "lapEnd": 41,
               "tyreAge": 0
             }
-          ]
+          ],
+          "raceControlPeriods": []
         },
         {
           "sessionKey": 11271,
@@ -65263,7 +65297,8 @@
               "lapEnd": 14,
               "tyreAge": 0
             }
-          ]
+          ],
+          "raceControlPeriods": []
         },
         {
           "sessionKey": 11275,
@@ -70347,7 +70382,8 @@
               "lapEnd": 19,
               "tyreAge": 0
             }
-          ]
+          ],
+          "raceControlPeriods": []
         },
         {
           "sessionKey": 11276,
@@ -72700,7 +72736,8 @@
               "lapEnd": 15,
               "tyreAge": 0
             }
-          ]
+          ],
+          "raceControlPeriods": []
         },
         {
           "sessionKey": 11280,
@@ -83979,6 +84016,13 @@
               "lapEnd": 56,
               "tyreAge": 0
             }
+          ],
+          "raceControlPeriods": [
+            {
+              "type": "SC",
+              "lapStart": 6,
+              "lapEnd": 11
+            }
           ]
         }
       ]
@@ -86353,7 +86397,8 @@
               "lapEnd": 32,
               "tyreAge": 22
             }
-          ]
+          ],
+          "raceControlPeriods": []
         },
         {
           "sessionKey": 11282,
@@ -88212,7 +88257,8 @@
               "lapEnd": 16,
               "tyreAge": 0
             }
-          ]
+          ],
+          "raceControlPeriods": []
         },
         {
           "sessionKey": 11286,
@@ -94157,7 +94203,8 @@
               "lapEnd": 22,
               "tyreAge": 0
             }
-          ]
+          ],
+          "raceControlPeriods": []
         },
         {
           "sessionKey": 11287,
@@ -96446,7 +96493,8 @@
               "lapEnd": 23,
               "tyreAge": 0
             }
-          ]
+          ],
+          "raceControlPeriods": []
         },
         {
           "sessionKey": 11291,
@@ -109300,7 +109348,8 @@
               "lapEnd": 66,
               "tyreAge": 0
             }
-          ]
+          ],
+          "raceControlPeriods": []
         }
       ]
     }

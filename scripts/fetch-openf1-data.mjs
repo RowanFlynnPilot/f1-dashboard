@@ -94,6 +94,60 @@ async function getPositions(sessionKey) {
 }
 
 /**
+ * Get race-control messages (safety car deployments, red flags, etc.) for a session.
+ */
+async function getRaceControl(sessionKey) {
+  try {
+    const data = await fetchJSON(`${BASE}/race_control?session_key=${sessionKey}`);
+    return data || [];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Scan race-control events chronologically and emit safety-car / VSC / red-flag
+ * periods as { type, lapStart, lapEnd } so the lap-time chart can shade them.
+ */
+function processRaceControlPeriods(events, maxLap) {
+  if (!events || events.length === 0) return [];
+  const sorted = [...events]
+    .filter(e => e.date)
+    .sort((a, b) => new Date(a.date) - new Date(b.date));
+  const periods = [];
+  let scStart = null, vscStart = null, rfStart = null;
+  for (const e of sorted) {
+    const msg = (e.message || "").toUpperCase();
+    const lap = e.lap_number;
+    if (msg.includes("VIRTUAL SAFETY CAR DEPLOYED")) {
+      if (vscStart == null) vscStart = lap;
+    } else if (msg.includes("VIRTUAL SAFETY CAR ENDING")) {
+      if (vscStart != null) {
+        periods.push({ type: "VSC", lapStart: vscStart, lapEnd: lap || vscStart });
+        vscStart = null;
+      }
+    } else if (msg.includes("SAFETY CAR DEPLOYED")) {
+      if (scStart == null) scStart = lap;
+    } else if (msg.includes("SAFETY CAR ENDING") || msg.includes("SAFETY CAR IN THIS LAP")) {
+      if (scStart != null) {
+        periods.push({ type: "SC", lapStart: scStart, lapEnd: lap || scStart });
+        scStart = null;
+      }
+    } else if (e.flag === "RED") {
+      if (rfStart == null) rfStart = lap;
+    } else if (e.flag === "GREEN" && rfStart != null) {
+      periods.push({ type: "RED", lapStart: rfStart, lapEnd: lap || rfStart });
+      rfStart = null;
+    }
+  }
+  // Close any unfinished periods at race end
+  if (scStart != null) periods.push({ type: "SC", lapStart: scStart, lapEnd: maxLap });
+  if (vscStart != null) periods.push({ type: "VSC", lapStart: vscStart, lapEnd: maxLap });
+  if (rfStart != null) periods.push({ type: "RED", lapStart: rfStart, lapEnd: maxLap });
+  return periods;
+}
+
+/**
  * Reduce raw /position events to per-lap position snapshots per driver.
  * For each driver lap, takes the most recent position record at or before
  * the lap's end time (date_start + duration).
@@ -337,8 +391,11 @@ async function main() {
         // For Race / Sprint sessions only, fetch position events for the telemetry tab.
         const isRaceLike = session.session_name === "Race" || session.session_name === "Sprint";
         let positions = [];
+        let raceControl = [];
         if (isRaceLike) {
           positions = await getPositions(session.session_key);
+          await sleep(2000);
+          raceControl = await getRaceControl(session.session_key);
           await sleep(2000);
         }
 
@@ -352,6 +409,10 @@ async function main() {
           const lapsByDriver = Object.fromEntries(driverStats.map(d => [d.number, d.laps]));
           positionsByDriver = processPositionsByLap(positions, lapsByDriver);
         }
+
+        // Compute max lap from driver data for race-control period closure
+        const sessionMaxLap = Math.max(0, ...driverStats.flatMap(d => d.laps.map(l => l.lap || 0)));
+        const raceControlPeriods = isRaceLike ? processRaceControlPeriods(raceControl, sessionMaxLap) : [];
 
         meetingSessions.push({
           sessionKey: session.session_key,
@@ -411,6 +472,8 @@ async function main() {
             lapEnd: s.lap_end,
             tyreAge: s.tyre_age_at_start,
           })),
+          // Safety car / VSC / red flag periods, race-likes only
+          raceControlPeriods,
         });
 
         console.log(`      ✅ ${laps.length} laps, ${driverStats.length} drivers`);

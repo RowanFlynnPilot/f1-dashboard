@@ -1597,6 +1597,8 @@ export default function F1Dashboard(){
                 const xTicks=Array.from({length:6},(_,i)=>Math.round(1+(i/5)*(maxLap-1)));
                 const fmtSec=(s)=>{const m=Math.floor(s/60);const r=(s%60).toFixed(1);return `${m}:${r.padStart(4,"0")}`;};
                 const fmtLapTime=(s)=>{if(!s)return"—";const m=Math.floor(s/60);const r=(s%60).toFixed(3);return `${m}:${r.padStart(6,"0")}`;};
+                const periods=race.raceControlPeriods||[];
+                const periodStyle={SC:{fill:"rgba(255,218,0,0.10)",border:"rgba(255,218,0,0.45)",label:"SC",color:"#FFDA00"},VSC:{fill:"rgba(255,152,0,0.08)",border:"rgba(255,152,0,0.40)",label:"VSC",color:"#FF9800"},RED:{fill:"rgba(232,0,32,0.14)",border:"rgba(232,0,32,0.55)",label:"RED",color:"#E80020"}};
                 const onMove=(e)=>{
                   const rect=e.currentTarget.getBoundingClientRect();
                   const xView=((e.clientX-rect.left)/rect.width)*W;
@@ -1619,6 +1621,19 @@ export default function F1Dashboard(){
                     <div style={{fontSize:12,color:"rgba(255,255,255,0.35)",marginBottom:16}}>Lap-by-lap pace · low Y axis clipped to 5th-95th percentile · hover for crosshair readout</div>
                     <div style={{position:"relative"}}>
                       <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{width:"100%",height:280,display:"block"}} onMouseMove={onMove} onMouseLeave={()=>setTelLapHover(null)}>
+                        {/* Race control bands — behind gridlines */}
+                        {periods.map((p,i)=>{
+                          const st=periodStyle[p.type];if(!st||!p.lapStart||!p.lapEnd)return null;
+                          const x1=xOf(p.lapStart);const x2=xOf(Math.max(p.lapStart,p.lapEnd));
+                          return(
+                            <g key={"rc"+i}>
+                              <rect x={x1} y={padT} width={Math.max(2,x2-x1)} height={plotH} fill={st.fill}/>
+                              <line x1={x1} x2={x1} y1={padT} y2={padT+plotH} stroke={st.border} strokeWidth={1} strokeDasharray="2 2"/>
+                              <line x1={x2} x2={x2} y1={padT} y2={padT+plotH} stroke={st.border} strokeWidth={1} strokeDasharray="2 2"/>
+                              <text x={(x1+x2)/2} y={padT+10} textAnchor="middle" fill={st.color} fontSize="9" fontWeight={700} fontFamily="'Outfit',sans-serif" letterSpacing={1}>{st.label}</text>
+                            </g>
+                          );
+                        })}
                         {yTicks.map((v,i)=>(
                           <g key={i}>
                             <line x1={padL} x2={W-padR} y1={yOf(v)} y2={yOf(v)} stroke="rgba(255,255,255,0.06)"/>
@@ -1818,12 +1833,26 @@ export default function F1Dashboard(){
                   setTelPosHover({lap});
                 };
                 const hoverLap=telPosHover?.lap||null;
+                const periods=race.raceControlPeriods||[];
+                const periodStyle={SC:{fill:"rgba(255,218,0,0.10)",border:"rgba(255,218,0,0.45)",label:"SC",color:"#FFDA00"},VSC:{fill:"rgba(255,152,0,0.08)",border:"rgba(255,152,0,0.40)",label:"VSC",color:"#FF9800"},RED:{fill:"rgba(232,0,32,0.14)",border:"rgba(232,0,32,0.55)",label:"RED",color:"#E80020"}};
                 return(
                   <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20}}>
                     <div style={{fontSize:15,fontWeight:700,marginBottom:4}}>Position by Lap</div>
                     <div style={{fontSize:12,color:"rgba(255,255,255,0.35)",marginBottom:16}}>Lines cross at overtakes — flat clusters = safety car, sharp drops = pit stops</div>
                     <div style={{position:"relative"}}>
                       <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{width:"100%",height:280,display:"block"}} onMouseMove={onMove} onMouseLeave={()=>setTelPosHover(null)}>
+                        {periods.map((p,i)=>{
+                          const st=periodStyle[p.type];if(!st||!p.lapStart||!p.lapEnd)return null;
+                          const x1=xOf(p.lapStart);const x2=xOf(Math.max(p.lapStart,p.lapEnd));
+                          return(
+                            <g key={"rc"+i}>
+                              <rect x={x1} y={padT} width={Math.max(2,x2-x1)} height={plotH} fill={st.fill}/>
+                              <line x1={x1} x2={x1} y1={padT} y2={padT+plotH} stroke={st.border} strokeWidth={1} strokeDasharray="2 2"/>
+                              <line x1={x2} x2={x2} y1={padT} y2={padT+plotH} stroke={st.border} strokeWidth={1} strokeDasharray="2 2"/>
+                              <text x={(x1+x2)/2} y={padT+10} textAnchor="middle" fill={st.color} fontSize="9" fontWeight={700} fontFamily="'Outfit',sans-serif" letterSpacing={1}>{st.label}</text>
+                            </g>
+                          );
+                        })}
                         {yTicks.map(p=>(
                           <g key={p}>
                             <line x1={padL} x2={W-padR} y1={yOf(p)} y2={yOf(p)} stroke="rgba(255,255,255,0.05)"/>
