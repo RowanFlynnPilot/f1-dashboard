@@ -560,6 +560,7 @@ export default function F1Dashboard(){
   const[deltaHover,setDeltaHover]=useState(null); // {lap}
   const[stintOverlay,setStintOverlay]=useState(()=>new Set()); // stint keys "driverNumber-stintNumber"
   const[overlayHover,setOverlayHover]=useState(null); // {lapInStint}
+  const[overlayCompoundFilter,setOverlayCompoundFilter]=useState("ALL"); // compound key or "ALL"
 
   useEffect(()=>{
     Promise.all([
@@ -611,6 +612,8 @@ export default function F1Dashboard(){
         .fu > *:nth-child(5){animation-delay:360ms}
         .fu > *:nth-child(n+6){animation-delay:420ms}
         .pulse-once{animation:pulseOnce 1.6s ease-out 1}
+        .heatmap-cell{transition:filter .15s, transform .15s, box-shadow .15s; cursor:default}
+        .heatmap-cell:hover{filter:brightness(1.35) saturate(1.1); transform:translateY(-1px); box-shadow:0 4px 14px rgba(0,0,0,0.4)}
         .tab-bar{display:flex;gap:0;margin-top:20px;border-bottom:1px solid rgba(255,255,255,0.06);overflow-x:auto}
         .tb{cursor:pointer;padding:10px 18px;border:none;background:none;color:rgba(255,255,255,0.4);font-size:13px;font-weight:500;letter-spacing:.5px;font-family:'Outfit',sans-serif;transition:all .3s;border-bottom:2px solid transparent;white-space:nowrap;flex:1;text-align:center}
         .tb:hover{color:rgba(255,255,255,0.7);background:rgba(255,255,255,0.02)}.tb.a{color:#E80020;border-bottom-color:#E80020;background:rgba(232,0,32,0.04)}
@@ -2057,7 +2060,7 @@ export default function F1Dashboard(){
                                     const bgAlpha=Math.round(intensity*60).toString(16).padStart(2,"0");
                                     const gap=t-range.min;
                                     return(
-                                      <div key={c} style={{padding:"7px 9px",borderRadius:4,background:`linear-gradient(135deg, ${col}${bgAlpha} 0%, ${col}${Math.round(intensity*30).toString(16).padStart(2,"0")} 100%)`,border:`1px solid ${isBest?col:"rgba(255,255,255,0.04)"}`,position:"relative"}}>
+                                      <div key={c} className="heatmap-cell" style={{padding:"7px 9px",borderRadius:4,background:`linear-gradient(135deg, ${col}${bgAlpha} 0%, ${col}${Math.round(intensity*30).toString(16).padStart(2,"0")} 100%)`,border:`1px solid ${isBest?col:"rgba(255,255,255,0.04)"}`,position:"relative"}}>
                                         <div style={{fontSize:11,fontWeight:700,fontVariantNumeric:"tabular-nums",color:isBest?"#fff":"rgba(255,255,255,0.85)"}}>{fmtBest(t)}</div>
                                         <div style={{fontSize:9,fontVariantNumeric:"tabular-nums",color:isBest?col:"rgba(255,255,255,0.45)",fontWeight:isBest?700:500,marginTop:1,letterSpacing:0.3}}>{isBest?"FASTEST":`+${gap.toFixed(3)}`}</div>
                                       </div>
@@ -2114,24 +2117,67 @@ export default function F1Dashboard(){
                         setOverlayHover({lapInStint:li});
                       };
                       const hLi=overlayHover?.lapInStint??null;
+                      // Compounds available within the analyzed stints
+                      const availCompounds=[...new Set(analyzed.map(a=>a.compound))].filter(c=>COMPOUND_COLORS[c]);
+                      const compoundCounts=Object.fromEntries(availCompounds.map(c=>[c,analyzed.filter(a=>a.compound===c).length]));
+                      const activeFilter=overlayCompoundFilter==="ALL"||availCompounds.includes(overlayCompoundFilter)?overlayCompoundFilter:"ALL";
+                      const filteredStints=activeFilter==="ALL"?analyzed:analyzed.filter(a=>a.compound===activeFilter);
+                      // Selected stints (computed off full analyzed list so they remain visible if user filters)
+                      const selectedAnalyzed=analyzed.filter(a=>selectedKeys.has(a.driver.number+"-"+a.stint.stintNumber));
                       return(
                         <div style={{marginTop:28}}>
                           <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:10,flexWrap:"wrap",gap:8}}>
                             <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.2,color:"rgba(255,255,255,0.5)",fontWeight:600}}>Stint Overlay</div>
-                            <div style={{fontSize:11,color:"rgba(255,255,255,0.4)"}}>Pick up to 4 stints to compare</div>
+                            <div style={{fontSize:11,color:"rgba(255,255,255,0.4)"}}>{selectedKeys.size}/4 selected</div>
                           </div>
-                          {/* Stint chips picker */}
-                          <div style={{display:"flex",gap:5,flexWrap:"wrap",marginBottom:14,maxHeight:96,overflowY:"auto",padding:"2px 1px"}}>
-                            {analyzed.map(a=>{
+                          {/* Selected stints — always visible */}
+                          {selectedAnalyzed.length>0&&(
+                            <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:10,padding:"8px 10px",background:"rgba(255,255,255,0.025)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:8}}>
+                              <span style={{fontSize:9,textTransform:"uppercase",letterSpacing:1,color:"rgba(255,255,255,0.35)",fontWeight:600,alignSelf:"center",marginRight:4}}>Selected</span>
+                              {selectedAnalyzed.map(a=>{
+                                const key=a.driver.number+"-"+a.stint.stintNumber;
+                                const col=COMPOUND_COLORS[a.compound]||"#888";
+                                const dark=a.compound==="HARD";
+                                const tc=a.driver.teamColour||"#fff";
+                                return(
+                                  <button key={key} onClick={()=>togglePick(key)} title="Click to remove" style={{display:"flex",alignItems:"center",gap:5,padding:"3px 7px 3px 6px",borderRadius:5,border:`1px solid ${tc}`,background:`${tc}1a`,color:"#fff",cursor:"pointer",fontSize:10,fontWeight:700,fontFamily:"'Outfit',sans-serif"}}>
+                                    <div style={{width:11,height:11,borderRadius:2,background:col,display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,fontWeight:800,color:dark?"#111":"#fff"}}>{a.compound[0]}</div>
+                                    <span style={{letterSpacing:0.4}}>{a.driver.acronym}</span>
+                                    <span style={{fontSize:9,color:"rgba(255,255,255,0.55)",fontWeight:400}}>S{a.stint.stintNumber}</span>
+                                    <span style={{marginLeft:2,fontSize:11,color:"rgba(255,255,255,0.55)",lineHeight:1}}>×</span>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
+                          {/* Compound filter + available stints */}
+                          <div style={{display:"flex",gap:5,flexWrap:"wrap",marginBottom:8}}>
+                            <button onClick={()=>setOverlayCompoundFilter("ALL")} style={{padding:"3px 9px",borderRadius:5,border:`1px solid ${activeFilter==="ALL"?"#fff":"rgba(255,255,255,0.08)"}`,background:activeFilter==="ALL"?"rgba(255,255,255,0.08)":"rgba(255,255,255,0.02)",color:activeFilter==="ALL"?"#fff":"rgba(255,255,255,0.55)",cursor:"pointer",fontSize:10,fontWeight:activeFilter==="ALL"?700:500,fontFamily:"'Outfit',sans-serif"}}>All <span style={{color:"rgba(255,255,255,0.4)",fontWeight:400,marginLeft:2}}>{analyzed.length}</span></button>
+                            {availCompounds.map(c=>{
+                              const col=COMPOUND_COLORS[c]||"#888";
+                              const dark=c==="HARD";
+                              const on=activeFilter===c;
+                              return(
+                                <button key={c} onClick={()=>setOverlayCompoundFilter(c)} style={{display:"flex",alignItems:"center",gap:5,padding:"3px 9px",borderRadius:5,border:`1px solid ${on?col:"rgba(255,255,255,0.08)"}`,background:on?`${col}22`:"rgba(255,255,255,0.02)",color:on?"#fff":"rgba(255,255,255,0.55)",cursor:"pointer",fontSize:10,fontWeight:on?700:500,fontFamily:"'Outfit',sans-serif"}}>
+                                  <div style={{width:11,height:11,borderRadius:2,background:col,display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,fontWeight:800,color:dark?"#111":"#fff"}}>{c[0]}</div>
+                                  <span>{c[0]+c.slice(1).toLowerCase()}</span>
+                                  <span style={{color:"rgba(255,255,255,0.4)",fontWeight:400}}>{compoundCounts[c]}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                          {/* Available stints — already-selected items excluded since they appear above */}
+                          <div style={{display:"flex",gap:5,flexWrap:"wrap",marginBottom:14,maxHeight:84,overflowY:"auto",padding:"2px 1px"}}>
+                            {filteredStints.filter(a=>!selectedKeys.has(a.driver.number+"-"+a.stint.stintNumber)).map(a=>{
                               const key=a.driver.number+"-"+a.stint.stintNumber;
-                              const on=selectedKeys.has(key);
                               const col=COMPOUND_COLORS[a.compound]||"#888";
                               const dark=a.compound==="HARD";
                               const tc=a.driver.teamColour||"#fff";
+                              const atMax=selectedKeys.size>=4;
                               return(
-                                <button key={key} onClick={()=>togglePick(key)} style={{display:"flex",alignItems:"center",gap:5,padding:"3px 7px",borderRadius:5,border:`1px solid ${on?tc:"rgba(255,255,255,0.08)"}`,background:on?`${tc}1a`:"rgba(255,255,255,0.02)",color:on?"#fff":"rgba(255,255,255,0.5)",cursor:"pointer",fontSize:10,fontWeight:on?700:500,fontFamily:"'Outfit',sans-serif"}}>
+                                <button key={key} disabled={atMax} onClick={()=>togglePick(key)} style={{display:"flex",alignItems:"center",gap:5,padding:"3px 7px",borderRadius:5,border:"1px solid rgba(255,255,255,0.08)",background:"rgba(255,255,255,0.02)",color:"rgba(255,255,255,0.55)",cursor:atMax?"not-allowed":"pointer",fontSize:10,fontWeight:500,fontFamily:"'Outfit',sans-serif",opacity:atMax?0.4:1}}>
                                   <div style={{width:11,height:11,borderRadius:2,background:col,display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,fontWeight:800,color:dark?"#111":"#fff"}}>{a.compound[0]}</div>
-                                  <span style={{letterSpacing:0.4}}>{a.driver.acronym}</span>
+                                  <span style={{letterSpacing:0.4,color:tc,fontWeight:600}}>{a.driver.acronym}</span>
                                   <span style={{fontSize:9,color:"rgba(255,255,255,0.4)",fontWeight:400}}>S{a.stint.stintNumber}</span>
                                 </button>
                               );
