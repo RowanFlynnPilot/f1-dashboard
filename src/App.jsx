@@ -1880,10 +1880,10 @@ export default function F1Dashboard(){
                     {/* DEGRADATION CHART */}
                     <div style={{marginBottom:24}}>
                       <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.2,color:"rgba(255,255,255,0.5)",marginBottom:10,fontWeight:600}}>Degradation per stint</div>
-                      <div style={{display:"flex",alignItems:"flex-end",gap:8,height:140,padding:"0 4px",overflowX:"auto"}}>
+                      <div style={{display:"flex",alignItems:"flex-end",gap:3,height:140,padding:"0 2px"}}>
                         {driverRows.map(({driver,stints})=>(
-                          <div key={driver.number} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,minWidth:40,flexShrink:0}}>
-                            <div style={{flex:1,display:"flex",alignItems:"flex-end",gap:2,height:100}}>
+                          <div key={driver.number} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,flex:"1 1 0",minWidth:0}}>
+                            <div style={{flex:1,display:"flex",alignItems:"flex-end",justifyContent:"center",gap:1.5,height:100,width:"100%"}}>
                               {stints.sort((a,b)=>a.stint.stintNumber-b.stint.stintNumber).map(a=>{
                                 const col=COMPOUND_COLORS[a.compound]||"#888";
                                 const dark=a.compound==="HARD";
@@ -1894,13 +1894,13 @@ export default function F1Dashboard(){
                                   <div key={a.stint.stintNumber}
                                     onMouseEnter={(e)=>{const r=e.currentTarget.getBoundingClientRect();const card=e.currentTarget.closest('[data-tire-card]').getBoundingClientRect();setTireHover({key,x:(r.left-card.left)+r.width/2,y:(r.top-card.top)});}}
                                     onMouseLeave={()=>setTireHover(null)}
-                                    style={{width:11,height:h,background:`linear-gradient(180deg, ${col} 0%, ${col}99 100%)`,borderRadius:"2px 2px 0 0",cursor:"default",outline:isHovered?"1.5px solid rgba(255,255,255,0.7)":"none",outlineOffset:isHovered?-1:0,position:"relative",border:dark?"1px solid rgba(0,0,0,0.4)":"none"}}/>
+                                    style={{flex:"1 1 0",maxWidth:9,minWidth:4,height:h,background:`linear-gradient(180deg, ${col} 0%, ${col}99 100%)`,borderRadius:"2px 2px 0 0",cursor:"default",outline:isHovered?"1.5px solid rgba(255,255,255,0.7)":"none",outlineOffset:isHovered?-1:0,position:"relative",border:dark?"1px solid rgba(0,0,0,0.4)":"none"}}/>
                                 );
                               })}
                             </div>
-                            <div style={{display:"flex",alignItems:"center",gap:3}}>
-                              <div style={{width:3,height:9,background:driver.teamColour||"#fff",borderRadius:1}}/>
-                              <div style={{fontSize:10,fontWeight:700,letterSpacing:0.4,color:"rgba(255,255,255,0.75)"}}>{driver.acronym}</div>
+                            <div style={{display:"flex",alignItems:"center",gap:2,minWidth:0}}>
+                              <div style={{width:2,height:9,background:driver.teamColour||"#fff",borderRadius:1,flexShrink:0}}/>
+                              <div style={{fontSize:9,fontWeight:700,letterSpacing:0.3,color:"rgba(255,255,255,0.75)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{driver.acronym}</div>
                             </div>
                           </div>
                         ))}
@@ -1928,7 +1928,7 @@ export default function F1Dashboard(){
                             );
                           })}
                         </div>
-                        <div style={{display:"flex",alignItems:"flex-end",gap:6,height:160,padding:"0 2px",overflowX:"auto"}}>
+                        <div style={{display:"flex",alignItems:"flex-end",gap:3,height:160,padding:"0 2px"}}>
                           {benchmarkStints.map(a=>{
                             const gap=a.avg-benchmarks[activeCompound];
                             const h=Math.max(2,Math.min(140,(gap/maxGap)*140));
@@ -1937,15 +1937,15 @@ export default function F1Dashboard(){
                             const key=a.driver.number+"-"+a.stint.stintNumber;
                             const isHovered=tireHover?.key===key;
                             return(
-                              <div key={key} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,minWidth:44,flexShrink:0}}>
-                                <div style={{fontSize:9,fontWeight:700,color:isBest?"#27F4D2":"rgba(255,255,255,0.5)",fontVariantNumeric:"tabular-nums"}}>{isBest?"FASTEST":`+${gap.toFixed(2)}`}</div>
+                              <div key={key} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,flex:"1 1 0",minWidth:0}}>
+                                <div style={{fontSize:9,fontWeight:700,color:isBest?"#27F4D2":"rgba(255,255,255,0.5)",fontVariantNumeric:"tabular-nums",whiteSpace:"nowrap"}}>{isBest?"FAST":`+${gap.toFixed(2)}`}</div>
                                 <div
                                   onMouseEnter={(e)=>{const r=e.currentTarget.getBoundingClientRect();const card=e.currentTarget.closest('[data-tire-card]').getBoundingClientRect();setTireHover({key,x:(r.left-card.left)+r.width/2,y:(r.top-card.top)});}}
                                   onMouseLeave={()=>setTireHover(null)}
-                                  style={{width:24,height:h,background:`linear-gradient(180deg, ${tc} 0%, ${tc}99 100%)`,borderRadius:"3px 3px 0 0",cursor:"default",outline:isHovered?"1.5px solid rgba(255,255,255,0.7)":"none",outlineOffset:isHovered?-1:0}}
+                                  style={{width:"100%",maxWidth:22,height:h,background:`linear-gradient(180deg, ${tc} 0%, ${tc}99 100%)`,borderRadius:"3px 3px 0 0",cursor:"default",outline:isHovered?"1.5px solid rgba(255,255,255,0.7)":"none",outlineOffset:isHovered?-1:0}}
                                 />
-                                <div style={{textAlign:"center"}}>
-                                  <div style={{fontSize:10,fontWeight:700,letterSpacing:0.4,color:isBest?"#27F4D2":"rgba(255,255,255,0.75)"}}>{a.driver.acronym}</div>
+                                <div style={{textAlign:"center",minWidth:0,width:"100%"}}>
+                                  <div style={{fontSize:9,fontWeight:700,letterSpacing:0.3,color:isBest?"#27F4D2":"rgba(255,255,255,0.75)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{a.driver.acronym}</div>
                                   <div style={{fontSize:8,color:"rgba(255,255,255,0.35)",fontVariantNumeric:"tabular-nums"}}>S{a.stint.stintNumber}</div>
                                 </div>
                               </div>
