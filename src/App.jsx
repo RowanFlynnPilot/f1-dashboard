@@ -561,6 +561,7 @@ export default function F1Dashboard(){
   const[stintOverlay,setStintOverlay]=useState(()=>new Set()); // stint keys "driverNumber-stintNumber"
   const[overlayHover,setOverlayHover]=useState(null); // {lapInStint}
   const[overlayCompoundFilter,setOverlayCompoundFilter]=useState("ALL"); // compound key or "ALL"
+  const[overlayDriverFilter,setOverlayDriverFilter]=useState("ALL"); // driverNumber or "ALL"
 
   useEffect(()=>{
     Promise.all([
@@ -2121,7 +2122,18 @@ export default function F1Dashboard(){
                       const availCompounds=[...new Set(analyzed.map(a=>a.compound))].filter(c=>COMPOUND_COLORS[c]);
                       const compoundCounts=Object.fromEntries(availCompounds.map(c=>[c,analyzed.filter(a=>a.compound===c).length]));
                       const activeFilter=overlayCompoundFilter==="ALL"||availCompounds.includes(overlayCompoundFilter)?overlayCompoundFilter:"ALL";
-                      const filteredStints=activeFilter==="ALL"?analyzed:analyzed.filter(a=>a.compound===activeFilter);
+                      // Drivers with at least one analyzed stint, ordered by best stint pace (theoretical-best proxy)
+                      const driverStintCounts={};
+                      for(const a of analyzed){driverStintCounts[a.driver.number]=(driverStintCounts[a.driver.number]||0)+1;}
+                      const driverFilterOptions=[...new Set(analyzed.map(a=>a.driver.number))]
+                        .map(num=>analyzed.find(a=>a.driver.number===num).driver)
+                        .sort((a,b)=>a.acronym.localeCompare(b.acronym));
+                      const activeDriverFilter=overlayDriverFilter==="ALL"||driverFilterOptions.find(d=>d.number===overlayDriverFilter)?overlayDriverFilter:"ALL";
+                      const filteredStints=analyzed.filter(a=>{
+                        if(activeFilter!=="ALL"&&a.compound!==activeFilter)return false;
+                        if(activeDriverFilter!=="ALL"&&a.driver.number!==activeDriverFilter)return false;
+                        return true;
+                      });
                       // Selected stints (computed off full analyzed list so they remain visible if user filters)
                       const selectedAnalyzed=analyzed.filter(a=>selectedKeys.has(a.driver.number+"-"+a.stint.stintNumber));
                       return(
@@ -2150,21 +2162,42 @@ export default function F1Dashboard(){
                               })}
                             </div>
                           )}
-                          {/* Compound filter + available stints */}
-                          <div style={{display:"flex",gap:5,flexWrap:"wrap",marginBottom:8}}>
-                            <button onClick={()=>setOverlayCompoundFilter("ALL")} style={{padding:"3px 9px",borderRadius:5,border:`1px solid ${activeFilter==="ALL"?"#fff":"rgba(255,255,255,0.08)"}`,background:activeFilter==="ALL"?"rgba(255,255,255,0.08)":"rgba(255,255,255,0.02)",color:activeFilter==="ALL"?"#fff":"rgba(255,255,255,0.55)",cursor:"pointer",fontSize:10,fontWeight:activeFilter==="ALL"?700:500,fontFamily:"'Outfit',sans-serif"}}>All <span style={{color:"rgba(255,255,255,0.4)",fontWeight:400,marginLeft:2}}>{analyzed.length}</span></button>
-                            {availCompounds.map(c=>{
-                              const col=COMPOUND_COLORS[c]||"#888";
-                              const dark=c==="HARD";
-                              const on=activeFilter===c;
-                              return(
-                                <button key={c} onClick={()=>setOverlayCompoundFilter(c)} style={{display:"flex",alignItems:"center",gap:5,padding:"3px 9px",borderRadius:5,border:`1px solid ${on?col:"rgba(255,255,255,0.08)"}`,background:on?`${col}22`:"rgba(255,255,255,0.02)",color:on?"#fff":"rgba(255,255,255,0.55)",cursor:"pointer",fontSize:10,fontWeight:on?700:500,fontFamily:"'Outfit',sans-serif"}}>
-                                  <div style={{width:11,height:11,borderRadius:2,background:col,display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,fontWeight:800,color:dark?"#111":"#fff"}}>{c[0]}</div>
-                                  <span>{c[0]+c.slice(1).toLowerCase()}</span>
-                                  <span style={{color:"rgba(255,255,255,0.4)",fontWeight:400}}>{compoundCounts[c]}</span>
-                                </button>
-                              );
-                            })}
+                          {/* Compound filter */}
+                          <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6,flexWrap:"wrap"}}>
+                            <span style={{fontSize:9,textTransform:"uppercase",letterSpacing:1,color:"rgba(255,255,255,0.3)",fontWeight:600,minWidth:54}}>Compound</span>
+                            <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
+                              <button onClick={()=>setOverlayCompoundFilter("ALL")} style={{padding:"3px 9px",borderRadius:5,border:`1px solid ${activeFilter==="ALL"?"#fff":"rgba(255,255,255,0.08)"}`,background:activeFilter==="ALL"?"rgba(255,255,255,0.08)":"rgba(255,255,255,0.02)",color:activeFilter==="ALL"?"#fff":"rgba(255,255,255,0.55)",cursor:"pointer",fontSize:10,fontWeight:activeFilter==="ALL"?700:500,fontFamily:"'Outfit',sans-serif"}}>All <span style={{color:"rgba(255,255,255,0.4)",fontWeight:400,marginLeft:2}}>{analyzed.length}</span></button>
+                              {availCompounds.map(c=>{
+                                const col=COMPOUND_COLORS[c]||"#888";
+                                const dark=c==="HARD";
+                                const on=activeFilter===c;
+                                return(
+                                  <button key={c} onClick={()=>setOverlayCompoundFilter(c)} style={{display:"flex",alignItems:"center",gap:5,padding:"3px 9px",borderRadius:5,border:`1px solid ${on?col:"rgba(255,255,255,0.08)"}`,background:on?`${col}22`:"rgba(255,255,255,0.02)",color:on?"#fff":"rgba(255,255,255,0.55)",cursor:"pointer",fontSize:10,fontWeight:on?700:500,fontFamily:"'Outfit',sans-serif"}}>
+                                    <div style={{width:11,height:11,borderRadius:2,background:col,display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,fontWeight:800,color:dark?"#111":"#fff"}}>{c[0]}</div>
+                                    <span>{c[0]+c.slice(1).toLowerCase()}</span>
+                                    <span style={{color:"rgba(255,255,255,0.4)",fontWeight:400}}>{compoundCounts[c]}</span>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                          {/* Driver filter */}
+                          <div style={{display:"flex",alignItems:"flex-start",gap:6,marginBottom:8,flexWrap:"wrap"}}>
+                            <span style={{fontSize:9,textTransform:"uppercase",letterSpacing:1,color:"rgba(255,255,255,0.3)",fontWeight:600,minWidth:54,paddingTop:4}}>Driver</span>
+                            <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
+                              <button onClick={()=>setOverlayDriverFilter("ALL")} style={{padding:"3px 9px",borderRadius:5,border:`1px solid ${activeDriverFilter==="ALL"?"#fff":"rgba(255,255,255,0.08)"}`,background:activeDriverFilter==="ALL"?"rgba(255,255,255,0.08)":"rgba(255,255,255,0.02)",color:activeDriverFilter==="ALL"?"#fff":"rgba(255,255,255,0.55)",cursor:"pointer",fontSize:10,fontWeight:activeDriverFilter==="ALL"?700:500,fontFamily:"'Outfit',sans-serif"}}>All <span style={{color:"rgba(255,255,255,0.4)",fontWeight:400,marginLeft:2}}>{driverFilterOptions.length}</span></button>
+                              {driverFilterOptions.map(d=>{
+                                const on=activeDriverFilter===d.number;
+                                const tc=d.teamColour||"#fff";
+                                return(
+                                  <button key={d.number} onClick={()=>setOverlayDriverFilter(d.number)} style={{display:"flex",alignItems:"center",gap:4,padding:"3px 8px",borderRadius:5,border:`1px solid ${on?tc:"rgba(255,255,255,0.08)"}`,background:on?`${tc}22`:"rgba(255,255,255,0.02)",color:on?"#fff":"rgba(255,255,255,0.55)",cursor:"pointer",fontSize:10,fontWeight:on?700:500,fontFamily:"'Outfit',sans-serif"}}>
+                                    <div style={{width:2,height:10,background:tc,borderRadius:1}}/>
+                                    <span style={{letterSpacing:0.4}}>{d.acronym}</span>
+                                    <span style={{color:"rgba(255,255,255,0.4)",fontWeight:400}}>{driverStintCounts[d.number]}</span>
+                                  </button>
+                                );
+                              })}
+                            </div>
                           </div>
                           {/* Available stints — already-selected items excluded since they appear above */}
                           <div style={{display:"flex",gap:5,flexWrap:"wrap",marginBottom:14,maxHeight:84,overflowY:"auto",padding:"2px 1px"}}>
