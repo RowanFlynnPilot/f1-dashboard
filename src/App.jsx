@@ -555,6 +555,11 @@ export default function F1Dashboard(){
   const[telTraceHover,setTelTraceHover]=useState(null); // {dist} or null
   const[tireCompound,setTireCompound]=useState(null); // selected compound key for benchmark chart
   const[tireHover,setTireHover]=useState(null); // {key, x, y} for stint bar tooltip
+  const[deltaA,setDeltaA]=useState(null); // delta-line driver A (acronym)
+  const[deltaB,setDeltaB]=useState(null); // delta-line driver B (acronym)
+  const[deltaHover,setDeltaHover]=useState(null); // {lap}
+  const[stintOverlay,setStintOverlay]=useState(()=>new Set()); // stint keys "driverNumber-stintNumber"
+  const[overlayHover,setOverlayHover]=useState(null); // {lapInStint}
 
   useEffect(()=>{
     Promise.all([
@@ -1967,6 +1972,202 @@ export default function F1Dashboard(){
                       </div>
                     )}
 
+                    {/* COMPOUND-BEST HEATMAP — fastest lap per driver per compound */}
+                    {(()=>{
+                      // Build map: { driverNumber: { compound: bestLapTime } }
+                      const byKey={};
+                      for(const a of analyzed){
+                        const k=a.driver.number;
+                        if(!byKey[k])byKey[k]={driver:a.driver,bests:{}};
+                        if(!byKey[k].bests[a.compound]||a.best<byKey[k].bests[a.compound])byKey[k].bests[a.compound]=a.best;
+                      }
+                      const rows=Object.values(byKey).filter(r=>Object.keys(r.bests).length>0);
+                      if(rows.length===0)return null;
+                      // Global min/max per compound for color scaling
+                      const globalRange={};
+                      for(const c of compounds){
+                        const vals=rows.map(r=>r.bests[c]).filter(v=>v!=null);
+                        if(vals.length>0)globalRange[c]={min:Math.min(...vals),max:Math.max(...vals)};
+                      }
+                      // Sort drivers by their overall best lap across any compound
+                      rows.sort((a,b)=>{const aBest=Math.min(...Object.values(a.bests));const bBest=Math.min(...Object.values(b.bests));return aBest-bBest;});
+                      const fmtBest=(t)=>{const m=Math.floor(t/60);const r=(t%60).toFixed(3);return `${m}:${r.padStart(6,"0")}`;};
+                      return(
+                        <div style={{marginTop:28}}>
+                          <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:10,flexWrap:"wrap",gap:8}}>
+                            <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.2,color:"rgba(255,255,255,0.5)",fontWeight:600}}>Compound-best heatmap</div>
+                            <div style={{fontSize:11,color:"rgba(255,255,255,0.4)"}}>Best lap per driver per compound · darker = closer to fastest</div>
+                          </div>
+                          <div style={{overflowX:"auto"}}>
+                            <div style={{display:"grid",gridTemplateColumns:`120px repeat(${compounds.length}, minmax(110px, 1fr))`,gap:4,minWidth:120+compounds.length*110}}>
+                              {/* Header row */}
+                              <div style={{fontSize:10,textTransform:"uppercase",letterSpacing:0.8,color:"rgba(255,255,255,0.35)",fontWeight:600,padding:"6px 8px"}}>Driver</div>
+                              {compounds.map(c=>{
+                                const col=COMPOUND_COLORS[c]||"#888";
+                                const dark=c==="HARD";
+                                return(
+                                  <div key={c} style={{display:"flex",alignItems:"center",gap:6,padding:"6px 8px"}}>
+                                    <div style={{width:14,height:14,borderRadius:3,background:col,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:800,color:dark?"#111":"#fff"}}>{c[0]}</div>
+                                    <span style={{fontSize:10,textTransform:"uppercase",letterSpacing:0.8,color:"rgba(255,255,255,0.55)",fontWeight:600}}>{c[0]+c.slice(1).toLowerCase()}</span>
+                                  </div>
+                                );
+                              })}
+                              {/* Data rows */}
+                              {rows.map(({driver,bests})=>(
+                                <Fragment key={driver.number}>
+                                  <div style={{display:"flex",alignItems:"center",gap:8,padding:"6px 8px",fontSize:11,fontWeight:600,minWidth:0}}>
+                                    <div style={{width:3,height:14,background:driver.teamColour||"#fff",borderRadius:1,flexShrink:0}}/>
+                                    <div style={{minWidth:0}}>
+                                      <div style={{whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{driver.acronym}</div>
+                                      <div style={{fontSize:9,color:"rgba(255,255,255,0.4)",fontWeight:400,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{normTeam(driver.team||"")}</div>
+                                    </div>
+                                  </div>
+                                  {compounds.map(c=>{
+                                    const t=bests[c];
+                                    if(t==null)return(
+                                      <div key={c} style={{padding:"6px 8px",fontSize:11,color:"rgba(255,255,255,0.18)",background:"rgba(255,255,255,0.015)",borderRadius:4,textAlign:"center"}}>—</div>
+                                    );
+                                    const range=globalRange[c];
+                                    const norm=range&&range.max>range.min?(t-range.min)/(range.max-range.min):0;
+                                    const isBest=norm<0.001;
+                                    // Color: blend from compound color (fastest) to muted background (slowest)
+                                    const col=COMPOUND_COLORS[c]||"#888";
+                                    // Compound base color at min, fade to dark grey at max
+                                    const intensity=Math.max(0.08,1-norm); // 1 = fastest, 0.08 = slowest
+                                    const bgAlpha=Math.round(intensity*60).toString(16).padStart(2,"0");
+                                    const gap=t-range.min;
+                                    return(
+                                      <div key={c} style={{padding:"7px 9px",borderRadius:4,background:`linear-gradient(135deg, ${col}${bgAlpha} 0%, ${col}${Math.round(intensity*30).toString(16).padStart(2,"0")} 100%)`,border:`1px solid ${isBest?col:"rgba(255,255,255,0.04)"}`,position:"relative"}}>
+                                        <div style={{fontSize:11,fontWeight:700,fontVariantNumeric:"tabular-nums",color:isBest?"#fff":"rgba(255,255,255,0.85)"}}>{fmtBest(t)}</div>
+                                        <div style={{fontSize:9,fontVariantNumeric:"tabular-nums",color:isBest?col:"rgba(255,255,255,0.45)",fontWeight:isBest?700:500,marginTop:1,letterSpacing:0.3}}>{isBest?"FASTEST":`+${gap.toFixed(3)}`}</div>
+                                      </div>
+                                    );
+                                  })}
+                                </Fragment>
+                              ))}
+                            </div>
+                          </div>
+                          <div style={{fontSize:10,color:"rgba(255,255,255,0.3)",marginTop:8,fontStyle:"italic"}}>Cell color intensity scales with how close to that compound's fastest lap. Drivers sorted by overall best lap.</div>
+                        </div>
+                      );
+                    })()}
+
+                    {/* STINT OVERLAY — pick stints, overlay lap-time vs lap-in-stint */}
+                    {(()=>{
+                      // Default selection: top 2 stints by lap count for variety
+                      const sortedByLength=[...analyzed].sort((a,b)=>b.validLaps-a.validLaps);
+                      const defaultKeys=new Set(sortedByLength.slice(0,2).map(a=>a.driver.number+"-"+a.stint.stintNumber));
+                      const selectedKeys=stintOverlay.size>0?stintOverlay:defaultKeys;
+                      const togglePick=(key)=>{
+                        setStintOverlay(prev=>{
+                          const cur=prev.size>0?new Set(prev):new Set(defaultKeys);
+                          if(cur.has(key)){if(cur.size<=1)return cur;cur.delete(key);}
+                          else if(cur.size<4){cur.add(key);}
+                          return cur;
+                        });
+                      };
+                      const picked=analyzed.filter(a=>selectedKeys.has(a.driver.number+"-"+a.stint.stintNumber));
+                      if(picked.length===0)return null;
+                      // Compute per-stint series: lap time vs lap-in-stint (0,1,2,...)
+                      const series=picked.map(a=>{
+                        const laps=(a.driver.lapTimes||[]).filter(l=>l.l>=a.lapStart&&l.l<=a.lapEnd&&!l.pit&&l.t>0).sort((x,y)=>x.l-y.l);
+                        const points=laps.map(l=>({li:l.l-a.lapStart,t:l.t}));
+                        return{key:a.driver.number+"-"+a.stint.stintNumber,driver:a.driver,stint:a.stint,compound:a.compound,points,slope:a.slope};
+                      });
+                      const maxLi=Math.max(0,...series.flatMap(s=>s.points.map(p=>p.li)));
+                      const allT=series.flatMap(s=>s.points.map(p=>p.t));
+                      if(allT.length<2)return null;
+                      const sortedT=[...allT].sort((a,b)=>a-b);
+                      const lo=sortedT[0]*0.995;
+                      const hi=sortedT[Math.floor(sortedT.length*0.95)]*1.01;
+                      const W=800,H=240,padL=58,padR=20,padT=18,padB=34;
+                      const plotW=W-padL-padR,plotH=H-padT-padB;
+                      const xOf=li=>padL+(maxLi>0?(li/maxLi)*plotW:0);
+                      const yOf=t=>padT+plotH-((Math.min(t,hi)-lo)/(hi-lo))*plotH;
+                      const yTicks=[lo,(lo+hi)/2,hi].map(v=>v);
+                      const xTicks=Array.from({length:Math.min(6,maxLi+1)},(_,i)=>Math.round((i/(Math.min(5,maxLi)))*maxLi));
+                      const onMove=(e)=>{
+                        const rect=e.currentTarget.getBoundingClientRect();
+                        const xView=((e.clientX-rect.left)/rect.width)*W;
+                        let li=Math.round(((xView-padL)/plotW)*maxLi);
+                        li=Math.max(0,Math.min(maxLi,li));
+                        setOverlayHover({lapInStint:li});
+                      };
+                      const hLi=overlayHover?.lapInStint??null;
+                      return(
+                        <div style={{marginTop:28}}>
+                          <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:10,flexWrap:"wrap",gap:8}}>
+                            <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.2,color:"rgba(255,255,255,0.5)",fontWeight:600}}>Stint Overlay</div>
+                            <div style={{fontSize:11,color:"rgba(255,255,255,0.4)"}}>Pick up to 4 stints to compare</div>
+                          </div>
+                          {/* Stint chips picker */}
+                          <div style={{display:"flex",gap:5,flexWrap:"wrap",marginBottom:14,maxHeight:96,overflowY:"auto",padding:"2px 1px"}}>
+                            {analyzed.map(a=>{
+                              const key=a.driver.number+"-"+a.stint.stintNumber;
+                              const on=selectedKeys.has(key);
+                              const col=COMPOUND_COLORS[a.compound]||"#888";
+                              const dark=a.compound==="HARD";
+                              const tc=a.driver.teamColour||"#fff";
+                              return(
+                                <button key={key} onClick={()=>togglePick(key)} style={{display:"flex",alignItems:"center",gap:5,padding:"3px 7px",borderRadius:5,border:`1px solid ${on?tc:"rgba(255,255,255,0.08)"}`,background:on?`${tc}1a`:"rgba(255,255,255,0.02)",color:on?"#fff":"rgba(255,255,255,0.5)",cursor:"pointer",fontSize:10,fontWeight:on?700:500,fontFamily:"'Outfit',sans-serif"}}>
+                                  <div style={{width:11,height:11,borderRadius:2,background:col,display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,fontWeight:800,color:dark?"#111":"#fff"}}>{a.compound[0]}</div>
+                                  <span style={{letterSpacing:0.4}}>{a.driver.acronym}</span>
+                                  <span style={{fontSize:9,color:"rgba(255,255,255,0.4)",fontWeight:400}}>S{a.stint.stintNumber}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                          <div style={{position:"relative"}}>
+                            <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{width:"100%",height:240,display:"block"}} onMouseMove={onMove} onMouseLeave={()=>setOverlayHover(null)}>
+                              {yTicks.map((v,i)=>(
+                                <g key={i}>
+                                  <line x1={padL} x2={W-padR} y1={yOf(v)} y2={yOf(v)} stroke="rgba(255,255,255,0.06)"/>
+                                  <text x={padL-8} y={yOf(v)+4} textAnchor="end" fill="rgba(255,255,255,0.4)" fontSize="10" fontFamily="'Outfit',sans-serif">{(()=>{const m=Math.floor(v/60);const r=(v%60).toFixed(1);return `${m}:${r.padStart(4,"0")}`;})()}</text>
+                                </g>
+                              ))}
+                              {xTicks.map((l,i)=>(<text key={i} x={xOf(l)} y={H-padB+18} textAnchor="middle" fill={hLi===l?"#fff":"rgba(255,255,255,0.45)"} fontWeight={hLi===l?600:400} fontSize="10" fontFamily="'Outfit',sans-serif">+{l}</text>))}
+                              {hLi!==null&&(<line x1={xOf(hLi)} x2={xOf(hLi)} y1={padT} y2={padT+plotH} stroke="rgba(255,255,255,0.25)" strokeWidth={1} strokeDasharray="3 3" pointerEvents="none"/>)}
+                              {series.map(s=>{
+                                if(s.points.length<2)return null;
+                                const tc=s.driver.teamColour||"#fff";
+                                const path=s.points.map((p,i)=>`${i===0?"M":"L"}${xOf(p.li)},${yOf(p.t)}`).join(" ");
+                                return(
+                                  <g key={s.key} pointerEvents="none">
+                                    <path d={path} stroke={tc} strokeWidth={2} fill="none" strokeLinecap="round" strokeLinejoin="round" opacity={0.9}/>
+                                    {s.points.map((p,i)=>(<circle key={i} cx={xOf(p.li)} cy={yOf(p.t)} r={2.5} fill={tc} opacity={0.7}/>))}
+                                    {hLi!==null&&(()=>{const p=s.points.find(x=>x.li===hLi);return p?<circle cx={xOf(p.li)} cy={yOf(p.t)} r={4.5} fill={tc} stroke="#0a0a0f" strokeWidth={1.5}/>:null;})()}
+                                  </g>
+                                );
+                              })}
+                            </svg>
+                            {hLi!==null&&(()=>{
+                              const rows=series
+                                .map(s=>{const p=s.points.find(x=>x.li===hLi);return p?{key:s.key,acronym:s.driver.acronym,teamColour:s.driver.teamColour,compound:s.compound,stintNumber:s.stint.stintNumber,t:p.t}:null;})
+                                .filter(Boolean)
+                                .sort((a,b)=>a.t-b.t);
+                              if(rows.length===0)return null;
+                              const leftPct=(xOf(hLi)/W)*100;
+                              const placeRight=leftPct<55;
+                              return(
+                                <div style={{position:"absolute",top:6,[placeRight?"left":"right"]:`${placeRight?leftPct+1.5:100-leftPct+1.5}%`,background:"rgba(14,14,22,0.96)",border:"1px solid rgba(255,255,255,0.10)",borderRadius:8,padding:"10px 12px",pointerEvents:"none",minWidth:200,boxShadow:"0 8px 24px rgba(0,0,0,0.5)"}}>
+                                  <div style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:"rgba(255,255,255,0.4)",fontWeight:600,marginBottom:8,fontVariantNumeric:"tabular-nums"}}>Stint lap +{hLi}</div>
+                                  {rows.map(r=>(
+                                    <div key={r.key} style={{display:"flex",alignItems:"center",gap:8,marginBottom:4,fontSize:11}}>
+                                      <div style={{width:10,height:10,borderRadius:2,background:COMPOUND_COLORS[r.compound]||"#888"}}/>
+                                      <div style={{width:3,height:11,background:r.teamColour||"#fff",borderRadius:1}}/>
+                                      <div style={{flex:1,fontWeight:600}}>{r.acronym} <span style={{color:"rgba(255,255,255,0.4)",fontWeight:400}}>S{r.stintNumber}</span></div>
+                                      <div style={{fontVariantNumeric:"tabular-nums",fontWeight:700}}>{fmtLapTime(r.t)}</div>
+                                    </div>
+                                  ))}
+                                </div>
+                              );
+                            })()}
+                          </div>
+                          <div style={{fontSize:10,color:"rgba(255,255,255,0.3)",marginTop:6,fontStyle:"italic"}}>X axis = lap number within each stint. Steeper rising lines = faster degradation.</div>
+                        </div>
+                      );
+                    })()}
+
                     {/* Shared hover tooltip */}
                     {hoveredEntry&&(
                       <div style={{position:"absolute",left:tireHover.x,top:tireHover.y-90,transform:"translateX(-50%)",background:"rgba(14,14,22,0.97)",border:`1px solid ${COMPOUND_COLORS[hoveredEntry.compound]||"#888"}40`,borderRadius:8,padding:"10px 12px",pointerEvents:"none",minWidth:220,boxShadow:"0 8px 24px rgba(0,0,0,0.5)",zIndex:10}}>
@@ -2081,6 +2282,129 @@ export default function F1Dashboard(){
                                 <div style={{flex:1,fontWeight:600}}>{r.acronym}</div>
                               </div>
                             ))}
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Driver-vs-Driver Delta */}
+              {(()=>{
+                // Drivers with usable lap-time arrays
+                const usable=allDrivers.filter(d=>(d.lapTimes||[]).length>=3);
+                if(usable.length<2)return null;
+                // Default: top-2 finishers
+                const finalPos=(d)=>{const ps=d.positions;if(!ps||ps.length===0)return 99;return ps[ps.length-1].p;};
+                const sortedByFinish=[...usable].sort((a,b)=>finalPos(a)-finalPos(b));
+                const defA=sortedByFinish[0]?.acronym;
+                const defB=sortedByFinish[1]?.acronym;
+                const acrA=deltaA&&usable.find(d=>d.acronym===deltaA)?deltaA:defA;
+                const acrB=deltaB&&usable.find(d=>d.acronym===deltaB)?deltaB:defB;
+                const drA=usable.find(d=>d.acronym===acrA);
+                const drB=usable.find(d=>d.acronym===acrB);
+                if(!drA||!drB||drA.acronym===drB.acronym)return null;
+                // Cumulative race time per lap
+                const cumByLap=(driver)=>{
+                  const m=new Map();
+                  const sorted=[...(driver.lapTimes||[])].sort((a,b)=>a.l-b.l);
+                  let cum=0;
+                  for(const l of sorted){cum+=l.t;m.set(l.l,cum);}
+                  return m;
+                };
+                const cA=cumByLap(drA),cB=cumByLap(drB);
+                const commonLaps=[];
+                for(const lap of cA.keys()){if(cB.has(lap))commonLaps.push(lap);}
+                commonLaps.sort((a,b)=>a-b);
+                if(commonLaps.length<2)return null;
+                const deltas=commonLaps.map(l=>({l,delta:cA.get(l)-cB.get(l)}));
+                const yMin=Math.min(...deltas.map(p=>p.delta));
+                const yMax=Math.max(...deltas.map(p=>p.delta));
+                const yPad=Math.max(2,(yMax-yMin)*0.15);
+                const yLo=yMin-yPad,yHi=yMax+yPad;
+                const W=800,H=240,padL=58,padR=20,padT=18,padB=34;
+                const plotW=W-padL-padR,plotH=H-padT-padB;
+                const lastLap=commonLaps[commonLaps.length-1];
+                const xOf=l=>padL+((l-1)/Math.max(1,maxLap-1))*plotW;
+                const yOf=v=>padT+plotH-((v-yLo)/(yHi-yLo))*plotH;
+                const zeroY=yOf(0);
+                const yTicks=[yLo,(yLo+yHi)/2,0,yHi].filter((v,i,a)=>a.indexOf(v)===i);
+                const xTicks=Array.from({length:6},(_,i)=>Math.round(1+(i/5)*(maxLap-1)));
+                const tcA=drA.teamColour||"#fff";
+                const tcB=drB.teamColour||"#fff";
+                const onMove=(e)=>{
+                  const rect=e.currentTarget.getBoundingClientRect();
+                  const xView=((e.clientX-rect.left)/rect.width)*W;
+                  let lap=Math.round(((xView-padL)/plotW)*(maxLap-1))+1;
+                  lap=Math.max(1,Math.min(maxLap,lap));
+                  setDeltaHover({lap});
+                };
+                const hoverLap=deltaHover?.lap||null;
+                const periods=race.raceControlPeriods||[];
+                const periodStyle={SC:{fill:"rgba(255,218,0,0.10)",border:"rgba(255,218,0,0.45)",label:"SC",color:"#FFDA00"},VSC:{fill:"rgba(255,152,0,0.08)",border:"rgba(255,152,0,0.40)",label:"VSC",color:"#FF9800"},RED:{fill:"rgba(232,0,32,0.14)",border:"rgba(232,0,32,0.55)",label:"RED",color:"#E80020"}};
+                return(
+                  <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20,position:"relative"}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:4,flexWrap:"wrap",gap:8}}>
+                      <div style={{fontSize:15,fontWeight:700}}>Race Gap · {drA.acronym} vs {drB.acronym}</div>
+                      <div style={{fontSize:11,color:"rgba(255,255,255,0.4)",fontVariantNumeric:"tabular-nums"}}>End-of-race gap {(deltas[deltas.length-1].delta).toFixed(3)}s</div>
+                    </div>
+                    <div style={{fontSize:12,color:"rgba(255,255,255,0.35)",marginBottom:14}}>Cumulative race-time delta per lap · positive = <span style={{color:tcA}}>{drA.acronym}</span> slower than <span style={{color:tcB}}>{drB.acronym}</span>, negative = ahead</div>
+                    <div style={{display:"flex",gap:14,marginBottom:14,flexWrap:"wrap"}}>
+                      <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
+                        <span style={{fontSize:10,color:"rgba(255,255,255,0.4)",textTransform:"uppercase",letterSpacing:1}}>A</span>
+                        {usable.map(d=>{const on=d.acronym===acrA;const dc=d.teamColour||"#fff";return(
+                          <button key={"a-"+d.acronym} onClick={()=>setDeltaA(d.acronym)} style={{padding:"3px 8px",borderRadius:4,border:`1px solid ${on?dc:"rgba(255,255,255,0.08)"}`,background:on?`${dc}1a`:"rgba(255,255,255,0.02)",color:on?"#fff":"rgba(255,255,255,0.55)",cursor:"pointer",fontSize:10,fontWeight:on?700:500,fontFamily:"'Outfit',sans-serif",letterSpacing:0.4}}>{d.acronym}</button>
+                        );})}
+                      </div>
+                      <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
+                        <span style={{fontSize:10,color:"rgba(255,255,255,0.4)",textTransform:"uppercase",letterSpacing:1}}>B</span>
+                        {usable.map(d=>{const on=d.acronym===acrB;const dc=d.teamColour||"#fff";return(
+                          <button key={"b-"+d.acronym} onClick={()=>setDeltaB(d.acronym)} style={{padding:"3px 8px",borderRadius:4,border:`1px solid ${on?dc:"rgba(255,255,255,0.08)"}`,background:on?`${dc}1a`:"rgba(255,255,255,0.02)",color:on?"#fff":"rgba(255,255,255,0.55)",cursor:"pointer",fontSize:10,fontWeight:on?700:500,fontFamily:"'Outfit',sans-serif",letterSpacing:0.4}}>{d.acronym}</button>
+                        );})}
+                      </div>
+                    </div>
+                    <div style={{position:"relative"}}>
+                      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{width:"100%",height:240,display:"block"}} onMouseMove={onMove} onMouseLeave={()=>setDeltaHover(null)}>
+                        {periods.map((p,i)=>{const st=periodStyle[p.type];if(!st||!p.lapStart||!p.lapEnd)return null;const x1=xOf(p.lapStart);const x2=xOf(Math.max(p.lapStart,p.lapEnd));return(<rect key={i} x={x1} y={padT} width={Math.max(2,x2-x1)} height={plotH} fill={st.fill}/>);})}
+                        {yTicks.map((v,i)=>(
+                          <g key={i}>
+                            <line x1={padL} x2={W-padR} y1={yOf(v)} y2={yOf(v)} stroke={v===0?"rgba(255,255,255,0.35)":"rgba(255,255,255,0.06)"} strokeWidth={v===0?1.2:1} strokeDasharray={v===0?"":""}/>
+                            <text x={padL-8} y={yOf(v)+4} textAnchor="end" fill={v===0?"rgba(255,255,255,0.65)":"rgba(255,255,255,0.4)"} fontSize="10" fontFamily="'Outfit',sans-serif" fontWeight={v===0?600:400}>{(v>=0?"+":"")+v.toFixed(1)}s</text>
+                          </g>
+                        ))}
+                        {xTicks.map((l,i)=>(<text key={i} x={xOf(l)} y={H-padB+18} textAnchor="middle" fill={hoverLap===l?"#fff":"rgba(255,255,255,0.45)"} fontWeight={hoverLap===l?600:400} fontSize="10" fontFamily="'Outfit',sans-serif">L{l}</text>))}
+                        {hoverLap&&(<line x1={xOf(hoverLap)} x2={xOf(hoverLap)} y1={padT} y2={padT+plotH} stroke="rgba(255,255,255,0.25)" strokeWidth={1} strokeDasharray="3 3" pointerEvents="none"/>)}
+                        {/* Filled area between line and zero */}
+                        {(()=>{
+                          const seg=deltas;
+                          if(seg.length<2)return null;
+                          // Build a path that fills between the line and y=0, color-coded by sign
+                          const aboveFill=`M${xOf(seg[0].l)},${zeroY} ${seg.map(p=>`L${xOf(p.l)},${yOf(Math.max(0,p.delta))}`).join(" ")} L${xOf(seg[seg.length-1].l)},${zeroY} Z`;
+                          const belowFill=`M${xOf(seg[0].l)},${zeroY} ${seg.map(p=>`L${xOf(p.l)},${yOf(Math.min(0,p.delta))}`).join(" ")} L${xOf(seg[seg.length-1].l)},${zeroY} Z`;
+                          return(<g pointerEvents="none"><path d={belowFill} fill={tcA} fillOpacity={0.12}/><path d={aboveFill} fill={tcB} fillOpacity={0.12}/></g>);
+                        })()}
+                        {/* Delta line */}
+                        <path d={deltas.map((p,i)=>`${i===0?"M":"L"}${xOf(p.l)},${yOf(p.delta)}`).join(" ")} stroke="rgba(255,255,255,0.85)" strokeWidth={2} fill="none" strokeLinecap="round" strokeLinejoin="round" pointerEvents="none"/>
+                        {hoverLap&&(()=>{const p=deltas.find(x=>x.l===hoverLap);return p?<circle cx={xOf(p.l)} cy={yOf(p.delta)} r={4} fill="#fff" stroke="#0a0a0f" strokeWidth={1.5} pointerEvents="none"/>:null;})()}
+                      </svg>
+                      {hoverLap&&(()=>{
+                        const p=deltas.find(x=>x.l===hoverLap);
+                        if(!p)return null;
+                        const leftPct=(xOf(hoverLap)/W)*100;
+                        const placeRight=leftPct<55;
+                        const ahead=p.delta<0?drA:drB;
+                        const aheadCol=p.delta<0?tcA:tcB;
+                        const absGap=Math.abs(p.delta);
+                        return(
+                          <div style={{position:"absolute",top:6,[placeRight?"left":"right"]:`${placeRight?leftPct+1.5:100-leftPct+1.5}%`,background:"rgba(14,14,22,0.96)",border:"1px solid rgba(255,255,255,0.10)",borderRadius:8,padding:"10px 12px",pointerEvents:"none",minWidth:180,boxShadow:"0 8px 24px rgba(0,0,0,0.5)"}}>
+                            <div style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:"rgba(255,255,255,0.4)",fontWeight:600,marginBottom:8}}>Lap {hoverLap}</div>
+                            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6,fontSize:11}}>
+                              <div style={{width:3,height:11,background:aheadCol,borderRadius:1}}/>
+                              <div style={{flex:1,fontWeight:700}}>{ahead.acronym}</div>
+                              <div style={{fontSize:10,color:"rgba(255,255,255,0.5)"}}>ahead</div>
+                            </div>
+                            <div style={{fontSize:18,fontWeight:800,fontVariantNumeric:"tabular-nums",color:aheadCol,letterSpacing:-0.5}}>{absGap.toFixed(3)}s</div>
                           </div>
                         );
                       })()}
