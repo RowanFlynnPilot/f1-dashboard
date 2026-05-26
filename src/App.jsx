@@ -654,6 +654,7 @@ export default function F1Dashboard(){
   const[lapCompareData,setLapCompareData]=useState({}); // cache: key `${session}-${driverNum}-${lap}` → {samples, error, loading}
   const[lapComparePlayTime,setLapComparePlayTime]=useState(0);
   const[lapComparePlaying,setLapComparePlaying]=useState(false);
+  const[lapCompareRetry,setLapCompareRetry]=useState(0); // bump to force effect re-fire
   const lapCompareRaf=useRef(null);
   const lapCompareLastTick=useRef(null);
 
@@ -743,42 +744,52 @@ export default function F1Dashboard(){
       if(lapToUse)setLapCompareLap(lapToUse);
     }
     if(!lapToUse)return;
-    // Trigger fetch for both if not cached
     const sessionKey=cur.race.sessionKey;
-    const ensureFetch=async(drv)=>{
+    const controller=new AbortController();
+    const timeoutId=setTimeout(()=>controller.abort(),12000);
+    let cancelled=false;
+    const fetchDriver=async(drv)=>{
       const key=`${sessionKey}-${drv.number}-${lapToUse}`;
-      if(lapCompareData[key])return;
+      // Use functional setter to read fresh state — skip if cache already has samples/error/loading
+      let proceed=true;
+      setLapCompareData(prev=>{
+        const c=prev[key];
+        if(c&&(c.samples||c.error||c.loading)){proceed=false;return prev;}
+        return{...prev,[key]:{loading:true}};
+      });
+      if(!proceed||cancelled)return;
       const ltEntry=(drv.lapTimes||[]).find(l=>l.l===lapToUse);
-      if(!ltEntry?.ds)return;
-      setLapCompareData(prev=>prev[key]?prev:{...prev,[key]:{loading:true}});
+      if(!ltEntry?.ds){setLapCompareData(prev=>({...prev,[key]:{loading:false,error:"No timestamp for this lap"}}));return;}
       try{
         const startMs=new Date(ltEntry.ds).getTime();
         const endMs=startMs+ltEntry.t*1000+500;
         const startIso=new Date(startMs).toISOString();
         const endIso=new Date(endMs).toISOString();
         const base=`https://api.openf1.org/v1`;
-        // Sequence the two requests instead of running parallel — OpenF1 free tier
-        // rate limit is 3 req/s and 4 parallel (2 drivers × car_data + location) can
-        // breach it for back-to-back lap picks.
-        const carRes=await fetch(`${base}/car_data?session_key=${sessionKey}&driver_number=${drv.number}&date>=${startIso}&date<=${endIso}`);
+        const carRes=await fetch(`${base}/car_data?session_key=${sessionKey}&driver_number=${drv.number}&date>=${startIso}&date<=${endIso}`,{signal:controller.signal});
         if(!carRes.ok)throw new Error(`car_data HTTP ${carRes.status}`);
         const carData=await carRes.json();
-        const locRes=await fetch(`${base}/location?session_key=${sessionKey}&driver_number=${drv.number}&date>=${startIso}&date<=${endIso}`);
+        const locRes=await fetch(`${base}/location?session_key=${sessionKey}&driver_number=${drv.number}&date>=${startIso}&date<=${endIso}`,{signal:controller.signal});
         if(!locRes.ok)throw new Error(`location HTTP ${locRes.status}`);
         const location=await locRes.json();
         if(!carData||carData.length===0||!location||location.length<3)throw new Error("No samples returned (lap may predate live data)");
         const samples=processLapTelemetry(carData,location);
         if(samples.length<3)throw new Error("Could not align speed and location samples");
-        setLapCompareData(prev=>({...prev,[key]:{samples,loading:false}}));
+        if(!cancelled)setLapCompareData(prev=>({...prev,[key]:{samples,loading:false}}));
       }catch(err){
-        setLapCompareData(prev=>({...prev,[key]:{loading:false,error:err.message||"fetch failed"}}));
+        if(cancelled)return;
+        if(err.name==="AbortError"){
+          setLapCompareData(prev=>({...prev,[key]:{loading:false,error:"Timed out after 12s — OpenF1 may be slow, click Retry"}}));
+        }else{
+          setLapCompareData(prev=>({...prev,[key]:{loading:false,error:err.message||"fetch failed"}}));
+        }
       }
     };
-    ensureFetch(drA);
-    ensureFetch(drB);
-  // Intentionally exclude lapCompareData from deps — only run on meeting/driver/lap change
+    // Sequential — 4 parallel requests can trip OpenF1's free-tier rate limit
+    (async()=>{await fetchDriver(drA);if(!cancelled)await fetchDriver(drB);clearTimeout(timeoutId);})();
+    return()=>{cancelled=true;clearTimeout(timeoutId);controller.abort();};
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  },[openf1,telMeetingKey,lapCompareA,lapCompareB,lapCompareLap]);
+  },[openf1,telMeetingKey,lapCompareA,lapCompareB,lapCompareLap,lapCompareRetry]);
 
   if(loading)return(<div style={{minHeight:"100vh",background:"#0a0a0f",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Outfit',sans-serif"}}><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/><div style={{textAlign:"center"}}><div style={{fontSize:32,fontWeight:700,marginBottom:8}}>Loading F1 Data...</div><div style={{color:"rgba(255,255,255,0.4)"}}>Fetching from Jolpica API</div></div></div>);
   if(error||!data)return(<div style={{minHeight:"100vh",background:"#0a0a0f",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Outfit',sans-serif"}}><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/><div style={{textAlign:"center"}}><div style={{fontSize:32,fontWeight:700,color:"#E80020",marginBottom:8}}>Failed to Load Data</div><div style={{color:"rgba(255,255,255,0.5)"}}>{error||"No data available. Run: npm run fetch-data"}</div></div></div>);
@@ -2019,40 +2030,18 @@ export default function F1Dashboard(){
                 const xTicks=Array.from({length:6},(_,i)=>Math.round(minLap+(i/5)*(maxLapCmp-minLap)));
                 const yTicks=[yLo,(yLo+yHi)/2,yHi];
                 const fmtLapTime=(s)=>{if(!s)return"—";const m=Math.floor(s/60);const r=(s%60).toFixed(3);return `${m}:${r.padStart(6,"0")}`;};
-                // Cache key helper + fetcher
+                // Cache key helper — fetching is handled by the consolidated useEffect
                 const keyFor=(drv,lap)=>`${cur.race.sessionKey}-${drv.number}-${lap}`;
-                const fetchLapData=async(drv,lap)=>{
-                  const key=keyFor(drv,lap);
-                  if(lapCompareData[key])return;
-                  setLapCompareData(prev=>({...prev,[key]:{loading:true}}));
-                  try{
-                    const ltEntry=(drv.lapTimes||[]).find(l=>l.l===lap);
-                    if(!ltEntry||!ltEntry.ds)throw new Error("No date_start for this lap");
-                    const startMs=new Date(ltEntry.ds).getTime();
-                    const endMs=startMs+ltEntry.t*1000+500;
-                    const startIso=new Date(startMs).toISOString();
-                    const endIso=new Date(endMs).toISOString();
-                    const base=`https://api.openf1.org/v1`;
-                    const carRes=await fetch(`${base}/car_data?session_key=${cur.race.sessionKey}&driver_number=${drv.number}&date>=${startIso}&date<=${endIso}`);
-                    if(!carRes.ok)throw new Error(`car_data HTTP ${carRes.status}`);
-                    const carData=await carRes.json();
-                    const locRes=await fetch(`${base}/location?session_key=${cur.race.sessionKey}&driver_number=${drv.number}&date>=${startIso}&date<=${endIso}`);
-                    if(!locRes.ok)throw new Error(`location HTTP ${locRes.status}`);
-                    const location=await locRes.json();
-                    if(!carData||carData.length===0||!location||location.length<3)throw new Error("No samples returned");
-                    const samples=processLapTelemetry(carData,location);
-                    if(samples.length<3)throw new Error("Could not align speed/location");
-                    setLapCompareData(prev=>({...prev,[key]:{samples,loading:false}}));
-                  }catch(err){
-                    setLapCompareData(prev=>({...prev,[key]:{loading:false,error:err.message||"fetch failed"}}));
-                  }
-                };
                 const onPickLap=(lap)=>{
                   setLapCompareLap(lap);
                   setLapComparePlayTime(0);
                   setLapComparePlaying(false);
-                  fetchLapData(drA,lap);
-                  fetchLapData(drB,lap);
+                };
+                const onRetry=()=>{
+                  if(!lapCompareLap)return;
+                  const k1=keyFor(drA,lapCompareLap),k2=keyFor(drB,lapCompareLap);
+                  setLapCompareData(prev=>{const n={...prev};delete n[k1];delete n[k2];return n;});
+                  setLapCompareRetry(r=>r+1);
                 };
                 const keyA=lapCompareLap?keyFor(drA,lapCompareLap):null;
                 const keyB=lapCompareLap?keyFor(drB,lapCompareLap):null;
@@ -2113,7 +2102,7 @@ export default function F1Dashboard(){
                         })()}
                       </select>
                       {lapCompareLap&&(dataA?.error||dataB?.error)&&(
-                        <button onClick={()=>{const k1=keyFor(drA,lapCompareLap),k2=keyFor(drB,lapCompareLap);setLapCompareData(prev=>{const n={...prev};delete n[k1];delete n[k2];return n;});fetchLapData(drA,lapCompareLap);fetchLapData(drB,lapCompareLap);}} style={{padding:"5px 12px",borderRadius:6,border:"1px solid rgba(232,0,32,0.4)",background:"rgba(232,0,32,0.15)",color:"#fff",cursor:"pointer",fontSize:11,fontWeight:600,fontFamily:"'Outfit',sans-serif"}}>↻ Retry</button>
+                        <button onClick={onRetry} style={{padding:"5px 12px",borderRadius:6,border:"1px solid rgba(232,0,32,0.4)",background:"rgba(232,0,32,0.15)",color:"#fff",cursor:"pointer",fontSize:11,fontWeight:600,fontFamily:"'Outfit',sans-serif"}}>↻ Retry</button>
                       )}
                     </div>
                     {/* Lap selector chart */}
