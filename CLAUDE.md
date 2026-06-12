@@ -15,14 +15,16 @@ f1-dashboard/
 ├── scripts/
 │   ├── fetch-f1-data.mjs           ← Jolpica API → public/data.json
 │   ├── fetch-openf1-data.mjs       ← OpenF1 API → public/openf1-data.json
-│   └── fetch-driver-quotes.py      ← YouTube + Claude API → public/driver-quotes.json
+│   ├── fetch-driver-quotes.py      ← YouTube + Claude API → public/driver-quotes.json
+│   └── fetch-tracks.mjs            ← Circuit GeoJSON → public/tracks.json (manual, not in CI)
 ├── src/
 │   ├── main.jsx                    ← React entry point
-│   └── App.jsx                     ← ~1000 lines, ALL tabs and components in one file
+│   └── App.jsx                     ← ~3600 lines, ALL tabs and components in one file
 ├── public/
 │   ├── data.json                   ← Jolpica: standings, results, qualifying, pit stops
 │   ├── openf1-data.json            ← OpenF1: sectors, speeds, stints, headshot URLs
-│   └── driver-quotes.json          ← Post-race driver quotes
+│   ├── driver-quotes.json          ← Post-race driver quotes
+│   └── tracks.json                 ← SVG track outlines for track maps
 ├── index.html
 ├── package.json
 ├── vite.config.js                  ← base: '/f1-dashboard/'
@@ -31,14 +33,14 @@ f1-dashboard/
 
 ### Key architectural decisions
 - **Single-file React app** — All tabs, components, and styles live in `App.jsx`. This is intentional for simplicity. Don't split into separate component files.
-- **Static data files** — Data is fetched at build time by scripts, saved as JSON in `public/`, and loaded client-side via `fetch()`. No runtime API calls from the browser.
+- **Static data files** — Data is fetched at build time by scripts, saved as JSON in `public/`, and loaded client-side via `fetch()`. One exception: the Telemetry tab's Lap Compare live-fetches OpenF1 `/car_data` + `/location` at runtime (gated on the tab being open).
 - **GitHub Actions deployment** — Uses `npm ci` (requires `package-lock.json`). Source set to "GitHub Actions" in Pages settings, not branch-based.
 - **Vite base path** — `vite.config.js` has `base: '/f1-dashboard/'` for GitHub Pages subdirectory hosting.
 
 ## Data Sources
 
 ### Jolpica API (Ergast successor)
-- Base URL: `https://api.jolpica.com/ergast/f1`
+- Base URL: `https://api.jolpi.ca/ergast/f1`
 - Provides: driver standings, constructor standings, race results, sprint results, qualifying results, pit stops, schedule
 - Rate limit: be polite, 400ms sleep between requests
 - Fetched by: `scripts/fetch-f1-data.mjs`
@@ -101,9 +103,11 @@ YouTube blocks GitHub Actions IPs, so transcripts cannot be fetched in CI. The f
 | Standings | 🏆 | Drivers' & Constructors' championships with headshots, team colors, position movement arrows, points delta |
 | Race Results | 🏁 | Podium cards, full classification, dropdown race selector, OpenF1 sector enrichment |
 | Sector Times | ⏱️ | Meeting/session selectors, driver comparison table, speed trap bar chart, team logos on stat cards |
+| Telemetry | 📈 | Race Replay (animated track dots + leaderboard), Lap Compare (runtime OpenF1 fetch), lap-time/position charts, tire strategy & degradation, speed trace |
 | Head to Head | 🥊 | Intra-team battles: qualifying position, average finish, points scored — with battle bars and per-race chips |
 | Pit Stops | 🔧 | Ranked pit times with team-colored bars, team logos |
-| Schedule | 📅 | Full calendar with sprint flags, completion status |
+| Quotes | 💬 | Post-session driver quotes grouped by round, session pill filters |
+| Schedule | 📅 | Full calendar with sprint flags, localized date/time, client-side completion status |
 
 ## Design System
 
@@ -159,7 +163,7 @@ The `DH` (Driver Headshot) component has a multi-level fallback system:
 ## Points Delta Calculation
 
 The standings delta (`d` field) is computed from the last race using the F1 points table:
-- Race: 25-18-15-12-10-8-6-4-2-1 + 1 fastest lap bonus (if finished P1-P10)
+- Race: 25-18-15-12-10-8-6-4-2-1 — NO fastest-lap bonus (the FL point was abolished from the 2025 season)
 - Sprint: 8-7-6-5-4-3-2-1
 - If the last round was a sprint weekend, both race and sprint points are combined
 
@@ -187,7 +191,7 @@ python3 scripts/fetch-driver-quotes.py --race "Japanese Grand Prix"
 
 The workflow runs on:
 - Push to `main`
-- Weekly schedule (Sunday 5 PM Central / 23:00 UTC)
+- Weekly schedule: Sunday 23:00 UTC + Monday 06:00 UTC (retry for races that finish after the Sunday cron, e.g. Miami/Austin/Mexico ending ~22:00 UTC)
 - Manual trigger (`workflow_dispatch`)
 
 Steps:
