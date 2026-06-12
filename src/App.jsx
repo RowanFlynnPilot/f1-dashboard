@@ -62,14 +62,14 @@ function transformData(raw) {
   const lastRacePtsMap = {};
   for (const r of lastRaceResults) {
     const pos = parseInt(r.pos);
-    const pts = F1_PTS[pos] || 0;
-    const flBonus = r.fastestLapRank === "1" && pos <= 10 ? 1 : 0;
-    lastRacePtsMap[r.driver] = pts + flBonus;
+    // No fastest-lap bonus — the FL point was abolished from the 2025 season
+    lastRacePtsMap[r.driver] = F1_PTS[pos] || 0;
   }
   // Also add sprint points if the last event had one
   const SPRINT_PTS = {1:8,2:7,3:6,4:5,5:4,6:3,7:2,8:1};
-  if (raw.sprints.length > 0) {
-    const lastSprint = raw.sprints[raw.sprints.length - 1];
+  const sprintsArr = raw.sprints || [];
+  if (sprintsArr.length > 0) {
+    const lastSprint = sprintsArr[sprintsArr.length - 1];
     // Only count if sprint is from same round as last race
     const lastRound = raw.races.length > 0 ? raw.races[raw.races.length - 1].round : 0;
     if (lastSprint.round === lastRound) {
@@ -111,7 +111,7 @@ function transformData(raw) {
     ...raw.races.map(r => ({
       r: r.round, nm: r.name, ci: r.circuit, dt: r.date, w: r.results[0]?.driver || "", wt: r.results[0]?.team || "",
       tm: r.results[0]?.gap === "WINNER" ? "" : "", sprint: false,
-      fl: r.fastestLap || { d: "N/A", t: "N/A", tm: "" },
+      fl: r.fastestLap || null, // normalized shape: {driver, time, team} or null
       pod: r.results.slice(0, 3).map(res => ({
         p: parseInt(res.pos), d: res.driver, t: res.team,
         g: res.pos === "1" ? "WINNER" : (res.gap.startsWith("+") ? res.gap : `+${res.gap}`),
@@ -122,10 +122,10 @@ function transformData(raw) {
         g: res.pos === "1" ? "WINNER" : (res.gap || res.status || ""),
       })),
     })),
-    ...raw.sprints.map(r => ({
+    ...sprintsArr.map(r => ({
       r: r.round + "S", nm: r.name, ci: r.circuit, dt: r.date, w: r.results[0]?.driver || "", wt: r.results[0]?.team || "",
       tm: "", sprint: true,
-      fl: r.fastestLap || { d: "N/A", t: "N/A", tm: "" },
+      fl: r.fastestLap || null, // normalized shape: {driver, time, team} or null
       pod: r.results.slice(0, 3).map(res => ({
         p: parseInt(res.pos), d: res.driver, t: res.team,
         g: res.pos === "1" ? "WINNER" : (res.gap.startsWith("+") ? res.gap : `+${res.gap}`),
@@ -145,24 +145,28 @@ function transformData(raw) {
     return 0;
   });
 
-  // Pit stops from most recent race
-  const pits = raw.pitStops.stops.map(p => ({
-    d: p.driver, fn: p.fullName || p.driver, t: p.team || "", s: p.durationMs, l: p.lap,
+  // Pit stops from most recent race (durationSec is current; durationMs is the
+  // legacy field name from older data.json builds — both hold seconds)
+  const pits = (raw.pitStops?.stops || []).map(p => ({
+    d: p.driver, fn: p.fullName || p.driver, t: p.team || "", s: p.durationSec ?? p.durationMs, l: p.lap,
   })).filter(p => p.s > 0 && p.s < 60);
 
-  // Schedule
+  // Schedule — status is computed client-side from race date + UTC start time,
+  // so a stale weekly build can't keep the NEXT RACE badge on a finished race.
+  // +3h after the start covers the race distance.
   const now = new Date();
-  const nextRaceIdx = raw.schedule.findIndex(r => !r.completed);
+  const raceEnded = (r) => now - new Date(`${r.date}T${r.time || "12:00:00Z"}`) > 3 * 3600 * 1000;
+  const nextRaceIdx = raw.schedule.findIndex(r => !raceEnded(r));
   const sched = raw.schedule.map((r, i) => ({
-    r: r.round, nm: r.name, ci: r.circuit, dt: r.date,
-    st: r.completed ? "done" : (i === nextRaceIdx ? "next" : "upcoming"),
+    r: r.round, nm: r.name, ci: r.circuit, dt: r.date, tt: r.time || null,
+    st: raceEnded(r) ? "done" : (i === nextRaceIdx ? "next" : "upcoming"),
     w: r.winner, sp: r.sprint, fc: r.country,
   }));
 
   const completedRounds = raw.completedRounds;
   const totalRounds = raw.totalRounds;
   const fetchedAt = raw.fetchedAt;
-  const pitRaceName = raw.pitStops.raceName;
+  const pitRaceName = raw.pitStops?.raceName || "";
 
   // Qualifying data
   const qualifying = (raw.qualifying || []).map(q => ({
@@ -395,8 +399,7 @@ function transformData(raw) {
       if(isNaN(p)||p>table.length)continue;
       const match=allRosterNames.find(n=>n.split(" ").pop()===res.d||n===res.d);
       if(!match)continue;
-      cumAll[match]+=table[p-1];
-      if(!race.sprint&&p<=10&&race.fl?.d===res.d)cumAll[match]+=1;
+      cumAll[match]+=table[p-1]; // no FL bonus — abolished from 2025
     }
     if(!race.sprint){
       progressionLabels.push("R"+race.r);
@@ -440,6 +443,63 @@ function AnimatedNum({value, duration=1200, decimals=0, prefix="", suffix=""}) {
   return <>{prefix}{decimals>0?v.toFixed(decimals):v}{suffix}</>;
 }
 
+// Shared requestAnimationFrame clock for Race Replay and Lap Compare playback.
+// Advances `time` by elapsed-seconds × speed while playing; reads the current
+// duration from a ref (published by the render) and auto-pauses at the end so
+// the clock can't run forever past the race/lap finish.
+function useRafClock(playing, speed, time, setTime, setPlaying, durationRef) {
+  const timeRef = useRef(time);
+  timeRef.current = time;
+  useEffect(() => {
+    if (!playing) return;
+    let raf = null, last = null;
+    const tick = (now) => {
+      if (last != null) {
+        const next = timeRef.current + ((now - last) / 1000) * speed;
+        const dur = durationRef.current;
+        if (dur > 0 && next >= dur) { setTime(dur); setPlaying(false); return; }
+        setTime(next);
+      }
+      last = now;
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [playing, speed]);
+}
+
+// Resolve the active race session for Lap Compare (falls back to the latest
+// meeting that has a Race session). Mirrors the resolution in the Telemetry
+// render so the fetch effects and the UI always agree.
+function lapCompareTarget(openf1, telMeetingKey) {
+  const raceMeetings = (openf1.meetings || [])
+    .map(m => ({ meeting: m, race: m.sessions.find(s => s.sessionName === "Race") }))
+    .filter(x => x.race);
+  if (raceMeetings.length === 0) return null;
+  const activeKey = telMeetingKey && raceMeetings.find(rm => rm.meeting.meetingKey === telMeetingKey) ? telMeetingKey : raceMeetings[raceMeetings.length - 1].meeting.meetingKey;
+  return raceMeetings.find(rm => rm.meeting.meetingKey === activeKey) || null;
+}
+// Resolve the two compared drivers (defaults: top-2 finishers with usable laps).
+function pickLapCompareDrivers(cur, acrAPref, acrBPref) {
+  const usable = (cur.race.drivers || []).filter(d => (d.lapTimes || []).filter(l => l.ds).length >= 3);
+  if (usable.length < 2) return {};
+  const finalPos = (d) => { const ps = d.positions; if (!ps || ps.length === 0) return 99; return ps[ps.length - 1].p; };
+  const sortedByFinish = [...usable].sort((a, b) => finalPos(a) - finalPos(b));
+  const acrA = acrAPref && usable.find(d => d.acronym === acrAPref) ? acrAPref : sortedByFinish[0]?.acronym;
+  const acrB = acrBPref && usable.find(d => d.acronym === acrBPref) ? acrBPref : sortedByFinish[1]?.acronym;
+  const drA = usable.find(d => d.acronym === acrA);
+  const drB = usable.find(d => d.acronym === acrB);
+  if (!drA || !drB || drA.acronym === drB.acronym) return {};
+  return { drA, drB };
+}
+
+// Format a race date (and optional UTC start time) in the viewer's locale.
+// Without a time, anchor at 12:00 UTC so the calendar date doesn't shift in
+// western-hemisphere timezones.
+const raceDateFmt = (dt, tt) => new Date(`${dt}T${tt || "12:00:00Z"}`).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+const raceTimeFmt = (dt, tt) => tt ? new Date(`${dt}T${tt}`).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" }) : null;
+
 // Drivers whose OpenF1 headshot_url is missing or points to a fallback image —
 // the manual map below supplies working high-res URLs found on
 // formula1.com/en/drivers.html.
@@ -458,8 +518,12 @@ function upscaleHeadshotUrl(url, displaySize){
   return url;
 }
 function DH({name,size=32,headshots}){const[tryLevel,setTryLevel]=useState(0);
+  // Reset the fallback chain when this instance is reused for a different driver \u2014
+  // otherwise a previous driver's CDN failure makes the new driver skip working URLs.
+  const prevName=useRef(name);
+  if(prevName.current!==name){prevName.current=name;setTryLevel(0);}
   const normName=(n)=>n.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
-  let of1=headshots&&(headshots[name]||Object.values(headshots).find(v=>false));
+  let of1=headshots&&headshots[name];
   if(!of1&&headshots){const key=Object.keys(headshots).find(k=>k.toLowerCase()===name.toLowerCase()||normName(k)===normName(name));if(key)of1=headshots[key];}
   const manualUrl=MANUAL_HEADSHOT_URLS[name];
   const baseCdn=manualUrl||(DH_USE_B64.has(name)?null:of1?.url);
@@ -645,8 +709,7 @@ export default function F1Dashboard(){
   const[replayPlaying,setReplayPlaying]=useState(false);
   const[replaySpeed,setReplaySpeed]=useState(8); // 1x, 2x, 4x, 8x, 16x — default 8 since real time is slow
   const[replayDotHover,setReplayDotHover]=useState(null); // {driverNumber, x, y}
-  const replayRaf=useRef(null);
-  const replayLastTick=useRef(null);
+  const replayDurationRef=useRef(0); // published by the Telemetry render; the rAF clock auto-pauses here
   // Lap Compare state — pick two drivers, click a lap, live-fetch /car_data + /location
   const[lapCompareA,setLapCompareA]=useState(null); // acronym
   const[lapCompareB,setLapCompareB]=useState(null);
@@ -657,9 +720,11 @@ export default function F1Dashboard(){
   const[lapCompareRetry,setLapCompareRetry]=useState(0); // bump to force effect re-fire
   const[lapZoom,setLapZoom]=useState(1.6); // viewBox zoom multiplier
   const[lapPan,setLapPan]=useState({x:0,y:0}); // viewBox pan in fitted-vb units
-  const lapCompareRaf=useRef(null);
-  const lapCompareLastTick=useRef(null);
+  const lapPlayDurationRef=useRef(0); // published by the Lap Compare render
   const lapDragRef=useRef(null);
+  const lapFetchInflight=useRef(new Set()); // cache keys with a live OpenF1 request
+  const lapCompareDataRef=useRef(lapCompareData);
+  lapCompareDataRef.current=lapCompareData; // fresh mirror so the fetch effect can read the cache without depending on it
 
   useEffect(()=>{
     Promise.all([
@@ -682,89 +747,63 @@ export default function F1Dashboard(){
     }).catch(e=>{console.error("Failed to load data:",e);setError(e.message);setLoading(false)});
   },[]);
 
-  // Race Replay animation tick — advance replayTime each frame while playing
-  useEffect(()=>{
-    if(!replayPlaying)return;
-    const tick=(now)=>{
-      if(replayLastTick.current!=null){
-        const dt=(now-replayLastTick.current)/1000;
-        setReplayTime(t=>t+dt*replaySpeed);
-      }
-      replayLastTick.current=now;
-      replayRaf.current=requestAnimationFrame(tick);
-    };
-    replayRaf.current=requestAnimationFrame(tick);
-    return()=>{cancelAnimationFrame(replayRaf.current);replayLastTick.current=null;};
-  },[replayPlaying,replaySpeed]);
+  // Race Replay clock — advances replayTime while playing, auto-pauses at race end
+  useRafClock(replayPlaying,replaySpeed,replayTime,setReplayTime,setReplayPlaying,replayDurationRef);
 
   // Reset replay when meeting changes
   useEffect(()=>{setReplayTime(0);setReplayPlaying(false);},[telMeetingKey]);
 
-  // Lap Compare animation tick
-  useEffect(()=>{
-    if(!lapComparePlaying)return;
-    const tick=(now)=>{
-      if(lapCompareLastTick.current!=null){
-        const dt=(now-lapCompareLastTick.current)/1000;
-        setLapComparePlayTime(t=>t+dt);
-      }
-      lapCompareLastTick.current=now;
-      lapCompareRaf.current=requestAnimationFrame(tick);
-    };
-    lapCompareRaf.current=requestAnimationFrame(tick);
-    return()=>{cancelAnimationFrame(lapCompareRaf.current);lapCompareLastTick.current=null;};
-  },[lapComparePlaying]);
+  // Lap Compare playback clock — auto-pauses at the end of the lap
+  useRafClock(lapComparePlaying,1,lapComparePlayTime,setLapComparePlayTime,setLapComparePlaying,lapPlayDurationRef);
+
+  // Leaving the Telemetry tab pauses playback — otherwise the rAF clocks keep
+  // firing 60fps state updates while the panels aren't even visible.
+  useEffect(()=>{if(tab!=="Telemetry"){setReplayPlaying(false);setLapComparePlaying(false);}},[tab]);
 
   // Reset lap compare selection when meeting changes
   useEffect(()=>{setLapCompareLap(null);setLapComparePlaying(false);setLapComparePlayTime(0);setLapZoom(1.6);setLapPan({x:0,y:0});},[telMeetingKey]);
   // Reset zoom/pan when lap or drivers change
   useEffect(()=>{setLapZoom(1.6);setLapPan({x:0,y:0});},[lapCompareLap,lapCompareA,lapCompareB]);
 
-  // Auto-load Lap Compare: when meeting / picked drivers change AND no lap selected,
-  // default to Driver A's fastest valid lap and trigger the OpenF1 fetch for both
-  // drivers so the playback view shows immediately.
+  // Auto-select a default lap (Driver A's fastest valid lap) when none is chosen.
+  // Lives in its own effect so the fetch effect below never invalidates itself by
+  // setting state it depends on — that used to abort its own in-flight fetch and
+  // strand the cache on {loading:true} forever.
   useEffect(()=>{
-    if(!openf1)return;
-    const raceMeetings=(openf1.meetings||[])
-      .map(m=>({meeting:m,race:m.sessions.find(s=>s.sessionName==="Race")}))
-      .filter(x=>x.race);
-    if(raceMeetings.length===0)return;
-    const activeKey=telMeetingKey&&raceMeetings.find(rm=>rm.meeting.meetingKey===telMeetingKey)?telMeetingKey:raceMeetings[raceMeetings.length-1].meeting.meetingKey;
-    const cur=raceMeetings.find(rm=>rm.meeting.meetingKey===activeKey);
+    if(tab!=="Telemetry"||!openf1||lapCompareLap)return;
+    const cur=lapCompareTarget(openf1,telMeetingKey);
     if(!cur)return;
-    const usable=(cur.race.drivers||[]).filter(d=>(d.lapTimes||[]).filter(l=>l.ds).length>=3);
-    if(usable.length<2)return;
-    const finalPos=(d)=>{const ps=d.positions;if(!ps||ps.length===0)return 99;return ps[ps.length-1].p;};
-    const sortedByFinish=[...usable].sort((a,b)=>finalPos(a)-finalPos(b));
-    const acrA=lapCompareA&&usable.find(d=>d.acronym===lapCompareA)?lapCompareA:sortedByFinish[0]?.acronym;
-    const acrB=lapCompareB&&usable.find(d=>d.acronym===lapCompareB)?lapCompareB:sortedByFinish[1]?.acronym;
-    const drA=usable.find(d=>d.acronym===acrA);
-    const drB=usable.find(d=>d.acronym===acrB);
-    if(!drA||!drB||drA.acronym===drB.acronym)return;
-    // Pick default lap if none chosen yet
-    let lapToUse=lapCompareLap;
-    if(!lapToUse){
-      const fastestA=(drA.lapTimes||[]).filter(l=>l.ds&&!l.pit).reduce((a,b)=>(!a||b.t<a.t)?b:a,null);
-      lapToUse=fastestA?.l;
-      if(lapToUse)setLapCompareLap(lapToUse);
-    }
-    if(!lapToUse)return;
+    const{drA}=pickLapCompareDrivers(cur,lapCompareA,lapCompareB);
+    if(!drA)return;
+    const fastestA=(drA.lapTimes||[]).filter(l=>l.ds&&!l.pit).reduce((a,b)=>(!a||b.t<a.t)?b:a,null);
+    if(fastestA?.l)setLapCompareLap(fastestA.l);
+  },[tab,openf1,telMeetingKey,lapCompareA,lapCompareB,lapCompareLap]);
+
+  // Fetch lap telemetry for both drivers from OpenF1. Gated on the Telemetry tab
+  // being open — visitors who never open it must never hit the live API.
+  useEffect(()=>{
+    if(tab!=="Telemetry"||!openf1||!lapCompareLap)return;
+    const cur=lapCompareTarget(openf1,telMeetingKey);
+    if(!cur)return;
+    const{drA,drB}=pickLapCompareDrivers(cur,lapCompareA,lapCompareB);
+    if(!drA||!drB)return;
     const sessionKey=cur.race.sessionKey;
-    const controller=new AbortController();
-    const timeoutId=setTimeout(()=>controller.abort(),12000);
+    const lap=lapCompareLap;
+    const inflight=lapFetchInflight.current;
     let cancelled=false;
+    const controllers=[];
     const fetchDriver=async(drv)=>{
-      const key=`${sessionKey}-${drv.number}-${lapToUse}`;
-      // Use functional setter to read fresh state — skip if cache already has samples/error/loading
-      let proceed=true;
-      setLapCompareData(prev=>{
-        const c=prev[key];
-        if(c&&(c.samples||c.error||c.loading)){proceed=false;return prev;}
-        return{...prev,[key]:{loading:true}};
-      });
-      if(!proceed||cancelled)return;
-      const ltEntry=(drv.lapTimes||[]).find(l=>l.l===lapToUse);
+      const key=`${sessionKey}-${drv.number}-${lap}`;
+      if(cancelled||inflight.has(key))return;
+      const cached=lapCompareDataRef.current[key];
+      if(cached&&(cached.samples||cached.error))return; // settled — only Retry clears it
+      const ltEntry=(drv.lapTimes||[]).find(l=>l.l===lap);
       if(!ltEntry?.ds){setLapCompareData(prev=>({...prev,[key]:{loading:false,error:"No timestamp for this lap"}}));return;}
+      inflight.add(key);
+      setLapCompareData(prev=>({...prev,[key]:{loading:true}}));
+      const controller=new AbortController();
+      controllers.push(controller);
+      const timeoutId=setTimeout(()=>controller.abort(),12000); // per-driver budget — B no longer pays for a slow A
       try{
         const startMs=new Date(ltEntry.ds).getTime();
         const endMs=startMs+ltEntry.t*1000+500;
@@ -780,28 +819,35 @@ export default function F1Dashboard(){
         if(!carData||carData.length===0||!location||location.length<3)throw new Error("No samples returned (lap may predate live data)");
         const samples=processLapTelemetry(carData,location);
         if(samples.length<3)throw new Error("Could not align speed and location samples");
-        if(!cancelled)setLapCompareData(prev=>({...prev,[key]:{samples,loading:false}}));
+        setLapCompareData(prev=>({...prev,[key]:{samples,loading:false}}));
       }catch(err){
-        if(cancelled)return;
-        if(err.name==="AbortError"){
+        if(err.name==="AbortError"&&cancelled){
+          // Lap/driver changed mid-fetch — clear the pending entry so the next
+          // effect run can fetch this key fresh instead of seeing it "loading".
+          setLapCompareData(prev=>{if(!prev[key]?.loading)return prev;const n={...prev};delete n[key];return n;});
+        }else if(err.name==="AbortError"){
           setLapCompareData(prev=>({...prev,[key]:{loading:false,error:"Timed out after 12s — OpenF1 may be slow, click Retry"}}));
         }else{
           setLapCompareData(prev=>({...prev,[key]:{loading:false,error:err.message||"fetch failed"}}));
         }
+      }finally{
+        clearTimeout(timeoutId);
+        inflight.delete(key);
       }
     };
     // Sequential — 4 parallel requests can trip OpenF1's free-tier rate limit
-    (async()=>{await fetchDriver(drA);if(!cancelled)await fetchDriver(drB);clearTimeout(timeoutId);})();
-    return()=>{cancelled=true;clearTimeout(timeoutId);controller.abort();};
+    (async()=>{await fetchDriver(drA);if(!cancelled)await fetchDriver(drB);})();
+    return()=>{cancelled=true;controllers.forEach(c=>c.abort());};
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  },[openf1,telMeetingKey,lapCompareA,lapCompareB,lapCompareLap,lapCompareRetry]);
+  },[tab,openf1,telMeetingKey,lapCompareA,lapCompareB,lapCompareLap,lapCompareRetry]);
 
   if(loading)return(<div style={{minHeight:"100vh",background:"#0a0a0f",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Outfit',sans-serif"}}><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/><div style={{textAlign:"center"}}><div style={{fontSize:32,fontWeight:700,marginBottom:8}}>Loading F1 Data...</div><div style={{color:"rgba(255,255,255,0.4)"}}>Fetching from Jolpica API</div></div></div>);
   if(error||!data)return(<div style={{minHeight:"100vh",background:"#0a0a0f",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Outfit',sans-serif"}}><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/><div style={{textAlign:"center"}}><div style={{fontSize:32,fontWeight:700,color:"#E80020",marginBottom:8}}>Failed to Load Data</div><div style={{color:"rgba(255,255,255,0.5)"}}>{error||"No data available. Run: npm run fetch-data"}</div></div></div>);
 
   const{DS,CS,races,pits,sched,qualifying,h2h,completedRounds,totalRounds,fetchedAt,pitRaceName,leader,lastWinner,fastestLap,narrative,progression}=data;
-  const avgP=pits.length>0?(pits.reduce((a,b)=>a+b.s,0)/pits.length).toFixed(3):"N/A";
+  const avgP=pits.length>0?`${(pits.reduce((a,b)=>a+b.s,0)/pits.length).toFixed(3)}s`:"N/A";
   const fastestPit=pits.length>0?pits[0]:null;
+  const maxDriverPts=Math.max(1,...DS.map(d=>d.pts));
   const nextRace=sched.find(r=>r.st==="next");
   const lastRaceFL=fastestLap;
   const headshots=openf1?.driverHeadshots||{};
@@ -890,7 +936,7 @@ export default function F1Dashboard(){
                 <div style={{fontSize:12,color:"rgba(255,255,255,0.35)",letterSpacing:1.5,marginTop:4,textTransform:"uppercase"}}>Formula 1 World Championship</div>
               </div>
             </div>
-            <div style={{fontSize:13,color:"rgba(255,255,255,0.7)",marginTop:4}}>Round {completedRounds} of {totalRounds} completed{nextRace?` · Next: ${nextRace.nm} · ${nextRace.dt}`:""}</div>
+            <div style={{fontSize:13,color:"rgba(255,255,255,0.7)",marginTop:4}}>Round {completedRounds} of {totalRounds} completed{nextRace?` · Next: ${nextRace.nm} · ${raceDateFmt(nextRace.dt,nextRace.tt)}`:""}</div>
           </div>
           <div className="fu" style={{animationDelay:"0.1s",display:"flex",alignItems:"center",gap:8}}>
             <div style={{width:8,height:8,borderRadius:"50%",background:"#27F4D2",animation:"pulse 2s infinite"}}/>
@@ -996,7 +1042,7 @@ export default function F1Dashboard(){
                       );
                     })}
                   </div>
-                  {(()=>{const fl=lastRaceFull.fl;const flDriver=fl?.driver||fl?.d;const flTeam=fl?.team||fl?.tm;const flTime=fl?.time||fl?.t;if(!flDriver||flDriver==="N/A")return null;return(
+                  {(()=>{const fl=lastRaceFull.fl;const flDriver=fl?.driver;const flTeam=fl?.team;const flTime=fl?.time;if(!flDriver)return null;return(
                     <div style={{marginTop:12,padding:"10px 14px",background:"rgba(232,0,32,0.06)",border:"1px solid rgba(232,0,32,0.18)",borderRadius:8,display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
                       <div style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:"#E80020",fontWeight:800,padding:"3px 8px",background:"rgba(232,0,32,0.14)",borderRadius:4}}>⚡ FASTEST LAP</div>
                       <div style={{fontSize:13,fontWeight:700}}>{flDriver}</div>
@@ -1012,7 +1058,7 @@ export default function F1Dashboard(){
               );
             })()}
             <div style={{display:"flex",gap:12,flexWrap:"wrap"}}>
-              <SC label="Avg Pit Stop" value={`${avgP}s`} sub={pitRaceName||""} accent="#FFD700"/>
+              <SC label="Avg Pit Stop" value={avgP} sub={pitRaceName||""} accent="#FFD700"/>
               <SC label="Fastest Pit Stop" value={fastestPit?`${fastestPit.s.toFixed(3)}s`:"N/A"} sub={fastestPit?`${fastestPit.d}`:""} accent="#27F4D2" icon={fastestPit&&fastestPit.t?<TL team={fastestPit.t} size={24}/>:null}/>
               <SC label="Completed Races" value={`${completedRounds}`} sub={`of ${totalRounds} scheduled`} accent="#d946ef"/>
             </div>
@@ -1021,7 +1067,7 @@ export default function F1Dashboard(){
               <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20}}>
                 <div style={{fontSize:13,textTransform:"uppercase",letterSpacing:1.5,color:"rgba(255,255,255,0.4)",marginBottom:16,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                   <span>Drivers' Championship</span>
-                  <span style={{fontSize:10,color:"rgba(255,255,255,0.25)",letterSpacing:0.5,textTransform:"none"}}>CHN pts →</span>
+                  <span style={{fontSize:10,color:"rgba(255,255,255,0.25)",letterSpacing:0.5,textTransform:"none"}}>+pts last race →</span>
                 </div>
                 {DS.map((d,i)=>(
                   <div key={d.n} className="dr">
@@ -1054,7 +1100,7 @@ export default function F1Dashboard(){
                         <div key={di} style={{display:"flex",alignItems:"center",gap:6}}>
                           <div style={{width:60,fontSize:10,color:"rgba(255,255,255,0.45)",textAlign:"right"}}>{d.n}</div>
                           <div style={{flex:1,height:4,background:"rgba(255,255,255,0.04)",borderRadius:2,overflow:"hidden"}}>
-                            <div style={{height:"100%",width:`${d.pts>0?Math.max((d.pts/98)*100,2):0}%`,background:TC[c.t],borderRadius:2,opacity:di===0?1:0.55,transition:"width 1.2s cubic-bezier(0.22,1,0.36,1)"}}/>
+                            <div style={{height:"100%",width:`${d.pts>0?Math.max((d.pts/maxDriverPts)*100,2):0}%`,background:TC[c.t],borderRadius:2,opacity:di===0?1:0.55,transition:"width 1.2s cubic-bezier(0.22,1,0.36,1)"}}/>
                           </div>
                           <div style={{width:20,fontSize:10,fontWeight:600,color:"rgba(255,255,255,0.5)",textAlign:"right"}}>{d.pts}</div>
                         </div>
@@ -1195,8 +1241,9 @@ export default function F1Dashboard(){
                       const rows=visibleSeries
                         .map(s=>{
                           const entry=standingsNow.find(x=>x.name===s.name);
-                          return{name:s.name,team:s.team,pts:entry?.pts??0,pos:entry?.pos??0};
+                          return entry?{name:s.name,team:s.team,pts:entry.pts,pos:entry.pos}:null;
                         })
+                        .filter(Boolean)
                         .sort((a,b)=>a.pos-b.pos);
                       const leftPct=(xOf(hoverIdx)/W)*100;
                       const placeRight=leftPct<60;
@@ -1358,11 +1405,13 @@ export default function F1Dashboard(){
                   ))}
                 </div>
                 <div style={{display:"flex",gap:12,alignItems:"center",flexWrap:"wrap",marginBottom:12}}>
+                  {race.fl&&race.fl.driver&&(
                   <div style={{display:"flex",alignItems:"center",gap:8,padding:"8px 14px",background:"rgba(128,0,128,0.1)",borderRadius:8,border:"1px solid rgba(128,0,128,0.2)"}}>
                     <span style={{fontSize:11,color:"rgba(255,255,255,0.5)"}}>⚡ Fastest Lap</span>
-                    <span style={{fontSize:13,fontWeight:600}}>{race.fl.d}</span>
-                    <span style={{fontSize:13,fontWeight:700,color:"#d946ef",fontVariantNumeric:"tabular-nums"}}>{race.fl.t}</span>
+                    <span style={{fontSize:13,fontWeight:600}}>{race.fl.driver}</span>
+                    <span style={{fontSize:13,fontWeight:700,color:"#d946ef",fontVariantNumeric:"tabular-nums"}}>{race.fl.time}</span>
                   </div>
+                  )}
                   <button onClick={()=>setExpandedRace(expandedRace===race.r?null:race.r)} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:6,padding:"8px 14px",background:"rgba(255,255,255,0.04)",borderRadius:8,border:"1px solid rgba(255,255,255,0.08)",color:"rgba(255,255,255,0.6)",fontSize:12,fontWeight:500,fontFamily:"'Outfit',sans-serif",transition:"all 0.2s"}}>
                     {expandedRace===race.r?"Hide":"View"} Full Classification
                     <span style={{transform:expandedRace===race.r?"rotate(180deg)":"rotate(0)",transition:"transform 0.3s",display:"inline-block"}}>▾</span>
@@ -1564,9 +1613,9 @@ export default function F1Dashboard(){
 
               {/* Summary Cards */}
               <div style={{display:"flex",gap:12,flexWrap:"wrap"}}>
-                {(()=>{const d1=drivers.find(d=>d.bestS1&&Math.abs(d.bestS1-sb.fastestS1)<0.001);return <SC label="Fastest S1" value={fmtS(sb.fastestS1)+"s"} sub={d1?.acronym||""} accent="#d946ef" icon={d1?<TL team={normTeam(d1.team)} size={22}/>:null}/>;})()}
-                {(()=>{const d2=drivers.find(d=>d.bestS2&&Math.abs(d.bestS2-sb.fastestS2)<0.001);return <SC label="Fastest S2" value={fmtS(sb.fastestS2)+"s"} sub={d2?.acronym||""} accent="#d946ef" icon={d2?<TL team={normTeam(d2.team)} size={22}/>:null}/>;})()}
-                {(()=>{const d3=drivers.find(d=>d.bestS3&&Math.abs(d.bestS3-sb.fastestS3)<0.001);return <SC label="Fastest S3" value={fmtS(sb.fastestS3)+"s"} sub={d3?.acronym||""} accent="#d946ef" icon={d3?<TL team={normTeam(d3.team)} size={22}/>:null}/>;})()}
+                {(()=>{const d1=drivers.find(d=>d.bestS1&&Math.abs(d.bestS1-sb.fastestS1)<0.001);return <SC label="Fastest S1" value={sb.fastestS1?fmtS(sb.fastestS1)+"s":"—"} sub={d1?.acronym||""} accent="#d946ef" icon={d1?<TL team={normTeam(d1.team)} size={22}/>:null}/>;})()}
+                {(()=>{const d2=drivers.find(d=>d.bestS2&&Math.abs(d.bestS2-sb.fastestS2)<0.001);return <SC label="Fastest S2" value={sb.fastestS2?fmtS(sb.fastestS2)+"s":"—"} sub={d2?.acronym||""} accent="#d946ef" icon={d2?<TL team={normTeam(d2.team)} size={22}/>:null}/>;})()}
+                {(()=>{const d3=drivers.find(d=>d.bestS3&&Math.abs(d.bestS3-sb.fastestS3)<0.001);return <SC label="Fastest S3" value={sb.fastestS3?fmtS(sb.fastestS3)+"s":"—"} sub={d3?.acronym||""} accent="#d946ef" icon={d3?<TL team={normTeam(d3.team)} size={22}/>:null}/>;})()}
                 {(()=>{const di=drivers.find(d=>d.maxI1Speed===sb.topI1Speed);return <SC label="Top Speed (I1)" value={`${sb.topI1Speed||"—"} km/h`} sub={di?.acronym||""} accent="#FF8000" icon={di?<TL team={normTeam(di.team)} size={22}/>:null}/>;})()}
                 {(()=>{const di=drivers.find(d=>d.maxI2Speed===sb.topI2Speed);return <SC label="Top Speed (I2)" value={`${sb.topI2Speed||"—"} km/h`} sub={di?.acronym||""} accent="#FF8000" icon={di?<TL team={normTeam(di.team)} size={22}/>:null}/>;})()}
                 {(()=>{const di=drivers.find(d=>d.maxSTSpeed===sb.topSTSpeed);return <SC label="Top Speed (ST)" value={`${sb.topSTSpeed||"—"} km/h`} sub={di?.acronym||""} accent="#FF8000" icon={di?<TL team={normTeam(di.team)} size={22}/>:null}/>;})()}
@@ -1811,26 +1860,30 @@ export default function F1Dashboard(){
                   return[d.number,{cumArr,total:cum}];
                 }));
                 const raceDuration=Math.max(1,...Object.values(lapsByDriver).map(x=>x.total));
+                replayDurationRef.current=raceDuration; // rAF clock auto-pauses here
+                const totalLaps=Math.max(1,...Object.values(lapsByDriver).map(x=>x.cumArr.length?x.cumArr[x.cumArr.length-1].l:0));
                 const tClamped=Math.max(0,Math.min(raceDuration,replayTime));
                 // Compute state per driver at tClamped
                 const driverStates=allDrivers.map(d=>{
                   const lb=lapsByDriver[d.number];
-                  if(!lb||lb.cumArr.length===0)return{driver:d,progress:0,lap:0,fracOfLap:0,finished:false,onTrack:false};
-                  let cum=0,lapDone=0,fracOfLap=0,curLapTime=0,finished=false;
+                  if(!lb||lb.cumArr.length===0)return{driver:d,progress:0,lap:0,lapInProgress:1,fracOfLap:0,finished:false,onTrack:false};
+                  const lastLapNum=lb.cumArr[lb.cumArr.length-1].l;
+                  let cum=0,lapDone=0,fracOfLap=0,finished=false;
                   for(let i=0;i<lb.cumArr.length;i++){
                     const e=lb.cumArr[i];
                     if(tClamped<=e.cum){
                       lapDone=e.l-1;
-                      curLapTime=e.t;
                       fracOfLap=(tClamped-(cum))/e.t;
                       break;
                     }
                     cum=e.cum;
                     lapDone=e.l;
                   }
-                  if(tClamped>lb.total){finished=true;fracOfLap=1;}
-                  const progress=lapDone+fracOfLap;
-                  return{driver:d,progress,lap:lapDone,fracOfLap:Math.max(0,Math.min(1,fracOfLap)),finished,onTrack:!finished&&progress>0};
+                  if(tClamped>=lb.total){finished=true;fracOfLap=1;lapDone=lastLapNum;}
+                  // finished drivers sit exactly at their last lap — no "Lap 59 of 57"
+                  const progress=lapDone+(finished?0:fracOfLap);
+                  const lapInProgress=finished?lastLapNum:Math.min(lapDone+1,lastLapNum);
+                  return{driver:d,progress,lap:lapDone,lapInProgress,fracOfLap:Math.max(0,Math.min(1,fracOfLap)),finished,onTrack:!finished&&progress>0};
                 });
                 // Rank by progress descending — higher progress = further ahead
                 const ranked=[...driverStates].sort((a,b)=>b.progress-a.progress);
@@ -1841,7 +1894,7 @@ export default function F1Dashboard(){
                   return stints.find(s=>lapNum>=(s.lapStart||1)&&lapNum<=(s.lapEnd||999))||null;
                 };
                 // Race-control state at current time — need to map race time back to lap of leader (rough)
-                const leaderLap=Math.floor(ranked[0]?.progress||0)+1;
+                const leaderLap=ranked[0]?.lapInProgress||1;
                 const periods=race.raceControlPeriods||[];
                 const yellowLaps=race.yellowFlagLaps||[];
                 const activePeriod=periods.find(p=>leaderLap>=p.lapStart&&leaderLap<=p.lapEnd);
@@ -1871,7 +1924,7 @@ export default function F1Dashboard(){
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:14,flexWrap:"wrap",gap:8}}>
                       <div>
                         <div style={{fontSize:15,fontWeight:700}}>Race Replay</div>
-                        <div style={{fontSize:11,color:"rgba(255,255,255,0.4)",marginTop:2}}>{cur.meeting.meetingName} · Lap {leaderLap} of {Math.ceil(raceDuration/(raceDuration/Math.max(1,Math.max(...Object.values(lapsByDriver).map(x=>x.cumArr.length||0)))))} · {fmtTime(tClamped)}</div>
+                        <div style={{fontSize:11,color:"rgba(255,255,255,0.4)",marginTop:2}}>{cur.meeting.meetingName} · Lap {leaderLap} of {totalLaps} · {fmtTime(tClamped)}</div>
                       </div>
                       <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
                         <button onClick={()=>{if(replayTime>=raceDuration-0.5)setReplayTime(0);setReplayPlaying(p=>!p);}} style={{width:38,height:38,borderRadius:"50%",border:"1px solid rgba(255,255,255,0.15)",background:replayPlaying?"rgba(232,0,32,0.18)":"rgba(255,255,255,0.06)",color:"#fff",cursor:"pointer",fontSize:14,fontFamily:"'Outfit',sans-serif",display:"flex",alignItems:"center",justifyContent:"center"}}>{replayPlaying?"⏸":"▶"}</button>
@@ -2060,6 +2113,7 @@ export default function F1Dashboard(){
                 const lapBTime=drB.lapTimes?.find(l=>l.l===lapCompareLap)?.t;
                 // For playback: max lap duration across both
                 const playDuration=Math.max(lapATime||0,lapBTime||0)||90;
+                lapPlayDurationRef.current=playDuration; // playback clock auto-pauses here
                 const playT=Math.max(0,Math.min(playDuration,lapComparePlayTime));
                 return(
                   <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:18}}>
@@ -2087,7 +2141,8 @@ export default function F1Dashboard(){
                     {/* Lap dropdown selector */}
                     <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10,flexWrap:"wrap"}}>
                       <span style={{fontSize:10,textTransform:"uppercase",letterSpacing:1,color:"rgba(255,255,255,0.4)",fontWeight:600}}>Lap</span>
-                      <select value={lapCompareLap||""} onChange={(e)=>onPickLap(parseInt(e.target.value))} style={{appearance:"none",WebkitAppearance:"none",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.10)",borderRadius:6,padding:"6px 28px 6px 12px",color:"#fff",fontSize:12,fontWeight:500,fontFamily:"'Outfit',sans-serif",cursor:"pointer",outline:"none",minWidth:200}}>
+                      <select value={lapCompareLap||""} onChange={(e)=>{const v=parseInt(e.target.value);if(!isNaN(v))onPickLap(v);}} style={{appearance:"none",WebkitAppearance:"none",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.10)",borderRadius:6,padding:"6px 28px 6px 12px",color:"#fff",fontSize:12,fontWeight:500,fontFamily:"'Outfit',sans-serif",cursor:"pointer",outline:"none",minWidth:200}}>
+                        {!lapCompareLap&&<option value="" disabled style={{background:"#14141f"}}>Select a lap…</option>}
                         {(()=>{
                           // Union of usable laps across both drivers
                           const lapSet=new Set();
@@ -2153,9 +2208,11 @@ export default function F1Dashboard(){
                           // rotate 90° so the long axis fills horizontal space
                           const rotate=(maxY-minY)>(maxX-minX);
                           const padPct=0.04;
-                          // Project a (x, y) sample into "fitted" local coords
-                          // OpenF1 location is north-positive Y, SVG is top-positive Y → flip Y
-                          const toLocal=(x,y)=>rotate?[maxY-y-(maxY-minY)*0,(x-minX)]:[(x-minX),(maxY-y)];
+                          // Project a (x, y) sample into "fitted" local coords.
+                          // OpenF1 location is north-positive Y, SVG is top-positive Y → flip Y.
+                          // The rotated branch must keep that flip (determinant −1), otherwise
+                          // the circuit renders mirror-imaged (left-handers become right-handers).
+                          const toLocal=(x,y)=>rotate?[(y-minY),(x-minX)]:[(x-minX),(maxY-y)];
                           const localSpanX=rotate?(maxY-minY):(maxX-minX)||1;
                           const localSpanY=rotate?(maxX-minX):(maxY-minY)||1;
                           const px=localSpanX*padPct,py=localSpanY*padPct;
@@ -3377,9 +3434,11 @@ export default function F1Dashboard(){
                   d1Val=battle.qual.d1;d2Val=battle.qual.d2;
                   d1Label=`${battle.qual.d1} win${battle.qual.d1!==1?"s":""}`;
                   d2Label=`${battle.qual.d2} win${battle.qual.d2!==1?"s":""}`;
-                  metricNote="Qualifying head-to-head (higher grid position wins)";
+                  metricNote="Qualifying head-to-head (better grid slot wins)";
                 }else if(h2hMetric==="race"){
-                  d1Val=battle.avgPos.d1?10-battle.avgPos.d1:0;d2Val=battle.avgPos.d2?10-battle.avgPos.d2:0; // invert so lower pos = bigger bar
+                  // Lower avg position = bigger bar. 21−avg keeps backmarkers positive
+                  // (10−avg went negative past P10 and inverted the bars).
+                  d1Val=battle.avgPos.d1?Math.max(0.5,21-battle.avgPos.d1):0;d2Val=battle.avgPos.d2?Math.max(0.5,21-battle.avgPos.d2):0;
                   d1Label=battle.avgPos.d1?`P${battle.avgPos.d1} avg`:"No data";
                   d2Label=battle.avgPos.d2?`P${battle.avgPos.d2} avg`:"No data";
                   metricNote="Average race finishing position";
@@ -3582,9 +3641,9 @@ export default function F1Dashboard(){
           <div className="fu" style={{display:"flex",flexDirection:"column",gap:24}}>
             <div style={{display:"flex",gap:16,flexWrap:"wrap"}}>
               <SC label="Total Races" value={String(totalRounds)} sub="2 postponed (Bahrain, Saudi)" accent="#fff"/>
-              <SC label="Races Completed" value={String(completedRounds)} sub={sched.filter(r=>r.st==="done").map(r=>r.nm.replace(" GP","")).join(" · ")||"None yet"} accent="#27F4D2"/>
+              <SC label="Races Completed" value={String(completedRounds)} sub={sched.filter(r=>r.st==="done").map(r=>r.nm.replace(" Grand Prix","")).join(" · ")||"None yet"} accent="#27F4D2"/>
               <SC label="Sprint Weekends" value={String(sched.filter(r=>r.sp).length)} sub={sched.filter(r=>r.sp).map(r=>r.fc).join(" · ")} accent="#E80020"/>
-              <SC label="Season Finale" value={sched.length>0?sched[sched.length-1].nm.replace(" GP",""):"TBD"} sub={sched.length>0?sched[sched.length-1].dt:""} accent="#FFD700"/>
+              <SC label="Season Finale" value={sched.length>0?sched[sched.length-1].nm.replace(" Grand Prix",""):"TBD"} sub={sched.length>0?raceDateFmt(sched[sched.length-1].dt,sched[sched.length-1].tt):""} accent="#FFD700"/>
             </div>
             <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20}}>
               <div style={{fontSize:15,fontWeight:700,marginBottom:4}}>{SEASON} Race Calendar</div>
@@ -3606,7 +3665,10 @@ export default function F1Dashboard(){
                     </div>
                     <div style={{fontSize:11,color:"rgba(255,255,255,0.35)",marginTop:2}}>{race.ci}</div>
                   </div>
-                  <div style={{fontSize:12,color:"rgba(255,255,255,0.5)",marginRight:16,fontVariantNumeric:"tabular-nums",flexShrink:0,textAlign:"right",width:105}}>{race.dt}</div>
+                  <div style={{fontSize:12,color:"rgba(255,255,255,0.5)",marginRight:16,fontVariantNumeric:"tabular-nums",flexShrink:0,textAlign:"right",width:105}}>
+                    <div>{raceDateFmt(race.dt,race.tt)}</div>
+                    {race.tt&&<div style={{fontSize:10,color:"rgba(255,255,255,0.3)",marginTop:1}}>{raceTimeFmt(race.dt,race.tt)}</div>}
+                  </div>
                   <div style={{width:95,flexShrink:0,display:"flex",justifyContent:"flex-end"}}><SB status={race.st}/></div>
                   {race.w&&<div style={{marginLeft:12,fontSize:12,color:"#27F4D2",fontWeight:600,flexShrink:0}}>🏆 {race.w}</div>}
                 </div>
