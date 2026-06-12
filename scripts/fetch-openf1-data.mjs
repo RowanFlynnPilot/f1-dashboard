@@ -364,16 +364,19 @@ async function main() {
 
   if (!meetings || meetings.length === 0) {
     console.log("   ⚠️  No meetings found for this season yet.");
-    console.log("   Writing empty data file...\n");
+    console.log("   Writing empty index...\n");
     const fs = await import("fs");
     const path = await import("path");
-    const outPath = path.join(process.cwd(), "public", "openf1-data.json");
-    fs.writeFileSync(outPath, JSON.stringify({
+    const outDir = path.join(process.cwd(), "public", "openf1");
+    fs.mkdirSync(path.join(outDir, "meetings"), { recursive: true });
+    fs.writeFileSync(path.join(outDir, "index.json"), JSON.stringify({
       season: SEASON,
       fetchedAt: new Date().toISOString(),
+      meetingCount: 0,
       meetings: [],
-    }, null, 2));
-    console.log(`✅ Empty data written to ${outPath}\n`);
+      driverHeadshots: {},
+    }));
+    console.log(`✅ Empty index written to ${outDir}\n`);
     return;
   }
 
@@ -551,7 +554,7 @@ async function main() {
               ? d.laps
                   .filter(l => l.lap && l.lapTime)
                   .sort((a, b) => a.lap - b.lap)
-                  .map(l => ({ l: l.lap, t: +l.lapTime.toFixed(3), pit: !!l.isPitOut, ds: l.dateStart || null }))
+                  .map(l => ({ l: l.lap, t: +l.lapTime.toFixed(3), pit: !!l.isPitOut, ds: l.dateStart ? new Date(l.dateStart).getTime() : null }))
               : null,
             // Per-lap position snapshots for the position-evolution chart.
             positions: isRaceLike ? (positionsByDriver[d.number] || []) : null,
@@ -593,23 +596,58 @@ async function main() {
     }
   }
 
-  // Build output
-  const output = {
+  // Build output — split layout, all minified (pretty-printing tripled the old
+  // single-file payload, and the browser had to download all of it up front):
+  //   public/openf1/index.json            light meeting/session metadata + headshots (fetched on page load)
+  //   public/openf1/meetings/{key}.json   full per-meeting data (lazy-loaded when a tab needs it)
+  const fs = await import("fs");
+  const path = await import("path");
+  const outDir = path.join(process.cwd(), "public", "openf1");
+  const meetingsDir = path.join(outDir, "meetings");
+  fs.mkdirSync(meetingsDir, { recursive: true });
+
+  let meetingBytes = 0;
+  for (const m of allMeetingData) {
+    const json = JSON.stringify(m);
+    meetingBytes += json.length;
+    fs.writeFileSync(path.join(meetingsDir, `${m.meetingKey}.json`), json);
+  }
+
+  const index = {
     season: SEASON,
     fetchedAt: new Date().toISOString(),
     meetingCount: allMeetingData.length,
-    meetings: allMeetingData,
     driverHeadshots: headshotMap,
+    meetings: allMeetingData.map(m => ({
+      meetingKey: m.meetingKey,
+      meetingName: m.meetingName,
+      location: m.location,
+      country: m.country,
+      countryCode: m.countryCode,
+      circuitName: m.circuitName,
+      dateStart: m.dateStart,
+      year: m.year,
+      sessions: m.sessions.map(s => ({
+        sessionKey: s.sessionKey,
+        sessionName: s.sessionName,
+        sessionType: s.sessionType,
+        dateStart: s.dateStart,
+        dateEnd: s.dateEnd,
+        totalLaps: s.totalLaps,
+        driverCount: s.driverCount,
+      })),
+    })),
   };
+  const indexJson = JSON.stringify(index);
+  fs.writeFileSync(path.join(outDir, "index.json"), indexJson);
 
-  // Write to public/openf1-data.json
-  const fs = await import("fs");
-  const path = await import("path");
-  const outPath = path.join(process.cwd(), "public", "openf1-data.json");
-  fs.writeFileSync(outPath, JSON.stringify(output, null, 2));
+  // Drop the legacy single-file payload if it's still around
+  const legacyPath = path.join(process.cwd(), "public", "openf1-data.json");
+  if (fs.existsSync(legacyPath)) fs.unlinkSync(legacyPath);
 
   const totalSessions = allMeetingData.reduce((sum, m) => sum + m.sessions.length, 0);
-  console.log(`\n✅ OpenF1 data written to ${outPath}`);
+  console.log(`\n✅ OpenF1 data written to ${outDir}`);
+  console.log(`   index.json ${(indexJson.length / 1024).toFixed(0)} KB + ${allMeetingData.length} meeting files totalling ${(meetingBytes / 1024).toFixed(0)} KB`);
   console.log(`   ${allMeetingData.length} meetings, ${totalSessions} sessions`);
   console.log(`   Includes: sector times, speed traps, stint data\n`);
 }

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, Fragment } from "react";
+import { useState, useEffect, useMemo, useRef, Fragment } from "react";
 
 const SEASON = 2026;
 
@@ -674,7 +674,13 @@ export default function F1Dashboard(){
   const[data,setData]=useState(null);
   const[loading,setLoading]=useState(true);
   const[error,setError]=useState(null);
-  const[openf1,setOpenf1]=useState(null);
+  // OpenF1 data is split: a light index (meeting/session metadata + headshots,
+  // ~11 KB) loads on page load; full per-meeting payloads (~200 KB each) load
+  // lazily when a tab needs them. The composed `openf1` value below keeps the
+  // original shape so consumers are unchanged.
+  const[openf1Index,setOpenf1Index]=useState(null);
+  const[openf1Meetings,setOpenf1Meetings]=useState({}); // meetingKey -> full meeting payload
+  const meetingFetchTried=useRef(new Set()); // one attempt per key per page load
   const[selMeeting,setSelMeeting]=useState(null);
   const[selSession,setSelSession]=useState(null);
   const[selRace,setSelRace]=useState("all");
@@ -727,25 +733,63 @@ export default function F1Dashboard(){
   lapCompareDataRef.current=lapCompareData; // fresh mirror so the fetch effect can read the cache without depending on it
 
   useEffect(()=>{
-    Promise.all([
-      fetch(import.meta.env.BASE_URL + "data.json").then(r=>{if(!r.ok)throw new Error(`HTTP ${r.status}`);return r.json()}),
-      fetch(import.meta.env.BASE_URL + "openf1-data.json").then(r=>r.ok?r.json():null).catch(()=>null),
-      fetch(import.meta.env.BASE_URL + "driver-quotes.json").then(r=>r.ok?r.json():null).catch(()=>null),
-      fetch(import.meta.env.BASE_URL + "tracks.json").then(r=>r.ok?r.json():null).catch(()=>null),
-    ]).then(([raw,of1,dq,tk])=>{
-      const d=transformData(raw);setData(d);
-      if(of1&&of1.meetings&&of1.meetings.length>0){
-        setOpenf1(of1);
+    // data.json alone gates first paint — the dashboard used to stay on the
+    // loading screen until the multi-MB telemetry payload finished downloading.
+    // Everything else streams in and populates state when it lands.
+    fetch(import.meta.env.BASE_URL + "data.json")
+      .then(r=>{if(!r.ok)throw new Error(`HTTP ${r.status}`);return r.json()})
+      .then(raw=>{setData(transformData(raw));setLoading(false);})
+      .catch(e=>{console.error("Failed to load data:",e);setError(e.message);setLoading(false);});
+    // OpenF1 index (light). Falls back to the legacy single-file payload for
+    // checkouts whose public/ data predates the split layout.
+    fetch(import.meta.env.BASE_URL + "openf1/index.json")
+      .then(r=>r.ok?r.json():null).catch(()=>null)
+      .then(idx=>idx||fetch(import.meta.env.BASE_URL + "openf1-data.json").then(r=>r.ok?r.json():null).catch(()=>null))
+      .then(of1=>{
+        if(!of1||!of1.meetings||of1.meetings.length===0)return;
+        setOpenf1Index(of1);
+        // Legacy payload ships full meetings inline — seed the cache so nothing refetches
+        const preloaded={};
+        for(const m of of1.meetings){if(m.sessions?.some(s=>s.drivers))preloaded[m.meetingKey]=m;}
+        if(Object.keys(preloaded).length>0)setOpenf1Meetings(prev=>({...preloaded,...prev}));
         setSelMeeting(of1.meetings[of1.meetings.length-1].meetingKey);
         const lastMtg=of1.meetings[of1.meetings.length-1];
         const raceSess=lastMtg.sessions.find(s=>s.sessionName==="Race")||lastMtg.sessions[lastMtg.sessions.length-1];
         if(raceSess)setSelSession(raceSess.sessionKey);
-      }
-      if(dq&&dq.rounds)setQuotes(dq);
-      if(tk)setTracks(tk);
-      setLoading(false);
-    }).catch(e=>{console.error("Failed to load data:",e);setError(e.message);setLoading(false)});
+      });
+    fetch(import.meta.env.BASE_URL + "driver-quotes.json").then(r=>r.ok?r.json():null).catch(()=>null).then(dq=>{if(dq&&dq.rounds)setQuotes(dq);});
+    fetch(import.meta.env.BASE_URL + "tracks.json").then(r=>r.ok?r.json():null).catch(()=>null).then(tk=>{if(tk)setTracks(tk);});
   },[]);
+
+  // Composed view: index metadata with full meeting payloads spliced in as they
+  // load. Same shape as the old single openf1 object, so consumers are unchanged;
+  // a meeting whose sessions lack `drivers` simply isn't loaded yet.
+  const openf1=useMemo(()=>{
+    if(!openf1Index)return null;
+    return {...openf1Index,meetings:openf1Index.meetings.map(m=>openf1Meetings[m.meetingKey]||m)};
+  },[openf1Index,openf1Meetings]);
+
+  // Lazy-load full meeting payloads for whatever the active tab needs.
+  useEffect(()=>{
+    if(!openf1Index||openf1Index.meetings.length===0)return;
+    const meta=openf1Index.meetings;
+    const lastKey=meta[meta.length-1].meetingKey;
+    const wanted=new Set();
+    if(tab==="Sector Times")wanted.add(selMeeting||lastKey);
+    if(tab==="Telemetry"){
+      const lastRace=[...meta].reverse().find(m=>m.sessions.some(s=>s.sessionName==="Race"));
+      wanted.add(telMeetingKey||lastRace?.meetingKey||lastKey);
+    }
+    if(tab==="Race Results")for(const m of meta)wanted.add(m.meetingKey); // sector enrichment spans all rounds
+    const tried=meetingFetchTried.current;
+    for(const key of wanted){
+      if(!key||openf1Meetings[key]||tried.has(key))continue;
+      tried.add(key); // one attempt per page load — a failed meeting fetch must not retry-loop
+      fetch(`${import.meta.env.BASE_URL}openf1/meetings/${key}.json`)
+        .then(r=>r.ok?r.json():null).catch(()=>null)
+        .then(m=>{if(m)setOpenf1Meetings(prev=>prev[key]?prev:{...prev,[key]:m});});
+    }
+  },[openf1Index,openf1Meetings,tab,selMeeting,telMeetingKey]);
 
   // Race Replay clock — advances replayTime while playing, auto-pauses at race end
   useRafClock(replayPlaying,replaySpeed,replayTime,setReplayTime,setReplayPlaying,replayDurationRef);
@@ -799,6 +843,15 @@ export default function F1Dashboard(){
       if(cached&&(cached.samples||cached.error))return; // settled — only Retry clears it
       const ltEntry=(drv.lapTimes||[]).find(l=>l.l===lap);
       if(!ltEntry?.ds){setLapCompareData(prev=>({...prev,[key]:{loading:false,error:"No timestamp for this lap"}}));return;}
+      // sessionStorage first — laps are immutable once the session is over, so a
+      // revisit (or tab round-trip) should never re-hit the OpenF1 API.
+      try{
+        const stored=sessionStorage.getItem(`lapTel:${key}`);
+        if(stored){
+          const samples=JSON.parse(stored);
+          if(Array.isArray(samples)&&samples.length>=3){setLapCompareData(prev=>({...prev,[key]:{samples,loading:false}}));return;}
+        }
+      }catch{/* parse/quota issues — fall through to the network */}
       inflight.add(key);
       setLapCompareData(prev=>({...prev,[key]:{loading:true}}));
       const controller=new AbortController();
@@ -811,14 +864,15 @@ export default function F1Dashboard(){
         const endIso=new Date(endMs).toISOString();
         const base=`https://api.openf1.org/v1`;
         const carRes=await fetch(`${base}/car_data?session_key=${sessionKey}&driver_number=${drv.number}&date>=${startIso}&date<=${endIso}`,{signal:controller.signal});
-        if(!carRes.ok)throw new Error(`car_data HTTP ${carRes.status}`);
+        if(!carRes.ok)throw new Error(carRes.status===404?"OpenF1 has no car telemetry for this session yet — recent races can lag a few days":`car_data HTTP ${carRes.status}`);
         const carData=await carRes.json();
         const locRes=await fetch(`${base}/location?session_key=${sessionKey}&driver_number=${drv.number}&date>=${startIso}&date<=${endIso}`,{signal:controller.signal});
-        if(!locRes.ok)throw new Error(`location HTTP ${locRes.status}`);
+        if(!locRes.ok)throw new Error(locRes.status===404?"OpenF1 has no location data for this session yet — recent races can lag a few days":`location HTTP ${locRes.status}`);
         const location=await locRes.json();
         if(!carData||carData.length===0||!location||location.length<3)throw new Error("No samples returned (lap may predate live data)");
         const samples=processLapTelemetry(carData,location);
         if(samples.length<3)throw new Error("Could not align speed and location samples");
+        try{sessionStorage.setItem(`lapTel:${key}`,JSON.stringify(samples));}catch{/* quota full — cache is best-effort */}
         setLapCompareData(prev=>({...prev,[key]:{samples,loading:false}}));
       }catch(err){
         if(err.name==="AbortError"&&cancelled){
@@ -841,8 +895,8 @@ export default function F1Dashboard(){
   // eslint-disable-next-line react-hooks/exhaustive-deps
   },[tab,openf1,telMeetingKey,lapCompareA,lapCompareB,lapCompareLap,lapCompareRetry]);
 
-  if(loading)return(<div style={{minHeight:"100vh",background:"#0a0a0f",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Outfit',sans-serif"}}><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/><div style={{textAlign:"center"}}><div style={{fontSize:32,fontWeight:700,marginBottom:8}}>Loading F1 Data...</div><div style={{color:"rgba(255,255,255,0.4)"}}>Fetching from Jolpica API</div></div></div>);
-  if(error||!data)return(<div style={{minHeight:"100vh",background:"#0a0a0f",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Outfit',sans-serif"}}><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/><div style={{textAlign:"center"}}><div style={{fontSize:32,fontWeight:700,color:"#E80020",marginBottom:8}}>Failed to Load Data</div><div style={{color:"rgba(255,255,255,0.5)"}}>{error||"No data available. Run: npm run fetch-data"}</div></div></div>);
+  if(loading)return(<div style={{minHeight:"100vh",background:"#0a0a0f",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Outfit',sans-serif"}}><div style={{textAlign:"center"}}><div style={{fontSize:32,fontWeight:700,marginBottom:8}}>Loading F1 Data...</div><div style={{color:"rgba(255,255,255,0.4)"}}>Fetching from Jolpica API</div></div></div>);
+  if(error||!data)return(<div style={{minHeight:"100vh",background:"#0a0a0f",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Outfit',sans-serif"}}><div style={{textAlign:"center"}}><div style={{fontSize:32,fontWeight:700,color:"#E80020",marginBottom:8}}>Failed to Load Data</div><div style={{color:"rgba(255,255,255,0.5)"}}>{error||"No data available. Run: npm run fetch-data"}</div></div></div>);
 
   const{DS,CS,races,pits,sched,qualifying,h2h,completedRounds,totalRounds,fetchedAt,pitRaceName,leader,lastWinner,fastestLap,narrative,progression}=data;
   const avgP=pits.length>0?`${(pits.reduce((a,b)=>a+b.s,0)/pits.length).toFixed(3)}s`:"N/A";
@@ -854,74 +908,7 @@ export default function F1Dashboard(){
 
   return(
     <div style={{minHeight:"100vh",background:"#0a0a0f",color:"#fff",fontFamily:"'Outfit',sans-serif"}}>
-      <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
-      <style>{`
-        *{box-sizing:border-box;margin:0;padding:0}
-        ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:2px}
-        @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
-        @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
-        @keyframes pulseOnce{0%{transform:scale(1)}30%{transform:scale(1.18)}100%{transform:scale(1)}}
-        @keyframes barGrow{from{transform:scaleX(0);transform-origin:left}to{transform:scaleX(1);transform-origin:left}}
-        .fu{animation:fadeUp .6s ease both}
-        .fu > *{animation:fadeUp .55s ease both}
-        .fu > *:nth-child(1){animation-delay:60ms}
-        .fu > *:nth-child(2){animation-delay:140ms}
-        .fu > *:nth-child(3){animation-delay:220ms}
-        .fu > *:nth-child(4){animation-delay:300ms}
-        .fu > *:nth-child(5){animation-delay:360ms}
-        .fu > *:nth-child(n+6){animation-delay:420ms}
-        .pulse-once{animation:pulseOnce 1.6s ease-out 1}
-        .heatmap-cell{transition:filter .15s, transform .15s, box-shadow .15s; cursor:default}
-        .heatmap-cell:hover{filter:brightness(1.35) saturate(1.1); transform:translateY(-1px); box-shadow:0 4px 14px rgba(0,0,0,0.4)}
-        @media(max-width:768px){.replay-grid{grid-template-columns:1fr!important}.lap-compare-grid{grid-template-columns:1fr!important}}
-        .tab-bar{display:flex;gap:0;margin-top:20px;border-bottom:1px solid rgba(255,255,255,0.06);overflow-x:auto}
-        .tb{cursor:pointer;padding:10px 18px;border:none;background:none;color:rgba(255,255,255,0.4);font-size:13px;font-weight:500;letter-spacing:.5px;font-family:'Outfit',sans-serif;transition:all .3s;border-bottom:2px solid transparent;white-space:nowrap;flex:1;text-align:center}
-        .tb:hover{color:rgba(255,255,255,0.7);background:rgba(255,255,255,0.02)}.tb.a{color:#E80020;border-bottom-color:#E80020;background:rgba(232,0,32,0.04)}
-        .dr{display:flex;align-items:center;padding:8px 12px;border-radius:8px;transition:all .2s}.dr:hover{background:rgba(255,255,255,0.04)}
-        .rc{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:20px;transition:all .3s}.rc:hover{border-color:rgba(255,255,255,0.12);background:rgba(255,255,255,0.05)}
-        .sr{display:flex;align-items:center;padding:14px 16px;border-radius:10px;transition:all .2s;margin-bottom:4px}.sr:hover{background:rgba(255,255,255,0.04)}
-        select:hover,select:focus{border-color:rgba(232,0,32,0.3)!important}select option{padding:8px}
-        .hdr{padding:28px 32px 0}.main{padding:24px 32px 48px;max-width:1200px;margin:0 auto}
-        .g2{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:stretch}
-        .g3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-        .g4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
-        .pod{display:flex;gap:12px}
-        .tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -4px;padding:0 4px}
-        .hero-pts{font-size:72px;letter-spacing:-3px}
-        .hero-sub{font-size:36px}
-        .hero-name{font-size:36px}
-        .hero-avatar{width:140px;height:140px}
-        @media(max-width:768px){
-          .hdr{padding:16px 14px 0}
-          .main{padding:16px 14px 32px}
-          .tb{padding:8px 10px;font-size:11px;flex:1}
-          .g2{grid-template-columns:1fr}
-          .g3{grid-template-columns:1fr}
-          .g4{grid-template-columns:1fr 1fr}
-          .pod{flex-direction:column}
-          .rc{padding:14px}
-          .sr{padding:10px 12px;flex-wrap:wrap;gap:6px}
-          .sr>div:nth-child(4){width:auto!important}
-          .dr{padding:6px 8px}
-          .hero{padding:24px 20px!important}
-          .hero-pts{font-size:54px;letter-spacing:-2px}
-          .hero-sub{font-size:28px}
-          .hero-name{font-size:26px}
-          .hero-avatar{width:96px;height:96px}
-        }
-        @media(max-width:480px){
-          .g4{grid-template-columns:1fr}
-          .tb{padding:7px 6px;font-size:10px;flex:1}
-          .hero-pts{font-size:44px}
-          .hero-name{font-size:22px}
-          .hero-avatar{width:80px;height:80px}
-          .recap-podium{grid-template-columns:1fr!important}
-          .compare-grid-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
-          .compare-grid{min-width:520px}
-          .tire-bars{overflow-x:auto;-webkit-overflow-scrolling:touch}
-          .tire-bars-inner{min-width:520px}
-        }
-      `}</style>
+      {/* Global styles live in src/styles.css; fonts load from index.html */}
 
       {/* Header */}
       <div className="hdr" style={{position:"relative",background:"linear-gradient(180deg,rgba(232,0,32,0.08) 0%,transparent 100%)"}}>
@@ -1528,6 +1515,14 @@ export default function F1Dashboard(){
             </div>
           );
           const curMtg=openf1.meetings.find(m=>m.meetingKey===selMeeting)||openf1.meetings[0];
+          // Full meeting payload still streaming in (lazy-loaded per meeting)
+          if(!curMtg.sessions.some(s=>s.drivers))return(
+            <div className="fu" style={{textAlign:"center",padding:60,color:"rgba(255,255,255,0.4)"}}>
+              <div style={{fontSize:40,marginBottom:12}}>⏱️</div>
+              <div style={{fontSize:16,fontWeight:600,marginBottom:4}}>Loading sector data…</div>
+              <div style={{fontSize:13}}>{curMtg.meetingName}</div>
+            </div>
+          );
           const curSess=curMtg.sessions.find(s=>s.sessionKey===selSession)||(curMtg.sessions.find(s=>s.sessionName==="Race"))||curMtg.sessions[0];
           const drivers=curSess?.drivers||[];
           const sb=curSess?.sessionBests||{};
@@ -1809,6 +1804,14 @@ export default function F1Dashboard(){
           const activeKey=telMeetingKey&&raceMeetings.find(rm=>rm.meeting.meetingKey===telMeetingKey)?telMeetingKey:raceMeetings[raceMeetings.length-1].meeting.meetingKey;
           const cur=raceMeetings.find(rm=>rm.meeting.meetingKey===activeKey);
           const race=cur.race;
+          // Full meeting payload still streaming in (lazy-loaded per meeting)
+          if(!race.drivers)return(
+            <div className="fu" style={{textAlign:"center",padding:60,color:"rgba(255,255,255,0.4)"}}>
+              <div style={{fontSize:40,marginBottom:12}}>📈</div>
+              <div style={{fontSize:16,fontWeight:600,marginBottom:4}}>Loading telemetry data…</div>
+              <div style={{fontSize:13}}>{cur.meeting.meetingName}</div>
+            </div>
+          );
           const allDrivers=race.drivers||[];
           // Default selection — finishing top 5. Use final position from per-lap snapshots.
           const finalPos=(d)=>{

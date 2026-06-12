@@ -14,7 +14,7 @@ f1-dashboard/
 ├── .github/workflows/deploy.yml    ← Fetches all APIs → builds → deploys to Pages
 ├── scripts/
 │   ├── fetch-f1-data.mjs           ← Jolpica API → public/data.json
-│   ├── fetch-openf1-data.mjs       ← OpenF1 API → public/openf1-data.json
+│   ├── fetch-openf1-data.mjs       ← OpenF1 API → public/openf1/ (split layout)
 │   ├── fetch-driver-quotes.py      ← YouTube + Claude API → public/driver-quotes.json
 │   └── fetch-tracks.mjs            ← Circuit GeoJSON → public/tracks.json (manual, not in CI)
 ├── src/
@@ -22,7 +22,9 @@ f1-dashboard/
 │   └── App.jsx                     ← ~3600 lines, ALL tabs and components in one file
 ├── public/
 │   ├── data.json                   ← Jolpica: standings, results, qualifying, pit stops
-│   ├── openf1-data.json            ← OpenF1: sectors, speeds, stints, headshot URLs
+│   ├── openf1/
+│   │   ├── index.json              ← Light meeting/session metadata + headshots (~11 KB, loaded on page load)
+│   │   └── meetings/{key}.json     ← Full per-meeting data (~200 KB each, lazy-loaded per tab)
 │   ├── driver-quotes.json          ← Post-race driver quotes
 │   └── tracks.json                 ← SVG track outlines for track maps
 ├── index.html
@@ -33,7 +35,7 @@ f1-dashboard/
 
 ### Key architectural decisions
 - **Single-file React app** — All tabs, components, and styles live in `App.jsx`. This is intentional for simplicity. Don't split into separate component files.
-- **Static data files** — Data is fetched at build time by scripts, saved as JSON in `public/`, and loaded client-side via `fetch()`. One exception: the Telemetry tab's Lap Compare live-fetches OpenF1 `/car_data` + `/location` at runtime (gated on the tab being open).
+- **Static data files** — Data is fetched at build time by scripts, saved as JSON in `public/`, and loaded client-side via `fetch()`. Only `data.json` gates first paint; the OpenF1 payload is split into a light `openf1/index.json` plus per-meeting files that lazy-load when Sector Times / Telemetry / Race Results need them (all output minified — pretty-printing tripled the old single-file payload). One runtime exception: the Telemetry tab's Lap Compare live-fetches OpenF1 `/car_data` + `/location` (gated on the tab being open, cached in sessionStorage).
 - **GitHub Actions deployment** — Uses `npm ci` (requires `package-lock.json`). Source set to "GitHub Actions" in Pages settings, not branch-based.
 - **Vite base path** — `vite.config.js` has `base: '/f1-dashboard/'` for GitHub Pages subdirectory hosting.
 
@@ -50,7 +52,7 @@ f1-dashboard/
 - Base URL: `https://api.openf1.org/v1`
 - Provides: sector times, speed traps (I1/I2/ST), stint/tire data, driver info (headshot URLs, team colours, acronyms)
 - Fetched by: `scripts/fetch-openf1-data.mjs`
-- Output: `public/openf1-data.json`
+- Output: `public/openf1/index.json` + `public/openf1/meetings/{meetingKey}.json` (the legacy single-file `public/openf1-data.json` is removed by the script; the app still falls back to reading it for old checkouts)
 - Key endpoints: `/meetings`, `/sessions`, `/drivers`, `/laps`, `/stints`
 
 ### YouTube + Claude API (driver quotes)
