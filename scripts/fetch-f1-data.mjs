@@ -339,7 +339,7 @@ async function main() {
     return parseFloat(s) || 0;
   };
 
-  const pitStops = latestPits ? latestPits.pitStops.map(p => {
+  const mapStops = (stops) => stops.map(p => {
     const info = driverLookup[p.driverId] || { name: p.driverId, fullName: p.driverId, team: "" };
     return {
       driver: info.name,
@@ -350,7 +350,16 @@ async function main() {
       duration: p.duration,
       durationSec: parsePitSeconds(p.duration),
     };
-  }).sort((a, b) => a.durationSec - b.durationSec) : [];
+  }).sort((a, b) => a.durationSec - b.durationSec);
+
+  // Every completed race (the Pit Stops tab has a race selector)
+  const pitStopsByRace = allPitStops.map(entry => ({
+    round: entry.round,
+    raceName: entry.raceName,
+    stops: mapStops(entry.pitStops),
+  }));
+
+  const pitStops = latestPits ? mapStops(latestPits.pitStops) : [];
 
   // Build final output
   const output = {
@@ -367,6 +376,7 @@ async function main() {
       raceName: latestPits?.raceName || "",
       stops: pitStops,
     },
+    pitStopsByRace,
     qualifying: allQualifying.map(q => ({
       round: q.round,
       raceName: q.raceName,

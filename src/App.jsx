@@ -151,6 +151,13 @@ function transformData(raw) {
     d: p.driver, fn: p.fullName || p.driver, t: p.team || "", s: p.durationSec ?? p.durationMs, l: p.lap,
   })).filter(p => p.s > 0 && p.s < 60);
 
+  // Per-race pit stops for the Pit Stops tab's race selector (older data.json
+  // builds only carry the latest race — the tab falls back to `pits` then)
+  const pitsByRace = (raw.pitStopsByRace || []).map(pr => ({
+    r: pr.round, nm: pr.raceName,
+    stops: pr.stops.map(p => ({ d: p.driver, fn: p.fullName || p.driver, t: p.team || "", s: p.durationSec ?? p.durationMs, l: p.lap })).filter(p => p.s > 0 && p.s < 60),
+  })).filter(pr => pr.stops.length > 0);
+
   // Schedule — status is computed client-side from race date + UTC start time,
   // so a stale weekly build can't keep the NEXT RACE badge on a finished race.
   // +3h after the start covers the race distance.
@@ -415,7 +422,7 @@ function transformData(raw) {
   }
   const progression={labels:progressionLabels,raceNames:progressionRaceNames,series:progressionSeries,standings:progressionStandings};
 
-  return { DS, CS, races: allRaces, pits, sched, qualifying, h2h, completedRounds, totalRounds, fetchedAt, pitRaceName, leader, lastWinner, fastestLap, narrative, progression };
+  return { DS, CS, races: allRaces, pits, pitsByRace, sched, qualifying, h2h, completedRounds, totalRounds, fetchedAt, pitRaceName, leader, lastWinner, fastestLap, narrative, progression };
 }
 
 
@@ -710,6 +717,7 @@ export default function F1Dashboard(){
   const[selSession,setSelSession]=useState(null);
   const[selRace,setSelRace]=useState("all");
   const[h2hMetric,setH2hMetric]=useState("qual");
+  const[selPitRace,setSelPitRace]=useState(null); // round id; null = latest
   const[quotes,setQuotes]=useState(null);
   const[quotesSession,setQuotesSession]=useState("race");
   const[progHover,setProgHover]=useState(null);
@@ -784,7 +792,7 @@ export default function F1Dashboard(){
   if(loading)return(<div style={{minHeight:"100vh",background:"#0a0a0f",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Outfit',sans-serif"}}><div style={{textAlign:"center"}}><div style={{fontSize:32,fontWeight:700,marginBottom:8}}>Loading F1 Data...</div><div style={{color:"rgba(255,255,255,0.4)"}}>Fetching from Jolpica API</div></div></div>);
   if(error||!data)return(<div style={{minHeight:"100vh",background:"#0a0a0f",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Outfit',sans-serif"}}><div style={{textAlign:"center"}}><div style={{fontSize:32,fontWeight:700,color:"#E80020",marginBottom:8}}>Failed to Load Data</div><div style={{color:"rgba(255,255,255,0.5)"}}>{error||"No data available. Run: npm run fetch-data"}</div></div></div>);
 
-  const{DS,CS,races,pits,sched,qualifying,h2h,completedRounds,totalRounds,fetchedAt,pitRaceName,leader,lastWinner,fastestLap,narrative,progression}=data;
+  const{DS,CS,races,pits,pitsByRace,sched,qualifying,h2h,completedRounds,totalRounds,fetchedAt,pitRaceName,leader,lastWinner,fastestLap,narrative,progression}=data;
   const avgP=pits.length>0?`${(pits.reduce((a,b)=>a+b.s,0)/pits.length).toFixed(3)}s`:"N/A";
   const fastestPit=pits.length>0?pits[0]:null;
   const maxDriverPts=Math.max(1,...DS.map(d=>d.pts));
@@ -1360,23 +1368,30 @@ export default function F1Dashboard(){
                     </div>
                   );
                 })()}
-                {expandedRace===race.r&&(
+                {expandedRace===race.r&&(()=>{
+                  // Grand Prix grid from qualifying (sprints set their grid in sprint quali, which we don't carry)
+                  const quali=!race.sprint?qualifying.find(q=>q.round===(typeof race.r==="string"?parseInt(race.r):race.r)):null;
+                  return(
                   <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:10,overflow:"hidden",marginTop:4}}>
                     <div style={{overflowX:"auto",WebkitOverflowScrolling:"touch"}}><table style={{width:"100%",borderCollapse:"collapse",minWidth:600,fontSize:13}}>
                       <thead><tr style={{borderBottom:"1px solid rgba(255,255,255,0.08)"}}>
-                        {["Pos","","Driver","Team","Gap to Winner"].map(h=><th key={h} style={{textAlign:"left",padding:"8px 10px",fontSize:10,textTransform:"uppercase",letterSpacing:1,color:"rgba(255,255,255,0.3)",fontWeight:500}}>{h}</th>)}
+                        {(quali?["Pos","","Driver","Team","Grid","+/−","Gap to Winner"]:["Pos","","Driver","Team","Gap to Winner"]).map(h=><th key={h} style={{textAlign:"left",padding:"8px 10px",fontSize:10,textTransform:"uppercase",letterSpacing:1,color:"rgba(255,255,255,0.3)",fontWeight:500}}>{h}</th>)}
                       </tr></thead>
                       <tbody>
                         {race.full.map((r,i)=>{
                           const isFinisher=typeof r.p==="number";
                           const isDNF=r.p==="DNF";
                           const isDNS=r.p==="DNS";
+                          const grid=quali?quali.results.find(x=>x.d===r.d)?.pos:null;
+                          const gain=grid&&isFinisher?grid-r.p:null;
                           return(
                             <tr key={i} style={{borderBottom:"1px solid rgba(255,255,255,0.03)",opacity:isDNF||isDNS?0.5:1}}>
                               <td style={{padding:"7px 10px",fontWeight:700,width:36,color:isFinisher&&r.p<=3?(r.p===1?"#FFD700":r.p===2?"#C0C0C0":"#CD7F32"):"rgba(255,255,255,0.5)",fontSize:12}}>{r.p}</td>
                               <td style={{padding:"7px 4px",width:28}}><TL team={r.t} size={20}/></td>
                               <td style={{padding:"7px 10px",fontWeight:600}}>{r.d}</td>
                               <td style={{padding:"7px 10px",color:"rgba(255,255,255,0.4)",fontSize:12}}>{r.t}</td>
+                              {quali&&<td style={{padding:"7px 10px",fontVariantNumeric:"tabular-nums",color:"rgba(255,255,255,0.45)",fontSize:12}}>{grid?`P${grid}`:"—"}</td>}
+                              {quali&&<td style={{padding:"7px 10px",fontSize:11,fontWeight:600,color:gain>0?"#27F4D2":gain<0?"#E80020":"rgba(255,255,255,0.25)"}}>{gain==null?"":gain>0?`▲${gain}`:gain<0?`▼${-gain}`:"—"}</td>}
                               <td style={{padding:"7px 10px",fontVariantNumeric:"tabular-nums",color:r.g==="WINNER"?"#27F4D2":isDNF?"#E80020":isDNS?"rgba(255,255,255,0.3)":"rgba(255,255,255,0.6)",fontSize:12,fontWeight:r.g==="WINNER"?600:400}}>{r.g}</td>
                             </tr>
                           );
@@ -1384,7 +1399,7 @@ export default function F1Dashboard(){
                       </tbody>
                     </table></div>
                   </div>
-                )}
+                  );})()}
               </div>
             ))}
             <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20}}>
@@ -1798,23 +1813,48 @@ export default function F1Dashboard(){
         )}
 
         {/* ═══ PIT STOPS ═══ */}
-        {tab==="Pit Stops"&&(
+        {tab==="Pit Stops"&&(()=>{
+          const prs=pitsByRace.length>0?pitsByRace:(pits.length>0?[{r:null,nm:pitRaceName,stops:pits}]:[]);
+          if(prs.length===0)return(
+            <div className="fu" style={{textAlign:"center",padding:60,color:"rgba(255,255,255,0.4)"}}>
+              <div style={{fontSize:40,marginBottom:12}}>🔧</div>
+              <div style={{fontSize:16,fontWeight:600,marginBottom:4,color:"#fff"}}>No pit stop data yet</div>
+              <div style={{fontSize:13}}>Pit stops appear here after the first race of the season.</div>
+            </div>
+          );
+          const curPr=prs.find(p=>String(p.r)===String(selPitRace))||prs[prs.length-1];
+          const cpits=curPr.stops;
+          const cName=curPr.nm;
+          const cFastest=cpits[0];
+          const cSlowest=cpits[cpits.length-1];
+          const cAvg=`${(cpits.reduce((a,b)=>a+b.s,0)/cpits.length).toFixed(3)}s`;
+          const chart=cpits.filter(d=>d.s<30);
+          const maxS=Math.max(25,...chart.map(d=>d.s))*1.04; // bar scale follows the data, not a hardcoded ceiling
+          return(
           <div className="fu" style={{display:"flex",flexDirection:"column",gap:24}}>
+            {prs.length>1&&(
+              <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
+                <span style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:"rgba(255,255,255,0.4)",fontWeight:600}}>Race</span>
+                <select value={String(curPr.r)} onChange={e=>setSelPitRace(e.target.value)} style={{appearance:"none",WebkitAppearance:"none",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.10)",borderRadius:6,padding:"6px 28px 6px 12px",color:"#fff",fontSize:12,fontWeight:500,fontFamily:"'Outfit',sans-serif",cursor:"pointer",outline:"none",minWidth:220}}>
+                  {prs.map(p=><option key={p.r} value={String(p.r)} style={{background:"#14141f"}}>{`R${p.r} — ${p.nm}`}</option>)}
+                </select>
+              </div>
+            )}
             <div style={{display:"flex",gap:16,flexWrap:"wrap"}}>
-              <SC label="Fastest Pit Stop" value={fastestPit?`${fastestPit.s.toFixed(3)}s`:"N/A"} sub={fastestPit?`${fastestPit.d} · Lap ${fastestPit.l}`:""} accent="#FFD700" icon={fastestPit&&fastestPit.t?<TL team={fastestPit.t} size={24}/>:null}/>
-              <SC label="Avg Pit Stop" value={`${avgP}s`} sub={`${pits.length} stops · ${pitRaceName}`} accent="#27F4D2"/>
-              <SC label="Slowest Pit Stop" value={pits.length>0?`${pits[pits.length-1].s.toFixed(3)}s`:"N/A"} sub={pits.length>0?`${pits[pits.length-1].d} · Lap ${pits[pits.length-1].l}`:""} accent="#E80020" icon={pits.length>0&&pits[pits.length-1].t?<TL team={pits[pits.length-1].t} size={24}/>:null}/>
+              <SC label="Fastest Pit Stop" value={cFastest?`${cFastest.s.toFixed(3)}s`:"N/A"} sub={cFastest?`${cFastest.d} · Lap ${cFastest.l}`:""} accent="#FFD700" icon={cFastest&&cFastest.t?<TL team={cFastest.t} size={24}/>:null}/>
+              <SC label="Avg Pit Stop" value={cAvg} sub={`${cpits.length} stops · ${cName}`} accent="#27F4D2"/>
+              <SC label="Slowest Pit Stop" value={cSlowest?`${cSlowest.s.toFixed(3)}s`:"N/A"} sub={cSlowest?`${cSlowest.d} · Lap ${cSlowest.l}`:""} accent="#E80020" icon={cSlowest&&cSlowest.t?<TL team={cSlowest.t} size={24}/>:null}/>
             </div>
             <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20}}>
-              <div style={{fontSize:15,fontWeight:700,marginBottom:4}}>{pitRaceName + " — Pit Stop Times"}</div>
+              <div style={{fontSize:15,fontWeight:700,marginBottom:4}}>{cName + " — Pit Stop Times"}</div>
               <div style={{fontSize:12,color:"rgba(255,255,255,0.35)",marginBottom:20}}>Sorted by duration</div>
               <div style={{display:"flex",flexDirection:"column",gap:5}}>
-                {pits.filter(d=>d.s<30).map((d,i)=>(
-                  <div key={i} style={{display:"flex",alignItems:"center",gap:8}}>
+                {chart.map((d,i)=>(
+                  <div key={`${curPr.r}-${d.d}-${d.l}`} style={{display:"flex",alignItems:"center",gap:8}}>
                     <TL team={d.t} size={22}/>
                     <div style={{width:80,fontSize:12,color:"rgba(255,255,255,0.7)",textAlign:"right",flexShrink:0}}>{d.d}</div>
                     <div style={{flex:1,height:22,background:"rgba(255,255,255,0.04)",borderRadius:4,overflow:"hidden",position:"relative"}}>
-                      <div style={{height:"100%",width:`${(d.s/28)*100}%`,background:TC[d.t]||"#555",borderRadius:4,transition:"width 1s cubic-bezier(0.22,1,0.36,1)",transitionDelay:`${i*50}ms`,opacity:.8}}/>
+                      <div style={{height:"100%",width:`${(d.s/maxS)*100}%`,background:TC[d.t]||"#555",borderRadius:4,transition:"width 1s cubic-bezier(0.22,1,0.36,1)",transitionDelay:`${i*50}ms`,opacity:.8}}/>
                       <div style={{position:"absolute",right:8,top:"50%",transform:"translateY(-50%)",fontSize:11,color:"rgba(255,255,255,0.6)",fontVariantNumeric:"tabular-nums"}}>{d.s.toFixed(3)}s</div>
                     </div>
                   </div>
@@ -1822,14 +1862,14 @@ export default function F1Dashboard(){
               </div>
             </div>
             <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20}}>
-              <div style={{fontSize:15,fontWeight:700,marginBottom:16}}>{"Full Pit Stop Summary — " + pitRaceName}</div>
+              <div style={{fontSize:15,fontWeight:700,marginBottom:16}}>{"Full Pit Stop Summary — " + cName}</div>
               <div style={{overflowX:"auto",WebkitOverflowScrolling:"touch"}}><table style={{width:"100%",borderCollapse:"collapse",minWidth:600,fontSize:13}}>
                 <thead><tr style={{borderBottom:"1px solid rgba(255,255,255,0.08)"}}>
                   {["#","Driver","Team","Lap","Duration"].map(h=><th key={h} style={{textAlign:"left",padding:"8px 12px",fontSize:11,textTransform:"uppercase",letterSpacing:1,color:"rgba(255,255,255,0.35)",fontWeight:500}}>{h}</th>)}
                 </tr></thead>
                 <tbody>
-                  {pits.map((d,i)=>(
-                    <tr key={i} style={{borderBottom:"1px solid rgba(255,255,255,0.04)"}}>
+                  {cpits.map((d,i)=>(
+                    <tr key={`${curPr.r}-${d.d}-${d.l}-${i}`} style={{borderBottom:"1px solid rgba(255,255,255,0.04)"}}>
                       <td style={{padding:"10px 12px",color:"rgba(255,255,255,0.4)",fontWeight:600}}>{i+1}</td>
                       <td style={{padding:"10px 12px"}}><div style={{display:"flex",alignItems:"center",gap:8}}><TL team={d.t} size={24}/><div style={{width:3,height:16,borderRadius:2,background:TC[d.t]}}/><span style={{fontWeight:600}}>{d.d}</span></div></td>
                       <td style={{padding:"10px 12px"}}><div style={{display:"flex",alignItems:"center",gap:6,color:"rgba(255,255,255,0.5)"}}><TL team={d.t} size={16}/>{d.t}</div></td>
@@ -1840,8 +1880,8 @@ export default function F1Dashboard(){
                 </tbody>
               </table></div>
             </div>
-          </div>
-        )}
+          </div>);
+        })()}
 
         {/* ═══ QUOTES ═══ */}
         {tab==="Quotes"&&(
