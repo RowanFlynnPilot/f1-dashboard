@@ -1,6 +1,6 @@
 {
   "season": 2026,
-  "fetchedAt": "2026-06-12T00:20:08.871Z",
+  "fetchedAt": "2026-06-12T01:50:21.572Z",
   "completedRounds": 6,
   "totalRounds": 22,
   "drivers": [
@@ -365,6 +365,7 @@
       "name": "Australian Grand Prix",
       "circuit": "Albert Park Grand Prix Circuit",
       "date": "2026-03-08",
+      "winnerTime": "1:23:06.801",
       "results": [
         {
           "pos": "1",
@@ -576,6 +577,7 @@
       "name": "Chinese Grand Prix",
       "circuit": "Shanghai International Circuit",
       "date": "2026-03-15",
+      "winnerTime": "1:33:15.607",
       "results": [
         {
           "pos": "1",
@@ -787,6 +789,7 @@
       "name": "Japanese Grand Prix",
       "circuit": "Suzuka Circuit",
       "date": "2026-03-29",
+      "winnerTime": "1:28:03.403",
       "results": [
         {
           "pos": "1",
@@ -998,6 +1001,7 @@
       "name": "Miami Grand Prix",
       "circuit": "Miami International Autodrome",
       "date": "2026-05-03",
+      "winnerTime": "1:33:19.273",
       "results": [
         {
           "pos": "1",
@@ -1209,6 +1213,7 @@
       "name": "Canadian Grand Prix",
       "circuit": "Circuit Gilles Villeneuve",
       "date": "2026-05-24",
+      "winnerTime": "1:28:15.758",
       "results": [
         {
           "pos": "1",
@@ -1420,6 +1425,7 @@
       "name": "Monaco Grand Prix",
       "circuit": "Circuit de Monaco",
       "date": "2026-06-07",
+      "winnerTime": "2:23:31.243",
       "results": [
         {
           "pos": "1",

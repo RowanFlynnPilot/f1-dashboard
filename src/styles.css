@@ -35,6 +35,9 @@ select:hover,select:focus{border-color:rgba(232,0,32,0.3)!important}select optio
 .hero-sub{font-size:36px}
 .hero-name{font-size:36px}
 .hero-avatar{width:140px;height:140px}
+/* The avatar img carries inline 140px sizing; when media queries shrink the
+   container, scale the image with it instead of cropping the top-left corner */
+.hero-avatar img{width:100%!important;height:100%!important}
 @media(max-width:768px){
   .hdr{padding:16px 14px 0}
   .main{padding:16px 14px 32px}

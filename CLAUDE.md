@@ -120,7 +120,7 @@ YouTube blocks GitHub Actions IPs, so transcripts cannot be fetched in CI. The f
 Mercedes: "#27F4D2"    Ferrari: "#E80020"     McLaren: "#FF8000"
 Red Bull: "#3671C6"    Racing Bulls: "#6692FF" Alpine: "#FF87BC"
 Aston Martin: "#229971" Haas: "#B6BABD"       Williams: "#64C4FF"
-Audi: "#FF0000"        Cadillac: "#1E1E1E"
+Audi: "#FF0000"        Cadillac: "#D4AF37"  (brand near-black is invisible on the dark theme — gold accent instead)
 ```
 
 ### Fonts

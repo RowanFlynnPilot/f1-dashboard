@@ -257,6 +257,8 @@ async function main() {
       name: race.raceName,
       circuit: race.Circuit.circuitName,
       date: race.date,
+      // Winner's total race time, e.g. "1:32:09.123" (P1 carries Time.time)
+      winnerTime: (race.Results || [])[0]?.Time?.time || null,
       results,
       fastestLap: fastestLapDriver ? {
         driver: fastestLapDriver.driver,

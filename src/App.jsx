@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef, Fragment, memo } from "react";
+import { useState, useEffect, useMemo, useRef, Fragment, Component, memo } from "react";
 
 const SEASON = 2026;
 
@@ -44,8 +44,8 @@ const TEAM_LOGOS = {
   "Ferrari": "data:image/png;base64,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",
 };
 
-const TC = { Mercedes: "#27F4D2", Ferrari: "#E80020", McLaren: "#FF8000", "Red Bull": "#3671C6", "Racing Bulls": "#6692FF", Alpine: "#FF87BC", "Aston Martin": "#229971", Haas: "#B6BABD", Williams: "#64C4FF", Audi: "#FF0000", Cadillac: "#1E1E1E" };
-const TB = { Mercedes: "rgba(39,244,210,0.10)", Ferrari: "rgba(232,0,32,0.10)", McLaren: "rgba(255,128,0,0.10)", "Red Bull": "rgba(54,113,198,0.10)", "Racing Bulls": "rgba(102,146,255,0.10)", Alpine: "rgba(255,135,188,0.10)", "Aston Martin": "rgba(34,153,113,0.10)", Haas: "rgba(182,186,189,0.10)", Williams: "rgba(100,196,255,0.10)", Audi: "rgba(255,0,0,0.06)", Cadillac: "rgba(120,120,120,0.10)" };
+const TC = { Mercedes: "#27F4D2", Ferrari: "#E80020", McLaren: "#FF8000", "Red Bull": "#3671C6", "Racing Bulls": "#6692FF", Alpine: "#FF87BC", "Aston Martin": "#229971", Haas: "#B6BABD", Williams: "#64C4FF", Audi: "#FF0000", Cadillac: "#D4AF37" }; // Cadillac's brand near-black is invisible on this background — use their gold accent
+const TB = { Mercedes: "rgba(39,244,210,0.10)", Ferrari: "rgba(232,0,32,0.10)", McLaren: "rgba(255,128,0,0.10)", "Red Bull": "rgba(54,113,198,0.10)", "Racing Bulls": "rgba(102,146,255,0.10)", Alpine: "rgba(255,135,188,0.10)", "Aston Martin": "rgba(34,153,113,0.10)", Haas: "rgba(182,186,189,0.10)", Williams: "rgba(100,196,255,0.10)", Audi: "rgba(255,0,0,0.06)", Cadillac: "rgba(212,175,55,0.10)" };
 
 // Normalize OpenF1 team names to match TC/TL keys
 function normTeam(t){if(!t)return"";return t.replace(" F1 Team","").replace("Red Bull Racing","Red Bull").replace("Kick Sauber","Audi").trim();}
@@ -110,7 +110,7 @@ function transformData(raw) {
   const allRaces = [
     ...raw.races.map(r => ({
       r: r.round, nm: r.name, ci: r.circuit, dt: r.date, w: r.results[0]?.driver || "", wt: r.results[0]?.team || "",
-      tm: r.results[0]?.gap === "WINNER" ? "" : "", sprint: false,
+      tm: r.winnerTime || "", sprint: false,
       fl: r.fastestLap || null, // normalized shape: {driver, time, team} or null
       pod: r.results.slice(0, 3).map(res => ({
         p: parseInt(res.pos), d: res.driver, t: res.team,
@@ -499,6 +499,28 @@ function pickLapCompareDrivers(cur, acrAPref, acrBPref) {
 // western-hemisphere timezones.
 const raceDateFmt = (dt, tt) => new Date(`${dt}T${tt || "12:00:00Z"}`).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
 const raceTimeFmt = (dt, tt) => tt ? new Date(`${dt}T${tt}`).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" }) : null;
+const daysUntilRace = (dt, tt) => Math.ceil((new Date(`${dt}T${tt || "12:00:00Z"}`).getTime() - Date.now()) / 86400000);
+const countdownLabel = (dt, tt) => { const d = daysUntilRace(dt, tt); return d <= 0 ? "today" : d === 1 ? "tomorrow" : `in ${d} days`; };
+
+// One bad data field shouldn't white-screen the whole dashboard — catch render
+// errors per-tab (keyed on the tab, so other tabs stay usable).
+class TabErrorBoundary extends Component {
+  constructor(props) { super(props); this.state = { error: null }; }
+  static getDerivedStateFromError(error) { return { error }; }
+  render() {
+    if (this.state.error) {
+      return (
+        <div className="fu" style={{ textAlign: "center", padding: 60, color: "rgba(255,255,255,0.5)" }}>
+          <div style={{ fontSize: 40, marginBottom: 12 }}>⚠️</div>
+          <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 6, color: "#fff" }}>This tab hit an error</div>
+          <div style={{ fontSize: 12, color: "rgba(255,255,255,0.35)", fontFamily: "monospace" }}>{String(this.state.error?.message || this.state.error)}</div>
+          <div style={{ fontSize: 12, marginTop: 10 }}>The other tabs still work — this is likely a data quirk from the latest fetch.</div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 // Drivers whose OpenF1 headshot_url is missing or points to a fallback image —
 // the manual map below supplies working high-res URLs found on
@@ -784,7 +806,7 @@ export default function F1Dashboard(){
                 <div style={{fontSize:12,color:"rgba(255,255,255,0.35)",letterSpacing:1.5,marginTop:4,textTransform:"uppercase"}}>Formula 1 World Championship</div>
               </div>
             </div>
-            <div style={{fontSize:13,color:"rgba(255,255,255,0.7)",marginTop:4}}>Round {completedRounds} of {totalRounds} completed{nextRace?` · Next: ${nextRace.nm} · ${raceDateFmt(nextRace.dt,nextRace.tt)}`:""}</div>
+            <div style={{fontSize:13,color:"rgba(255,255,255,0.7)",marginTop:4}}>Round {completedRounds} of {totalRounds} completed{nextRace?` · Next: ${nextRace.nm} · ${raceDateFmt(nextRace.dt,nextRace.tt)} (${countdownLabel(nextRace.dt,nextRace.tt)})`:""}</div>
           </div>
           {(()=>{
             // Honest freshness indicator — the dot used to pulse green forever,
@@ -804,6 +826,7 @@ export default function F1Dashboard(){
       </div>
 
       <div className="main">
+        <TabErrorBoundary key={tab}>
 
         {/* ═══ OVERVIEW ═══ */}
         {tab==="Overview"&&(
@@ -1153,6 +1176,7 @@ export default function F1Dashboard(){
                       <div style={{fontSize:13,fontWeight:600,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{d.n}</div>
                       <div style={{fontSize:10,color:"rgba(255,255,255,0.35)",marginTop:1}}>{d.t}</div>
                     </div>
+                    <div style={{width:36,textAlign:"center",fontSize:10,color:"rgba(255,215,0,0.85)",fontWeight:600}}>{d.wins>0?`🏆${d.wins}`:""}</div>
                     <div className={d.mv!==0?"pulse-once":""} style={{width:40,textAlign:"center",fontSize:11,fontWeight:600,color:d.mv>0?"#27F4D2":d.mv<0?"#E80020":"rgba(255,255,255,0.15)",display:"inline-block"}}>{d.mv>0?`▲${d.mv}`:d.mv<0?`▼${Math.abs(d.mv)}`:"—"}</div>
                     <div style={{width:40,textAlign:"center",fontSize:11,fontWeight:600,color:d.d!=="—"?"#27F4D2":"rgba(255,255,255,0.2)"}}>{d.d}</div>
                     <div style={{width:55,marginRight:8,overflow:"hidden"}}><div style={{height:4,width:`${d.pts>0?Math.max((d.pts/maxPts)*100,3):0}%`,background:TC[d.t],borderRadius:2,transformOrigin:"left",animation:"barGrow 1.1s cubic-bezier(0.22,1,0.36,1) both",animationDelay:`${600+i*40}ms`}}/></div>
@@ -1239,10 +1263,10 @@ export default function F1Dashboard(){
                     </div>
                     <div style={{fontSize:12,color:"rgba(255,255,255,0.4)"}}>{race.ci} · {race.dt}, 2026</div>
                   </div>
-                  <div style={{textAlign:"right"}}>
+                  {race.tm&&<div style={{textAlign:"right"}}>
                     <div style={{fontSize:12,color:"rgba(255,255,255,0.4)"}}>Race Time</div>
                     <div style={{fontSize:16,fontWeight:600,fontVariantNumeric:"tabular-nums"}}>{race.tm}</div>
-                  </div>
+                  </div>}
                 </div>
                 <div className="pod" style={{marginBottom:16}}>
                   {race.pod.map(p=>(
@@ -1706,7 +1730,7 @@ export default function F1Dashboard(){
                       <TL team={battle.team} size={28}/>
                       <div style={{width:3,height:22,borderRadius:2,background:tc,opacity:.8}}/>
                       <span style={{fontSize:16,fontWeight:700}}>{battle.team}</span>
-                      <span style={{fontSize:11,color:"rgba(255,255,255,0.3)",marginLeft:"auto"}}>{metricNote}</span>
+                      <span style={{fontSize:11,color:"rgba(255,255,255,0.3)",marginLeft:"auto"}}>{metricNote}{(()=>{if(h2hMetric!=="qual"&&h2hMetric!=="race")return "";const n=(h2hMetric==="qual"?battle.qual?.details:battle.race?.details)?.length;return n!=null?` · ${n} of ${completedRounds} rounds compared`:"";})()}</span>
                     </div>
 
                     {/* Driver vs Driver */}
@@ -1907,6 +1931,7 @@ export default function F1Dashboard(){
                     <div style={{display:"flex",alignItems:"center",gap:8}}>
                       <span style={{fontSize:14,fontWeight:600,color:race.st==="postponed"?"rgba(255,255,255,0.4)":"#fff"}}>{race.nm}</span>
                       {race.sp&&<span style={{fontSize:9,fontWeight:700,letterSpacing:.5,padding:"2px 6px",borderRadius:3,background:"rgba(232,0,32,0.15)",color:"#E80020"}}>SPRINT</span>}
+                      {race.st==="next"&&<span style={{fontSize:10,fontWeight:600,padding:"2px 8px",borderRadius:3,background:"rgba(232,0,32,0.1)",color:"rgba(255,255,255,0.7)"}}>{countdownLabel(race.dt,race.tt)}</span>}
                     </div>
                     <div style={{fontSize:11,color:"rgba(255,255,255,0.35)",marginTop:2}}>{race.ci}</div>
                   </div>
@@ -1925,6 +1950,7 @@ export default function F1Dashboard(){
 
         {/* ═══ TELEMETRY ═══ */}
         {tab==="Telemetry"&&<TelemetryTab openf1={openf1} tracks={tracks} telMeetingKey={telMeetingKey} setTelMeetingKey={setTelMeetingKey}/>}
+        </TabErrorBoundary>
       </div>
     </div>
   );
