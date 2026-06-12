@@ -602,7 +602,7 @@ function buildTrackSampler(track){
 }
 
 // Join live /car_data and /location samples for a single lap window into a
-// time-aligned series [{t, x, y, d, speed}, ...] used by Lap Compare.
+// time-aligned series [{t, x, y, d, speed, th, br, g}, ...] used by Lap Compare.
 function processLapTelemetry(carData, location){
   if(!carData||!location||location.length<3)return [];
   const carSorted=[...carData].filter(c=>c.date).sort((a,b)=>new Date(a.date)-new Date(b.date));
@@ -619,7 +619,7 @@ function processLapTelemetry(carData, location){
       cum+=Math.sqrt(dx*dx+dy*dy);
     }
     const t=(new Date(locSorted[i].date).getTime()-startMs)/1000;
-    samples.push({t,x:locSorted[i].x,y:locSorted[i].y,d:cum,speed:0});
+    samples.push({t,x:locSorted[i].x,y:locSorted[i].y,d:cum,speed:0,th:0,br:0,g:null});
   }
   // Walk car_data with two pointers to attach nearest speed
   let ci=0;
@@ -627,6 +627,9 @@ function processLapTelemetry(carData, location){
     const targetMs=startMs+s.t*1000;
     while(ci+1<carSorted.length&&Math.abs(new Date(carSorted[ci+1].date).getTime()-targetMs)<Math.abs(new Date(carSorted[ci].date).getTime()-targetMs))ci++;
     s.speed=carSorted[ci]?.speed||0;
+    s.th=carSorted[ci]?.throttle||0;
+    s.br=carSorted[ci]?.brake||0;
+    s.g=carSorted[ci]?.n_gear??null;
   }
   return samples;
 }
@@ -2371,7 +2374,7 @@ const LapComparePanel=memo(function LapComparePanel({openf1,telMeetingKey,allDri
       // sessionStorage first — laps are immutable once the session is over, so a
       // revisit (or tab round-trip) should never re-hit the OpenF1 API.
       try{
-        const stored=sessionStorage.getItem(`lapTel:${key}`);
+        const stored=sessionStorage.getItem(`lapTel2:${key}`);
         if(stored){
           const samples=JSON.parse(stored);
           if(Array.isArray(samples)&&samples.length>=3){setLapCompareData(prev=>({...prev,[key]:{samples,loading:false}}));return;}
@@ -2397,7 +2400,7 @@ const LapComparePanel=memo(function LapComparePanel({openf1,telMeetingKey,allDri
         if(!carData||carData.length===0||!location||location.length<3)throw new Error("No samples returned (lap may predate live data)");
         const samples=processLapTelemetry(carData,location);
         if(samples.length<3)throw new Error("Could not align speed and location samples");
-        try{sessionStorage.setItem(`lapTel:${key}`,JSON.stringify(samples));}catch{/* quota full — cache is best-effort */}
+        try{sessionStorage.setItem(`lapTel2:${key}`,JSON.stringify(samples));}catch{/* quota full — cache is best-effort */}
         setLapCompareData(prev=>({...prev,[key]:{samples,loading:false}}));
       }catch(err){
         if(err.name==="AbortError"&&cancelled){
@@ -2420,16 +2423,91 @@ const LapComparePanel=memo(function LapComparePanel({openf1,telMeetingKey,allDri
   // eslint-disable-next-line react-hooks/exhaustive-deps
   },[openf1,telMeetingKey,lapCompareA,lapCompareB,lapCompareLap,lapCompareRetry]);
 
+  // ── Selection + loaded samples, hoisted out of the render IIFE so the heavy
+  // per-lap series below can live in useMemo (hooks can't sit behind its early returns)
+  const usable=allDrivers.filter(d=>(d.lapTimes||[]).filter(l=>l.ds).length>=3);
+  // Default to top 2 finishers
+  const finalPos=(d)=>{const ps=d.positions;if(!ps||ps.length===0)return 99;return ps[ps.length-1].p;};
+  const sortedByFinish=[...usable].sort((a,b)=>finalPos(a)-finalPos(b));
+  const acrA=lapCompareA&&usable.find(d=>d.acronym===lapCompareA)?lapCompareA:sortedByFinish[0]?.acronym;
+  const acrB=lapCompareB&&usable.find(d=>d.acronym===lapCompareB)?lapCompareB:sortedByFinish[1]?.acronym;
+  const drA=usable.find(d=>d.acronym===acrA);
+  const drB=usable.find(d=>d.acronym===acrB);
+  // Cache key helper — fetching is handled by the consolidated useEffect
+  const keyFor=(drv,lap)=>`${cur.race.sessionKey}-${drv.number}-${lap}`;
+  const keyA=lapCompareLap&&drA&&cur?keyFor(drA,lapCompareLap):null;
+  const keyB=lapCompareLap&&drB&&cur?keyFor(drB,lapCompareLap):null;
+  const dataA=keyA?lapCompareData[keyA]:null;
+  const dataB=keyB?lapCompareData[keyB]:null;
+  const samplesA=dataA?.samples||null;
+  const samplesB=dataB?.samples||null;
+  const lapTimeA=lapCompareLap?drA?.lapTimes?.find(l=>l.l===lapCompareLap)?.t:null;
+  const lapTimeB=lapCompareLap?drB?.lapTimes?.find(l=>l.l===lapCompareLap)?.t:null;
+  // Broadcast gap series: delta(f)=tA(f)−tB(f) at 200 distance fractions (t as a function of d,
+  // both monotonic). Positive = A behind B. Samples extend ~500ms past the finish line, so each
+  // driver is trimmed at their official lap time (with an interpolated finish-line point) — that
+  // pins delta(1) to exactly lapTimeA−lapTimeB instead of sampling-tail noise. Memoized — playback
+  // re-renders at 60fps and must only pay for playhead interpolation.
+  const lapDeltaSeries=useMemo(()=>{
+    if(!samplesA||!samplesB||samplesA.length<3||samplesB.length<3)return null;
+    const trim=(ss,lapT)=>{
+      if(!lapT)return ss;
+      const out=ss.filter(s=>s.t<=lapT);
+      if(out.length<3)return ss;
+      const last=out[out.length-1],next=ss[out.length];
+      if(next&&next.t>last.t){const f=(lapT-last.t)/(next.t-last.t);out.push({...last,t:lapT,d:last.d+f*(next.d-last.d)});}
+      return out;
+    };
+    const A=trim(samplesA,lapTimeA),B=trim(samplesB,lapTimeB);
+    const tAt=(ss,frac)=>{const tot=ss[ss.length-1].d||1;const target=frac*tot;let lo=0,hi=ss.length-1;while(lo<hi-1){const mid=(lo+hi)>>1;if(ss[mid].d<=target)lo=mid;else hi=mid;}const seg=ss[hi].d-ss[lo].d||1;const f=(target-ss[lo].d)/seg;return ss[lo].t+f*(ss[hi].t-ss[lo].t);};
+    const N=200,pts=[{f:0,delta:0}];let mx=0;
+    for(let i=1;i<=N;i++){const f=i/N;const delta=tAt(A,f)-tAt(B,f);mx=Math.max(mx,Math.abs(delta));pts.push({f,delta});}
+    const yMax=Math.max(0.1,mx*1.15);
+    const dW=800,dH=120,dPadL=44,dPadR=20,dPadT=12,dPadB=20,pw=dW-dPadL-dPadR,ph=dH-dPadT-dPadB;
+    const xOf=f=>dPadL+f*pw,yOf=v=>dPadT+ph/2-(Math.max(-yMax,Math.min(yMax,v))/yMax)*(ph/2);
+    const line=pts.map((p,i)=>`${i===0?"M":"L"}${xOf(p.f)},${yOf(p.delta)}`).join(" ");
+    const area=`M${xOf(0)},${yOf(0)} `+pts.map(p=>`L${xOf(p.f)},${yOf(p.delta)}`).join(" ")+` L${xOf(1)},${yOf(0)} Z`;
+    return{pts,yMax,line,area,geo:{dW,dH,dPadL,dPadR,dPadT,dPadB,pw,ph}};
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[samplesA,samplesB,lapTimeA,lapTimeB]);
+  // Track outline split into runs colored by whoever is faster at that distance fraction.
+  // Mirrors the render IIFE's projection exactly (bbox over both drivers, auto-rotate, 4% pad).
+  const lapTrackRuns=useMemo(()=>{
+    if(!samplesA||!samplesB||samplesA.length<3||samplesB.length<3)return null;
+    const allPts=[...samplesA,...samplesB];
+    const xs=allPts.map(p=>p.x),ys=allPts.map(p=>p.y);
+    const minX=Math.min(...xs),maxX=Math.max(...xs);
+    const minY=Math.min(...ys),maxY=Math.max(...ys);
+    const rotate=(maxY-minY)>(maxX-minX);
+    const toLocal=(x,y)=>rotate?[(y-minY),(x-minX)]:[(x-minX),(maxY-y)];
+    const localSpanX=rotate?(maxY-minY):(maxX-minX)||1;
+    const localSpanY=rotate?(maxX-minX):(maxY-minY)||1;
+    const px=localSpanX*0.04,py=localSpanY*0.04;
+    const pX=(x,y)=>toLocal(x,y)[0]+px,pY=(x,y)=>toLocal(x,y)[1]+py;
+    const totA=samplesA[samplesA.length-1].d||1,totB=samplesB[samplesB.length-1].d||1;
+    const spdBAt=(frac)=>{const target=Math.max(0,Math.min(1,frac))*totB;let lo=0,hi=samplesB.length-1;while(lo<hi-1){const mid=(lo+hi)>>1;if(samplesB[mid].d<=target)lo=mid;else hi=mid;}const seg=samplesB[hi].d-samplesB[lo].d||1;const f=(target-samplesB[lo].d)/seg;return(samplesB[lo].speed||0)+f*((samplesB[hi].speed||0)-(samplesB[lo].speed||0));};
+    const runs=[];let run=null;
+    for(let i=1;i<samplesA.length;i++){
+      const p0=samplesA[i-1],p1=samplesA[i];
+      const aFaster=((p0.speed||0)+(p1.speed||0))/2>=spdBAt(((p0.d+p1.d)/2)/totA);
+      if(run&&run.aFaster===aFaster)run.d+=` L${pX(p1.x,p1.y)},${pY(p1.x,p1.y)}`;
+      else{run={aFaster,d:`M${pX(p0.x,p0.y)},${pY(p0.x,p0.y)} L${pX(p1.x,p1.y)},${pY(p1.x,p1.y)}`};runs.push(run);}
+    }
+    return runs;
+  },[samplesA,samplesB]);
+  // Throttle/brake strip path strings (x = own-lap distance fraction, y = 0-100%)
+  const lapStripPaths=useMemo(()=>{
+    if(!samplesA||!samplesB||samplesA.length<3||samplesB.length<3)return null;
+    const sW=800,sH=52,sPadL=44,sPadR=20,sPadT=10,sPadB=6,pw=sW-sPadL-sPadR,ph=sH-sPadT-sPadB;
+    const totA=samplesA[samplesA.length-1].d||1,totB=samplesB[samplesB.length-1].d||1;
+    const yOf=v=>sPadT+ph-(Math.max(0,Math.min(100,v||0))/100)*ph;
+    const mk=(ss,tot,fld)=>ss.map((s,i)=>`${i===0?"M":"L"}${sPadL+(s.d/tot)*pw},${yOf(s[fld])}`).join(" ");
+    const mkArea=(ss,tot,fld)=>`M${sPadL},${sPadT+ph} `+ss.map(s=>`L${sPadL+(s.d/tot)*pw},${yOf(s[fld])}`).join(" ")+` L${sPadL+pw},${sPadT+ph} Z`;
+    return{thA:mk(samplesA,totA,"th"),thB:mk(samplesB,totB,"th"),thAreaA:mkArea(samplesA,totA,"th"),brA:mk(samplesA,totA,"br"),brB:mk(samplesB,totB,"br"),brAreaA:mkArea(samplesA,totA,"br"),brAreaB:mkArea(samplesB,totB,"br"),geo:{sW,sH,sPadL,sPadR,sPadT,sPadB,pw,ph}};
+  },[samplesA,samplesB]);
+
   return (()=>{
-                const usable=allDrivers.filter(d=>(d.lapTimes||[]).filter(l=>l.ds).length>=3);
                 if(usable.length<2)return null;
-                // Default to top 2 finishers
-                const finalPos=(d)=>{const ps=d.positions;if(!ps||ps.length===0)return 99;return ps[ps.length-1].p;};
-                const sortedByFinish=[...usable].sort((a,b)=>finalPos(a)-finalPos(b));
-                const acrA=lapCompareA&&usable.find(d=>d.acronym===lapCompareA)?lapCompareA:sortedByFinish[0]?.acronym;
-                const acrB=lapCompareB&&usable.find(d=>d.acronym===lapCompareB)?lapCompareB:sortedByFinish[1]?.acronym;
-                const drA=usable.find(d=>d.acronym===acrA);
-                const drB=usable.find(d=>d.acronym===acrB);
                 if(!drA||!drB||drA.acronym===drB.acronym)return null;
                 const tcA=drA.teamColour||"#27F4D2";
                 const tcB=drB.teamColour||"#E80020";
@@ -2454,8 +2532,6 @@ const LapComparePanel=memo(function LapComparePanel({openf1,telMeetingKey,allDri
                 const xTicks=Array.from({length:6},(_,i)=>Math.round(minLap+(i/5)*(maxLapCmp-minLap)));
                 const yTicks=[yLo,(yLo+yHi)/2,yHi];
                 const fmtLapTime=(s)=>{if(!s)return"—";const m=Math.floor(s/60);const r=(s%60).toFixed(3);return `${m}:${r.padStart(6,"0")}`;};
-                // Cache key helper — fetching is handled by the consolidated useEffect
-                const keyFor=(drv,lap)=>`${cur.race.sessionKey}-${drv.number}-${lap}`;
                 const onPickLap=(lap)=>{
                   setLapCompareLap(lap);
                   setLapComparePlayTime(0);
@@ -2467,12 +2543,6 @@ const LapComparePanel=memo(function LapComparePanel({openf1,telMeetingKey,allDri
                   setLapCompareData(prev=>{const n={...prev};delete n[k1];delete n[k2];return n;});
                   setLapCompareRetry(r=>r+1);
                 };
-                const keyA=lapCompareLap?keyFor(drA,lapCompareLap):null;
-                const keyB=lapCompareLap?keyFor(drB,lapCompareLap):null;
-                const dataA=keyA?lapCompareData[keyA]:null;
-                const dataB=keyB?lapCompareData[keyB]:null;
-                const samplesA=dataA?.samples||null;
-                const samplesB=dataB?.samples||null;
                 const bothLoaded=samplesA&&samplesB;
                 // Lap times for selected lap
                 const lapATime=drA.lapTimes?.find(l=>l.l===lapCompareLap)?.t;
@@ -2602,6 +2672,8 @@ const LapComparePanel=memo(function LapComparePanel({openf1,telMeetingKey,allDri
                                   x:prev.x+f*(next.x-prev.x),
                                   y:prev.y+f*(next.y-prev.y),
                                   speed:prev.speed+f*((next.speed||0)-(prev.speed||0)),
+                                  d:prev.d+f*(next.d-prev.d),
+                                  g:(f<0.5?prev.g:next.g)??null,
                                   t,
                                 };
                               }
@@ -2610,10 +2682,10 @@ const LapComparePanel=memo(function LapComparePanel({openf1,telMeetingKey,allDri
                           };
                           const ptA=findAtTime(samplesA,playT);
                           const ptB=findAtTime(samplesB,playT);
-                          // Delta: A's time when B is at this point. Approximate: where A and B's positions match in time within their laps.
-                          // Simpler: delta = B's current cumulative distance vs A's. Higher = A ahead at this moment.
-                          // For now, just show t-delta (negative if A finishes lap sooner)
-                          const deltaToB=lapATime&&lapBTime?(lapATime*(playT/playDuration))-(lapBTime*(playT/playDuration)):0;
+                          // Shared playhead x for every distance-domain chart: driver A's distance fraction at playT
+                          const playFrac=Math.max(0,Math.min(1,(ptA?.d??0)/((samplesA[samplesA.length-1].d)||1)));
+                          // Live gap at the playhead, interpolated from the memoized delta series (tA−tB; negative = A ahead)
+                          const deltaNow=lapDeltaSeries?(()=>{const pts=lapDeltaSeries.pts;const k=playFrac*(pts.length-1);const i0=Math.floor(k),i1=Math.min(pts.length-1,i0+1);return pts[i0].delta+(k-i0)*(pts[i1].delta-pts[i0].delta);})():null;
                           // Speed-vs-distance for chart below
                           const samplesAdist=samplesA.map(s=>({d:s.d/(samplesA[samplesA.length-1].d||1),s:s.speed}));
                           const samplesBdist=samplesB.map(s=>({d:s.d/(samplesB[samplesB.length-1].d||1),s:s.speed}));
@@ -2643,9 +2715,8 @@ const LapComparePanel=memo(function LapComparePanel({openf1,telMeetingKey,allDri
                                   onMouseUp={()=>{lapDragRef.current=null;}}
                                   onMouseLeave={()=>{lapDragRef.current=null;}}
                                   style={{width:"100%",height:420,display:"block",cursor:lapDragRef.current?"grabbing":"grab",touchAction:"none"}}>
-                                  {/* Track outline from samples (stroke widths use fitted dims so they stay consistent across zoom) */}
-                                  <path d={samplesA.map((p,i)=>`${i===0?"M":"L"}${projX(p.x,p.y)},${projY(p.x,p.y)}`).join(" ")} stroke={tcA} strokeOpacity={0.3} strokeWidth={Math.max(fittedW,fittedH)*0.008/Math.sqrt(lapZoom)} fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-                                  <path d={samplesB.map((p,i)=>`${i===0?"M":"L"}${projX(p.x,p.y)},${projY(p.x,p.y)}`).join(" ")} stroke={tcB} strokeOpacity={0.3} strokeWidth={Math.max(fittedW,fittedH)*0.008/Math.sqrt(lapZoom)} fill="none" strokeLinecap="round" strokeLinejoin="round" strokeDasharray={`${Math.max(fittedW,fittedH)*0.01/Math.sqrt(lapZoom)} ${Math.max(fittedW,fittedH)*0.008/Math.sqrt(lapZoom)}`}/>
+                                  {/* Track outline segmented by whoever is faster at each point — memoized runs (stroke widths use fitted dims so they stay consistent across zoom) */}
+                                  {(lapTrackRuns||[]).map((r,i)=><path key={i} d={r.d} stroke={r.aFaster?tcA:tcB} strokeOpacity={0.85} strokeWidth={Math.max(fittedW,fittedH)*0.008/Math.sqrt(lapZoom)} fill="none" strokeLinecap="round" strokeLinejoin="round"/>)}
                                   {/* Start marker */}
                                   <circle cx={projX(samplesA[0].x,samplesA[0].y)} cy={projY(samplesA[0].x,samplesA[0].y)} r={Math.max(fittedW,fittedH)*0.008/Math.sqrt(lapZoom)} fill="rgba(255,255,255,0.4)"/>
                                   {/* Dots at current playT */}
@@ -2661,6 +2732,10 @@ const LapComparePanel=memo(function LapComparePanel({openf1,telMeetingKey,allDri
                                     </div>
                                     <div style={{fontSize:10,color:"rgba(255,255,255,0.45)",marginBottom:2}}>Speed</div>
                                     <div style={{fontSize:18,fontWeight:800,fontVariantNumeric:"tabular-nums",color:tcA}}>{ptA?Math.round(ptA.speed):0}<span style={{fontSize:10,color:"rgba(255,255,255,0.5)",marginLeft:3,fontWeight:500}}>km/h</span></div>
+                                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginTop:6}}>
+                                      <div style={{fontSize:10,color:"rgba(255,255,255,0.45)"}}>Gear</div>
+                                      <div style={{fontSize:14,fontWeight:700,fontVariantNumeric:"tabular-nums"}}>{ptA?.g==null?"—":ptA.g===0?"N":ptA.g}</div>
+                                    </div>
                                   </div>
                                   <div style={{padding:"10px 12px",background:`${tcB}10`,border:`1px solid ${tcB}40`,borderRadius:8}}>
                                     <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
@@ -2669,13 +2744,53 @@ const LapComparePanel=memo(function LapComparePanel({openf1,telMeetingKey,allDri
                                     </div>
                                     <div style={{fontSize:10,color:"rgba(255,255,255,0.45)",marginBottom:2}}>Speed</div>
                                     <div style={{fontSize:18,fontWeight:800,fontVariantNumeric:"tabular-nums",color:tcB}}>{ptB?Math.round(ptB.speed):0}<span style={{fontSize:10,color:"rgba(255,255,255,0.5)",marginLeft:3,fontWeight:500}}>km/h</span></div>
+                                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginTop:6}}>
+                                      <div style={{fontSize:10,color:"rgba(255,255,255,0.45)"}}>Gear</div>
+                                      <div style={{fontSize:14,fontWeight:700,fontVariantNumeric:"tabular-nums"}}>{ptB?.g==null?"—":ptB.g===0?"N":ptB.g}</div>
+                                    </div>
                                   </div>
                                   <div style={{padding:"10px 12px",background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:8}}>
                                     <div style={{fontSize:10,color:"rgba(255,255,255,0.45)",marginBottom:2,textTransform:"uppercase",letterSpacing:1}}>Speed Δ (A−B)</div>
                                     <div style={{fontSize:18,fontWeight:800,fontVariantNumeric:"tabular-nums",color:ptA&&ptB?(ptA.speed-ptB.speed>0?"#27F4D2":"#FF6B6B"):"#fff"}}>{ptA&&ptB?(ptA.speed-ptB.speed>=0?"+":"")+Math.round(ptA.speed-ptB.speed):"—"}<span style={{fontSize:10,color:"rgba(255,255,255,0.5)",marginLeft:3,fontWeight:500}}>km/h</span></div>
                                   </div>
+                                  <div style={{padding:"10px 12px",background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:8}}>
+                                    <div style={{fontSize:10,color:"rgba(255,255,255,0.45)",marginBottom:2,textTransform:"uppercase",letterSpacing:1}}>Gap {drA.acronym}−{drB.acronym}</div>
+                                    <div style={{fontSize:18,fontWeight:800,fontVariantNumeric:"tabular-nums",color:deltaNow==null?"#fff":deltaNow<=0?tcA:tcB}}>{deltaNow==null?"—":(deltaNow>=0?"+":"")+deltaNow.toFixed(3)}<span style={{fontSize:10,color:"rgba(255,255,255,0.5)",marginLeft:3,fontWeight:500}}>s</span></div>
+                                    <div style={{fontSize:9,color:"rgba(255,255,255,0.35)",marginTop:2}}>{deltaNow==null?"":deltaNow<=0?`${drA.acronym} ahead`:`${drB.acronym} ahead`}</div>
+                                  </div>
+                                </div>
+                                {/* Faster-driver legend — third grid child lands under the track svg */}
+                                <div style={{display:"flex",gap:14,fontSize:10,color:"rgba(255,255,255,0.55)",alignItems:"center",marginTop:2}}>
+                                  <span style={{display:"flex",alignItems:"center",gap:5}}><span style={{width:8,height:8,borderRadius:"50%",background:tcA,display:"inline-block"}}/>{drA.acronym} faster</span>
+                                  <span style={{display:"flex",alignItems:"center",gap:5}}><span style={{width:8,height:8,borderRadius:"50%",background:tcB,display:"inline-block"}}/>{drB.acronym} faster</span>
                                 </div>
                               </div>
+                              {/* Broadcast-style gap chart — delta(f)=tA−tB vs distance %, memoized paths */}
+                              {lapDeltaSeries&&(()=>{
+                                const{yMax,line,area,geo:g}=lapDeltaSeries;
+                                const y0=g.dPadT+g.ph/2;
+                                const xPh=g.dPadL+playFrac*g.pw;
+                                return(
+                                  <div style={{marginTop:14}}>
+                                    <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.2,color:"rgba(255,255,255,0.5)",fontWeight:600,marginBottom:8}}>Gap {drA.acronym}−{drB.acronym} (s) · <span style={{color:tcA}}>below 0 = {drA.acronym} ahead</span></div>
+                                    <svg viewBox={`0 0 ${g.dW} ${g.dH}`} preserveAspectRatio="none" style={{width:"100%",height:120,display:"block"}}>
+                                      <defs>
+                                        <clipPath id="lapGapAbove"><rect x={g.dPadL} y={g.dPadT} width={g.pw} height={g.ph/2}/></clipPath>
+                                        <clipPath id="lapGapBelow"><rect x={g.dPadL} y={y0} width={g.pw} height={g.ph/2}/></clipPath>
+                                      </defs>
+                                      {[yMax,0,-yMax].map((v,i)=>{const y=y0-(v/yMax)*(g.ph/2);return(<g key={i}>
+                                        <line x1={g.dPadL} x2={g.dW-g.dPadR} y1={y} y2={y} stroke={v===0?"rgba(255,255,255,0.22)":"rgba(255,255,255,0.06)"}/>
+                                        <text x={g.dPadL-8} y={y+3} textAnchor="end" fill="rgba(255,255,255,0.4)" fontSize="9" fontFamily="'Outfit',sans-serif">{(v>0?"+":"")+v.toFixed(2)}s</text>
+                                      </g>);})}
+                                      {[0,0.25,0.5,0.75,1].map((v,i)=>(<text key={i} x={g.dPadL+v*g.pw} y={g.dH-g.dPadB+15} textAnchor="middle" fill="rgba(255,255,255,0.45)" fontSize="9" fontFamily="'Outfit',sans-serif">{Math.round(v*100)}%</text>))}
+                                      <path d={area} fill={tcB} fillOpacity={0.13} clipPath="url(#lapGapAbove)"/>
+                                      <path d={area} fill={tcA} fillOpacity={0.13} clipPath="url(#lapGapBelow)"/>
+                                      <path d={line} stroke="rgba(255,255,255,0.85)" strokeWidth={1.6} fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                                      <line x1={xPh} x2={xPh} y1={g.dPadT} y2={g.dPadT+g.ph} stroke="rgba(255,255,255,0.4)" strokeWidth={1} strokeDasharray="3 3"/>
+                                    </svg>
+                                  </div>
+                                );
+                              })()}
                               {/* Speed-vs-distance comparison */}
                               {(()=>{
                                 const cW=800,cH=180,cPadL=44,cPadR=20,cPadT=16,cPadB=28;
@@ -2695,9 +2810,33 @@ const LapComparePanel=memo(function LapComparePanel({openf1,telMeetingKey,allDri
                                       {xTicksD.map((v,i)=>(<text key={i} x={xOfD(v)} y={cH-cPadB+15} textAnchor="middle" fill="rgba(255,255,255,0.45)" fontSize="9" fontFamily="'Outfit',sans-serif">{Math.round(v*100)}%</text>))}
                                       <path d={samplesAdist.map((p,i)=>`${i===0?"M":"L"}${xOfD(p.d)},${yOfS(p.s)}`).join(" ")} stroke={tcA} strokeWidth={2} fill="none" strokeLinecap="round" strokeLinejoin="round" opacity={0.92}/>
                                       <path d={samplesBdist.map((p,i)=>`${i===0?"M":"L"}${xOfD(p.d)},${yOfS(p.s)}`).join(" ")} stroke={tcB} strokeWidth={2} fill="none" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="4 3" opacity={0.92}/>
-                                      {/* Vertical line at current playback % */}
-                                      {(()=>{const fA=playT/playDuration;return<line x1={xOfD(fA)} x2={xOfD(fA)} y1={cPadT} y2={cPadT+cPlotH} stroke="rgba(255,255,255,0.4)" strokeWidth={1} strokeDasharray="3 3"/>;})()}
+                                      {/* Vertical line at the shared playhead distance fraction */}
+                                      <line x1={xOfD(playFrac)} x2={xOfD(playFrac)} y1={cPadT} y2={cPadT+cPlotH} stroke="rgba(255,255,255,0.4)" strokeWidth={1} strokeDasharray="3 3"/>
                                     </svg>
+                                    {/* Throttle/brake strips — same x-axis (% of own lap distance), memoized paths */}
+                                    {lapStripPaths&&(()=>{
+                                      const g=lapStripPaths.geo;
+                                      const xPh=g.sPadL+playFrac*g.pw;
+                                      return(<>
+                                        <svg viewBox={`0 0 ${g.sW} ${g.sH}`} preserveAspectRatio="none" style={{width:"100%",height:g.sH,display:"block",marginTop:8}}>
+                                          <line x1={g.sPadL} x2={g.sW-g.sPadR} y1={g.sPadT+g.ph} y2={g.sPadT+g.ph} stroke="rgba(255,255,255,0.08)"/>
+                                          <text x={g.sPadL+4} y={g.sPadT+8} fill="rgba(255,255,255,0.4)" fontSize="9" letterSpacing="1.2" fontFamily="'Outfit',sans-serif">THROTTLE</text>
+                                          <path d={lapStripPaths.thAreaA} fill={tcA} fillOpacity={0.10}/>
+                                          <path d={lapStripPaths.thA} stroke={tcA} strokeWidth={1.4} fill="none" strokeLinecap="round" strokeLinejoin="round" opacity={0.92}/>
+                                          <path d={lapStripPaths.thB} stroke={tcB} strokeWidth={1.4} fill="none" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="4 3" opacity={0.55}/>
+                                          <line x1={xPh} x2={xPh} y1={g.sPadT} y2={g.sPadT+g.ph} stroke="rgba(255,255,255,0.4)" strokeWidth={1} strokeDasharray="3 3"/>
+                                        </svg>
+                                        <svg viewBox={`0 0 ${g.sW} ${g.sH}`} preserveAspectRatio="none" style={{width:"100%",height:g.sH,display:"block",marginTop:6}}>
+                                          <line x1={g.sPadL} x2={g.sW-g.sPadR} y1={g.sPadT+g.ph} y2={g.sPadT+g.ph} stroke="rgba(255,255,255,0.08)"/>
+                                          <text x={g.sPadL+4} y={g.sPadT+8} fill="rgba(255,255,255,0.4)" fontSize="9" letterSpacing="1.2" fontFamily="'Outfit',sans-serif">BRAKE</text>
+                                          <path d={lapStripPaths.brAreaA} fill={tcA} fillOpacity={0.28}/>
+                                          <path d={lapStripPaths.brAreaB} fill={tcB} fillOpacity={0.28}/>
+                                          <path d={lapStripPaths.brA} stroke={tcA} strokeWidth={1} fill="none" opacity={0.8}/>
+                                          <path d={lapStripPaths.brB} stroke={tcB} strokeWidth={1} fill="none" strokeDasharray="4 3" opacity={0.55}/>
+                                          <line x1={xPh} x2={xPh} y1={g.sPadT} y2={g.sPadT+g.ph} stroke="rgba(255,255,255,0.4)" strokeWidth={1} strokeDasharray="3 3"/>
+                                        </svg>
+                                      </>);
+                                    })()}
                                   </div>
                                 );
                               })()}
