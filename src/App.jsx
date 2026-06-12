@@ -409,7 +409,9 @@ function transformData(raw) {
       cumAll[match]+=table[p-1]; // no FL bonus — abolished from 2025
     }
     if(!race.sprint){
-      progressionLabels.push("R"+race.r);
+      // Mark sprint weekends — the sprint event shares the round number with an "S" suffix
+      const hadSprint=allRaces.some(x=>x.sprint&&x.r===race.r+"S");
+      progressionLabels.push("R"+race.r+(hadSprint?" S":""));
       progressionRaceNames.push(race.nm);
       // Snapshot current standings (sorted by pts, ties broken by original DS order)
       const ranked=allRosterNames
@@ -720,6 +722,7 @@ export default function F1Dashboard(){
   const[selPitRace,setSelPitRace]=useState(null); // round id; null = latest
   const[quotes,setQuotes]=useState(null);
   const[quotesSession,setQuotesSession]=useState("race");
+  const[quoteDriver,setQuoteDriver]=useState(null); // null = all drivers
   const[progHover,setProgHover]=useState(null);
   const[progHidden,setProgHidden]=useState(()=>new Set());
   const[tracks,setTracks]=useState(null);
@@ -831,8 +834,15 @@ export default function F1Dashboard(){
             <span style={{fontSize:12,color:"rgba(255,255,255,0.5)"}}>{label}</span>
           </div>);})()}
         </div>
-        <div className="tab-bar" style={{display:"flex",gap:0,marginTop:20,borderBottom:"1px solid rgba(255,255,255,0.06)",overflowX:"auto"}}>
-          {TABS.map(t=><button key={t.id} className={`tb ${tab===t.id?"a":""}`} onClick={()=>setTab(t.id)}>{t.label}</button>)}
+        <div className="tab-bar" role="tablist" onKeyDown={e=>{
+          if(e.key!=="ArrowLeft"&&e.key!=="ArrowRight")return;
+          e.preventDefault();
+          const i=TABS.findIndex(t=>t.id===tab);
+          const next=(i+(e.key==="ArrowRight"?1:-1)+TABS.length)%TABS.length;
+          setTab(TABS[next].id);
+          e.currentTarget.children[next]?.focus();
+        }} style={{display:"flex",gap:0,marginTop:20,borderBottom:"1px solid rgba(255,255,255,0.06)",overflowX:"auto"}}>
+          {TABS.map(t=>{const[emoji,...rest]=t.label.split(" ");return <button key={t.id} role="tab" aria-selected={tab===t.id} className={`tb ${tab===t.id?"a":""}`} onClick={()=>setTab(t.id)}><span aria-hidden="true">{emoji}</span> {rest.join(" ")}</button>;})}
         </div>
       </div>
 
@@ -1087,7 +1097,7 @@ export default function F1Dashboard(){
               return(
                 <div style={{position:"relative",background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20}}>
                   <div style={{fontSize:15,fontWeight:700,marginBottom:4}}>Points Progression</div>
-                  <div style={{fontSize:12,color:"rgba(255,255,255,0.35)",marginBottom:16}}>Top 6 drivers · cumulative points by round · hover for details, click legend to filter</div>
+                  <div style={{fontSize:12,color:"rgba(255,255,255,0.35)",marginBottom:16}}>Top 6 drivers · cumulative points by round · hover for details, click legend to filter{progression.labels.some(l=>l.endsWith(" S"))&&" · S = sprint weekend (sprint points included in that round's jump)"}</div>
                   <div style={{position:"relative"}}>
                     <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{width:"100%",height:240,display:"block"}} onMouseMove={onMove} onMouseLeave={()=>setProgHover(null)}>
                       {/* Y gridlines + labels */}
@@ -1443,11 +1453,11 @@ export default function F1Dashboard(){
               {/* Meeting + Session Selectors */}
               <div style={{display:"flex",gap:12,flexWrap:"wrap",alignItems:"center"}}>
                 <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:"rgba(255,255,255,0.4)"}}>Meeting</div>
-                <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
+                <select value={String(curMtg.meetingKey)} onChange={e=>{const m=openf1.meetings.find(x=>String(x.meetingKey)===e.target.value);if(!m)return;setSelMeeting(m.meetingKey);const rs=m.sessions.find(s=>s.sessionName==="Race")||m.sessions[m.sessions.length-1];if(rs)setSelSession(rs.sessionKey);}} style={{appearance:"none",WebkitAppearance:"none",MozAppearance:"none",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.10)",borderRadius:8,padding:"8px 36px 8px 12px",color:"#fff",fontSize:12,fontWeight:500,fontFamily:"'Outfit',sans-serif",cursor:"pointer",outline:"none",minWidth:200,transition:"border-color .2s"}}>
                   {openf1.meetings.map(m=>(
-                    <button key={m.meetingKey} onClick={()=>{setSelMeeting(m.meetingKey);const rs=m.sessions.find(s=>s.sessionName==="Race")||m.sessions[m.sessions.length-1];if(rs)setSelSession(rs.sessionKey);}} style={{cursor:"pointer",padding:"6px 14px",borderRadius:6,border:selMeeting===m.meetingKey?"1px solid rgba(232,0,32,0.4)":"1px solid rgba(255,255,255,0.08)",background:selMeeting===m.meetingKey?"rgba(232,0,32,0.12)":"rgba(255,255,255,0.03)",color:selMeeting===m.meetingKey?"#E80020":"rgba(255,255,255,0.5)",fontSize:12,fontWeight:selMeeting===m.meetingKey?600:400,fontFamily:"'Outfit',sans-serif",transition:"all .2s"}}>{m.meetingName.replace(" Grand Prix","")}</button>
+                    <option key={m.meetingKey} value={String(m.meetingKey)} style={{background:"#14141f",color:"#fff"}}>{m.meetingName.replace(" Grand Prix","")}</option>
                   ))}
-                </div>
+                </select>
                 <div style={{height:20,width:1,background:"rgba(255,255,255,0.1)",margin:"0 4px"}}/>
                 <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:"rgba(255,255,255,0.4)"}}>Session</div>
                 <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
@@ -1565,7 +1575,7 @@ export default function F1Dashboard(){
                       <div style={{fontSize:15,fontWeight:700}}>Driver Compare</div>
                       <div style={{fontSize:11,color:"rgba(255,255,255,0.4)"}}>{selectedDrivers.length} of 4 max selected · Click to toggle</div>
                     </div>
-                    <div style={{fontSize:12,color:"rgba(255,255,255,0.35)",marginBottom:16}}>Pick drivers to see their best sectors side-by-side. Bars are scaled relative to the slowest in each sector.</div>
+                    <div style={{fontSize:12,color:"rgba(255,255,255,0.35)",marginBottom:16}}>Pick drivers to see their best sectors side-by-side. Bars are rescaled to each sector's spread — fastest at 25%, slowest at 100% — so small gaps stay visible.</div>
                     {/* Driver picker */}
                     <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:18}}>
                       {drivers.map(d=>{
@@ -1604,7 +1614,7 @@ export default function F1Dashboard(){
                               const min=minS[si-1];
                               const isFastest=time&&min&&Math.abs(time-min)<0.001;
                               const delta=time&&min?time-min:0;
-                              const pct=time&&max?(time/max)*100:0;
+                              const pct=time&&max?25+75*((time-min)/((max-min)||1)):0;
                               return(
                                 <div key={si} style={{display:"flex",alignItems:"center",gap:8}}>
                                   <div style={{flex:1,height:14,background:"rgba(255,255,255,0.04)",borderRadius:3,overflow:"hidden",position:"relative"}}>
@@ -1622,6 +1632,29 @@ export default function F1Dashboard(){
                       })}
                     </div>
                     </div>
+                    {/* Theoretical best — sum of best sectors per compared driver, delta to best */}
+                    {(()=>{
+                      const theo=selectedDrivers.map(d=>({d,tb:d.theoreticalBest||((d.bestS1&&d.bestS2&&d.bestS3)?d.bestS1+d.bestS2+d.bestS3:null)}));
+                      const valid=theo.filter(t=>t.tb);
+                      if(valid.length===0)return null;
+                      const bestTb=Math.min(...valid.map(t=>t.tb));
+                      return(
+                        <div style={{display:"flex",alignItems:"center",gap:18,flexWrap:"wrap",marginTop:16,paddingTop:14,borderTop:"1px solid rgba(255,255,255,0.06)"}}>
+                          <div style={{fontSize:10,textTransform:"uppercase",letterSpacing:1,color:"rgba(255,255,255,0.3)",fontWeight:600}}>Theoretical best</div>
+                          {theo.map(({d,tb})=>{
+                            const isBest=tb&&Math.abs(tb-bestTb)<0.0005;
+                            return(
+                              <div key={d.acronym} style={{display:"flex",alignItems:"center",gap:7}}>
+                                <div style={{width:3,height:14,background:d.teamColour||"#fff",borderRadius:1.5}}/>
+                                <span style={{fontSize:11,fontWeight:600,color:"rgba(255,255,255,0.6)"}}>{d.acronym}</span>
+                                <span style={{fontSize:12,fontWeight:700,fontVariantNumeric:"tabular-nums",color:isBest?"#27F4D2":"#fff"}}>{tb?fmtLap(tb):"—"}</span>
+                                {tb&&!isBest&&<span style={{fontSize:10,fontVariantNumeric:"tabular-nums",color:"rgba(255,255,255,0.5)"}}>+{(tb-bestTb).toFixed(3)}s</span>}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    })()}
                   </div>
                 );
               })()}
@@ -1897,6 +1930,11 @@ export default function F1Dashboard(){
               const SESSION_LABELS={race:"Race",sprint:"Sprint",qualifying:"Qualifying",sprintQualifying:"Sprint Quali"};
               const availableSessions=SESSION_ORDER.filter(s=>quotes.rounds.some(r=>(r.sessions?.[s]?.quotes||[]).length>0));
               const activeSession=availableSessions.includes(quotesSession)?quotesSession:(availableSessions[0]||"race");
+              // Driver filter chips — distinct drivers in the active session across all rounds, by quote count desc
+              const driverCounts={};
+              quotes.rounds.forEach(r=>(r.sessions?.[activeSession]?.quotes||[]).forEach(q=>{driverCounts[q.driver]=(driverCounts[q.driver]||0)+1;}));
+              const quoteDrivers=Object.entries(driverCounts).sort((a,b)=>b[1]-a[1]);
+              const activeDriver=quoteDriver&&driverCounts[quoteDriver]?quoteDriver:null;
               return(
               <>
                 <div style={{display:"flex",gap:12,flexWrap:"wrap"}}>
@@ -1905,12 +1943,18 @@ export default function F1Dashboard(){
                 </div>
                 <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
                   {availableSessions.map(s=>(
-                    <button key={s} onClick={()=>setQuotesSession(s)} style={{padding:"8px 20px",borderRadius:8,border:"1px solid "+(activeSession===s?"#E80020":"rgba(255,255,255,0.08)"),background:activeSession===s?"rgba(232,0,32,0.15)":"rgba(255,255,255,0.02)",color:activeSession===s?"#fff":"rgba(255,255,255,0.5)",cursor:"pointer",fontSize:13,fontWeight:600,fontFamily:"'Outfit',sans-serif"}}>{SESSION_LABELS[s]}</button>
+                    <button key={s} onClick={()=>{setQuotesSession(s);setQuoteDriver(null);}} style={{padding:"8px 20px",borderRadius:8,border:"1px solid "+(activeSession===s?"#E80020":"rgba(255,255,255,0.08)"),background:activeSession===s?"rgba(232,0,32,0.15)":"rgba(255,255,255,0.02)",color:activeSession===s?"#fff":"rgba(255,255,255,0.5)",cursor:"pointer",fontSize:13,fontWeight:600,fontFamily:"'Outfit',sans-serif"}}>{SESSION_LABELS[s]}</button>
+                  ))}
+                </div>
+                <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                  <button onClick={()=>setQuoteDriver(null)} style={{padding:"6px 14px",borderRadius:8,border:"1px solid "+(activeDriver===null?"#E80020":"rgba(255,255,255,0.08)"),background:activeDriver===null?"rgba(232,0,32,0.15)":"rgba(255,255,255,0.02)",color:activeDriver===null?"#fff":"rgba(255,255,255,0.5)",cursor:"pointer",fontSize:12,fontWeight:600,fontFamily:"'Outfit',sans-serif"}}>All</button>
+                  {quoteDrivers.map(([name,cnt])=>(
+                    <button key={name} onClick={()=>setQuoteDriver(activeDriver===name?null:name)} style={{padding:"6px 14px",borderRadius:8,border:"1px solid "+(activeDriver===name?"#E80020":"rgba(255,255,255,0.08)"),background:activeDriver===name?"rgba(232,0,32,0.15)":"rgba(255,255,255,0.02)",color:activeDriver===name?"#fff":"rgba(255,255,255,0.5)",cursor:"pointer",fontSize:12,fontWeight:600,fontFamily:"'Outfit',sans-serif"}}>{name} <span style={{fontWeight:400,opacity:0.55}}>{cnt}</span></button>
                   ))}
                 </div>
                 {[...quotes.rounds].reverse().map(round=>{
                   const sess=round.sessions?.[activeSession];
-                  const roundQuotes=sess?.quotes||[];
+                  const roundQuotes=(sess?.quotes||[]).filter(q=>!activeDriver||q.driver===activeDriver);
                   if(roundQuotes.length===0)return null;
                   return(
                     <div key={round.round} style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20}}>
@@ -2939,7 +2983,7 @@ const LapTimesChart=memo(function LapTimesChart({maxLap,yMin,yMax,race,visibleDr
                 return(
                   <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20,position:"relative"}}>
                     <div style={{fontSize:15,fontWeight:700,marginBottom:4}}>Lap Times</div>
-                    <div style={{fontSize:12,color:"rgba(255,255,255,0.35)",marginBottom:8}}>Lap-by-lap pace · low Y axis clipped to 5th-95th percentile · hover for crosshair readout</div>
+                    <div style={{fontSize:12,color:"rgba(255,255,255,0.35)",marginBottom:8}}>Lap-by-lap pace · low Y axis clipped to 5th-95th percentile · hover for crosshair readout · □ = pit stop</div>
                     {/* Race-control legend */}
                     <div style={{display:"flex",gap:14,flexWrap:"wrap",marginBottom:14,fontSize:10,color:"rgba(255,255,255,0.5)"}}>
                       <div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:14,height:8,background:"rgba(255,218,0,0.45)",borderRadius:2}}/><span>Safety Car</span></div>
@@ -2996,6 +3040,10 @@ const LapTimesChart=memo(function LapTimesChart({maxLap,yMin,yMax,race,visibleDr
                           return(
                             <g key={d.acronym} pointerEvents="none">
                               <path d={path} stroke={color} strokeWidth={1.6} fill="none" strokeLinecap="round" strokeLinejoin="round" opacity={0.85}/>
+                              {/* Pit-out laps — small hollow square at the data point */}
+                              {lt.filter(p=>p.pit).map(p=>(
+                                <rect key={"pit"+p.l} x={xOf(p.l)-3} y={yOf(p.t)-3} width={6} height={6} fill="#0a0a0f" stroke={color} strokeWidth={1.3} opacity={0.9}/>
+                              ))}
                               {hoverLap&&(()=>{const p=lt.find(x=>x.l===hoverLap);return p?<circle cx={xOf(p.l)} cy={yOf(p.t)} r={4} fill={color} stroke="#0a0a0f" strokeWidth={1.5}/>:null;})()}
                             </g>
                           );

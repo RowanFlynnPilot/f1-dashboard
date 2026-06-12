@@ -68,3 +68,7 @@ select:hover,select:focus{border-color:rgba(232,0,32,0.3)!important}select optio
   .tire-bars{overflow-x:auto;-webkit-overflow-scrolling:touch}
   .tire-bars-inner{min-width:520px}
 }
+/* Accessibility — collapse fadeUp/pulse/pulseOnce/barGrow and all transitions for users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:0.01ms!important;animation-iteration-count:1!important;transition-duration:0.01ms!important}
+}
