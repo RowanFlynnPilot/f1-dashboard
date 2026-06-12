@@ -20,7 +20,7 @@ const SESSION_TYPES = ["Practice 1", "Practice 2", "Practice 3", "Qualifying", "
 
 async function fetchJSON(url, retries = 3) {
   console.log(`  Fetching: ${url}`);
-  const res = await fetch(url);
+  const res = await fetch(url, { signal: AbortSignal.timeout(20000) });
   if (res.status === 429 && retries > 0) {
     const retryAfter = res.headers.get("Retry-After");
     const waitSec = retryAfter ? Math.max(parseInt(retryAfter, 10), 10) : 10 * (4 - retries);

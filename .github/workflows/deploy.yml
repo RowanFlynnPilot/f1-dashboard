@@ -2,7 +2,8 @@ name: Fetch F1 Data & Deploy
 
 on:
   schedule:
-    - cron: '0 23 * * 0'   # Every Sunday 5 PM CT
+    - cron: '0 23 * * 0'   # Sunday 23:00 UTC — catches most race results
+    - cron: '0 6 * * 1'    # Monday 06:00 UTC — retry for late races (Miami/Austin/Mexico end ~22:00 UTC Sunday, after the first cron)
   push:
     branches: ['main']
   workflow_dispatch:         # Manual trigger
@@ -22,6 +23,7 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     env:
       HAS_ANTHROPIC_KEY: ${{ secrets.ANTHROPIC_API_KEY != '' }}
     steps:
@@ -29,8 +31,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'npm'
       - name: Install dependencies
-        run: npm install
+        run: npm ci
       - name: Fetch F1 data from Jolpica API
         run: node scripts/fetch-f1-data.mjs
       - name: Fetch sector & speed data from OpenF1 API

@@ -14,7 +14,7 @@ const BASE = "https://api.jolpi.ca/ergast/f1";
 
 async function fetchJSON(url) {
   console.log(`  Fetching: ${url}`);
-  const res = await fetch(url);
+  const res = await fetch(url, { signal: AbortSignal.timeout(15000) });
   if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
   return res.json();
 }
@@ -58,7 +58,8 @@ async function getSprintResults(round) {
 
 async function getPitStops(round) {
   try {
-    const data = await fetchJSON(`${BASE}/${SEASON}/${round}/pitstops.json?limit=100`);
+    // limit=200: 22 cars × 5+ stops can exceed the old limit=100 in a chaotic race
+    const data = await fetchJSON(`${BASE}/${SEASON}/${round}/pitstops.json?limit=200`);
     const races = data.MRData.RaceTable.Races;
     return races.length > 0 ? races[0].PitStops : [];
   } catch {
@@ -104,7 +105,7 @@ const CIRCUIT_COUNTRIES = {
   jeddah: "SA", miami: "US", villeneuve: "CA", monaco: "MC",
   catalunya: "ES", red_bull_ring: "AT", silverstone: "GB",
   spa: "BE", hungaroring: "HU", zandvoort: "NL", monza: "IT",
-  valencia: "ES", baku: "AZ", marina_bay: "SG", americas: "US",
+  valencia: "ES", madring: "ES", baku: "AZ", marina_bay: "SG", americas: "US",
   rodriguez: "MX", interlagos: "BR", vegas: "US", losail: "QA",
   yas_marina: "AE",
 };
@@ -136,9 +137,15 @@ async function main() {
   console.log(`   Found ${constructorStandings.length} constructors\n`);
   await sleep(500);
 
-  // 3. Determine completed rounds
+  // 3. Determine completed rounds — race date + UTC start time + 3h buffer.
+  // A bare date parses as midnight UTC, which marked races "completed" up to
+  // ~20 hours before they actually ran.
   const now = new Date();
-  const completedRaces = schedule.filter(r => new Date(r.date) < now);
+  const raceEnded = (r) => {
+    const start = new Date(`${r.date}T${r.time || "12:00:00Z"}`);
+    return now - start > 3 * 3600 * 1000;
+  };
+  const completedRaces = schedule.filter(r => raceEnded(r));
   console.log(`✅ ${completedRaces.length} races completed\n`);
 
   // 4. Fetch results for each completed race
@@ -264,7 +271,7 @@ async function main() {
     date: race.date,
     time: race.time || null,
     country: getCountryCode(race.Circuit.circuitId),
-    completed: new Date(race.date) < now,
+    completed: raceEnded(race),
     sprint: race.Sprint ? true : false,
     winner: (() => {
       const rr = raceResults.find(r => r.round === race.round);
@@ -286,6 +293,18 @@ async function main() {
     };
   }
 
+  // Jolpica formats long stops (red flags etc.) as "mm:ss.xxx" — parseFloat
+  // would silently read "31:24.123" as a plausible-looking 31 seconds.
+  const parsePitSeconds = (str) => {
+    if (!str) return 0;
+    const s = String(str);
+    if (s.includes(":")) {
+      const [m, rest] = s.split(":");
+      return (parseInt(m) || 0) * 60 + (parseFloat(rest) || 0);
+    }
+    return parseFloat(s) || 0;
+  };
+
   const pitStops = latestPits ? latestPits.pitStops.map(p => {
     const info = driverLookup[p.driverId] || { name: p.driverId, fullName: p.driverId, team: "" };
     return {
@@ -295,9 +314,9 @@ async function main() {
       lap: parseInt(p.lap),
       stop: parseInt(p.stop),
       duration: p.duration,
-      durationMs: parseFloat(p.duration) || 0,
+      durationSec: parsePitSeconds(p.duration),
     };
-  }).sort((a, b) => a.durationMs - b.durationMs) : [];
+  }).sort((a, b) => a.durationSec - b.durationSec) : [];
 
   // Build final output
   const output = {
