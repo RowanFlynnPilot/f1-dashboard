@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef, Fragment } from "react";
+import { useState, useEffect, useMemo, useRef, Fragment, memo } from "react";
 
 const SEASON = 2026;
 
@@ -693,44 +693,9 @@ export default function F1Dashboard(){
   // Per-session driver selection for the Sector Times compare panel.
   // Map: sessionKey -> array of acronyms. Empty/missing means "auto: top 3".
   const[compareBySession,setCompareBySession]=useState({});
-  // Telemetry tab state
+  // Telemetry tab state — the rest of it lives inside TelemetryTab; telMeetingKey
+  // stays here because the lazy meeting-payload loader effect below depends on it.
   const[telMeetingKey,setTelMeetingKey]=useState(null);
-  const[telSelected,setTelSelected]=useState(()=>new Set());
-  const[telLapHover,setTelLapHover]=useState(null); // {x,lap} or null
-  const[telPosHover,setTelPosHover]=useState(null); // {x,lap} or null
-  const[telStintHover,setTelStintHover]=useState(null); // {driverNumber, stintNumber, x, y} or null
-  const[telTraceSel,setTelTraceSel]=useState(()=>new Set()); // acronyms selected for speed trace
-  const[telTraceHover,setTelTraceHover]=useState(null); // {dist} or null
-  const[tireCompound,setTireCompound]=useState(null); // selected compound key for benchmark chart
-  const[tireHover,setTireHover]=useState(null); // {key, x, y} for stint bar tooltip
-  const[deltaA,setDeltaA]=useState(null); // delta-line driver A (acronym)
-  const[deltaB,setDeltaB]=useState(null); // delta-line driver B (acronym)
-  const[deltaHover,setDeltaHover]=useState(null); // {lap}
-  const[stintOverlay,setStintOverlay]=useState(()=>new Set()); // stint keys "driverNumber-stintNumber"
-  const[overlayHover,setOverlayHover]=useState(null); // {lapInStint}
-  const[overlayCompoundFilter,setOverlayCompoundFilter]=useState("ALL"); // compound key or "ALL"
-  const[overlayDriverFilter,setOverlayDriverFilter]=useState("ALL"); // driverNumber or "ALL"
-  // Race Replay state
-  const[replayTime,setReplayTime]=useState(0); // seconds into the race
-  const[replayPlaying,setReplayPlaying]=useState(false);
-  const[replaySpeed,setReplaySpeed]=useState(8); // 1x, 2x, 4x, 8x, 16x — default 8 since real time is slow
-  const[replayDotHover,setReplayDotHover]=useState(null); // {driverNumber, x, y}
-  const replayDurationRef=useRef(0); // published by the Telemetry render; the rAF clock auto-pauses here
-  // Lap Compare state — pick two drivers, click a lap, live-fetch /car_data + /location
-  const[lapCompareA,setLapCompareA]=useState(null); // acronym
-  const[lapCompareB,setLapCompareB]=useState(null);
-  const[lapCompareLap,setLapCompareLap]=useState(null);
-  const[lapCompareData,setLapCompareData]=useState({}); // cache: key `${session}-${driverNum}-${lap}` → {samples, error, loading}
-  const[lapComparePlayTime,setLapComparePlayTime]=useState(0);
-  const[lapComparePlaying,setLapComparePlaying]=useState(false);
-  const[lapCompareRetry,setLapCompareRetry]=useState(0); // bump to force effect re-fire
-  const[lapZoom,setLapZoom]=useState(1.6); // viewBox zoom multiplier
-  const[lapPan,setLapPan]=useState({x:0,y:0}); // viewBox pan in fitted-vb units
-  const lapPlayDurationRef=useRef(0); // published by the Lap Compare render
-  const lapDragRef=useRef(null);
-  const lapFetchInflight=useRef(new Set()); // cache keys with a live OpenF1 request
-  const lapCompareDataRef=useRef(lapCompareData);
-  lapCompareDataRef.current=lapCompareData; // fresh mirror so the fetch effect can read the cache without depending on it
 
   useEffect(()=>{
     // data.json alone gates first paint — the dashboard used to stay on the
@@ -790,110 +755,6 @@ export default function F1Dashboard(){
         .then(m=>{if(m)setOpenf1Meetings(prev=>prev[key]?prev:{...prev,[key]:m});});
     }
   },[openf1Index,openf1Meetings,tab,selMeeting,telMeetingKey]);
-
-  // Race Replay clock — advances replayTime while playing, auto-pauses at race end
-  useRafClock(replayPlaying,replaySpeed,replayTime,setReplayTime,setReplayPlaying,replayDurationRef);
-
-  // Reset replay when meeting changes
-  useEffect(()=>{setReplayTime(0);setReplayPlaying(false);},[telMeetingKey]);
-
-  // Lap Compare playback clock — auto-pauses at the end of the lap
-  useRafClock(lapComparePlaying,1,lapComparePlayTime,setLapComparePlayTime,setLapComparePlaying,lapPlayDurationRef);
-
-  // Leaving the Telemetry tab pauses playback — otherwise the rAF clocks keep
-  // firing 60fps state updates while the panels aren't even visible.
-  useEffect(()=>{if(tab!=="Telemetry"){setReplayPlaying(false);setLapComparePlaying(false);}},[tab]);
-
-  // Reset lap compare selection when meeting changes
-  useEffect(()=>{setLapCompareLap(null);setLapComparePlaying(false);setLapComparePlayTime(0);setLapZoom(1.6);setLapPan({x:0,y:0});},[telMeetingKey]);
-  // Reset zoom/pan when lap or drivers change
-  useEffect(()=>{setLapZoom(1.6);setLapPan({x:0,y:0});},[lapCompareLap,lapCompareA,lapCompareB]);
-
-  // Auto-select a default lap (Driver A's fastest valid lap) when none is chosen.
-  // Lives in its own effect so the fetch effect below never invalidates itself by
-  // setting state it depends on — that used to abort its own in-flight fetch and
-  // strand the cache on {loading:true} forever.
-  useEffect(()=>{
-    if(tab!=="Telemetry"||!openf1||lapCompareLap)return;
-    const cur=lapCompareTarget(openf1,telMeetingKey);
-    if(!cur)return;
-    const{drA}=pickLapCompareDrivers(cur,lapCompareA,lapCompareB);
-    if(!drA)return;
-    const fastestA=(drA.lapTimes||[]).filter(l=>l.ds&&!l.pit).reduce((a,b)=>(!a||b.t<a.t)?b:a,null);
-    if(fastestA?.l)setLapCompareLap(fastestA.l);
-  },[tab,openf1,telMeetingKey,lapCompareA,lapCompareB,lapCompareLap]);
-
-  // Fetch lap telemetry for both drivers from OpenF1. Gated on the Telemetry tab
-  // being open — visitors who never open it must never hit the live API.
-  useEffect(()=>{
-    if(tab!=="Telemetry"||!openf1||!lapCompareLap)return;
-    const cur=lapCompareTarget(openf1,telMeetingKey);
-    if(!cur)return;
-    const{drA,drB}=pickLapCompareDrivers(cur,lapCompareA,lapCompareB);
-    if(!drA||!drB)return;
-    const sessionKey=cur.race.sessionKey;
-    const lap=lapCompareLap;
-    const inflight=lapFetchInflight.current;
-    let cancelled=false;
-    const controllers=[];
-    const fetchDriver=async(drv)=>{
-      const key=`${sessionKey}-${drv.number}-${lap}`;
-      if(cancelled||inflight.has(key))return;
-      const cached=lapCompareDataRef.current[key];
-      if(cached&&(cached.samples||cached.error))return; // settled — only Retry clears it
-      const ltEntry=(drv.lapTimes||[]).find(l=>l.l===lap);
-      if(!ltEntry?.ds){setLapCompareData(prev=>({...prev,[key]:{loading:false,error:"No timestamp for this lap"}}));return;}
-      // sessionStorage first — laps are immutable once the session is over, so a
-      // revisit (or tab round-trip) should never re-hit the OpenF1 API.
-      try{
-        const stored=sessionStorage.getItem(`lapTel:${key}`);
-        if(stored){
-          const samples=JSON.parse(stored);
-          if(Array.isArray(samples)&&samples.length>=3){setLapCompareData(prev=>({...prev,[key]:{samples,loading:false}}));return;}
-        }
-      }catch{/* parse/quota issues — fall through to the network */}
-      inflight.add(key);
-      setLapCompareData(prev=>({...prev,[key]:{loading:true}}));
-      const controller=new AbortController();
-      controllers.push(controller);
-      const timeoutId=setTimeout(()=>controller.abort(),12000); // per-driver budget — B no longer pays for a slow A
-      try{
-        const startMs=new Date(ltEntry.ds).getTime();
-        const endMs=startMs+ltEntry.t*1000+500;
-        const startIso=new Date(startMs).toISOString();
-        const endIso=new Date(endMs).toISOString();
-        const base=`https://api.openf1.org/v1`;
-        const carRes=await fetch(`${base}/car_data?session_key=${sessionKey}&driver_number=${drv.number}&date>=${startIso}&date<=${endIso}`,{signal:controller.signal});
-        if(!carRes.ok)throw new Error(carRes.status===404?"OpenF1 has no car telemetry for this session yet — recent races can lag a few days":`car_data HTTP ${carRes.status}`);
-        const carData=await carRes.json();
-        const locRes=await fetch(`${base}/location?session_key=${sessionKey}&driver_number=${drv.number}&date>=${startIso}&date<=${endIso}`,{signal:controller.signal});
-        if(!locRes.ok)throw new Error(locRes.status===404?"OpenF1 has no location data for this session yet — recent races can lag a few days":`location HTTP ${locRes.status}`);
-        const location=await locRes.json();
-        if(!carData||carData.length===0||!location||location.length<3)throw new Error("No samples returned (lap may predate live data)");
-        const samples=processLapTelemetry(carData,location);
-        if(samples.length<3)throw new Error("Could not align speed and location samples");
-        try{sessionStorage.setItem(`lapTel:${key}`,JSON.stringify(samples));}catch{/* quota full — cache is best-effort */}
-        setLapCompareData(prev=>({...prev,[key]:{samples,loading:false}}));
-      }catch(err){
-        if(err.name==="AbortError"&&cancelled){
-          // Lap/driver changed mid-fetch — clear the pending entry so the next
-          // effect run can fetch this key fresh instead of seeing it "loading".
-          setLapCompareData(prev=>{if(!prev[key]?.loading)return prev;const n={...prev};delete n[key];return n;});
-        }else if(err.name==="AbortError"){
-          setLapCompareData(prev=>({...prev,[key]:{loading:false,error:"Timed out after 12s — OpenF1 may be slow, click Retry"}}));
-        }else{
-          setLapCompareData(prev=>({...prev,[key]:{loading:false,error:err.message||"fetch failed"}}));
-        }
-      }finally{
-        clearTimeout(timeoutId);
-        inflight.delete(key);
-      }
-    };
-    // Sequential — 4 parallel requests can trip OpenF1's free-tier rate limit
-    (async()=>{await fetchDriver(drA);if(!cancelled)await fetchDriver(drB);})();
-    return()=>{cancelled=true;controllers.forEach(c=>c.abort());};
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  },[tab,openf1,telMeetingKey,lapCompareA,lapCompareB,lapCompareLap,lapCompareRetry]);
 
   if(loading)return(<div style={{minHeight:"100vh",background:"#0a0a0f",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Outfit',sans-serif"}}><div style={{textAlign:"center"}}><div style={{fontSize:32,fontWeight:700,marginBottom:8}}>Loading F1 Data...</div><div style={{color:"rgba(255,255,255,0.4)"}}>Fetching from Jolpica API</div></div></div>);
   if(error||!data)return(<div style={{minHeight:"100vh",background:"#0a0a0f",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Outfit',sans-serif"}}><div style={{textAlign:"center"}}><div style={{fontSize:32,fontWeight:700,color:"#E80020",marginBottom:8}}>Failed to Load Data</div><div style={{color:"rgba(255,255,255,0.5)"}}>{error||"No data available. Run: npm run fetch-data"}</div></div></div>);
@@ -1785,42 +1646,317 @@ export default function F1Dashboard(){
           );
         })()}
 
+        {/* ═══ HEAD TO HEAD ═══ */}
+        {tab==="Head to Head"&&(
+          <div className="fu" style={{display:"flex",flexDirection:"column",gap:24}}>
+            {/* Metric Toggle */}
+            <div style={{display:"flex",alignItems:"center",gap:14,flexWrap:"wrap"}}>
+              <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:"rgba(255,255,255,0.4)"}}>Compare by</div>
+              <div style={{display:"flex",gap:4}}>
+                {[{id:"qual",label:"Qualifying Position"},{id:"race",label:"Average Finish"},{id:"pts",label:"Points Scored"}].map(m=>(
+                  <button key={m.id} onClick={()=>setH2hMetric(m.id)} style={{cursor:"pointer",padding:"8px 16px",borderRadius:6,border:h2hMetric===m.id?"1px solid rgba(232,0,32,0.4)":"1px solid rgba(255,255,255,0.08)",background:h2hMetric===m.id?"rgba(232,0,32,0.12)":"rgba(255,255,255,0.03)",color:h2hMetric===m.id?"#E80020":"rgba(255,255,255,0.5)",fontSize:12,fontWeight:h2hMetric===m.id?600:400,fontFamily:"'Outfit',sans-serif",transition:"all .2s"}}>{m.label}</button>
+                ))}
+              </div>
+            </div>
+
+            {/* Team Battles */}
+            <div style={{display:"flex",flexDirection:"column",gap:16}}>
+              {h2h.map(battle=>{
+                const tc=TC[battle.team]||"#555";
+                const d1Last=battle.d1.n.split(" ").pop();
+                const d2Last=battle.d2.n.split(" ").pop();
+
+                // Compute bar values based on selected metric
+                let d1Val,d2Val,d1Label,d2Label,metricNote;
+                if(h2hMetric==="qual"){
+                  d1Val=battle.qual.d1;d2Val=battle.qual.d2;
+                  d1Label=`${battle.qual.d1} win${battle.qual.d1!==1?"s":""}`;
+                  d2Label=`${battle.qual.d2} win${battle.qual.d2!==1?"s":""}`;
+                  metricNote="Qualifying head-to-head (better grid slot wins)";
+                }else if(h2hMetric==="race"){
+                  // Lower avg position = bigger bar. 21−avg keeps backmarkers positive
+                  // (10−avg went negative past P10 and inverted the bars).
+                  d1Val=battle.avgPos.d1?Math.max(0.5,21-battle.avgPos.d1):0;d2Val=battle.avgPos.d2?Math.max(0.5,21-battle.avgPos.d2):0;
+                  d1Label=battle.avgPos.d1?`P${battle.avgPos.d1} avg`:"No data";
+                  d2Label=battle.avgPos.d2?`P${battle.avgPos.d2} avg`:"No data";
+                  metricNote="Average race finishing position";
+                }else{
+                  d1Val=battle.d1.pts;d2Val=battle.d2.pts;
+                  d1Label=`${battle.d1.pts} pts`;d2Label=`${battle.d2.pts} pts`;
+                  metricNote="Championship points scored";
+                }
+                const total=d1Val+d2Val;
+                const d1Pct=total>0?(d1Val/total)*100:50;
+                const d2Pct=total>0?(d2Val/total)*100:50;
+                const d1Leads=d1Val>d2Val;
+                const d2Leads=d2Val>d1Val;
+                const tied=d1Val===d2Val;
+
+                return(
+                  <div key={battle.team} style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20,overflow:"hidden"}}>
+                    {/* Team Header */}
+                    <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16}}>
+                      <TL team={battle.team} size={28}/>
+                      <div style={{width:3,height:22,borderRadius:2,background:tc,opacity:.8}}/>
+                      <span style={{fontSize:16,fontWeight:700}}>{battle.team}</span>
+                      <span style={{fontSize:11,color:"rgba(255,255,255,0.3)",marginLeft:"auto"}}>{metricNote}</span>
+                    </div>
+
+                    {/* Driver vs Driver */}
+                    <div style={{display:"flex",alignItems:"center",gap:16,marginBottom:12}}>
+                      {/* Driver 1 */}
+                      <div style={{flex:1,textAlign:"right"}}>
+                        <div style={{display:"flex",alignItems:"center",justifyContent:"flex-end",gap:8,marginBottom:6}}>
+                          <div>
+                            <div style={{fontSize:15,fontWeight:700,color:d1Leads?"#fff":"rgba(255,255,255,0.5)"}}>{d1Last}</div>
+                            <div style={{fontSize:20,fontWeight:800,color:d1Leads?tc:"rgba(255,255,255,0.4)"}}>{d1Label}</div>
+                          </div>
+                          <DH name={battle.d1.n} size={44} headshots={headshots}/>
+                        </div>
+                      </div>
+
+                      {/* VS badge */}
+                      <div style={{flexShrink:0,width:40,height:40,borderRadius:"50%",background:"rgba(255,255,255,0.06)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:800,color:"rgba(255,255,255,0.3)"}}>VS</div>
+
+                      {/* Driver 2 */}
+                      <div style={{flex:1}}>
+                        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
+                          <DH name={battle.d2.n} size={44} headshots={headshots}/>
+                          <div>
+                            <div style={{fontSize:15,fontWeight:700,color:d2Leads?"#fff":"rgba(255,255,255,0.5)"}}>{d2Last}</div>
+                            <div style={{fontSize:20,fontWeight:800,color:d2Leads?tc:"rgba(255,255,255,0.4)"}}>{d2Label}</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Battle Bar */}
+                    <div style={{display:"flex",height:8,borderRadius:4,overflow:"hidden",background:"rgba(255,255,255,0.04)"}}>
+                      <div style={{width:`${d1Pct}%`,background:d1Leads?tc:"rgba(255,255,255,0.15)",borderRadius:"4px 0 0 4px",transition:"width .8s cubic-bezier(0.22,1,0.36,1)"}}/>
+                      <div style={{width:2,background:"#0a0a0f",flexShrink:0}}/>
+                      <div style={{width:`${d2Pct}%`,background:d2Leads?tc:"rgba(255,255,255,0.15)",borderRadius:"0 4px 4px 0",transition:"width .8s cubic-bezier(0.22,1,0.36,1)"}}/>
+                    </div>
+
+                    {/* Per-race detail row (Qualifying / Race) */}
+                    {h2hMetric!=="pts"&&(
+                      <div style={{marginTop:14,display:"flex",gap:6,flexWrap:"wrap"}}>
+                        {(h2hMetric==="qual"?battle.qual.details:battle.race.details).map((rd,i)=>{
+                          const d1Won=typeof rd.d1==="number"&&typeof rd.d2==="number"?rd.d1<rd.d2:false;
+                          const d2Won=typeof rd.d1==="number"&&typeof rd.d2==="number"?rd.d2<rd.d1:false;
+                          return(
+                            <div key={i} style={{background:"rgba(255,255,255,0.03)",borderRadius:6,padding:"6px 10px",fontSize:11,border:"1px solid rgba(255,255,255,0.04)",minWidth:80}}>
+                              <div style={{color:"rgba(255,255,255,0.35)",marginBottom:3,fontSize:10}}>{rd.race}</div>
+                              <div style={{display:"flex",justifyContent:"space-between",gap:8}}>
+                                <span style={{fontWeight:d1Won?700:400,color:d1Won?tc:"rgba(255,255,255,0.4)"}}>P{rd.d1}</span>
+                                <span style={{color:"rgba(255,255,255,0.15)"}}>—</span>
+                                <span style={{fontWeight:d2Won?700:400,color:d2Won?tc:"rgba(255,255,255,0.4)"}}>P{rd.d2}</span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* ═══ PIT STOPS ═══ */}
+        {tab==="Pit Stops"&&(
+          <div className="fu" style={{display:"flex",flexDirection:"column",gap:24}}>
+            <div style={{display:"flex",gap:16,flexWrap:"wrap"}}>
+              <SC label="Fastest Pit Stop" value={fastestPit?`${fastestPit.s.toFixed(3)}s`:"N/A"} sub={fastestPit?`${fastestPit.d} · Lap ${fastestPit.l}`:""} accent="#FFD700" icon={fastestPit&&fastestPit.t?<TL team={fastestPit.t} size={24}/>:null}/>
+              <SC label="Avg Pit Stop" value={`${avgP}s`} sub={`${pits.length} stops · ${pitRaceName}`} accent="#27F4D2"/>
+              <SC label="Slowest Pit Stop" value={pits.length>0?`${pits[pits.length-1].s.toFixed(3)}s`:"N/A"} sub={pits.length>0?`${pits[pits.length-1].d} · Lap ${pits[pits.length-1].l}`:""} accent="#E80020" icon={pits.length>0&&pits[pits.length-1].t?<TL team={pits[pits.length-1].t} size={24}/>:null}/>
+            </div>
+            <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20}}>
+              <div style={{fontSize:15,fontWeight:700,marginBottom:4}}>{pitRaceName + " — Pit Stop Times"}</div>
+              <div style={{fontSize:12,color:"rgba(255,255,255,0.35)",marginBottom:20}}>Sorted by duration</div>
+              <div style={{display:"flex",flexDirection:"column",gap:5}}>
+                {pits.filter(d=>d.s<30).map((d,i)=>(
+                  <div key={i} style={{display:"flex",alignItems:"center",gap:8}}>
+                    <TL team={d.t} size={22}/>
+                    <div style={{width:80,fontSize:12,color:"rgba(255,255,255,0.7)",textAlign:"right",flexShrink:0}}>{d.d}</div>
+                    <div style={{flex:1,height:22,background:"rgba(255,255,255,0.04)",borderRadius:4,overflow:"hidden",position:"relative"}}>
+                      <div style={{height:"100%",width:`${(d.s/28)*100}%`,background:TC[d.t]||"#555",borderRadius:4,transition:"width 1s cubic-bezier(0.22,1,0.36,1)",transitionDelay:`${i*50}ms`,opacity:.8}}/>
+                      <div style={{position:"absolute",right:8,top:"50%",transform:"translateY(-50%)",fontSize:11,color:"rgba(255,255,255,0.6)",fontVariantNumeric:"tabular-nums"}}>{d.s.toFixed(3)}s</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20}}>
+              <div style={{fontSize:15,fontWeight:700,marginBottom:16}}>{"Full Pit Stop Summary — " + pitRaceName}</div>
+              <div style={{overflowX:"auto",WebkitOverflowScrolling:"touch"}}><table style={{width:"100%",borderCollapse:"collapse",minWidth:600,fontSize:13}}>
+                <thead><tr style={{borderBottom:"1px solid rgba(255,255,255,0.08)"}}>
+                  {["#","Driver","Team","Lap","Duration"].map(h=><th key={h} style={{textAlign:"left",padding:"8px 12px",fontSize:11,textTransform:"uppercase",letterSpacing:1,color:"rgba(255,255,255,0.35)",fontWeight:500}}>{h}</th>)}
+                </tr></thead>
+                <tbody>
+                  {pits.map((d,i)=>(
+                    <tr key={i} style={{borderBottom:"1px solid rgba(255,255,255,0.04)"}}>
+                      <td style={{padding:"10px 12px",color:"rgba(255,255,255,0.4)",fontWeight:600}}>{i+1}</td>
+                      <td style={{padding:"10px 12px"}}><div style={{display:"flex",alignItems:"center",gap:8}}><TL team={d.t} size={24}/><div style={{width:3,height:16,borderRadius:2,background:TC[d.t]}}/><span style={{fontWeight:600}}>{d.d}</span></div></td>
+                      <td style={{padding:"10px 12px"}}><div style={{display:"flex",alignItems:"center",gap:6,color:"rgba(255,255,255,0.5)"}}><TL team={d.t} size={16}/>{d.t}</div></td>
+                      <td style={{padding:"10px 12px",fontVariantNumeric:"tabular-nums"}}>{d.l}</td>
+                      <td style={{padding:"10px 12px",fontWeight:700,fontVariantNumeric:"tabular-nums",color:d.s<23?"#27F4D2":d.s>26?"#E80020":"#fff"}}>{d.s.toFixed(3)}s</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table></div>
+            </div>
+          </div>
+        )}
+
+        {/* ═══ QUOTES ═══ */}
+        {tab==="Quotes"&&(
+          <div className="fu" style={{display:"flex",flexDirection:"column",gap:24}}>
+            {!quotes||!quotes.rounds||quotes.rounds.length===0?(
+              <div style={{textAlign:"center",padding:60,color:"rgba(255,255,255,0.4)"}}>
+                <div style={{fontSize:40,marginBottom:12}}>💬</div>
+                <div style={{fontSize:16,fontWeight:600,marginBottom:4}}>No driver quotes available yet</div>
+                <div style={{fontSize:13}}>Quotes are extracted from official F1 YouTube post-session videos</div>
+              </div>
+            ):(()=>{
+              const SESSION_ORDER=["race","sprint","qualifying","sprintQualifying"];
+              const SESSION_LABELS={race:"Race",sprint:"Sprint",qualifying:"Qualifying",sprintQualifying:"Sprint Quali"};
+              const availableSessions=SESSION_ORDER.filter(s=>quotes.rounds.some(r=>(r.sessions?.[s]?.quotes||[]).length>0));
+              const activeSession=availableSessions.includes(quotesSession)?quotesSession:(availableSessions[0]||"race");
+              return(
+              <>
+                <div style={{display:"flex",gap:12,flexWrap:"wrap"}}>
+                  <SC label="Rounds with Quotes" value={String(quotes.rounds.length)} sub={quotes.rounds.map(r=>r.raceName.replace(" Grand Prix","")).join(" · ")} accent="#E80020"/>
+                  <SC label="Total Quotes" value={String(quotes.rounds.reduce((sum,r)=>sum+Object.values(r.sessions||{}).reduce((s2,sess)=>s2+(sess.quotes||[]).length,0),0))} sub={"Across "+availableSessions.map(s=>SESSION_LABELS[s].toLowerCase()).join(", ")} accent="#27F4D2"/>
+                </div>
+                <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+                  {availableSessions.map(s=>(
+                    <button key={s} onClick={()=>setQuotesSession(s)} style={{padding:"8px 20px",borderRadius:8,border:"1px solid "+(activeSession===s?"#E80020":"rgba(255,255,255,0.08)"),background:activeSession===s?"rgba(232,0,32,0.15)":"rgba(255,255,255,0.02)",color:activeSession===s?"#fff":"rgba(255,255,255,0.5)",cursor:"pointer",fontSize:13,fontWeight:600,fontFamily:"'Outfit',sans-serif"}}>{SESSION_LABELS[s]}</button>
+                  ))}
+                </div>
+                {[...quotes.rounds].reverse().map(round=>{
+                  const sess=round.sessions?.[activeSession];
+                  const roundQuotes=sess?.quotes||[];
+                  if(roundQuotes.length===0)return null;
+                  return(
+                    <div key={round.round} style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20}}>
+                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+                        <div>
+                          <div style={{fontSize:15,fontWeight:700}}>{round.raceName}</div>
+                          <div style={{fontSize:11,color:"rgba(255,255,255,0.35)",marginTop:2}}>Round {round.round} · Post-{SESSION_LABELS[activeSession].toLowerCase()} reactions</div>
+                        </div>
+                        <div style={{fontSize:11,color:"rgba(255,255,255,0.25)"}}>{roundQuotes.length} quotes</div>
+                      </div>
+                      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(320px,1fr))",gap:12}}>
+                        {roundQuotes.map((q,i)=>(
+                          <div key={i} style={{background:`linear-gradient(135deg,${TC[q.team]||"#555"}11,rgba(255,255,255,0.02))`,border:`1px solid ${TC[q.team]||"rgba(255,255,255,0.06)"}33`,borderRadius:10,padding:16,display:"flex",gap:12}}>
+                            <div style={{flexShrink:0}}>
+                              <DH name={q.driver} size={40} headshots={headshots}/>
+                            </div>
+                            <div style={{flex:1,minWidth:0}}>
+                              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
+                                <span style={{fontSize:13,fontWeight:700}}>{q.driver}</span>
+                                <div style={{width:3,height:12,borderRadius:2,background:TC[q.team]||"#555",opacity:.7}}/>
+                                <span style={{fontSize:11,color:"rgba(255,255,255,0.4)"}}>{q.team}</span>
+                              </div>
+                              <div style={{fontSize:12,color:"rgba(255,255,255,0.8)",lineHeight:1.6,fontStyle:"italic"}}>"{q.quote}"</div>
+                              {q.context&&<div style={{fontSize:10,color:"rgba(255,255,255,0.3)",marginTop:6,textTransform:"uppercase",letterSpacing:.5}}>{q.context}</div>}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </>
+              );
+            })()}
+          </div>
+        )}
+
+        {/* ═══ SCHEDULE ═══ */}
+        {tab==="Schedule"&&(
+          <div className="fu" style={{display:"flex",flexDirection:"column",gap:24}}>
+            <div style={{display:"flex",gap:16,flexWrap:"wrap"}}>
+              <SC label="Total Races" value={String(totalRounds)} sub="2 postponed (Bahrain, Saudi)" accent="#fff"/>
+              <SC label="Races Completed" value={String(completedRounds)} sub={sched.filter(r=>r.st==="done").map(r=>r.nm.replace(" Grand Prix","")).join(" · ")||"None yet"} accent="#27F4D2"/>
+              <SC label="Sprint Weekends" value={String(sched.filter(r=>r.sp).length)} sub={sched.filter(r=>r.sp).map(r=>r.fc).join(" · ")} accent="#E80020"/>
+              <SC label="Season Finale" value={sched.length>0?sched[sched.length-1].nm.replace(" Grand Prix",""):"TBD"} sub={sched.length>0?raceDateFmt(sched[sched.length-1].dt,sched[sched.length-1].tt):""} accent="#FFD700"/>
+            </div>
+            <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20}}>
+              <div style={{fontSize:15,fontWeight:700,marginBottom:4}}>{SEASON} Race Calendar</div>
+              <div style={{fontSize:12,color:"rgba(255,255,255,0.35)",marginBottom:20}}>{sched.length} races · {sched.filter(r=>r.sp).length} Sprint weekends</div>
+              {sched.map(race=>{
+                return(
+                <div key={race.r} className="sr" style={{background:race.st==="next"?"rgba(232,0,32,0.08)":race.st==="postponed"?"rgba(255,165,0,0.04)":"transparent",border:race.st==="next"?"1px solid rgba(232,0,32,0.2)":"1px solid transparent"}}>
+                  <div style={{width:36,fontSize:13,fontWeight:700,color:race.st==="done"?"#27F4D2":race.st==="next"?"#E80020":"rgba(255,255,255,0.3)",flexShrink:0}}>R{race.r}</div>
+                  {race.fc && <div style={{width:36,height:24,borderRadius:3,flexShrink:0,marginRight:10,background:"rgba(255,255,255,0.06)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700,color:"rgba(255,255,255,0.4)",letterSpacing:.5,opacity:race.st==="postponed"?0.4:1}}>{race.fc}</div>}
+                  {tracks&&tracks[race.nm]&&(
+                    <div style={{width:44,height:32,marginRight:12,flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",opacity:race.st==="postponed"?0.3:0.75}}>
+                      <TrackMap raceName={race.nm} tracks={tracks} stroke={race.st==="next"?"#E80020":race.st==="done"?"#27F4D2":"rgba(255,255,255,0.55)"} strokeWidth={1.8} height={32} width={44}/>
+                    </div>
+                  )}
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{display:"flex",alignItems:"center",gap:8}}>
+                      <span style={{fontSize:14,fontWeight:600,color:race.st==="postponed"?"rgba(255,255,255,0.4)":"#fff"}}>{race.nm}</span>
+                      {race.sp&&<span style={{fontSize:9,fontWeight:700,letterSpacing:.5,padding:"2px 6px",borderRadius:3,background:"rgba(232,0,32,0.15)",color:"#E80020"}}>SPRINT</span>}
+                    </div>
+                    <div style={{fontSize:11,color:"rgba(255,255,255,0.35)",marginTop:2}}>{race.ci}</div>
+                  </div>
+                  <div style={{fontSize:12,color:"rgba(255,255,255,0.5)",marginRight:16,fontVariantNumeric:"tabular-nums",flexShrink:0,textAlign:"right",width:105}}>
+                    <div>{raceDateFmt(race.dt,race.tt)}</div>
+                    {race.tt&&<div style={{fontSize:10,color:"rgba(255,255,255,0.3)",marginTop:1}}>{raceTimeFmt(race.dt,race.tt)}</div>}
+                  </div>
+                  <div style={{width:95,flexShrink:0,display:"flex",justifyContent:"flex-end"}}><SB status={race.st}/></div>
+                  {race.w&&<div style={{marginLeft:12,fontSize:12,color:"#27F4D2",fontWeight:600,flexShrink:0}}>🏆 {race.w}</div>}
+                </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* ═══ TELEMETRY ═══ */}
-        {tab==="Telemetry"&&(()=>{
+        {tab==="Telemetry"&&<TelemetryTab openf1={openf1} tracks={tracks} telMeetingKey={telMeetingKey} setTelMeetingKey={setTelMeetingKey}/>}
+      </div>
+    </div>
+  );
+}
+
+// ─── Telemetry tab — module-scope memo component so hover tooltips and 60fps
+// playback frames re-render only this subtree, never the whole dashboard.
+// Mounted only while the Telemetry tab is active, so the rAF clocks stop on
+// unmount and the live-fetch effects can drop their tab guards.
+const TelemetryTab=memo(function TelemetryTab({openf1,tracks,telMeetingKey,setTelMeetingKey}){
+  const[telSelected,setTelSelected]=useState(()=>new Set());
+          // ── Shared derivations (memoized — several panels read these). Hooks must
+          // run before the early-return guards below, so empty/loading cases are
+          // handled with null fallbacks inside the memos.
           // Collect race sessions across meetings (only racing sessions have lap series + positions)
-          const raceMeetings=(openf1?.meetings||[])
-            .map(m=>{
-              const race=m.sessions.find(s=>s.sessionName==="Race");
-              return race?{meeting:m,race}:null;
-            })
-            .filter(Boolean);
-          if(raceMeetings.length===0)return(
-            <div className="fu" style={{textAlign:"center",padding:60,color:"rgba(255,255,255,0.4)"}}>
-              <div style={{fontSize:40,marginBottom:12}}>📈</div>
-              <div style={{fontSize:16,fontWeight:600,marginBottom:4}}>No race telemetry available yet</div>
-              <div style={{fontSize:13}}>Run <code style={{background:"rgba(255,255,255,0.08)",padding:"2px 8px",borderRadius:4}}>npm run fetch-openf1</code> after a race finishes.</div>
-            </div>
-          );
-          const activeKey=telMeetingKey&&raceMeetings.find(rm=>rm.meeting.meetingKey===telMeetingKey)?telMeetingKey:raceMeetings[raceMeetings.length-1].meeting.meetingKey;
-          const cur=raceMeetings.find(rm=>rm.meeting.meetingKey===activeKey);
-          const race=cur.race;
-          // Full meeting payload still streaming in (lazy-loaded per meeting)
-          if(!race.drivers)return(
-            <div className="fu" style={{textAlign:"center",padding:60,color:"rgba(255,255,255,0.4)"}}>
-              <div style={{fontSize:40,marginBottom:12}}>📈</div>
-              <div style={{fontSize:16,fontWeight:600,marginBottom:4}}>Loading telemetry data…</div>
-              <div style={{fontSize:13}}>{cur.meeting.meetingName}</div>
-            </div>
-          );
-          const allDrivers=race.drivers||[];
+          const{raceMeetings,activeKey,cur,race}=useMemo(()=>{
+            const raceMeetings=(openf1?.meetings||[])
+              .map(m=>{
+                const race=m.sessions.find(s=>s.sessionName==="Race");
+                return race?{meeting:m,race}:null;
+              })
+              .filter(Boolean);
+            if(raceMeetings.length===0)return{raceMeetings,activeKey:null,cur:null,race:null};
+            const activeKey=telMeetingKey&&raceMeetings.find(rm=>rm.meeting.meetingKey===telMeetingKey)?telMeetingKey:raceMeetings[raceMeetings.length-1].meeting.meetingKey;
+            const cur=raceMeetings.find(rm=>rm.meeting.meetingKey===activeKey);
+            return{raceMeetings,activeKey,cur,race:cur.race};
+          },[openf1,telMeetingKey]);
           // Default selection — finishing top 5. Use final position from per-lap snapshots.
-          const finalPos=(d)=>{
-            const ps=d.positions;
-            if(!ps||ps.length===0)return 99;
-            return ps[ps.length-1].p;
-          };
-          const sortedByFinish=[...allDrivers].sort((a,b)=>finalPos(a)-finalPos(b));
-          const defaultSel=new Set(sortedByFinish.slice(0,5).map(d=>d.acronym));
+          const{allDrivers,sortedByFinish,defaultSel}=useMemo(()=>{
+            const allDrivers=race?.drivers||[];
+            const finalPos=(d)=>{
+              const ps=d.positions;
+              if(!ps||ps.length===0)return 99;
+              return ps[ps.length-1].p;
+            };
+            const sortedByFinish=[...allDrivers].sort((a,b)=>finalPos(a)-finalPos(b));
+            const defaultSel=new Set(sortedByFinish.slice(0,5).map(d=>d.acronym));
+            return{allDrivers,sortedByFinish,defaultSel};
+          },[race]);
           const selected=telSelected.size>0?telSelected:defaultSel;
           const toggleTel=(acr)=>{
             setTelSelected(prev=>{
@@ -1830,16 +1966,32 @@ export default function F1Dashboard(){
               return cur;
             });
           };
-          const visibleDrivers=allDrivers.filter(d=>selected.has(d.acronym));
+          const visibleDrivers=useMemo(()=>allDrivers.filter(d=>selected.has(d.acronym)),[allDrivers,selected]);
           // Max lap across all drivers — derive race length
-          const maxLap=Math.max(1,...allDrivers.flatMap(d=>(d.lapTimes||[]).map(l=>l.l)));
+          const maxLap=useMemo(()=>Math.max(1,...allDrivers.flatMap(d=>(d.lapTimes||[]).map(l=>l.l))),[allDrivers]);
           // For lap-time chart, ignore extreme outliers (safety car / first lap can skew scale)
-          const allValidTimes=visibleDrivers.flatMap(d=>(d.lapTimes||[]).filter(l=>!l.pit).map(l=>l.t));
-          allValidTimes.sort((a,b)=>a-b);
-          const p10=allValidTimes[Math.floor(allValidTimes.length*0.05)]||0;
-          const p95=allValidTimes[Math.floor(allValidTimes.length*0.95)]||1;
-          const yMin=Math.max(0,p10-1);
-          const yMax=p95+3; // tail above for slow laps
+          const{yMin,yMax}=useMemo(()=>{
+            const allValidTimes=visibleDrivers.flatMap(d=>(d.lapTimes||[]).filter(l=>!l.pit).map(l=>l.t));
+            allValidTimes.sort((a,b)=>a-b);
+            const p10=allValidTimes[Math.floor(allValidTimes.length*0.05)]||0;
+            const p95=allValidTimes[Math.floor(allValidTimes.length*0.95)]||1;
+            return{yMin:Math.max(0,p10-1),yMax:p95+3}; // tail above for slow laps
+          },[visibleDrivers]);
+          if(raceMeetings.length===0)return(
+            <div className="fu" style={{textAlign:"center",padding:60,color:"rgba(255,255,255,0.4)"}}>
+              <div style={{fontSize:40,marginBottom:12}}>📈</div>
+              <div style={{fontSize:16,fontWeight:600,marginBottom:4}}>No race telemetry available yet</div>
+              <div style={{fontSize:13}}>Run <code style={{background:"rgba(255,255,255,0.08)",padding:"2px 8px",borderRadius:4}}>npm run fetch-openf1</code> after a race finishes.</div>
+            </div>
+          );
+          // Full meeting payload still streaming in (lazy-loaded per meeting)
+          if(!race.drivers)return(
+            <div className="fu" style={{textAlign:"center",padding:60,color:"rgba(255,255,255,0.4)"}}>
+              <div style={{fontSize:40,marginBottom:12}}>📈</div>
+              <div style={{fontSize:16,fontWeight:600,marginBottom:4}}>Loading telemetry data…</div>
+              <div style={{fontSize:13}}>{cur.meeting.meetingName}</div>
+            </div>
+          );
           return(
             <div className="fu" style={{display:"flex",flexDirection:"column",gap:24}}>
               {/* Meeting selector */}
@@ -1853,15 +2005,79 @@ export default function F1Dashboard(){
               </div>
 
               {/* Race Replay — track dots + animated leaderboard + scrubber */}
-              {(()=>{
-                const trackKey=cur.meeting.meetingName;
-                const sampler=tracks?buildTrackSampler(tracks[trackKey]):null;
-                // Race duration = max cumulative race time across drivers
-                const lapsByDriver=Object.fromEntries(allDrivers.map(d=>{
-                  const sorted=[...(d.lapTimes||[])].sort((a,b)=>a.l-b.l);
-                  let cum=0;const cumArr=[];for(const l of sorted){cum+=l.t;cumArr.push({l:l.l,cum,t:l.t});}
-                  return[d.number,{cumArr,total:cum}];
-                }));
+              <ReplayPanel cur={cur} race={race} tracks={tracks} allDrivers={allDrivers} telMeetingKey={telMeetingKey}/>
+
+              {/* Lap Compare — pick 2 drivers + 1 lap, live-fetch /car_data + /location */}
+              <LapComparePanel openf1={openf1} telMeetingKey={telMeetingKey} allDrivers={allDrivers} cur={cur}/>
+
+              {/* Driver chips */}
+              <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:16}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:10}}>
+                  <div style={{fontSize:12,color:"rgba(255,255,255,0.5)",fontWeight:500}}>Drivers (click to toggle · max 8)</div>
+                  <div style={{fontSize:10,color:"rgba(255,255,255,0.3)"}}>{visibleDrivers.length} selected</div>
+                </div>
+                <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                  {sortedByFinish.map(d=>{
+                    const on=selected.has(d.acronym);
+                    const tc=d.teamColour||"#fff";
+                    return(
+                      <button key={d.acronym} onClick={()=>toggleTel(d.acronym)} style={{display:"flex",alignItems:"center",gap:6,padding:"5px 10px",borderRadius:6,border:`1px solid ${on?tc:"rgba(255,255,255,0.08)"}`,background:on?`${tc}1a`:"rgba(255,255,255,0.02)",color:on?"#fff":"rgba(255,255,255,0.5)",cursor:"pointer",fontSize:11,fontWeight:on?700:500,fontFamily:"'Outfit',sans-serif"}}>
+                        <div style={{width:3,height:11,background:tc,borderRadius:1,opacity:on?1:0.5}}/>
+                        <span style={{letterSpacing:0.5}}>{d.acronym}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Lap Times Chart */}
+              <LapTimesChart maxLap={maxLap} yMin={yMin} yMax={yMax} race={race} visibleDrivers={visibleDrivers}/>
+
+              {/* Tire Stints */}
+              <TireStrategyPanel race={race} maxLap={maxLap} allDrivers={allDrivers} visibleDrivers={visibleDrivers}/>
+
+              {/* Tire Management — degradation rates + stint pace vs compound benchmark */}
+              <TireManagementPanel race={race} allDrivers={allDrivers} maxLap={maxLap}/>
+
+              {/* Position Evolution */}
+              <PositionChartPanel maxLap={maxLap} visibleDrivers={visibleDrivers} race={race}/>
+
+              {/* Driver-vs-Driver Delta */}
+              <DeltaChartPanel allDrivers={allDrivers} maxLap={maxLap} race={race}/>
+
+              {/* Speed Trace */}
+              <SpeedTracePanel allDrivers={allDrivers}/>
+            </div>
+          );
+});
+
+// ─── Race Replay panel — owns the playback clock, scrubber and dot-hover state
+// so the 60fps animation frames re-render only this panel.
+const ReplayPanel=memo(function ReplayPanel({cur,race,tracks,allDrivers,telMeetingKey}){
+  // Race Replay state
+  const[replayTime,setReplayTime]=useState(0); // seconds into the race
+  const[replayPlaying,setReplayPlaying]=useState(false);
+  const[replaySpeed,setReplaySpeed]=useState(8); // 1x, 2x, 4x, 8x, 16x — default 8 since real time is slow
+  const[replayDotHover,setReplayDotHover]=useState(null); // {driverNumber, x, y}
+  const replayDurationRef=useRef(0); // published by the Telemetry render; the rAF clock auto-pauses here
+
+  // Race Replay clock — advances replayTime while playing, auto-pauses at race end
+  useRafClock(replayPlaying,replaySpeed,replayTime,setReplayTime,setReplayPlaying,replayDurationRef);
+
+  // Reset replay when meeting changes
+  useEffect(()=>{setReplayTime(0);setReplayPlaying(false);},[telMeetingKey]);
+
+  const trackKey=cur.meeting.meetingName;
+  // Track sampler + cumulative lap tables are static per race — memoized so the
+  // 60fps playback frames don't re-parse the SVG path or rebuild the tables.
+  const sampler=useMemo(()=>tracks?buildTrackSampler(tracks[trackKey]):null,[tracks,trackKey]);
+  // Race duration = max cumulative race time across drivers
+  const lapsByDriver=useMemo(()=>Object.fromEntries(allDrivers.map(d=>{
+    const sorted=[...(d.lapTimes||[])].sort((a,b)=>a.l-b.l);
+    let cum=0;const cumArr=[];for(const l of sorted){cum+=l.t;cumArr.push({l:l.l,cum,t:l.t});}
+    return[d.number,{cumArr,total:cum}];
+  })),[allDrivers]);
+  return (()=>{
                 const raceDuration=Math.max(1,...Object.values(lapsByDriver).map(x=>x.total));
                 replayDurationRef.current=raceDuration; // rAF clock auto-pauses here
                 const totalLaps=Math.max(1,...Object.values(lapsByDriver).map(x=>x.cumArr.length?x.cumArr[x.cumArr.length-1].l:0));
@@ -2054,10 +2270,124 @@ export default function F1Dashboard(){
                     </div>
                   </div>
                 );
-              })()}
+              })();
+});
 
-              {/* Lap Compare — pick 2 drivers + 1 lap, live-fetch /car_data + /location */}
-              {(()=>{
+// ─── Lap Compare panel — owns driver/lap selection, the on-demand OpenF1
+// telemetry fetch + cache, the playback clock and zoom/pan, so 60fps playback
+// frames and fetch-state updates re-render only this panel.
+const LapComparePanel=memo(function LapComparePanel({openf1,telMeetingKey,allDrivers,cur}){
+  // Lap Compare state — pick two drivers, click a lap, live-fetch /car_data + /location
+  const[lapCompareA,setLapCompareA]=useState(null); // acronym
+  const[lapCompareB,setLapCompareB]=useState(null);
+  const[lapCompareLap,setLapCompareLap]=useState(null);
+  const[lapCompareData,setLapCompareData]=useState({}); // cache: key `${session}-${driverNum}-${lap}` → {samples, error, loading}
+  const[lapComparePlayTime,setLapComparePlayTime]=useState(0);
+  const[lapComparePlaying,setLapComparePlaying]=useState(false);
+  const[lapCompareRetry,setLapCompareRetry]=useState(0); // bump to force effect re-fire
+  const[lapZoom,setLapZoom]=useState(1.6); // viewBox zoom multiplier
+  const[lapPan,setLapPan]=useState({x:0,y:0}); // viewBox pan in fitted-vb units
+  const lapPlayDurationRef=useRef(0); // published by the Lap Compare render
+  const lapDragRef=useRef(null);
+  const lapFetchInflight=useRef(new Set()); // cache keys with a live OpenF1 request
+  const lapCompareDataRef=useRef(lapCompareData);
+  lapCompareDataRef.current=lapCompareData; // fresh mirror so the fetch effect can read the cache without depending on it
+
+  // Lap Compare playback clock — auto-pauses at the end of the lap
+  useRafClock(lapComparePlaying,1,lapComparePlayTime,setLapComparePlayTime,setLapComparePlaying,lapPlayDurationRef);
+
+  // Reset lap compare selection when meeting changes
+  useEffect(()=>{setLapCompareLap(null);setLapComparePlaying(false);setLapComparePlayTime(0);setLapZoom(1.6);setLapPan({x:0,y:0});},[telMeetingKey]);
+  // Reset zoom/pan when lap or drivers change
+  useEffect(()=>{setLapZoom(1.6);setLapPan({x:0,y:0});},[lapCompareLap,lapCompareA,lapCompareB]);
+
+  // Auto-select a default lap (Driver A's fastest valid lap) when none is chosen.
+  // Lives in its own effect so the fetch effect below never invalidates itself by
+  // setting state it depends on — that used to abort its own in-flight fetch and
+  // strand the cache on {loading:true} forever.
+  useEffect(()=>{
+    if(!openf1||lapCompareLap)return;
+    const cur=lapCompareTarget(openf1,telMeetingKey);
+    if(!cur)return;
+    const{drA}=pickLapCompareDrivers(cur,lapCompareA,lapCompareB);
+    if(!drA)return;
+    const fastestA=(drA.lapTimes||[]).filter(l=>l.ds&&!l.pit).reduce((a,b)=>(!a||b.t<a.t)?b:a,null);
+    if(fastestA?.l)setLapCompareLap(fastestA.l);
+  },[openf1,telMeetingKey,lapCompareA,lapCompareB,lapCompareLap]);
+
+  // Fetch lap telemetry for both drivers from OpenF1. This component only mounts
+  // while the Telemetry tab is open — visitors who never open it never hit the live API.
+  useEffect(()=>{
+    if(!openf1||!lapCompareLap)return;
+    const cur=lapCompareTarget(openf1,telMeetingKey);
+    if(!cur)return;
+    const{drA,drB}=pickLapCompareDrivers(cur,lapCompareA,lapCompareB);
+    if(!drA||!drB)return;
+    const sessionKey=cur.race.sessionKey;
+    const lap=lapCompareLap;
+    const inflight=lapFetchInflight.current;
+    let cancelled=false;
+    const controllers=[];
+    const fetchDriver=async(drv)=>{
+      const key=`${sessionKey}-${drv.number}-${lap}`;
+      if(cancelled||inflight.has(key))return;
+      const cached=lapCompareDataRef.current[key];
+      if(cached&&(cached.samples||cached.error))return; // settled — only Retry clears it
+      const ltEntry=(drv.lapTimes||[]).find(l=>l.l===lap);
+      if(!ltEntry?.ds){setLapCompareData(prev=>({...prev,[key]:{loading:false,error:"No timestamp for this lap"}}));return;}
+      // sessionStorage first — laps are immutable once the session is over, so a
+      // revisit (or tab round-trip) should never re-hit the OpenF1 API.
+      try{
+        const stored=sessionStorage.getItem(`lapTel:${key}`);
+        if(stored){
+          const samples=JSON.parse(stored);
+          if(Array.isArray(samples)&&samples.length>=3){setLapCompareData(prev=>({...prev,[key]:{samples,loading:false}}));return;}
+        }
+      }catch{/* parse/quota issues — fall through to the network */}
+      inflight.add(key);
+      setLapCompareData(prev=>({...prev,[key]:{loading:true}}));
+      const controller=new AbortController();
+      controllers.push(controller);
+      const timeoutId=setTimeout(()=>controller.abort(),12000); // per-driver budget — B no longer pays for a slow A
+      try{
+        const startMs=new Date(ltEntry.ds).getTime();
+        const endMs=startMs+ltEntry.t*1000+500;
+        const startIso=new Date(startMs).toISOString();
+        const endIso=new Date(endMs).toISOString();
+        const base=`https://api.openf1.org/v1`;
+        const carRes=await fetch(`${base}/car_data?session_key=${sessionKey}&driver_number=${drv.number}&date>=${startIso}&date<=${endIso}`,{signal:controller.signal});
+        if(!carRes.ok)throw new Error(carRes.status===404?"OpenF1 has no car telemetry for this session yet — recent races can lag a few days":`car_data HTTP ${carRes.status}`);
+        const carData=await carRes.json();
+        const locRes=await fetch(`${base}/location?session_key=${sessionKey}&driver_number=${drv.number}&date>=${startIso}&date<=${endIso}`,{signal:controller.signal});
+        if(!locRes.ok)throw new Error(locRes.status===404?"OpenF1 has no location data for this session yet — recent races can lag a few days":`location HTTP ${locRes.status}`);
+        const location=await locRes.json();
+        if(!carData||carData.length===0||!location||location.length<3)throw new Error("No samples returned (lap may predate live data)");
+        const samples=processLapTelemetry(carData,location);
+        if(samples.length<3)throw new Error("Could not align speed and location samples");
+        try{sessionStorage.setItem(`lapTel:${key}`,JSON.stringify(samples));}catch{/* quota full — cache is best-effort */}
+        setLapCompareData(prev=>({...prev,[key]:{samples,loading:false}}));
+      }catch(err){
+        if(err.name==="AbortError"&&cancelled){
+          // Lap/driver changed mid-fetch — clear the pending entry so the next
+          // effect run can fetch this key fresh instead of seeing it "loading".
+          setLapCompareData(prev=>{if(!prev[key]?.loading)return prev;const n={...prev};delete n[key];return n;});
+        }else if(err.name==="AbortError"){
+          setLapCompareData(prev=>({...prev,[key]:{loading:false,error:"Timed out after 12s — OpenF1 may be slow, click Retry"}}));
+        }else{
+          setLapCompareData(prev=>({...prev,[key]:{loading:false,error:err.message||"fetch failed"}}));
+        }
+      }finally{
+        clearTimeout(timeoutId);
+        inflight.delete(key);
+      }
+    };
+    // Sequential — 4 parallel requests can trip OpenF1's free-tier rate limit
+    (async()=>{await fetchDriver(drA);if(!cancelled)await fetchDriver(drB);})();
+    return()=>{cancelled=true;controllers.forEach(c=>c.abort());};
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[openf1,telMeetingKey,lapCompareA,lapCompareB,lapCompareLap,lapCompareRetry]);
+
+  return (()=>{
                 const usable=allDrivers.filter(d=>(d.lapTimes||[]).filter(l=>l.ds).length>=3);
                 if(usable.length<2)return null;
                 // Default to top 2 finishers
@@ -2359,30 +2689,14 @@ export default function F1Dashboard(){
                     )}
                   </div>
                 );
-              })()}
+              })();
+});
 
-              {/* Driver chips */}
-              <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:16}}>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:10}}>
-                  <div style={{fontSize:12,color:"rgba(255,255,255,0.5)",fontWeight:500}}>Drivers (click to toggle · max 8)</div>
-                  <div style={{fontSize:10,color:"rgba(255,255,255,0.3)"}}>{visibleDrivers.length} selected</div>
-                </div>
-                <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
-                  {sortedByFinish.map(d=>{
-                    const on=selected.has(d.acronym);
-                    const tc=d.teamColour||"#fff";
-                    return(
-                      <button key={d.acronym} onClick={()=>toggleTel(d.acronym)} style={{display:"flex",alignItems:"center",gap:6,padding:"5px 10px",borderRadius:6,border:`1px solid ${on?tc:"rgba(255,255,255,0.08)"}`,background:on?`${tc}1a`:"rgba(255,255,255,0.02)",color:on?"#fff":"rgba(255,255,255,0.5)",cursor:"pointer",fontSize:11,fontWeight:on?700:500,fontFamily:"'Outfit',sans-serif"}}>
-                        <div style={{width:3,height:11,background:tc,borderRadius:1,opacity:on?1:0.5}}/>
-                        <span style={{letterSpacing:0.5}}>{d.acronym}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Lap Times Chart */}
-              {(()=>{
+// ─── Lap Times chart panel — owns the hover crosshair/readout state so 60Hz
+// mousemove updates re-render only this chart.
+const LapTimesChart=memo(function LapTimesChart({maxLap,yMin,yMax,race,visibleDrivers}){
+  const[telLapHover,setTelLapHover]=useState(null); // {x,lap} or null
+  return (()=>{
                 const W=800,H=280,padL=50,padR=20,padT=18,padB=34;
                 const plotW=W-padL-padR,plotH=H-padT-padB;
                 const xOf=l=>padL+((l-1)/Math.max(1,maxLap-1))*plotW;
@@ -2507,10 +2821,13 @@ export default function F1Dashboard(){
                     </div>
                   </div>
                 );
-              })()}
+              })();
+});
 
-              {/* Tire Stints */}
-              {(()=>{
+// ─── Tire Strategy panel — owns the stint-segment hover tooltip state.
+const TireStrategyPanel=memo(function TireStrategyPanel({race,maxLap,allDrivers,visibleDrivers}){
+  const[telStintHover,setTelStintHover]=useState(null); // {driverNumber, stintNumber, x, y} or null
+  return (()=>{
                 const allStints=race.stints||[];
                 if(allStints.length===0)return null;
                 const fmtLapTime=(s)=>{if(!s)return"—";const m=Math.floor(s/60);const r=(s%60).toFixed(3);return `${m}:${r.padStart(6,"0")}`;};
@@ -2624,14 +2941,24 @@ export default function F1Dashboard(){
                     })()}
                   </div>
                 );
-              })()}
+              })();
+});
 
-              {/* Tire Management — degradation rates + stint pace vs compound benchmark */}
-              {(()=>{
+// ─── Tire Management panel — one component for the degradation chart, compound
+// benchmark, heatmap and stint overlay because they all share the `analyzed`
+// stint statistics. Owns every tire-related hover/filter/selection state.
+const TireManagementPanel=memo(function TireManagementPanel({race,allDrivers,maxLap}){
+  const[tireCompound,setTireCompound]=useState(null); // selected compound key for benchmark chart
+  const[tireHover,setTireHover]=useState(null); // {key, x, y} for stint bar tooltip
+  const[stintOverlay,setStintOverlay]=useState(()=>new Set()); // stint keys "driverNumber-stintNumber"
+  const[overlayHover,setOverlayHover]=useState(null); // {lapInStint}
+  const[overlayCompoundFilter,setOverlayCompoundFilter]=useState("ALL"); // compound key or "ALL"
+  const[overlayDriverFilter,setOverlayDriverFilter]=useState("ALL"); // driverNumber or "ALL"
+  // Analyze every stint with enough data — output [{driver, stint, compound, validLaps, avg, best, slope}]
+  // Memoized: the per-stint outlier filtering + linear regression is the most
+  // expensive derivation on this tab and must not re-run on every hover.
+  const analyzed=useMemo(()=>{
                 const allStints=race.stints||[];
-                if(allStints.length===0)return null;
-                const fmtLapTime=(s)=>{if(!s)return"—";const m=Math.floor(s/60);const r=(s%60).toFixed(3);return `${m}:${r.padStart(6,"0")}`;};
-                // Analyze every stint with enough data — output [{driver, stint, compound, validLaps, avg, best, slope}]
                 const analyzed=[];
                 for(const driver of allDrivers){
                   const myStints=allStints.filter(s=>s.driverNumber===driver.number);
@@ -2659,6 +2986,12 @@ export default function F1Dashboard(){
                     });
                   }
                 }
+                return analyzed;
+  },[race,allDrivers,maxLap]);
+  return (()=>{
+                const allStints=race.stints||[];
+                if(allStints.length===0)return null;
+                const fmtLapTime=(s)=>{if(!s)return"—";const m=Math.floor(s/60);const r=(s%60).toFixed(3);return `${m}:${r.padStart(6,"0")}`;};
                 if(analyzed.length===0)return null;
                 // Compounds actually used
                 const compounds=[...new Set(analyzed.map(a=>a.compound))].filter(c=>COMPOUND_COLORS[c]);
@@ -3066,10 +3399,13 @@ export default function F1Dashboard(){
                     )}
                   </div>
                 );
-              })()}
+              })();
+});
 
-              {/* Position Evolution */}
-              {(()=>{
+// ─── Position Evolution panel — owns the hover crosshair/tooltip state.
+const PositionChartPanel=memo(function PositionChartPanel({maxLap,visibleDrivers,race}){
+  const[telPosHover,setTelPosHover]=useState(null); // {x,lap} or null
+  return (()=>{
                 const W=800,H=280,padL=44,padR=20,padT=18,padB=34;
                 const plotW=W-padL-padR,plotH=H-padT-padB;
                 const totalPositions=22;
@@ -3161,37 +3497,48 @@ export default function F1Dashboard(){
                     </div>
                   </div>
                 );
-              })()}
+              })();
+});
 
-              {/* Driver-vs-Driver Delta */}
-              {(()=>{
-                // Drivers with usable lap-time arrays
-                const usable=allDrivers.filter(d=>(d.lapTimes||[]).length>=3);
+// ─── Race Gap delta panel — owns the A/B pickers and hover crosshair; the
+// cumulative per-lap delta series is memoized so hovers skip the rebuild.
+const DeltaChartPanel=memo(function DeltaChartPanel({allDrivers,maxLap,race}){
+  const[deltaA,setDeltaA]=useState(null); // delta-line driver A (acronym)
+  const[deltaB,setDeltaB]=useState(null); // delta-line driver B (acronym)
+  const[deltaHover,setDeltaHover]=useState(null); // {lap}
+                const{usable,acrA,acrB,drA,drB,commonLaps,deltas}=useMemo(()=>{
+                  // Drivers with usable lap-time arrays
+                  const usable=allDrivers.filter(d=>(d.lapTimes||[]).length>=3);
+                  if(usable.length<2)return{usable};
+                  // Default: top-2 finishers
+                  const finalPos=(d)=>{const ps=d.positions;if(!ps||ps.length===0)return 99;return ps[ps.length-1].p;};
+                  const sortedByFinish=[...usable].sort((a,b)=>finalPos(a)-finalPos(b));
+                  const defA=sortedByFinish[0]?.acronym;
+                  const defB=sortedByFinish[1]?.acronym;
+                  const acrA=deltaA&&usable.find(d=>d.acronym===deltaA)?deltaA:defA;
+                  const acrB=deltaB&&usable.find(d=>d.acronym===deltaB)?deltaB:defB;
+                  const drA=usable.find(d=>d.acronym===acrA);
+                  const drB=usable.find(d=>d.acronym===acrB);
+                  if(!drA||!drB||drA.acronym===drB.acronym)return{usable};
+                  // Cumulative race time per lap
+                  const cumByLap=(driver)=>{
+                    const m=new Map();
+                    const sorted=[...(driver.lapTimes||[])].sort((a,b)=>a.l-b.l);
+                    let cum=0;
+                    for(const l of sorted){cum+=l.t;m.set(l.l,cum);}
+                    return m;
+                  };
+                  const cA=cumByLap(drA),cB=cumByLap(drB);
+                  const commonLaps=[];
+                  for(const lap of cA.keys()){if(cB.has(lap))commonLaps.push(lap);}
+                  commonLaps.sort((a,b)=>a-b);
+                  if(commonLaps.length<2)return{usable,acrA,acrB,drA,drB};
+                  const deltas=commonLaps.map(l=>({l,delta:cA.get(l)-cB.get(l)}));
+                  return{usable,acrA,acrB,drA,drB,commonLaps,deltas};
+                },[allDrivers,deltaA,deltaB]);
                 if(usable.length<2)return null;
-                // Default: top-2 finishers
-                const finalPos=(d)=>{const ps=d.positions;if(!ps||ps.length===0)return 99;return ps[ps.length-1].p;};
-                const sortedByFinish=[...usable].sort((a,b)=>finalPos(a)-finalPos(b));
-                const defA=sortedByFinish[0]?.acronym;
-                const defB=sortedByFinish[1]?.acronym;
-                const acrA=deltaA&&usable.find(d=>d.acronym===deltaA)?deltaA:defA;
-                const acrB=deltaB&&usable.find(d=>d.acronym===deltaB)?deltaB:defB;
-                const drA=usable.find(d=>d.acronym===acrA);
-                const drB=usable.find(d=>d.acronym===acrB);
                 if(!drA||!drB||drA.acronym===drB.acronym)return null;
-                // Cumulative race time per lap
-                const cumByLap=(driver)=>{
-                  const m=new Map();
-                  const sorted=[...(driver.lapTimes||[])].sort((a,b)=>a.l-b.l);
-                  let cum=0;
-                  for(const l of sorted){cum+=l.t;m.set(l.l,cum);}
-                  return m;
-                };
-                const cA=cumByLap(drA),cB=cumByLap(drB);
-                const commonLaps=[];
-                for(const lap of cA.keys()){if(cB.has(lap))commonLaps.push(lap);}
-                commonLaps.sort((a,b)=>a-b);
-                if(commonLaps.length<2)return null;
-                const deltas=commonLaps.map(l=>({l,delta:cA.get(l)-cB.get(l)}));
+                if(!deltas||deltas.length<2)return null;
                 const yMin=Math.min(...deltas.map(p=>p.delta));
                 const yMax=Math.max(...deltas.map(p=>p.delta));
                 const yPad=Math.max(2,(yMax-yMin)*0.15);
@@ -3284,15 +3631,30 @@ export default function F1Dashboard(){
                     </div>
                   </div>
                 );
-              })()}
+});
 
-              {/* Speed Trace */}
-              {(()=>{
-                const traceable=allDrivers.filter(d=>d.fastLapTrace&&d.fastLapTrace.trace&&d.fastLapTrace.trace.length>0);
-                if(traceable.length===0)return null;
-                const defaultSel=new Set(traceable.slice(0,2).map(d=>d.acronym));
+// ─── Speed Trace panel — owns its driver picks and hover crosshair so 60Hz
+// mousemove updates re-render only this panel.
+const SpeedTracePanel=memo(function SpeedTracePanel({allDrivers}){
+  const[telTraceSel,setTelTraceSel]=useState(()=>new Set()); // acronyms selected for speed trace
+  const[telTraceHover,setTelTraceHover]=useState(null); // {dist} or null
+                const traceable=useMemo(()=>allDrivers.filter(d=>d.fastLapTrace&&d.fastLapTrace.trace&&d.fastLapTrace.trace.length>0),[allDrivers]);
+                const defaultSel=useMemo(()=>new Set(traceable.slice(0,2).map(d=>d.acronym)),[traceable]);
                 const selected=telTraceSel.size>0?telTraceSel:defaultSel;
-                const visible=traceable.filter(d=>selected.has(d.acronym));
+                const visible=useMemo(()=>traceable.filter(d=>selected.has(d.acronym)),[traceable,selected]);
+                // Normalize each driver's trace to 0-1 percent of lap (raw distance
+                // units from OpenF1 location aren't meters and vary slightly per
+                // driver due to racing line). Percent-of-lap makes comparison
+                // unitless and aligns the lines for visual comparison.
+                const normalized=useMemo(()=>visible.map(d=>{
+                  const t=d.fastLapTrace.trace;
+                  const dMax=Math.max(1,...t.map(p=>p.d));
+                  return{
+                    driver:d,
+                    points:t.map(p=>({pct:p.d/dMax,s:p.s})),
+                  };
+                }),[visible]);
+                if(traceable.length===0)return null;
                 const toggle=(acr)=>{
                   setTelTraceSel(prev=>{
                     const cur=prev.size>0?new Set(prev):new Set(defaultSel);
@@ -3301,18 +3663,6 @@ export default function F1Dashboard(){
                     return cur;
                   });
                 };
-                // Normalize each driver's trace to 0-1 percent of lap (raw distance
-                // units from OpenF1 location aren't meters and vary slightly per
-                // driver due to racing line). Percent-of-lap makes comparison
-                // unitless and aligns the lines for visual comparison.
-                const normalized=visible.map(d=>{
-                  const t=d.fastLapTrace.trace;
-                  const dMax=Math.max(1,...t.map(p=>p.d));
-                  return{
-                    driver:d,
-                    points:t.map(p=>({pct:p.d/dMax,s:p.s})),
-                  };
-                });
                 const allSpeed=normalized.flatMap(n=>n.points.map(p=>p.s));
                 const maxSpeed=Math.max(10,...allSpeed)*1.05;
                 const minSpeed=Math.min(30,...allSpeed)*0.92;
@@ -3406,281 +3756,4 @@ export default function F1Dashboard(){
                     </div>
                   </div>
                 );
-              })()}
-            </div>
-          );
-        })()}
-
-        {/* ═══ HEAD TO HEAD ═══ */}
-        {tab==="Head to Head"&&(
-          <div className="fu" style={{display:"flex",flexDirection:"column",gap:24}}>
-            {/* Metric Toggle */}
-            <div style={{display:"flex",alignItems:"center",gap:14,flexWrap:"wrap"}}>
-              <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:"rgba(255,255,255,0.4)"}}>Compare by</div>
-              <div style={{display:"flex",gap:4}}>
-                {[{id:"qual",label:"Qualifying Position"},{id:"race",label:"Average Finish"},{id:"pts",label:"Points Scored"}].map(m=>(
-                  <button key={m.id} onClick={()=>setH2hMetric(m.id)} style={{cursor:"pointer",padding:"8px 16px",borderRadius:6,border:h2hMetric===m.id?"1px solid rgba(232,0,32,0.4)":"1px solid rgba(255,255,255,0.08)",background:h2hMetric===m.id?"rgba(232,0,32,0.12)":"rgba(255,255,255,0.03)",color:h2hMetric===m.id?"#E80020":"rgba(255,255,255,0.5)",fontSize:12,fontWeight:h2hMetric===m.id?600:400,fontFamily:"'Outfit',sans-serif",transition:"all .2s"}}>{m.label}</button>
-                ))}
-              </div>
-            </div>
-
-            {/* Team Battles */}
-            <div style={{display:"flex",flexDirection:"column",gap:16}}>
-              {h2h.map(battle=>{
-                const tc=TC[battle.team]||"#555";
-                const d1Last=battle.d1.n.split(" ").pop();
-                const d2Last=battle.d2.n.split(" ").pop();
-
-                // Compute bar values based on selected metric
-                let d1Val,d2Val,d1Label,d2Label,metricNote;
-                if(h2hMetric==="qual"){
-                  d1Val=battle.qual.d1;d2Val=battle.qual.d2;
-                  d1Label=`${battle.qual.d1} win${battle.qual.d1!==1?"s":""}`;
-                  d2Label=`${battle.qual.d2} win${battle.qual.d2!==1?"s":""}`;
-                  metricNote="Qualifying head-to-head (better grid slot wins)";
-                }else if(h2hMetric==="race"){
-                  // Lower avg position = bigger bar. 21−avg keeps backmarkers positive
-                  // (10−avg went negative past P10 and inverted the bars).
-                  d1Val=battle.avgPos.d1?Math.max(0.5,21-battle.avgPos.d1):0;d2Val=battle.avgPos.d2?Math.max(0.5,21-battle.avgPos.d2):0;
-                  d1Label=battle.avgPos.d1?`P${battle.avgPos.d1} avg`:"No data";
-                  d2Label=battle.avgPos.d2?`P${battle.avgPos.d2} avg`:"No data";
-                  metricNote="Average race finishing position";
-                }else{
-                  d1Val=battle.d1.pts;d2Val=battle.d2.pts;
-                  d1Label=`${battle.d1.pts} pts`;d2Label=`${battle.d2.pts} pts`;
-                  metricNote="Championship points scored";
-                }
-                const total=d1Val+d2Val;
-                const d1Pct=total>0?(d1Val/total)*100:50;
-                const d2Pct=total>0?(d2Val/total)*100:50;
-                const d1Leads=d1Val>d2Val;
-                const d2Leads=d2Val>d1Val;
-                const tied=d1Val===d2Val;
-
-                return(
-                  <div key={battle.team} style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20,overflow:"hidden"}}>
-                    {/* Team Header */}
-                    <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16}}>
-                      <TL team={battle.team} size={28}/>
-                      <div style={{width:3,height:22,borderRadius:2,background:tc,opacity:.8}}/>
-                      <span style={{fontSize:16,fontWeight:700}}>{battle.team}</span>
-                      <span style={{fontSize:11,color:"rgba(255,255,255,0.3)",marginLeft:"auto"}}>{metricNote}</span>
-                    </div>
-
-                    {/* Driver vs Driver */}
-                    <div style={{display:"flex",alignItems:"center",gap:16,marginBottom:12}}>
-                      {/* Driver 1 */}
-                      <div style={{flex:1,textAlign:"right"}}>
-                        <div style={{display:"flex",alignItems:"center",justifyContent:"flex-end",gap:8,marginBottom:6}}>
-                          <div>
-                            <div style={{fontSize:15,fontWeight:700,color:d1Leads?"#fff":"rgba(255,255,255,0.5)"}}>{d1Last}</div>
-                            <div style={{fontSize:20,fontWeight:800,color:d1Leads?tc:"rgba(255,255,255,0.4)"}}>{d1Label}</div>
-                          </div>
-                          <DH name={battle.d1.n} size={44} headshots={headshots}/>
-                        </div>
-                      </div>
-
-                      {/* VS badge */}
-                      <div style={{flexShrink:0,width:40,height:40,borderRadius:"50%",background:"rgba(255,255,255,0.06)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:800,color:"rgba(255,255,255,0.3)"}}>VS</div>
-
-                      {/* Driver 2 */}
-                      <div style={{flex:1}}>
-                        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
-                          <DH name={battle.d2.n} size={44} headshots={headshots}/>
-                          <div>
-                            <div style={{fontSize:15,fontWeight:700,color:d2Leads?"#fff":"rgba(255,255,255,0.5)"}}>{d2Last}</div>
-                            <div style={{fontSize:20,fontWeight:800,color:d2Leads?tc:"rgba(255,255,255,0.4)"}}>{d2Label}</div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Battle Bar */}
-                    <div style={{display:"flex",height:8,borderRadius:4,overflow:"hidden",background:"rgba(255,255,255,0.04)"}}>
-                      <div style={{width:`${d1Pct}%`,background:d1Leads?tc:"rgba(255,255,255,0.15)",borderRadius:"4px 0 0 4px",transition:"width .8s cubic-bezier(0.22,1,0.36,1)"}}/>
-                      <div style={{width:2,background:"#0a0a0f",flexShrink:0}}/>
-                      <div style={{width:`${d2Pct}%`,background:d2Leads?tc:"rgba(255,255,255,0.15)",borderRadius:"0 4px 4px 0",transition:"width .8s cubic-bezier(0.22,1,0.36,1)"}}/>
-                    </div>
-
-                    {/* Per-race detail row (Qualifying / Race) */}
-                    {h2hMetric!=="pts"&&(
-                      <div style={{marginTop:14,display:"flex",gap:6,flexWrap:"wrap"}}>
-                        {(h2hMetric==="qual"?battle.qual.details:battle.race.details).map((rd,i)=>{
-                          const d1Won=typeof rd.d1==="number"&&typeof rd.d2==="number"?rd.d1<rd.d2:false;
-                          const d2Won=typeof rd.d1==="number"&&typeof rd.d2==="number"?rd.d2<rd.d1:false;
-                          return(
-                            <div key={i} style={{background:"rgba(255,255,255,0.03)",borderRadius:6,padding:"6px 10px",fontSize:11,border:"1px solid rgba(255,255,255,0.04)",minWidth:80}}>
-                              <div style={{color:"rgba(255,255,255,0.35)",marginBottom:3,fontSize:10}}>{rd.race}</div>
-                              <div style={{display:"flex",justifyContent:"space-between",gap:8}}>
-                                <span style={{fontWeight:d1Won?700:400,color:d1Won?tc:"rgba(255,255,255,0.4)"}}>P{rd.d1}</span>
-                                <span style={{color:"rgba(255,255,255,0.15)"}}>—</span>
-                                <span style={{fontWeight:d2Won?700:400,color:d2Won?tc:"rgba(255,255,255,0.4)"}}>P{rd.d2}</span>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* ═══ PIT STOPS ═══ */}
-        {tab==="Pit Stops"&&(
-          <div className="fu" style={{display:"flex",flexDirection:"column",gap:24}}>
-            <div style={{display:"flex",gap:16,flexWrap:"wrap"}}>
-              <SC label="Fastest Pit Stop" value={fastestPit?`${fastestPit.s.toFixed(3)}s`:"N/A"} sub={fastestPit?`${fastestPit.d} · Lap ${fastestPit.l}`:""} accent="#FFD700" icon={fastestPit&&fastestPit.t?<TL team={fastestPit.t} size={24}/>:null}/>
-              <SC label="Avg Pit Stop" value={`${avgP}s`} sub={`${pits.length} stops · ${pitRaceName}`} accent="#27F4D2"/>
-              <SC label="Slowest Pit Stop" value={pits.length>0?`${pits[pits.length-1].s.toFixed(3)}s`:"N/A"} sub={pits.length>0?`${pits[pits.length-1].d} · Lap ${pits[pits.length-1].l}`:""} accent="#E80020" icon={pits.length>0&&pits[pits.length-1].t?<TL team={pits[pits.length-1].t} size={24}/>:null}/>
-            </div>
-            <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20}}>
-              <div style={{fontSize:15,fontWeight:700,marginBottom:4}}>{pitRaceName + " — Pit Stop Times"}</div>
-              <div style={{fontSize:12,color:"rgba(255,255,255,0.35)",marginBottom:20}}>Sorted by duration</div>
-              <div style={{display:"flex",flexDirection:"column",gap:5}}>
-                {pits.filter(d=>d.s<30).map((d,i)=>(
-                  <div key={i} style={{display:"flex",alignItems:"center",gap:8}}>
-                    <TL team={d.t} size={22}/>
-                    <div style={{width:80,fontSize:12,color:"rgba(255,255,255,0.7)",textAlign:"right",flexShrink:0}}>{d.d}</div>
-                    <div style={{flex:1,height:22,background:"rgba(255,255,255,0.04)",borderRadius:4,overflow:"hidden",position:"relative"}}>
-                      <div style={{height:"100%",width:`${(d.s/28)*100}%`,background:TC[d.t]||"#555",borderRadius:4,transition:"width 1s cubic-bezier(0.22,1,0.36,1)",transitionDelay:`${i*50}ms`,opacity:.8}}/>
-                      <div style={{position:"absolute",right:8,top:"50%",transform:"translateY(-50%)",fontSize:11,color:"rgba(255,255,255,0.6)",fontVariantNumeric:"tabular-nums"}}>{d.s.toFixed(3)}s</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20}}>
-              <div style={{fontSize:15,fontWeight:700,marginBottom:16}}>{"Full Pit Stop Summary — " + pitRaceName}</div>
-              <div style={{overflowX:"auto",WebkitOverflowScrolling:"touch"}}><table style={{width:"100%",borderCollapse:"collapse",minWidth:600,fontSize:13}}>
-                <thead><tr style={{borderBottom:"1px solid rgba(255,255,255,0.08)"}}>
-                  {["#","Driver","Team","Lap","Duration"].map(h=><th key={h} style={{textAlign:"left",padding:"8px 12px",fontSize:11,textTransform:"uppercase",letterSpacing:1,color:"rgba(255,255,255,0.35)",fontWeight:500}}>{h}</th>)}
-                </tr></thead>
-                <tbody>
-                  {pits.map((d,i)=>(
-                    <tr key={i} style={{borderBottom:"1px solid rgba(255,255,255,0.04)"}}>
-                      <td style={{padding:"10px 12px",color:"rgba(255,255,255,0.4)",fontWeight:600}}>{i+1}</td>
-                      <td style={{padding:"10px 12px"}}><div style={{display:"flex",alignItems:"center",gap:8}}><TL team={d.t} size={24}/><div style={{width:3,height:16,borderRadius:2,background:TC[d.t]}}/><span style={{fontWeight:600}}>{d.d}</span></div></td>
-                      <td style={{padding:"10px 12px"}}><div style={{display:"flex",alignItems:"center",gap:6,color:"rgba(255,255,255,0.5)"}}><TL team={d.t} size={16}/>{d.t}</div></td>
-                      <td style={{padding:"10px 12px",fontVariantNumeric:"tabular-nums"}}>{d.l}</td>
-                      <td style={{padding:"10px 12px",fontWeight:700,fontVariantNumeric:"tabular-nums",color:d.s<23?"#27F4D2":d.s>26?"#E80020":"#fff"}}>{d.s.toFixed(3)}s</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table></div>
-            </div>
-          </div>
-        )}
-
-        {/* ═══ QUOTES ═══ */}
-        {tab==="Quotes"&&(
-          <div className="fu" style={{display:"flex",flexDirection:"column",gap:24}}>
-            {!quotes||!quotes.rounds||quotes.rounds.length===0?(
-              <div style={{textAlign:"center",padding:60,color:"rgba(255,255,255,0.4)"}}>
-                <div style={{fontSize:40,marginBottom:12}}>💬</div>
-                <div style={{fontSize:16,fontWeight:600,marginBottom:4}}>No driver quotes available yet</div>
-                <div style={{fontSize:13}}>Quotes are extracted from official F1 YouTube post-session videos</div>
-              </div>
-            ):(()=>{
-              const SESSION_ORDER=["race","sprint","qualifying","sprintQualifying"];
-              const SESSION_LABELS={race:"Race",sprint:"Sprint",qualifying:"Qualifying",sprintQualifying:"Sprint Quali"};
-              const availableSessions=SESSION_ORDER.filter(s=>quotes.rounds.some(r=>(r.sessions?.[s]?.quotes||[]).length>0));
-              const activeSession=availableSessions.includes(quotesSession)?quotesSession:(availableSessions[0]||"race");
-              return(
-              <>
-                <div style={{display:"flex",gap:12,flexWrap:"wrap"}}>
-                  <SC label="Rounds with Quotes" value={String(quotes.rounds.length)} sub={quotes.rounds.map(r=>r.raceName.replace(" Grand Prix","")).join(" · ")} accent="#E80020"/>
-                  <SC label="Total Quotes" value={String(quotes.rounds.reduce((sum,r)=>sum+Object.values(r.sessions||{}).reduce((s2,sess)=>s2+(sess.quotes||[]).length,0),0))} sub={"Across "+availableSessions.map(s=>SESSION_LABELS[s].toLowerCase()).join(", ")} accent="#27F4D2"/>
-                </div>
-                <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-                  {availableSessions.map(s=>(
-                    <button key={s} onClick={()=>setQuotesSession(s)} style={{padding:"8px 20px",borderRadius:8,border:"1px solid "+(activeSession===s?"#E80020":"rgba(255,255,255,0.08)"),background:activeSession===s?"rgba(232,0,32,0.15)":"rgba(255,255,255,0.02)",color:activeSession===s?"#fff":"rgba(255,255,255,0.5)",cursor:"pointer",fontSize:13,fontWeight:600,fontFamily:"'Outfit',sans-serif"}}>{SESSION_LABELS[s]}</button>
-                  ))}
-                </div>
-                {[...quotes.rounds].reverse().map(round=>{
-                  const sess=round.sessions?.[activeSession];
-                  const roundQuotes=sess?.quotes||[];
-                  if(roundQuotes.length===0)return null;
-                  return(
-                    <div key={round.round} style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20}}>
-                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-                        <div>
-                          <div style={{fontSize:15,fontWeight:700}}>{round.raceName}</div>
-                          <div style={{fontSize:11,color:"rgba(255,255,255,0.35)",marginTop:2}}>Round {round.round} · Post-{SESSION_LABELS[activeSession].toLowerCase()} reactions</div>
-                        </div>
-                        <div style={{fontSize:11,color:"rgba(255,255,255,0.25)"}}>{roundQuotes.length} quotes</div>
-                      </div>
-                      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(320px,1fr))",gap:12}}>
-                        {roundQuotes.map((q,i)=>(
-                          <div key={i} style={{background:`linear-gradient(135deg,${TC[q.team]||"#555"}11,rgba(255,255,255,0.02))`,border:`1px solid ${TC[q.team]||"rgba(255,255,255,0.06)"}33`,borderRadius:10,padding:16,display:"flex",gap:12}}>
-                            <div style={{flexShrink:0}}>
-                              <DH name={q.driver} size={40} headshots={headshots}/>
-                            </div>
-                            <div style={{flex:1,minWidth:0}}>
-                              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
-                                <span style={{fontSize:13,fontWeight:700}}>{q.driver}</span>
-                                <div style={{width:3,height:12,borderRadius:2,background:TC[q.team]||"#555",opacity:.7}}/>
-                                <span style={{fontSize:11,color:"rgba(255,255,255,0.4)"}}>{q.team}</span>
-                              </div>
-                              <div style={{fontSize:12,color:"rgba(255,255,255,0.8)",lineHeight:1.6,fontStyle:"italic"}}>"{q.quote}"</div>
-                              {q.context&&<div style={{fontSize:10,color:"rgba(255,255,255,0.3)",marginTop:6,textTransform:"uppercase",letterSpacing:.5}}>{q.context}</div>}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })}
-              </>
-              );
-            })()}
-          </div>
-        )}
-
-        {/* ═══ SCHEDULE ═══ */}
-        {tab==="Schedule"&&(
-          <div className="fu" style={{display:"flex",flexDirection:"column",gap:24}}>
-            <div style={{display:"flex",gap:16,flexWrap:"wrap"}}>
-              <SC label="Total Races" value={String(totalRounds)} sub="2 postponed (Bahrain, Saudi)" accent="#fff"/>
-              <SC label="Races Completed" value={String(completedRounds)} sub={sched.filter(r=>r.st==="done").map(r=>r.nm.replace(" Grand Prix","")).join(" · ")||"None yet"} accent="#27F4D2"/>
-              <SC label="Sprint Weekends" value={String(sched.filter(r=>r.sp).length)} sub={sched.filter(r=>r.sp).map(r=>r.fc).join(" · ")} accent="#E80020"/>
-              <SC label="Season Finale" value={sched.length>0?sched[sched.length-1].nm.replace(" Grand Prix",""):"TBD"} sub={sched.length>0?raceDateFmt(sched[sched.length-1].dt,sched[sched.length-1].tt):""} accent="#FFD700"/>
-            </div>
-            <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20}}>
-              <div style={{fontSize:15,fontWeight:700,marginBottom:4}}>{SEASON} Race Calendar</div>
-              <div style={{fontSize:12,color:"rgba(255,255,255,0.35)",marginBottom:20}}>{sched.length} races · {sched.filter(r=>r.sp).length} Sprint weekends</div>
-              {sched.map(race=>{
-                return(
-                <div key={race.r} className="sr" style={{background:race.st==="next"?"rgba(232,0,32,0.08)":race.st==="postponed"?"rgba(255,165,0,0.04)":"transparent",border:race.st==="next"?"1px solid rgba(232,0,32,0.2)":"1px solid transparent"}}>
-                  <div style={{width:36,fontSize:13,fontWeight:700,color:race.st==="done"?"#27F4D2":race.st==="next"?"#E80020":"rgba(255,255,255,0.3)",flexShrink:0}}>R{race.r}</div>
-                  {race.fc && <div style={{width:36,height:24,borderRadius:3,flexShrink:0,marginRight:10,background:"rgba(255,255,255,0.06)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700,color:"rgba(255,255,255,0.4)",letterSpacing:.5,opacity:race.st==="postponed"?0.4:1}}>{race.fc}</div>}
-                  {tracks&&tracks[race.nm]&&(
-                    <div style={{width:44,height:32,marginRight:12,flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",opacity:race.st==="postponed"?0.3:0.75}}>
-                      <TrackMap raceName={race.nm} tracks={tracks} stroke={race.st==="next"?"#E80020":race.st==="done"?"#27F4D2":"rgba(255,255,255,0.55)"} strokeWidth={1.8} height={32} width={44}/>
-                    </div>
-                  )}
-                  <div style={{flex:1,minWidth:0}}>
-                    <div style={{display:"flex",alignItems:"center",gap:8}}>
-                      <span style={{fontSize:14,fontWeight:600,color:race.st==="postponed"?"rgba(255,255,255,0.4)":"#fff"}}>{race.nm}</span>
-                      {race.sp&&<span style={{fontSize:9,fontWeight:700,letterSpacing:.5,padding:"2px 6px",borderRadius:3,background:"rgba(232,0,32,0.15)",color:"#E80020"}}>SPRINT</span>}
-                    </div>
-                    <div style={{fontSize:11,color:"rgba(255,255,255,0.35)",marginTop:2}}>{race.ci}</div>
-                  </div>
-                  <div style={{fontSize:12,color:"rgba(255,255,255,0.5)",marginRight:16,fontVariantNumeric:"tabular-nums",flexShrink:0,textAlign:"right",width:105}}>
-                    <div>{raceDateFmt(race.dt,race.tt)}</div>
-                    {race.tt&&<div style={{fontSize:10,color:"rgba(255,255,255,0.3)",marginTop:1}}>{raceTimeFmt(race.dt,race.tt)}</div>}
-                  </div>
-                  <div style={{width:95,flexShrink:0,display:"flex",justifyContent:"flex-end"}}><SB status={race.st}/></div>
-                  {race.w&&<div style={{marginLeft:12,fontSize:12,color:"#27F4D2",fontWeight:600,flexShrink:0}}>🏆 {race.w}</div>}
-                </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
+});
