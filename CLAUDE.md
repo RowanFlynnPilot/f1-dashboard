@@ -16,7 +16,8 @@ f1-dashboard/
 │   ├── fetch-f1-data.mjs           ← Jolpica API → public/data.json
 │   ├── fetch-openf1-data.mjs       ← OpenF1 API → public/openf1/ (split layout)
 │   ├── fetch-driver-quotes.py      ← YouTube + Claude API → public/driver-quotes.json
-│   └── fetch-tracks.mjs            ← Circuit GeoJSON → public/tracks.json (manual, not in CI)
+│   ├── fetch-tracks.mjs            ← Circuit GeoJSON → public/tracks.json (manual, not in CI)
+│   └── validate-data.mjs           ← CI gate: fails the deploy if fetched data is malformed or shrank vs HEAD
 ├── src/
 │   ├── main.jsx                    ← React entry point
 │   └── App.jsx                     ← ~3600 lines, ALL tabs and components in one file
@@ -53,11 +54,12 @@ f1-dashboard/
 - Provides: sector times, speed traps (I1/I2/ST), stint/tire data, driver info (headshot URLs, team colours, acronyms)
 - Fetched by: `scripts/fetch-openf1-data.mjs`
 - Output: `public/openf1/index.json` + `public/openf1/meetings/{meetingKey}.json` (the legacy single-file `public/openf1-data.json` is removed by the script; the app still falls back to reading it for old checkouts)
+- **Incremental**: meetings older than 8 days are served from the previous output (past weekends are immutable); only new/recent meetings are refetched. Cached sessions also backfill any session a flaky refetch drops, and an empty `/meetings` response aborts instead of wiping good data.
 - Key endpoints: `/meetings`, `/sessions`, `/drivers`, `/laps`, `/stints`
 
 ### YouTube + Claude API (driver quotes)
 - Uses `youtube-transcript-api` Python library to pull auto-generated captions
-- Sends transcript to Claude Sonnet to extract per-driver quotes with attribution
+- Sends transcript to Claude Sonnet (`claude-sonnet-4-6`, temperature 0, structured outputs via `output_config.format` json_schema) to extract per-driver quotes with attribution
 - Requires `ANTHROPIC_API_KEY` environment variable / GitHub secret
 - Fetched by: `scripts/fetch-driver-quotes.py`
 - Output: `public/driver-quotes.json`
@@ -197,12 +199,13 @@ The workflow runs on:
 - Manual trigger (`workflow_dispatch`)
 
 Steps:
-1. Checkout → Setup Node 20 → `npm ci`
-2. Fetch Jolpica data
-3. Fetch OpenF1 data
+1. Checkout → Setup Node 20 (npm cache) → `npm ci`
+2. Fetch Jolpica data (retry/backoff on 429/5xx; only 404 means "no data")
+3. Fetch OpenF1 data (incremental — see above)
 4. Setup Python 3.12 → `pip install youtube-transcript-api` → fetch driver quotes (only if `ANTHROPIC_API_KEY` secret exists, `continue-on-error: true`)
-5. `npm run build`
-6. Deploy to GitHub Pages
+5. `node scripts/validate-data.mjs` — hard-fails the deploy if data is malformed or shrank vs the committed baseline (a failed build keeps the previous deploy live)
+6. `npm run build`
+7. Deploy to GitHub Pages
 
 ### Required secrets
 - `ANTHROPIC_API_KEY` — For driver quotes extraction (optional — quotes step is skipped if not set)

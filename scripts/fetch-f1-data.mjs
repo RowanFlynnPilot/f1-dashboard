@@ -12,11 +12,37 @@
 const SEASON = 2026;
 const BASE = "https://api.jolpi.ca/ergast/f1";
 
-async function fetchJSON(url) {
+// Fetch with retry/backoff: 429 and 5xx are retried (honoring Retry-After),
+// network errors/timeouts are retried, other HTTP errors throw with .status
+// attached so callers can distinguish 404-means-empty from real failures.
+async function fetchJSON(url, retries = 3) {
   console.log(`  Fetching: ${url}`);
-  const res = await fetch(url, { signal: AbortSignal.timeout(15000) });
-  if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
-  return res.json();
+  for (let attempt = 0; ; attempt++) {
+    try {
+      const res = await fetch(url, { signal: AbortSignal.timeout(15000) });
+      if ((res.status === 429 || res.status >= 500) && attempt < retries) {
+        const ra = parseInt(res.headers.get("retry-after") || "0", 10);
+        const wait = Math.max(ra * 1000, 2000 * 2 ** attempt);
+        console.log(`      ⏳ HTTP ${res.status}, retrying in ${wait / 1000}s... (${retries - attempt} left)`);
+        await sleep(wait);
+        continue;
+      }
+      if (!res.ok) {
+        const err = new Error(`HTTP ${res.status} for ${url}`);
+        err.status = res.status;
+        throw err;
+      }
+      return res.json();
+    } catch (e) {
+      if (e.status) throw e; // HTTP error already classified above
+      if (attempt < retries) {
+        console.log(`      ⏳ ${e.message || e.name}, retrying in ${(2000 * 2 ** attempt) / 1000}s...`);
+        await sleep(2000 * 2 ** attempt);
+        continue;
+      }
+      throw e;
+    }
+  }
 }
 
 function sleep(ms) {
@@ -46,13 +72,17 @@ async function getRaceResults(round) {
   return races.length > 0 ? races[0] : null;
 }
 
+// For the optional per-round endpoints, only a 404 means "no data for this
+// round" — any other failure should abort the run (a rate-limit mid-loop used
+// to silently ship a deploy missing sprint/pit/qualifying data).
 async function getSprintResults(round) {
   try {
     const data = await fetchJSON(`${BASE}/${SEASON}/${round}/sprint.json`);
     const races = data.MRData.RaceTable.Races;
     return races.length > 0 ? races[0] : null;
-  } catch {
-    return null; // Not all rounds have sprints
+  } catch (e) {
+    if (e.status === 404) return null; // Not all rounds have sprints
+    throw e;
   }
 }
 
@@ -62,8 +92,9 @@ async function getPitStops(round) {
     const data = await fetchJSON(`${BASE}/${SEASON}/${round}/pitstops.json?limit=200`);
     const races = data.MRData.RaceTable.Races;
     return races.length > 0 ? races[0].PitStops : [];
-  } catch {
-    return [];
+  } catch (e) {
+    if (e.status === 404) return [];
+    throw e;
   }
 }
 
@@ -72,8 +103,9 @@ async function getQualifying(round) {
     const data = await fetchJSON(`${BASE}/${SEASON}/${round}/qualifying.json`);
     const races = data.MRData.RaceTable.Races;
     return races.length > 0 ? races[0].QualifyingResults : [];
-  } catch {
-    return [];
+  } catch (e) {
+    if (e.status === 404) return [];
+    throw e;
   }
 }
 

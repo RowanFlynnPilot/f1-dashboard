@@ -358,17 +358,33 @@ function computeSessionBests(driverStats) {
 async function main() {
   console.log(`\n🏎️  Fetching OpenF1 sector/speed data for ${SEASON}...\n`);
 
+  const fs = await import("fs");
+  const path = await import("path");
+  const outDir = path.join(process.cwd(), "public", "openf1");
+  const meetingsDir = path.join(outDir, "meetings");
+
+  // Previous output seeds an incremental run: past race weekends are immutable,
+  // so finished meetings are served from cache and only new/recent ones are
+  // refetched. This also means a transient API failure can never silently drop
+  // data that previously shipped.
+  let prevIndex = null;
+  try { prevIndex = JSON.parse(fs.readFileSync(path.join(outDir, "index.json"), "utf8")); } catch { /* first run */ }
+  const readCachedMeeting = (key) => {
+    try { return JSON.parse(fs.readFileSync(path.join(meetingsDir, `${key}.json`), "utf8")); } catch { return null; }
+  };
+
   // 1. Get all meetings
   console.log("📅 Fetching meetings...");
   const meetings = await getMeetings();
 
   if (!meetings || meetings.length === 0) {
+    if (prevIndex && (prevIndex.meetings || []).length > 0) {
+      // An API glitch must not wipe the deployed season — fail the build instead
+      throw new Error("OpenF1 /meetings returned empty but previous data exists — refusing to overwrite");
+    }
     console.log("   ⚠️  No meetings found for this season yet.");
     console.log("   Writing empty index...\n");
-    const fs = await import("fs");
-    const path = await import("path");
-    const outDir = path.join(process.cwd(), "public", "openf1");
-    fs.mkdirSync(path.join(outDir, "meetings"), { recursive: true });
+    fs.mkdirSync(meetingsDir, { recursive: true });
     fs.writeFileSync(path.join(outDir, "index.json"), JSON.stringify({
       season: SEASON,
       fetchedAt: new Date().toISOString(),
@@ -384,13 +400,24 @@ async function main() {
 
   const now = new Date();
   const allMeetingData = [];
-  const headshotMap = {}; // fullName -> { url, number, acronym, team }
+  // Seed headshots from the previous run — cached meetings skip driver fetches
+  const headshotMap = { ...(prevIndex?.driverHeadshots || {}) }; // fullName -> { url, number, acronym, team }
+  // Meetings that started more than this long ago are final — serve from cache
+  const FRESH_WINDOW_MS = 8 * 24 * 3600 * 1000;
 
   for (const meeting of meetings) {
     const meetingStart = new Date(meeting.date_start);
     // Skip future meetings
     if (meetingStart > now) {
       console.log(`⏭️  Skipping future meeting: ${meeting.meeting_name}`);
+      continue;
+    }
+
+    const cached = readCachedMeeting(meeting.meeting_key);
+    const isRecent = now - meetingStart < FRESH_WINDOW_MS;
+    if (cached && !isRecent) {
+      console.log(`📦 Cached (final): ${meeting.meeting_name}`);
+      allMeetingData.push(cached);
       continue;
     }
 
@@ -581,7 +608,17 @@ async function main() {
       }
     }
 
-    if (meetingSessions.length > 0) {
+    // Merge with cache: fresh sessions win; cached sessions fill any gaps left
+    // by transient per-session fetch failures, so a flaky run can't drop a
+    // session that previously shipped.
+    let sessionsOut = meetingSessions;
+    if (cached?.sessions?.length) {
+      const have = new Set(meetingSessions.map(s => s.sessionKey));
+      const fill = cached.sessions.filter(s => !have.has(s.sessionKey));
+      if (fill.length > 0) console.log(`   📦 Restored ${fill.length} session(s) from cache`);
+      sessionsOut = [...meetingSessions, ...fill].sort((a, b) => new Date(a.dateStart) - new Date(b.dateStart));
+    }
+    if (sessionsOut.length > 0) {
       allMeetingData.push({
         meetingKey: meeting.meeting_key,
         meetingName: meeting.meeting_name,
@@ -591,7 +628,7 @@ async function main() {
         circuitName: meeting.circuit_short_name,
         dateStart: meeting.date_start,
         year: meeting.year,
-        sessions: meetingSessions,
+        sessions: sessionsOut,
       });
     }
   }
@@ -600,10 +637,6 @@ async function main() {
   // single-file payload, and the browser had to download all of it up front):
   //   public/openf1/index.json            light meeting/session metadata + headshots (fetched on page load)
   //   public/openf1/meetings/{key}.json   full per-meeting data (lazy-loaded when a tab needs it)
-  const fs = await import("fs");
-  const path = await import("path");
-  const outDir = path.join(process.cwd(), "public", "openf1");
-  const meetingsDir = path.join(outDir, "meetings");
   fs.mkdirSync(meetingsDir, { recursive: true });
 
   let meetingBytes = 0;
@@ -640,6 +673,12 @@ async function main() {
   };
   const indexJson = JSON.stringify(index);
   fs.writeFileSync(path.join(outDir, "index.json"), indexJson);
+
+  // Remove meeting files no longer referenced by the index (season rollover etc.)
+  const valid = new Set(allMeetingData.map(m => String(m.meetingKey)));
+  for (const f of fs.readdirSync(meetingsDir)) {
+    if (f.endsWith(".json") && !valid.has(f.replace(/\.json$/, ""))) fs.unlinkSync(path.join(meetingsDir, f));
+  }
 
   // Drop the legacy single-file payload if it's still around
   const legacyPath = path.join(process.cwd(), "public", "openf1-data.json");

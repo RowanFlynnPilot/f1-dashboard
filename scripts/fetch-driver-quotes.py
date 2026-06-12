@@ -106,6 +106,30 @@ Here is the transcript:
 
 {transcript}"""
 
+# Structured-output schema matching the JSON shape in EXTRACTION_PROMPT — the API
+# guarantees the response parses against this, so no fence-stripping/retry needed.
+QUOTES_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "quotes": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "driver": {"type": "string"},
+                    "team": {"type": "string"},
+                    "quote": {"type": "string"},
+                    "context": {"type": "string"},
+                },
+                "required": ["driver", "team", "quote", "context"],
+                "additionalProperties": False,
+            },
+        },
+    },
+    "required": ["quotes"],
+    "additionalProperties": False,
+}
+
 
 def transcript_path(video_id: str) -> Path:
     """Return the cached transcript file path for a video."""
@@ -178,9 +202,14 @@ def apply_overrides(rounds_data: list[dict], overrides: list[dict]) -> int:
                         continue
                     match = (rule.get("matchText") or "").lower()
                     if match and match in quote_text:
+                        new_driver = rule.get("newDriver")
+                        new_team = rule.get("newTeam")
+                        if not new_driver or not new_team:
+                            print(f"      ⚠️  Skipping malformed override rule (needs newDriver+newTeam): {rule}")
+                            continue
                         old_driver = q.get("driver")
-                        q["driver"] = rule["newDriver"]
-                        q["team"] = rule["newTeam"]
+                        q["driver"] = new_driver
+                        q["team"] = new_team
                         print(f"      ✍️  Override applied: R{r['round']} {session_name} — "
                               f"'{old_driver}' → '{rule['newDriver']}' "
                               f"(matched: '{rule.get('matchText')}')")
@@ -212,7 +241,7 @@ def discover_new_videos(season_videos: dict) -> int:
     race_to_round = {}
     if DATA_JSON_PATH.exists():
         try:
-            with open(DATA_JSON_PATH) as f:
+            with open(DATA_JSON_PATH, encoding="utf-8") as f:
                 data = json.load(f)
             for race in data.get("schedule", []):
                 race_to_round[race["name"]] = race["round"]
@@ -256,13 +285,19 @@ def discover_new_videos(season_videos: dict) -> int:
                         season_videos[rkey]["raceName"] = race_name
                         print(f"  ✨ Discovered {session_type} video for R{round_num} {race_name}: {video_id}")
                         found += 1
+                else:
+                    # YouTube title naming may not match Jolpica raceName exactly
+                    # (2026 has BOTH "Barcelona Grand Prix" and "Spanish Grand Prix" —
+                    # don't auto-alias; add the ID to video-ids.json manually instead)
+                    print(f"  ⚠️  '{race_name}' from video title doesn't match any round in data.json "
+                          f"— add {video_id} to video-ids.json manually if it belongs to this season")
                 break  # Don't try less-specific patterns against the same title
 
     if found > 0:
-        with open(VIDEO_IDS_PATH) as f:
+        with open(VIDEO_IDS_PATH, encoding="utf-8") as f:
             all_ids = json.load(f)
         all_ids[str(SEASON)] = season_videos
-        with open(VIDEO_IDS_PATH, "w") as f:
+        with open(VIDEO_IDS_PATH, "w", encoding="utf-8") as f:
             json.dump(all_ids, f, indent=2)
         print(f"  📝 Updated video-ids.json with {found} new video(s)")
     else:
@@ -314,6 +349,10 @@ def extract_quotes(transcript: str, race_name: str, session_type: str,
 
     client = anthropic.Anthropic(api_key=api_key)
 
+    if len(transcript) > 15000:
+        print(f"      ⚠️  Transcript truncated {len(transcript)} → 15000 chars — "
+              "quotes from drivers interviewed late in the video may be missed")
+
     prompt = EXTRACTION_PROMPT.format(
         season=SEASON,
         session_type=session_type,
@@ -324,8 +363,10 @@ def extract_quotes(transcript: str, race_name: str, session_type: str,
 
     try:
         message = client.messages.create(
-            model="claude-sonnet-4-5",
+            model="claude-sonnet-4-6",
             max_tokens=4096,
+            temperature=0,  # extraction wants determinism, not creativity
+            output_config={"format": {"type": "json_schema", "schema": QUOTES_SCHEMA}},
             messages=[{"role": "user", "content": prompt}],
         )
         response_text = message.content[0].text.strip()
@@ -377,7 +418,7 @@ def load_existing_quotes() -> dict:
     """Load existing driver-quotes.json if it exists."""
     if OUTPUT_PATH.exists():
         try:
-            with open(OUTPUT_PATH) as f:
+            with open(OUTPUT_PATH, encoding="utf-8") as f:
                 return json.load(f)
         except (json.JSONDecodeError, KeyError):
             pass
@@ -406,7 +447,7 @@ def main():
         print(f"❌ {VIDEO_IDS_PATH} not found")
         sys.exit(1)
 
-    with open(VIDEO_IDS_PATH) as f:
+    with open(VIDEO_IDS_PATH, encoding="utf-8") as f:
         video_ids = json.load(f)
 
     season_videos = video_ids.get(str(SEASON), {})
@@ -535,7 +576,7 @@ def main():
         "rounds": sorted(rounds_data, key=lambda r: r["round"]),
     }
 
-    with open(OUTPUT_PATH, "w") as f:
+    with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
         json.dump(output, f, indent=2)
 
     total_quotes = sum(

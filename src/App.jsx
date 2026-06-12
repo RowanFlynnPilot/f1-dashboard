@@ -786,10 +786,17 @@ export default function F1Dashboard(){
             </div>
             <div style={{fontSize:13,color:"rgba(255,255,255,0.7)",marginTop:4}}>Round {completedRounds} of {totalRounds} completed{nextRace?` · Next: ${nextRace.nm} · ${raceDateFmt(nextRace.dt,nextRace.tt)}`:""}</div>
           </div>
-          <div className="fu" style={{animationDelay:"0.1s",display:"flex",alignItems:"center",gap:8}}>
-            <div style={{width:8,height:8,borderRadius:"50%",background:"#27F4D2",animation:"pulse 2s infinite"}}/>
-            <span style={{fontSize:12,color:"rgba(255,255,255,0.5)"}}>Updated {new Date(fetchedAt).toLocaleDateString()}</span>
-          </div>
+          {(()=>{
+            // Honest freshness indicator — the dot used to pulse green forever,
+            // implying live data even when the weekly build had gone stale.
+            const ageDays=Math.floor((Date.now()-new Date(fetchedAt).getTime())/86400000);
+            const c=ageDays<4?"#27F4D2":ageDays<10?"#FFA500":"#E80020";
+            const label=ageDays<=0?"Data updated today":ageDays===1?"Data updated yesterday":`Data updated ${ageDays} days ago`;
+            return(
+          <div className="fu" style={{animationDelay:"0.1s",display:"flex",alignItems:"center",gap:8}} title={new Date(fetchedAt).toLocaleString()}>
+            <div style={{width:8,height:8,borderRadius:"50%",background:c,animation:ageDays<4?"pulse 2s infinite":"none"}}/>
+            <span style={{fontSize:12,color:"rgba(255,255,255,0.5)"}}>{label}</span>
+          </div>);})()}
         </div>
         <div className="tab-bar" style={{display:"flex",gap:0,marginTop:20,borderBottom:"1px solid rgba(255,255,255,0.06)",overflowX:"auto"}}>
           {TABS.map(t=><button key={t.id} className={`tb ${tab===t.id?"a":""}`} onClick={()=>setTab(t.id)}>{t.label}</button>)}

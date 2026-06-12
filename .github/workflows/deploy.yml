@@ -50,6 +50,8 @@ jobs:
           python scripts/fetch-driver-quotes.py
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      - name: Validate fetched data
+        run: node scripts/validate-data.mjs
       - run: npm run build
       - uses: actions/configure-pages@v4
       - uses: actions/upload-pages-artifact@v3
