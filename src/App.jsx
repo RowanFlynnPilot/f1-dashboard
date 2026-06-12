@@ -102,9 +102,25 @@ function transformData(raw) {
 
   // Constructor standings with driver breakdowns
   const CS = raw.constructors.map(c => ({
-    p: c.pos, t: c.team, pts: c.pts,
+    p: c.pos, t: c.team, pts: c.pts, mv: 0,
     dr: c.drivers.map(d => ({ n: d.name, pts: d.pts })),
   }));
+
+  // Constructor movement — same idea as drivers: subtract each team's last-round points
+  // (summed from its drivers' deltas), re-sort to reconstruct the previous order, compare.
+  if (Object.keys(lastRacePtsMap).length > 0) {
+    const teamDelta = {};
+    for (const d of raw.drivers) {
+      const lastName = d.name.split(" ").pop();
+      teamDelta[d.team] = (teamDelta[d.team] || 0) + (lastRacePtsMap[lastName] || 0);
+    }
+    const prevCS = CS.map(c => ({ t: c.t, pts: c.pts - (teamDelta[c.t] || 0) }))
+      .sort((a, b) => b.pts - a.pts || CS.findIndex(x => x.t === a.t) - CS.findIndex(x => x.t === b.t));
+    for (const c of CS) {
+      const prevPos = prevCS.findIndex(x => x.t === c.t) + 1;
+      c.mv = prevPos - c.p; // positive = gained places
+    }
+  }
 
   // Combine races and sprints, sorted by date
   const allRaces = [
@@ -702,6 +718,53 @@ const TABS=[{id:"Overview",label:"📊 Overview"},{id:"Standings",label:"🏆 St
 // F1 tire compound color map (broadcast graphics convention)
 const COMPOUND_COLORS={SOFT:"#FF3344",MEDIUM:"#FFDA00",HARD:"#EEEEEE",INTERMEDIATE:"#43B02A",WET:"#0067AD",UNKNOWN:"#888"};
 
+// Race Results OpenF1 enrichment table — module-scope so it can own the show-all
+// toggle (its call site is an IIFE inside a .map(), which can't hold hooks).
+const SectorEnrichment=memo(function SectorEnrichment({sess,isExact,sessLabel,targetSession}){
+  const[showAll,setShowAll]=useState(false);
+  const sb=sess.sessionBests;
+  const fmtS=(v)=>v?v.toFixed(3):"—";
+  const shown=sess.drivers.slice(0,showAll?undefined:5);
+  return(
+    <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:10,padding:16,marginBottom:12}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12,flexWrap:"wrap",gap:8}}>
+        <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:"rgba(255,255,255,0.4)"}}>{sessLabel} · {showAll?`All ${sess.drivers.length}`:"Top 5"} <span style={{fontSize:9,opacity:0.6,letterSpacing:0}}>(via OpenF1){!isExact?` · ${targetSession} data unavailable`:""}</span></div>
+        <div style={{display:"flex",gap:12,fontSize:10,color:"rgba(255,255,255,0.3)"}}>
+          <span>I1: {sb.topI1Speed||"—"} km/h</span>
+          <span>I2: {sb.topI2Speed||"—"} km/h</span>
+          <span>ST: {sb.topSTSpeed||"—"} km/h</span>
+        </div>
+      </div>
+      <div style={{overflowX:"auto",WebkitOverflowScrolling:"touch"}}><table style={{width:"100%",borderCollapse:"collapse",minWidth:600,fontSize:12}}>
+        <thead><tr style={{borderBottom:"1px solid rgba(255,255,255,0.06)"}}>
+          {["","Driver","Best S1","Best S2","Best S3","Theo. Best","Top Speed"].map(h=><th key={h} style={{textAlign:h==="Driver"?"left":"right",padding:"5px 8px",fontSize:9,textTransform:"uppercase",letterSpacing:.8,color:"rgba(255,255,255,0.3)",fontWeight:500}}>{h}</th>)}
+        </tr></thead>
+        <tbody>{shown.map((d,i)=>{
+          const isFS1=d.bestS1&&sb.fastestS1&&Math.abs(d.bestS1-sb.fastestS1)<0.001;
+          const isFS2=d.bestS2&&sb.fastestS2&&Math.abs(d.bestS2-sb.fastestS2)<0.001;
+          const isFS3=d.bestS3&&sb.fastestS3&&Math.abs(d.bestS3-sb.fastestS3)<0.001;
+          return(
+          <tr key={i} style={{borderBottom:"1px solid rgba(255,255,255,0.03)"}}>
+            <td style={{padding:"5px 8px",width:20,fontSize:11,fontWeight:700,color:i<3?"#fff":"rgba(255,255,255,0.35)"}}>{i+1}</td>
+            <td style={{padding:"5px 8px"}}><div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:3,height:14,borderRadius:1,background:d.teamColour||"#555"}}/><span style={{fontWeight:600,fontSize:12}}>{d.acronym}</span><span style={{fontSize:10,color:"rgba(255,255,255,0.2)",margin:"0 2px"}}>|</span><span style={{fontSize:10,color:"rgba(255,255,255,0.35)"}}>{normTeam(d.team||"")}</span></div></td>
+            <td style={{padding:"5px 8px",textAlign:"right",fontVariantNumeric:"tabular-nums",color:isFS1?"#d946ef":"rgba(255,255,255,0.6)",fontWeight:isFS1?700:400}}>{fmtS(d.bestS1)}</td>
+            <td style={{padding:"5px 8px",textAlign:"right",fontVariantNumeric:"tabular-nums",color:isFS2?"#d946ef":"rgba(255,255,255,0.6)",fontWeight:isFS2?700:400}}>{fmtS(d.bestS2)}</td>
+            <td style={{padding:"5px 8px",textAlign:"right",fontVariantNumeric:"tabular-nums",color:isFS3?"#d946ef":"rgba(255,255,255,0.6)",fontWeight:isFS3?700:400}}>{fmtS(d.bestS3)}</td>
+            <td style={{padding:"5px 8px",textAlign:"right",fontVariantNumeric:"tabular-nums",fontWeight:700,color:i===0?"#27F4D2":"rgba(255,255,255,0.7)"}}>{fmtS(d.theoreticalBest)}</td>
+            <td style={{padding:"5px 8px",textAlign:"right",fontVariantNumeric:"tabular-nums",color:"rgba(255,255,255,0.5)"}}>{d.maxSTSpeed||"—"}</td>
+          </tr>);
+        })}</tbody>
+      </table></div>
+      {sess.drivers.length>5&&(
+        <button onClick={()=>setShowAll(v=>!v)} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:6,padding:"8px 14px",background:"rgba(255,255,255,0.04)",borderRadius:8,border:"1px solid rgba(255,255,255,0.08)",color:"rgba(255,255,255,0.6)",fontSize:12,fontWeight:500,fontFamily:"'Outfit',sans-serif",transition:"all 0.2s",marginTop:10}}>
+          {showAll?"Top 5":`Show all ${sess.drivers.length}`}
+          <span style={{transform:showAll?"rotate(180deg)":"rotate(0)",transition:"transform 0.3s",display:"inline-block"}}>▾</span>
+        </button>
+      )}
+    </div>
+  );
+});
+
 export default function F1Dashboard(){
   const[tab,setTab]=useState("Overview");
   const[expandedRace,setExpandedRace]=useState(null);
@@ -1099,7 +1162,7 @@ export default function F1Dashboard(){
                   <div style={{fontSize:15,fontWeight:700,marginBottom:4}}>Points Progression</div>
                   <div style={{fontSize:12,color:"rgba(255,255,255,0.35)",marginBottom:16}}>Top 6 drivers · cumulative points by round · hover for details, click legend to filter{progression.labels.some(l=>l.endsWith(" S"))&&" · S = sprint weekend (sprint points included in that round's jump)"}</div>
                   <div style={{position:"relative"}}>
-                    <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{width:"100%",height:240,display:"block"}} onMouseMove={onMove} onMouseLeave={()=>setProgHover(null)}>
+                    <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{width:"100%",height:240,display:"block",touchAction:"pan-y"}} onPointerMove={onMove} onPointerLeave={()=>setProgHover(null)}>
                       {/* Y gridlines + labels */}
                       {yTicks.map(t=>(
                         <g key={t}>
@@ -1219,6 +1282,7 @@ export default function F1Dashboard(){
                       <div style={{width:24,fontSize:16,fontWeight:800,color:i<3?TC[c.t]:"rgba(255,255,255,0.3)"}}>{c.p}</div>
                       <TL team={c.t} size={26}/>
                       <div style={{flex:1,marginLeft:10}}><span style={{fontSize:15,fontWeight:700}}>{c.t}</span></div>
+                      <div className={c.mv!==0?"pulse-once":""} style={{width:40,textAlign:"center",fontSize:11,fontWeight:600,color:c.mv>0?"#27F4D2":c.mv<0?"#E80020":"rgba(255,255,255,0.15)",display:"inline-block"}}>{c.mv>0?`▲${c.mv}`:c.mv<0?`▼${Math.abs(c.mv)}`:"—"}</div>
                       <div style={{fontSize:20,fontWeight:800}}>{c.pts}<span style={{fontSize:11,fontWeight:400,color:"rgba(255,255,255,0.4)",marginLeft:4}}>PTS</span></div>
                     </div>
                     <div style={{position:"relative",marginLeft:24}}>
@@ -1340,43 +1404,9 @@ export default function F1Dashboard(){
                   let sess=null;
                   for(const sn of sessPriority){const s=mtg.sessions.find(s=>s.sessionName===sn&&s.drivers&&s.drivers.length>0);if(s){sess=s;break;}}
                   if(!sess)return null;
-                  const top5=sess.drivers.slice(0,5);
-                  const sb=sess.sessionBests;
-                  const fmtS=(v)=>v?v.toFixed(3):"—";
                   const isExact=sess.sessionName===targetSession;
                   const sessLabel=isExact?(race.sprint?"Sprint Sector Times":"Race Sector Times"):`${sess.sessionName} Sector Times`;
-                  return(
-                    <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:10,padding:16,marginBottom:12}}>
-                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12,flexWrap:"wrap",gap:8}}>
-                        <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:"rgba(255,255,255,0.4)"}}>{sessLabel} · Top 5 <span style={{fontSize:9,opacity:0.6,letterSpacing:0}}>(via OpenF1){!isExact?` · ${targetSession} data unavailable`:""}</span></div>
-                        <div style={{display:"flex",gap:12,fontSize:10,color:"rgba(255,255,255,0.3)"}}>
-                          <span>I1: {sb.topI1Speed||"—"} km/h</span>
-                          <span>I2: {sb.topI2Speed||"—"} km/h</span>
-                          <span>ST: {sb.topSTSpeed||"—"} km/h</span>
-                        </div>
-                      </div>
-                      <div style={{overflowX:"auto",WebkitOverflowScrolling:"touch"}}><table style={{width:"100%",borderCollapse:"collapse",minWidth:600,fontSize:12}}>
-                        <thead><tr style={{borderBottom:"1px solid rgba(255,255,255,0.06)"}}>
-                          {["","Driver","Best S1","Best S2","Best S3","Theo. Best","Top Speed"].map(h=><th key={h} style={{textAlign:h==="Driver"?"left":"right",padding:"5px 8px",fontSize:9,textTransform:"uppercase",letterSpacing:.8,color:"rgba(255,255,255,0.3)",fontWeight:500}}>{h}</th>)}
-                        </tr></thead>
-                        <tbody>{top5.map((d,i)=>{
-                          const isFS1=d.bestS1&&sb.fastestS1&&Math.abs(d.bestS1-sb.fastestS1)<0.001;
-                          const isFS2=d.bestS2&&sb.fastestS2&&Math.abs(d.bestS2-sb.fastestS2)<0.001;
-                          const isFS3=d.bestS3&&sb.fastestS3&&Math.abs(d.bestS3-sb.fastestS3)<0.001;
-                          return(
-                          <tr key={i} style={{borderBottom:"1px solid rgba(255,255,255,0.03)"}}>
-                            <td style={{padding:"5px 8px",width:20,fontSize:11,fontWeight:700,color:i<3?"#fff":"rgba(255,255,255,0.35)"}}>{i+1}</td>
-                            <td style={{padding:"5px 8px"}}><div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:3,height:14,borderRadius:1,background:d.teamColour||"#555"}}/><span style={{fontWeight:600,fontSize:12}}>{d.acronym}</span><span style={{fontSize:10,color:"rgba(255,255,255,0.2)",margin:"0 2px"}}>|</span><span style={{fontSize:10,color:"rgba(255,255,255,0.35)"}}>{normTeam(d.team||"")}</span></div></td>
-                            <td style={{padding:"5px 8px",textAlign:"right",fontVariantNumeric:"tabular-nums",color:isFS1?"#d946ef":"rgba(255,255,255,0.6)",fontWeight:isFS1?700:400}}>{fmtS(d.bestS1)}</td>
-                            <td style={{padding:"5px 8px",textAlign:"right",fontVariantNumeric:"tabular-nums",color:isFS2?"#d946ef":"rgba(255,255,255,0.6)",fontWeight:isFS2?700:400}}>{fmtS(d.bestS2)}</td>
-                            <td style={{padding:"5px 8px",textAlign:"right",fontVariantNumeric:"tabular-nums",color:isFS3?"#d946ef":"rgba(255,255,255,0.6)",fontWeight:isFS3?700:400}}>{fmtS(d.bestS3)}</td>
-                            <td style={{padding:"5px 8px",textAlign:"right",fontVariantNumeric:"tabular-nums",fontWeight:700,color:i===0?"#27F4D2":"rgba(255,255,255,0.7)"}}>{fmtS(d.theoreticalBest)}</td>
-                            <td style={{padding:"5px 8px",textAlign:"right",fontVariantNumeric:"tabular-nums",color:"rgba(255,255,255,0.5)"}}>{d.maxSTSpeed||"—"}</td>
-                          </tr>);
-                        })}</tbody>
-                      </table></div>
-                    </div>
-                  );
+                  return <SectorEnrichment sess={sess} isExact={isExact} sessLabel={sessLabel} targetSession={targetSession}/>;
                 })()}
                 {expandedRace===race.r&&(()=>{
                   // Grand Prix grid from qualifying (sprints set their grid in sprint quali, which we don't carry)
@@ -2191,12 +2221,34 @@ const ReplayPanel=memo(function ReplayPanel({cur,race,tracks,allDrivers,telMeeti
   // Track sampler + cumulative lap tables are static per race — memoized so the
   // 60fps playback frames don't re-parse the SVG path or rebuild the tables.
   const sampler=useMemo(()=>tracks?buildTrackSampler(tracks[trackKey]):null,[tracks,trackKey]);
+  // Sector thirds for the underlay — same point list + viewBox as the track path, so
+  // the segments drop straight into the replay svg's coordinate system.
+  const sectors=useMemo(()=>tracks?splitTrackIntoSectors(tracks[trackKey]):null,[tracks,trackKey]);
   // Race duration = max cumulative race time across drivers
   const lapsByDriver=useMemo(()=>Object.fromEntries(allDrivers.map(d=>{
     const sorted=[...(d.lapTimes||[])].sort((a,b)=>a.l-b.l);
     let cum=0;const cumArr=[];for(const l of sorted){cum+=l.t;cumArr.push({l:l.l,cum,t:l.t});}
     return[d.number,{cumArr,total:cum}];
   })),[allDrivers]);
+  // Gap-to-winner series for the mini chart: gap(d,lap)=cum[d][lap]−cum[winner][lap], where
+  // winner = first in finishing order (most laps, then lowest total time). Static per race —
+  // keyed only on lapsByDriver; colors/acronyms are looked up at render time.
+  const gapSeries=useMemo(()=>{
+    const entries=Object.entries(lapsByDriver).filter(([,v])=>v.cumArr.length>0);
+    if(entries.length<2)return null;
+    const lastLap=(v)=>v.cumArr[v.cumArr.length-1].l;
+    const order=[...entries].sort((a,b)=>lastLap(b[1])-lastLap(a[1])||a[1].total-b[1].total);
+    const winCum=new Map(order[0][1].cumArr.map(e=>[e.l,e.cum]));
+    const CAP=60; // cap displayed gap — backmarkers would crush the scale
+    const series=order.slice(0,6).map(([num,v])=>({
+      number:parseInt(num),
+      pts:v.cumArr.filter(e=>winCum.has(e.l)).map(e=>({l:e.l,gap:Math.min(CAP,e.cum-winCum.get(e.l))})),
+    })).filter(s=>s.pts.length>=2);
+    if(series.length===0)return null;
+    const maxGap=Math.max(5,...series.flatMap(s=>s.pts.map(p=>p.gap)));
+    const minGap=Math.min(0,...series.flatMap(s=>s.pts.map(p=>p.gap)));
+    return{series,totalLaps:lastLap(order[0][1]),maxGap,minGap};
+  },[lapsByDriver]);
   return (()=>{
                 const raceDuration=Math.max(1,...Object.values(lapsByDriver).map(x=>x.total));
                 replayDurationRef.current=raceDuration; // rAF clock auto-pauses here
@@ -2310,7 +2362,21 @@ const ReplayPanel=memo(function ReplayPanel({cur,race,tracks,allDrivers,telMeeti
                             .map(s=>({...s,pt:sampler.sample(s.fracOfLap)}));
                           const hovered=replayDotHover?driverStates.find(s=>s.driver.number===replayDotHover.driverNumber):null;
                           return(
-                            <svg viewBox={t.viewBox} preserveAspectRatio="xMidYMid meet" style={{width:"100%",height:440,display:"block",overflow:"visible"}}>
+                            <svg viewBox={t.viewBox} preserveAspectRatio="xMidYMid meet" style={{width:"100%",height:440,display:"block",overflow:"visible",touchAction:"pan-y"}}>
+                              {/* Sector underlay — S1/S2/S3 thirds in faint hues beneath the track line */}
+                              {sectors&&(()=>{
+                                const segs=[{d:sectors.s1,c:"#d946ef"},{d:sectors.s2,c:"#27F4D2"},{d:sectors.s3,c:"#FF8000"}];
+                                const m=sectors.s1.match(/^M([0-9.]+),([0-9.]+)/);
+                                const starts=[m?[parseFloat(m[1]),parseFloat(m[2])]:null,sectors.boundaries[0],sectors.boundaries[1]];
+                                return(
+                                  <g pointerEvents="none">
+                                    {segs.map((s,i)=><path key={i} d={s.d} fill="none" stroke={s.c} strokeOpacity={0.25} strokeWidth={3.2} strokeLinecap="round" strokeLinejoin="round"/>)}
+                                    {starts.map((p,i)=>p&&(
+                                      <text key={"sl"+i} x={p[0]+1.5} y={p[1]-1.5} fontSize="3.6" fontWeight="700" fill={segs[i].c} fillOpacity={0.6} fontFamily="'Outfit',sans-serif">S{i+1}</text>
+                                    ))}
+                                  </g>
+                                );
+                              })()}
                               <path d={t.path} fill="none" stroke="rgba(255,255,255,0.14)" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"/>
                               {/* Dots */}
                               {dotPositions.map(s=>{
@@ -2319,8 +2385,8 @@ const ReplayPanel=memo(function ReplayPanel({cur,race,tracks,allDrivers,telMeeti
                                 const isHovered=replayDotHover?.driverNumber===s.driver.number;
                                 return(
                                   <g key={s.driver.number} style={{transition:"transform 0.15s linear",cursor:"pointer"}}
-                                    onMouseEnter={(e)=>{const r=e.currentTarget.getBoundingClientRect();const card=e.currentTarget.closest('[data-replay-track]').getBoundingClientRect();setReplayDotHover({driverNumber:s.driver.number,x:(r.left-card.left)+r.width/2,y:(r.top-card.top)});}}
-                                    onMouseLeave={()=>setReplayDotHover(null)}>
+                                    onPointerEnter={(e)=>{const r=e.currentTarget.getBoundingClientRect();const card=e.currentTarget.closest('[data-replay-track]').getBoundingClientRect();setReplayDotHover({driverNumber:s.driver.number,x:(r.left-card.left)+r.width/2,y:(r.top-card.top)});}}
+                                    onPointerLeave={()=>setReplayDotHover(null)}>
                                     {/* Larger transparent hit area for easier hovering */}
                                     <circle cx={s.pt[0]} cy={s.pt[1]} r={3.5} fill="transparent"/>
                                     <circle cx={s.pt[0]} cy={s.pt[1]} r={(isLeader?1.9:1.5)*(isHovered?1.4:1)} fill={tc} stroke="#0a0a0f" strokeWidth={0.5} opacity={s.finished?0.4:1}/>
@@ -2388,6 +2454,44 @@ const ReplayPanel=memo(function ReplayPanel({cur,race,tracks,allDrivers,telMeeti
                         })}
                       </div>
                     </div>
+                    {/* Gap-to-winner mini chart — playhead follows the current leader's lap */}
+                    {gapSeries&&(()=>{
+                      const{series,totalLaps:gTL,maxGap,minGap}=gapSeries;
+                      const W=800,H=120,padL=40,padR=14,padT=10,padB=22;
+                      const plotW=W-padL-padR,plotH=H-padT-padB;
+                      const xOf=l=>padL+((l-1)/Math.max(1,gTL-1))*plotW;
+                      const yOf=g=>padT+((g-minGap)/Math.max(0.001,maxGap-minGap))*plotH; // smaller gap = higher
+                      const phLap=Math.max(1,Math.min(gTL,leaderLap));
+                      return(
+                        <div style={{marginTop:14,background:"rgba(0,0,0,0.25)",border:"1px solid rgba(255,255,255,0.04)",borderRadius:10,padding:"12px 14px"}}>
+                          <div style={{fontSize:10,textTransform:"uppercase",letterSpacing:1.2,color:"rgba(255,255,255,0.4)",fontWeight:600,marginBottom:8}}>Gap to winner (s) by lap · top 6 finishers · capped at 60s</div>
+                          <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{width:"100%",height:120,display:"block"}}>
+                            {[minGap,(minGap+maxGap)/2,maxGap].map((g,i)=>(
+                              <g key={i}>
+                                <line x1={padL} x2={W-padR} y1={yOf(g)} y2={yOf(g)} stroke="rgba(255,255,255,0.06)"/>
+                                <text x={padL-6} y={yOf(g)+3} textAnchor="end" fill="rgba(255,255,255,0.4)" fontSize="9" fontFamily="'Outfit',sans-serif">{Math.round(g)}</text>
+                              </g>
+                            ))}
+                            {Array.from({length:5},(_,i)=>Math.round(1+(i/4)*(gTL-1))).map((l,i)=>(
+                              <text key={i} x={xOf(l)} y={H-padB+14} textAnchor="middle" fill="rgba(255,255,255,0.45)" fontSize="9" fontFamily="'Outfit',sans-serif">L{l}</text>
+                            ))}
+                            {series.map(s=>{
+                              const drv=allDrivers.find(d=>d.number===s.number);
+                              const tc=drv?.teamColour||"#fff";
+                              return <path key={s.number} d={s.pts.map((p,i)=>`${i===0?"M":"L"}${xOf(p.l)},${yOf(p.gap)}`).join(" ")} stroke={tc} strokeWidth={1.6} fill="none" strokeLinecap="round" strokeLinejoin="round" opacity={0.9}/>;
+                            })}
+                            <line x1={xOf(phLap)} x2={xOf(phLap)} y1={padT} y2={padT+plotH} stroke="rgba(255,255,255,0.35)" strokeWidth={1} strokeDasharray="3 3"/>
+                          </svg>
+                          <div style={{display:"flex",gap:12,marginTop:6,flexWrap:"wrap",fontSize:10,color:"rgba(255,255,255,0.55)"}}>
+                            {series.map(s=>{
+                              const drv=allDrivers.find(d=>d.number===s.number);
+                              if(!drv)return null;
+                              return <span key={s.number} style={{display:"flex",alignItems:"center",gap:4}}><span style={{width:10,height:2,background:drv.teamColour||"#fff",display:"inline-block"}}/>{drv.acronym}</span>;
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </div>
                 );
               })();
@@ -2409,6 +2513,10 @@ const LapComparePanel=memo(function LapComparePanel({openf1,telMeetingKey,allDri
   const[lapPan,setLapPan]=useState({x:0,y:0}); // viewBox pan in fitted-vb units
   const lapPlayDurationRef=useRef(0); // published by the Lap Compare render
   const lapDragRef=useRef(null);
+  const lapSvgRef=useRef(null); // track-view svg — gets a non-passive wheel listener
+  const lapViewGeoRef=useRef(null); // {fittedW,fittedH} published by the track-view render
+  const lapZoomRef=useRef(lapZoom);lapZoomRef.current=lapZoom; // fresh mirrors for the wheel handler
+  const lapPanRef=useRef(lapPan);lapPanRef.current=lapPan;
   const lapFetchInflight=useRef(new Set()); // cache keys with a live OpenF1 request
   const lapCompareDataRef=useRef(lapCompareData);
   lapCompareDataRef.current=lapCompareData; // fresh mirror so the fetch effect can read the cache without depending on it
@@ -2589,6 +2697,52 @@ const LapComparePanel=memo(function LapComparePanel({openf1,telMeetingKey,allDri
     const mkArea=(ss,tot,fld)=>`M${sPadL},${sPadT+ph} `+ss.map(s=>`L${sPadL+(s.d/tot)*pw},${yOf(s[fld])}`).join(" ")+` L${sPadL+pw},${sPadT+ph} Z`;
     return{thA:mk(samplesA,totA,"th"),thB:mk(samplesB,totB,"th"),thAreaA:mkArea(samplesA,totA,"th"),brA:mk(samplesA,totA,"br"),brB:mk(samplesB,totB,"br"),brAreaA:mkArea(samplesA,totA,"br"),brAreaB:mkArea(samplesB,totB,"br"),geo:{sW,sH,sPadL,sPadR,sPadT,sPadB,pw,ph}};
   },[samplesA,samplesB]);
+  // Clamp pan so the track can't be pushed fully off-screen: ±(fitted−vb)/2 plus a 20% margin
+  const clampPan=(p,z)=>{
+    const g=lapViewGeoRef.current;
+    if(!g)return p;
+    const mx=((g.fittedW-g.fittedW/z)/2)*1.2,my=((g.fittedH-g.fittedH/z)/2)*1.2;
+    return{x:Math.max(-mx,Math.min(mx,p.x)),y:Math.max(-my,Math.min(my,p.y))};
+  };
+  // Wheel zoom — React attaches its root wheel listener passively, so a JSX onWheel
+  // preventDefault is a no-op and the page scrolls while zooming. Bind a non-passive
+  // listener directly on the svg instead, and anchor the zoom at the cursor.
+  useEffect(()=>{
+    const el=lapSvgRef.current;
+    if(!el)return;
+    const onWheel=(e)=>{
+      e.preventDefault();
+      const z0=Math.max(1,Math.min(6,lapZoomRef.current));
+      const z1=Math.max(1,Math.min(6,z0*(e.deltaY<0?1.12:0.88)));
+      if(z1===z0)return;
+      const g=lapViewGeoRef.current;
+      if(!g){setLapZoom(z1);return;}
+      const{fittedW,fittedH}=g;
+      const rect=el.getBoundingClientRect();
+      const pan=lapPanRef.current;
+      // Current viewBox (mirrors the render math: vbW=fittedW/z, vbX=(fittedW−vbW)/2+pan.x)
+      const vbW0=fittedW/z0,vbH0=fittedH/z0;
+      const vbX0=(fittedW-vbW0)/2+pan.x,vbY0=(fittedH-vbH0)/2+pan.y;
+      // Pointer → viewBox coords. preserveAspectRatio="xMidYMid meet" draws the vb at
+      // uniform scale s=min(w/vbW,h/vbH), centered with letterbox offsets ox/oy. The vb
+      // aspect is constant (both dims divide by z), so s scales by z1/z0 and ox/oy stay put.
+      const s=Math.min(rect.width/vbW0,rect.height/vbH0)||1;
+      const ox=(rect.width-vbW0*s)/2,oy=(rect.height-vbH0*s)/2;
+      const px=vbX0+(e.clientX-rect.left-ox)/s;
+      const py=vbY0+(e.clientY-rect.top-oy)/s;
+      // Cursor-anchored zoom: the screen x of the world point, ox+(px−vbX)·s, must match
+      // before and after. With s1=s0·(z1/z0): (px−vbX1)·s1=(px−vbX0)·s0
+      //   ⇒ vbX1 = px − (px−vbX0)·(z0/z1)
+      // and vbX1=(fittedW−fittedW/z1)/2+panX ⇒ panX = vbX1 − (fittedW−fittedW/z1)/2.
+      const nx=px-(px-vbX0)*(z0/z1)-(fittedW-fittedW/z1)/2;
+      const ny=py-(py-vbY0)*(z0/z1)-(fittedH-fittedH/z1)/2;
+      setLapZoom(z1);
+      setLapPan(clampPan({x:nx,y:ny},z1));
+    };
+    el.addEventListener("wheel",onWheel,{passive:false});
+    return()=>el.removeEventListener("wheel",onWheel);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[samplesA,samplesB,lapCompareLap]);
 
   return (()=>{
                 if(usable.length<2)return null;
@@ -2737,6 +2891,7 @@ const LapComparePanel=memo(function LapComparePanel({openf1,telMeetingKey,allDri
                           const localSpanY=rotate?(maxX-minX):(maxY-minY)||1;
                           const px=localSpanX*padPct,py=localSpanY*padPct;
                           const fittedW=localSpanX+px*2,fittedH=localSpanY+py*2;
+                          lapViewGeoRef.current={fittedW,fittedH}; // wheel handler + pan clamp read current fitted dims
                           // Apply zoom/pan to the viewBox (smaller vb = zoomed in)
                           const z=Math.max(1,Math.min(6,lapZoom));
                           const vbW=fittedW/z,vbH=fittedH/z;
@@ -2785,19 +2940,18 @@ const LapComparePanel=memo(function LapComparePanel({openf1,telMeetingKey,allDri
                                 <input type="range" min={0} max={playDuration} step={0.05} value={playT} onChange={(e)=>{setLapComparePlaying(false);setLapComparePlayTime(parseFloat(e.target.value));}} style={{flex:1,minWidth:200,height:24,margin:0,appearance:"none",WebkitAppearance:"none",cursor:"pointer",background:"transparent"}}/>
                                 {/* Zoom controls */}
                                 <div style={{display:"flex",gap:2,border:"1px solid rgba(255,255,255,0.08)",borderRadius:6,padding:2,background:"rgba(255,255,255,0.02)"}}>
-                                  <button onClick={()=>setLapZoom(z=>Math.max(1,z*0.8))} style={{width:24,height:24,borderRadius:4,border:"none",background:"transparent",color:"rgba(255,255,255,0.6)",cursor:"pointer",fontSize:12,fontFamily:"'Outfit',sans-serif"}}>−</button>
+                                  <button onClick={()=>{const z1=Math.max(1,lapZoom*0.8);setLapZoom(z1);setLapPan(p=>clampPan(p,z1));}} style={{width:24,height:24,borderRadius:4,border:"none",background:"transparent",color:"rgba(255,255,255,0.6)",cursor:"pointer",fontSize:12,fontFamily:"'Outfit',sans-serif"}}>−</button>
                                   <button onClick={()=>{setLapZoom(1.6);setLapPan({x:0,y:0});}} title="Reset zoom" style={{padding:"3px 8px",borderRadius:4,border:"none",background:"transparent",color:"rgba(255,255,255,0.55)",cursor:"pointer",fontSize:10,fontFamily:"'Outfit',sans-serif"}}>{(lapZoom*100|0)}%</button>
                                   <button onClick={()=>setLapZoom(z=>Math.min(6,z*1.25))} style={{width:24,height:24,borderRadius:4,border:"none",background:"transparent",color:"rgba(255,255,255,0.6)",cursor:"pointer",fontSize:12,fontFamily:"'Outfit',sans-serif"}}>+</button>
                                 </div>
                               </div>
                               {/* Track view (live x/y) */}
                               <div style={{display:"grid",gridTemplateColumns:"1fr 200px",gap:14,alignItems:"start"}} className="lap-compare-grid">
-                                <svg viewBox={`${vbX} ${vbY} ${vbW} ${vbH}`} preserveAspectRatio="xMidYMid meet"
-                                  onWheel={(e)=>{e.preventDefault();const f=e.deltaY<0?1.12:0.88;setLapZoom(z=>Math.max(1,Math.min(6,z*f)));}}
-                                  onMouseDown={(e)=>{lapDragRef.current={x:e.clientX,y:e.clientY,panX:lapPan.x,panY:lapPan.y,vbW};}}
-                                  onMouseMove={(e)=>{if(!lapDragRef.current)return;const dx=(e.clientX-lapDragRef.current.x);const dy=(e.clientY-lapDragRef.current.y);const rect=e.currentTarget.getBoundingClientRect();const scale=lapDragRef.current.vbW/rect.width;setLapPan({x:lapDragRef.current.panX-dx*scale,y:lapDragRef.current.panY-dy*scale});}}
-                                  onMouseUp={()=>{lapDragRef.current=null;}}
-                                  onMouseLeave={()=>{lapDragRef.current=null;}}
+                                <svg ref={lapSvgRef} viewBox={`${vbX} ${vbY} ${vbW} ${vbH}`} preserveAspectRatio="xMidYMid meet"
+                                  onPointerDown={(e)=>{e.currentTarget.setPointerCapture(e.pointerId);lapDragRef.current={x:e.clientX,y:e.clientY,panX:lapPan.x,panY:lapPan.y,vbW};}}
+                                  onPointerMove={(e)=>{if(!lapDragRef.current)return;const dx=(e.clientX-lapDragRef.current.x);const dy=(e.clientY-lapDragRef.current.y);const rect=e.currentTarget.getBoundingClientRect();const scale=lapDragRef.current.vbW/rect.width;setLapPan(clampPan({x:lapDragRef.current.panX-dx*scale,y:lapDragRef.current.panY-dy*scale},z));}}
+                                  onPointerUp={()=>{lapDragRef.current=null;}}
+                                  onPointerLeave={()=>{lapDragRef.current=null;}}
                                   style={{width:"100%",height:420,display:"block",cursor:lapDragRef.current?"grabbing":"grab",touchAction:"none"}}>
                                   {/* Track outline segmented by whoever is faster at each point — memoized runs (stroke widths use fitted dims so they stay consistent across zoom) */}
                                   {(lapTrackRuns||[]).map((r,i)=><path key={i} d={r.d} stroke={r.aFaster?tcA:tcB} strokeOpacity={0.85} strokeWidth={Math.max(fittedW,fittedH)*0.008/Math.sqrt(lapZoom)} fill="none" strokeLinecap="round" strokeLinejoin="round"/>)}
@@ -2992,7 +3146,7 @@ const LapTimesChart=memo(function LapTimesChart({maxLap,yMin,yMax,race,visibleDr
                       <div style={{display:"flex",alignItems:"center",gap:6}}><svg width={14} height={8}><line x1={7} y1={0} x2={7} y2={8} stroke="rgba(255,200,0,0.7)" strokeWidth={1.5} strokeDasharray="2 2"/><circle cx={7} cy={2} r={2} fill="#FFC800"/></svg><span>Local yellow flag</span></div>
                     </div>
                     <div style={{position:"relative"}}>
-                      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{width:"100%",height:280,display:"block"}} onMouseMove={onMove} onMouseLeave={()=>setTelLapHover(null)}>
+                      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{width:"100%",height:280,display:"block",touchAction:"pan-y"}} onPointerMove={onMove} onPointerLeave={()=>setTelLapHover(null)}>
                         {/* Race control bands — behind gridlines */}
                         {periods.map((p,i)=>{
                           const st=periodStyle[p.type];if(!st||!p.lapStart||!p.lapEnd)return null;
@@ -3136,8 +3290,8 @@ const TireStrategyPanel=memo(function TireStrategyPanel({race,maxLap,allDrivers,
                                 const isHovered=hovered&&hovered.driverNumber===d.number&&hovered.stintNumber===s.stintNumber;
                                 return(
                                   <div key={i}
-                                    onMouseEnter={(e)=>{const r=e.currentTarget.getBoundingClientRect();const card=e.currentTarget.closest('[data-stint-card]');if(!card)return;const cr=card.getBoundingClientRect();setTelStintHover({driverNumber:d.number,stintNumber:s.stintNumber,x:(r.left-cr.left)+r.width/2,y:(r.bottom-cr.top)});}}
-                                    onMouseLeave={()=>setTelStintHover(null)}
+                                    onPointerEnter={(e)=>{const r=e.currentTarget.getBoundingClientRect();const card=e.currentTarget.closest('[data-stint-card]');if(!card)return;const cr=card.getBoundingClientRect();setTelStintHover({driverNumber:d.number,stintNumber:s.stintNumber,x:(r.left-cr.left)+r.width/2,y:(r.bottom-cr.top)});}}
+                                    onPointerLeave={()=>setTelStintHover(null)}
                                     style={{width:`${pct}%`,background:col,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:800,color:dark?"#111":"#fff",letterSpacing:0.5,borderRight:i<myStints.length-1?"2px solid rgba(0,0,0,0.4)":"none",cursor:"default",outline:isHovered?"2px solid rgba(255,255,255,0.55)":"none",outlineOffset:isHovered?-2:0,transition:"outline-color 0.12s"}}>
                                     {pct>4?c[0]:""}
                                   </div>
@@ -3296,8 +3450,8 @@ const TireManagementPanel=memo(function TireManagementPanel({race,allDrivers,max
                                 const isHovered=tireHover?.key===key;
                                 return(
                                   <div key={a.stint.stintNumber}
-                                    onMouseEnter={(e)=>{const r=e.currentTarget.getBoundingClientRect();const card=e.currentTarget.closest('[data-tire-card]').getBoundingClientRect();setTireHover({key,x:(r.left-card.left)+r.width/2,y:(r.top-card.top)});}}
-                                    onMouseLeave={()=>setTireHover(null)}
+                                    onPointerEnter={(e)=>{const r=e.currentTarget.getBoundingClientRect();const card=e.currentTarget.closest('[data-tire-card]').getBoundingClientRect();setTireHover({key,x:(r.left-card.left)+r.width/2,y:(r.top-card.top)});}}
+                                    onPointerLeave={()=>setTireHover(null)}
                                     style={{flex:"1 1 0",maxWidth:9,minWidth:4,height:h,background:`linear-gradient(180deg, ${col} 0%, ${col}99 100%)`,borderRadius:"2px 2px 0 0",cursor:"default",outline:isHovered?"1.5px solid rgba(255,255,255,0.7)":"none",outlineOffset:isHovered?-1:0,position:"relative",border:dark?"1px solid rgba(0,0,0,0.4)":"none"}}/>
                                 );
                               })}
@@ -3346,8 +3500,8 @@ const TireManagementPanel=memo(function TireManagementPanel({race,allDrivers,max
                               <div key={key} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,flex:"1 1 0",minWidth:0}}>
                                 <div style={{fontSize:9,fontWeight:700,color:isBest?"#27F4D2":"rgba(255,255,255,0.5)",fontVariantNumeric:"tabular-nums",whiteSpace:"nowrap"}}>{isBest?"FAST":`+${gap.toFixed(2)}`}</div>
                                 <div
-                                  onMouseEnter={(e)=>{const r=e.currentTarget.getBoundingClientRect();const card=e.currentTarget.closest('[data-tire-card]').getBoundingClientRect();setTireHover({key,x:(r.left-card.left)+r.width/2,y:(r.top-card.top)});}}
-                                  onMouseLeave={()=>setTireHover(null)}
+                                  onPointerEnter={(e)=>{const r=e.currentTarget.getBoundingClientRect();const card=e.currentTarget.closest('[data-tire-card]').getBoundingClientRect();setTireHover({key,x:(r.left-card.left)+r.width/2,y:(r.top-card.top)});}}
+                                  onPointerLeave={()=>setTireHover(null)}
                                   style={{width:"100%",maxWidth:22,height:h,background:`linear-gradient(180deg, ${tc} 0%, ${tc}99 100%)`,borderRadius:"3px 3px 0 0",cursor:"default",outline:isHovered?"1.5px solid rgba(255,255,255,0.7)":"none",outlineOffset:isHovered?-1:0}}
                                 />
                                 <div style={{textAlign:"center",minWidth:0,width:"100%"}}>
@@ -3584,7 +3738,7 @@ const TireManagementPanel=memo(function TireManagementPanel({race,allDrivers,max
                             })}
                           </div>
                           <div style={{position:"relative"}}>
-                            <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{width:"100%",height:240,display:"block"}} onMouseMove={onMove} onMouseLeave={()=>setOverlayHover(null)}>
+                            <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{width:"100%",height:240,display:"block",touchAction:"pan-y"}} onPointerMove={onMove} onPointerLeave={()=>setOverlayHover(null)}>
                               {yTicks.map((v,i)=>(
                                 <g key={i}>
                                   <line x1={padL} x2={W-padR} y1={yOf(v)} y2={yOf(v)} stroke="rgba(255,255,255,0.06)"/>
@@ -3692,7 +3846,7 @@ const PositionChartPanel=memo(function PositionChartPanel({maxLap,visibleDrivers
                     <div style={{fontSize:15,fontWeight:700,marginBottom:4}}>Position by Lap</div>
                     <div style={{fontSize:12,color:"rgba(255,255,255,0.35)",marginBottom:16}}>Lines cross at overtakes — flat clusters = safety car, sharp drops = pit stops</div>
                     <div style={{position:"relative"}}>
-                      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{width:"100%",height:280,display:"block"}} onMouseMove={onMove} onMouseLeave={()=>setTelPosHover(null)}>
+                      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{width:"100%",height:280,display:"block",touchAction:"pan-y"}} onPointerMove={onMove} onPointerLeave={()=>setTelPosHover(null)}>
                         {periods.map((p,i)=>{
                           const st=periodStyle[p.type];if(!st||!p.lapStart||!p.lapEnd)return null;
                           const x1=xOf(p.lapStart);const x2=xOf(Math.max(p.lapStart,p.lapEnd));
@@ -3845,7 +3999,7 @@ const DeltaChartPanel=memo(function DeltaChartPanel({allDrivers,maxLap,race}){
                       </div>
                     </div>
                     <div style={{position:"relative"}}>
-                      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{width:"100%",height:240,display:"block"}} onMouseMove={onMove} onMouseLeave={()=>setDeltaHover(null)}>
+                      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{width:"100%",height:240,display:"block",touchAction:"pan-y"}} onPointerMove={onMove} onPointerLeave={()=>setDeltaHover(null)}>
                         {periods.map((p,i)=>{const st=periodStyle[p.type];if(!st||!p.lapStart||!p.lapEnd)return null;const x1=xOf(p.lapStart);const x2=xOf(Math.max(p.lapStart,p.lapEnd));return(<rect key={i} x={x1} y={padT} width={Math.max(2,x2-x1)} height={plotH} fill={st.fill}/>);})}
                         {yTicks.map((v,i)=>(
                           <g key={i}>
@@ -3967,7 +4121,7 @@ const SpeedTracePanel=memo(function SpeedTracePanel({allDrivers}){
                       })}
                     </div>
                     <div style={{position:"relative"}}>
-                      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{width:"100%",height:280,display:"block"}} onMouseMove={onMove} onMouseLeave={()=>setTelTraceHover(null)}>
+                      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{width:"100%",height:280,display:"block",touchAction:"pan-y"}} onPointerMove={onMove} onPointerLeave={()=>setTelTraceHover(null)}>
                         {yTicks.map(v=>(
                           <g key={v}>
                             <line x1={padL} x2={W-padR} y1={yOf(v)} y2={yOf(v)} stroke="rgba(255,255,255,0.06)"/>
