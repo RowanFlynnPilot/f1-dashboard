@@ -342,16 +342,21 @@ def get_transcript(video_id: str) -> str | None:
 
 
 def extract_quotes(transcript: str, race_name: str, session_type: str,
-                   roster_block: str, roster_map: dict[str, str]) -> list[dict]:
-    """Send transcript to Claude and extract driver quotes."""
+                   roster_block: str, roster_map: dict[str, str]) -> list[dict] | None:
+    """Send transcript to Claude and extract driver quotes.
+
+    Returns None when extraction FAILED (SDK/API/parse error) so the caller can
+    leave the session out of the output and retry next run. An empty list means
+    the call succeeded and found nothing usable.
+    """
     if anthropic is None:
         print("      ⚠️  anthropic not installed. Run: pip install anthropic")
-        return []
+        return None
 
     api_key = os.environ.get("ANTHROPIC_API_KEY")
     if not api_key:
         print("      ⚠️  ANTHROPIC_API_KEY not set, skipping quote extraction")
-        return []
+        return None
 
     client = anthropic.Anthropic(api_key=api_key)
 
@@ -368,12 +373,16 @@ def extract_quotes(transcript: str, race_name: str, session_type: str,
     )
 
     try:
+        # anthropic SDK 1.x removed `temperature=` from messages.create() (CI
+        # installs the latest SDK — the keyword raised TypeError and silently
+        # produced 0-quote rounds). Sonnet 4.6 still honours it on the wire, so
+        # it goes through extra_body: extraction wants determinism.
         message = client.messages.create(
             model="claude-sonnet-4-6",
             max_tokens=4096,
-            temperature=0,  # extraction wants determinism, not creativity
             output_config={"format": {"type": "json_schema", "schema": QUOTES_SCHEMA}},
             messages=[{"role": "user", "content": prompt}],
+            extra_body={"temperature": 0},
         )
         response_text = message.content[0].text.strip()
         print(f"      📨 Claude response length: {len(response_text)} chars")
@@ -389,10 +398,10 @@ def extract_quotes(transcript: str, race_name: str, session_type: str,
     except json.JSONDecodeError as e:
         print(f"      ⚠️  Failed to parse Claude response as JSON: {e}")
         print(f"      ⚠️  Raw response: {response_text[:500]}")
-        return []
+        return None
     except Exception as e:
         print(f"      ⚠️  Claude API error: {type(e).__name__}: {e}")
-        return []
+        return None
 
 
 def process_video(video_id: str, race_name: str, session_type: str,
@@ -416,6 +425,9 @@ def process_video(video_id: str, race_name: str, session_type: str,
     time.sleep(1)
 
     quotes = extract_quotes(transcript, race_name, session_type, roster_block, roster_map or {})
+    if quotes is None:
+        print(f"      ❌ Extraction failed — session left out so the next run retries it")
+        return {"videoId": video_id, "quotes": [], "failed": True}
     print(f"      ✅ Extracted {len(quotes)} quotes")
     return {"videoId": video_id, "quotes": quotes}
 
@@ -485,6 +497,7 @@ def main():
     rounds_data = []
     cached_count = 0
     missing_count = 0
+    failed_sessions = 0
 
     for round_num, videos in sorted(season_videos.items(), key=lambda x: int(x[0])):
         round_int = int(round_num)
@@ -550,13 +563,19 @@ def main():
                           f"YouTube likely blocks CI — transcript fetch will fail. "
                           f"Run 'python scripts/fetch-driver-quotes.py --fetch-transcripts' "
                           f"locally and commit scripts/transcripts/.")
-            sessions[session_type] = process_video(
+            result = process_video(
                 vid, race_name, session_type,
                 roster_block=roster_block, roster_map=roster_map,
             )
+            if result.get("failed"):
+                failed_sessions += 1
+            else:
+                sessions[session_type] = result
             time.sleep(2)
 
-        if not args.fetch_transcripts:
+        # A round with no successfully extracted session is left out entirely —
+        # the dashboard shouldn't list a race with "0 quotes"
+        if not args.fetch_transcripts and sessions:
             rounds_data.append({
                 "round": round_int,
                 "raceName": race_name,
@@ -591,6 +610,12 @@ def main():
         for s in r.get("sessions", {}).values()
     )
     print(f"\n✅ Wrote {len(output['rounds'])} rounds, {total_quotes} total quotes to {OUTPUT_PATH}\n")
+
+    if failed_sessions:
+        # Non-zero exit makes the CI step show red (it's continue-on-error, so the
+        # deploy still ships with whatever was extracted successfully)
+        print(f"❌ {failed_sessions} session(s) failed extraction — will retry next run")
+        sys.exit(1)
 
 
 if __name__ == "__main__":
