@@ -1,0 +1,18 @@
+# Monthly, grouped dependency PRs. Merging one also counts as repo activity,
+# which keeps the scheduled deploy workflow from being disabled for inactivity.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      npm-all:
+        patterns: ["*"]
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      actions-all:
+        patterns: ["*"]

@@ -11,7 +11,8 @@
     "fetch-openf1": "node scripts/fetch-openf1-data.mjs",
     "fetch-all": "node scripts/fetch-f1-data.mjs && node scripts/fetch-openf1-data.mjs",
     "fetch-quotes": "python scripts/fetch-driver-quotes.py",
-    "fetch-tracks": "node scripts/fetch-tracks.mjs"
+    "fetch-tracks": "node scripts/fetch-tracks.mjs",
+    "test": "node --test"
   },
   "dependencies": {
     "react": "^18.3.1",

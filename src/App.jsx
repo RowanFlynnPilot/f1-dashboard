@@ -1095,12 +1095,15 @@ export default function F1Dashboard(){
               const raceQuotes=lastRound.sessions?.race?.quotes||[];
               const showQuotes=raceQuotes.slice(0,4);
               if(showQuotes.length===0)return null;
+              // Quotes need a manual transcript step (YouTube blocks CI) — say so when they lag the results
+              const latestGP=races.filter(r=>!r.sprint).slice(-1)[0];
+              const quoteLag=!!latestGP&&lastRound.round<latestGP.r;
               return(
                 <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
                     <div>
                       <div style={{fontSize:13,textTransform:"uppercase",letterSpacing:1.5,color:"rgba(255,255,255,0.4)"}}>Driver Reactions</div>
-                      <div style={{fontSize:11,color:"rgba(255,255,255,0.25)",marginTop:2}}>{lastRound.raceName}</div>
+                      <div style={{fontSize:11,color:"rgba(255,255,255,0.25)",marginTop:2}}>{lastRound.raceName}{quoteLag?` · later rounds (through the ${latestGP.nm}) not yet transcribed`:""}</div>
                     </div>
                     <div onClick={()=>setTab("Quotes")} style={{fontSize:11,color:"#E80020",cursor:"pointer",fontWeight:600}}>View all →</div>
                   </div>
@@ -1965,8 +1968,16 @@ export default function F1Dashboard(){
               quotes.rounds.forEach(r=>(r.sessions?.[activeSession]?.quotes||[]).forEach(q=>{driverCounts[q.driver]=(driverCounts[q.driver]||0)+1;}));
               const quoteDrivers=Object.entries(driverCounts).sort((a,b)=>b[1]-a[1]);
               const activeDriver=quoteDriver&&driverCounts[quoteDriver]?quoteDriver:null;
+              const latestGP=races.filter(r=>!r.sprint).slice(-1)[0];
+              const lastQuoteRound=quotes.rounds[quotes.rounds.length-1];
+              const quoteLag=latestGP&&lastQuoteRound.round<latestGP.r?latestGP.r-lastQuoteRound.round:0;
               return(
               <>
+                {quoteLag>0&&(
+                  <div style={{fontSize:12,color:"rgba(255,255,255,0.45)",background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:10,padding:"10px 14px"}}>
+                    Quotes run through the <b style={{color:"#fff"}}>{lastQuoteRound.raceName}</b>. {quoteLag} later round{quoteLag>1?"s":""} (up to the {latestGP.nm}) {quoteLag>1?"haven't":"hasn't"} been transcribed yet.
+                  </div>
+                )}
                 <div style={{display:"flex",gap:12,flexWrap:"wrap"}}>
                   <SC label="Rounds with Quotes" value={String(quotes.rounds.length)} sub={quotes.rounds.map(r=>r.raceName.replace(" Grand Prix","")).join(" · ")} accent="#E80020"/>
                   <SC label="Total Quotes" value={String(quotes.rounds.reduce((sum,r)=>sum+Object.values(r.sessions||{}).reduce((s2,sess)=>s2+(sess.quotes||[]).length,0),0))} sub={"Across "+availableSessions.map(s=>SESSION_LABELS[s].toLowerCase()).join(", ")} accent="#27F4D2"/>

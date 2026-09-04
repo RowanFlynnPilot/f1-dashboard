@@ -76,6 +76,12 @@ SESSION_PATTERNS: list[tuple[str, re.Pattern]] = [
 ]
 SESSION_TYPES = [name for name, _ in SESSION_PATTERNS]
 
+# YouTube title -> Jolpica raceName, where F1's video naming differs from the
+# API. Only add entries that are unambiguous within the season.
+YOUTUBE_RACE_ALIASES: dict[str, str] = {
+    "Barcelona-Catalunya Grand Prix": "Barcelona Grand Prix",   # 2026 R7 ("Spanish GP" is Madrid, R14)
+}
+
 EXTRACTION_PROMPT = """You are analyzing a transcript from an official Formula 1 YouTube video where drivers give their reactions after a {session_type} session at the {race_name}.
 
 This is the {season} season. The COMPLETE list of drivers competing in {season} is below — every quote you extract MUST be from a driver on this list, using the team shown here. Do NOT use driver/team pairings from previous seasons. Drivers like Tsunoda, Ricciardo, Magnussen, Bottas (unless listed below) are NOT in F1 this year. If you think you hear a driver who isn't on this list, you are mistaken — either it's a different driver on the list, or the speaker is unclear and you should omit the quote.
@@ -274,7 +280,7 @@ def discover_new_videos(season_videos: dict) -> int:
         for session_type, pattern in SESSION_PATTERNS:
             m = pattern.match(title)
             if m and int(m.group(1)) == SEASON:
-                race_name = m.group(2).strip()
+                race_name = YOUTUBE_RACE_ALIASES.get(m.group(2).strip(), m.group(2).strip())
                 round_num = race_to_round.get(race_name)
                 if round_num:
                     rkey = str(round_num)
@@ -287,8 +293,8 @@ def discover_new_videos(season_videos: dict) -> int:
                         found += 1
                 else:
                     # YouTube title naming may not match Jolpica raceName exactly
-                    # (2026 has BOTH "Barcelona Grand Prix" and "Spanish Grand Prix" —
-                    # don't auto-alias; add the ID to video-ids.json manually instead)
+                    # (2026 has BOTH "Barcelona Grand Prix" and "Spanish Grand Prix").
+                    # Add a YOUTUBE_RACE_ALIASES entry or the ID to video-ids.json manually.
                     print(f"  ⚠️  '{race_name}' from video title doesn't match any round in data.json "
                           f"— add {video_id} to video-ids.json manually if it belongs to this season")
                 break  # Don't try less-specific patterns against the same title

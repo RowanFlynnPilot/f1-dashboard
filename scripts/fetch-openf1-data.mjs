@@ -12,25 +12,48 @@
  *       Rate limit: 3 req/s, 30 req/min on free tier.
  */
 
+import { pathToFileURL } from "node:url";
+
 const SEASON = 2026;
 const BASE = "https://api.openf1.org/v1";
 
 // Sessions we care about
 const SESSION_TYPES = ["Practice 1", "Practice 2", "Practice 3", "Qualifying", "Sprint Qualifying", "Sprint", "Race"];
 
-async function fetchJSON(url, retries = 3) {
+// Fetch with retry/backoff. 429 (honouring Retry-After), 5xx, timeouts and
+// network errors are retried; other HTTP errors throw with .status attached so
+// callers can tell a 404 ("no data for this session") from a real failure.
+// Before this only 429 was retried — a single 502 dropped a whole session.
+export async function fetchJSON(url, retries = 3) {
   console.log(`  Fetching: ${url}`);
-  const res = await fetch(url, { signal: AbortSignal.timeout(20000) });
-  if (res.status === 429 && retries > 0) {
-    const retryAfter = res.headers.get("Retry-After");
-    const waitSec = retryAfter ? Math.max(parseInt(retryAfter, 10), 10) : 10 * (4 - retries);
-    console.log(`      ⏳ Rate limited (429). Retrying in ${waitSec}s... (${retries} retries left)`);
-    await sleep(waitSec * 1000);
-    return fetchJSON(url, retries - 1);
+  for (let attempt = 0; ; attempt++) {
+    try {
+      const res = await fetch(url, { signal: AbortSignal.timeout(20000) });
+      if ((res.status === 429 || res.status >= 500) && attempt < retries) {
+        const ra = parseInt(res.headers.get("retry-after") || "0", 10);
+        const base = res.status === 429 ? 10000 * (attempt + 1) : 3000 * 2 ** attempt;
+        const wait = Math.max(ra * 1000, base);
+        console.log(`      ⏳ HTTP ${res.status}, retrying in ${wait / 1000}s... (${retries - attempt} left)`);
+        await sleep(wait);
+        continue;
+      }
+      if (!res.ok) {
+        const err = new Error(`HTTP ${res.status} for ${url}`);
+        err.status = res.status;
+        throw err;
+      }
+      return await res.json();
+    } catch (e) {
+      if (e.status) throw e; // classified HTTP error — not retryable
+      if (attempt < retries) {
+        const wait = 3000 * 2 ** attempt;
+        console.log(`      ⏳ ${e.message || e.name}, retrying in ${wait / 1000}s... (${retries - attempt} left)`);
+        await sleep(wait);
+        continue;
+      }
+      throw e;
+    }
   }
-  if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
-  const data = await res.json();
-  return data;
 }
 
 function sleep(ms) {
@@ -127,7 +150,7 @@ async function getLocation(sessionKey, driverNumber, dateStartIso, dateEndIso) {
  * timestamp, then decimate to roughly `targetSamples` evenly-spaced points so the
  * payload stays small. Returns [{ d: distance_meters, s: speed_kmh }, ...].
  */
-function buildSpeedTrace(carData, location, targetSamples = 80) {
+export function buildSpeedTrace(carData, location, targetSamples = 80) {
   if (!carData || carData.length === 0 || !location || location.length < 2) return [];
   const carSorted = [...carData].sort((a, b) => new Date(a.date) - new Date(b.date));
   const locSorted = [...location].sort((a, b) => new Date(a.date) - new Date(b.date));
@@ -169,7 +192,7 @@ function buildSpeedTrace(carData, location, targetSamples = 80) {
  * Also returns the de-duplicated list of laps that had any localized yellow-flag
  * (sector wave) so the chart can drop thin reference markers on those laps.
  */
-function processRaceControlPeriods(events, maxLap) {
+export function processRaceControlPeriods(events, maxLap) {
   if (!events || events.length === 0) return { periods: [], yellowLaps: [] };
   const sorted = [...events]
     .filter(e => e.date)
@@ -215,7 +238,7 @@ function processRaceControlPeriods(events, maxLap) {
  * For each driver lap, takes the most recent position record at or before
  * the lap's end time (date_start + duration).
  */
-function processPositionsByLap(positions, lapsByDriver) {
+export function processPositionsByLap(positions, lapsByDriver) {
   // Sort position events by date once
   const sorted = [...positions]
     .filter(p => p.date && p.driver_number && p.position)
@@ -245,7 +268,7 @@ function processPositionsByLap(positions, lapsByDriver) {
 /**
  * Process lap data into a structured format per driver
  */
-function processLapData(laps, drivers) {
+export function processLapData(laps, drivers) {
   // Build driver lookup: driver_number -> { name, acronym, team, teamColour }
   const driverMap = {};
   for (const d of drivers) {
@@ -337,7 +360,7 @@ function processLapData(laps, drivers) {
 /**
  * Find overall fastest sector times and speed traps across all drivers
  */
-function computeSessionBests(driverStats) {
+export function computeSessionBests(driverStats) {
   const allBestS1 = driverStats.filter(d => d.bestS1).map(d => d.bestS1);
   const allBestS2 = driverStats.filter(d => d.bestS2).map(d => d.bestS2);
   const allBestS3 = driverStats.filter(d => d.bestS3).map(d => d.bestS3);
@@ -404,6 +427,15 @@ async function main() {
   const headshotMap = { ...(prevIndex?.driverHeadshots || {}) }; // fullName -> { url, number, acronym, team }
   // Meetings that started more than this long ago are final — serve from cache
   const FRESH_WINDOW_MS = 8 * 24 * 3600 * 1000;
+  // Meetings older than this are accepted from cache even without a Race
+  // session (cancelled race, or OpenF1 simply never had the data).
+  const SETTLED_MS = 30 * 24 * 3600 * 1000;
+  // Negative cache: meetings OpenF1 lists but has no lap data for (pre-season
+  // tests, cancelled rounds). Each one used to cost ~12 requests every run.
+  const RECHECK_EMPTY_MS = 30 * 24 * 3600 * 1000;
+  const prevEmpty = new Map((prevIndex?.emptyMeetings || []).map(m => [m.meetingKey, m]));
+  const emptyMeetings = [];
+  const markEmpty = (meeting) => emptyMeetings.push({ meetingKey: meeting.meeting_key, meetingName: meeting.meeting_name, checkedAt: now.toISOString() });
 
   for (const meeting of meetings) {
     const meetingStart = new Date(meeting.date_start);
@@ -416,8 +448,20 @@ async function main() {
     const cached = readCachedMeeting(meeting.meeting_key);
     const isRecent = now - meetingStart < FRESH_WINDOW_MS;
     if (cached && !isRecent) {
-      console.log(`📦 Cached (final): ${meeting.meeting_name}`);
-      allMeetingData.push(cached);
+      // "Final" needs a Race session — a flaky run inside the fresh window must
+      // not freeze a half-fetched weekend forever. Old meetings are accepted as-is.
+      const hasRace = (cached.sessions || []).some(s => s.sessionName === "Race");
+      if (hasRace || now - meetingStart > SETTLED_MS) {
+        console.log(`📦 Cached (final): ${meeting.meeting_name}`);
+        allMeetingData.push(cached);
+        continue;
+      }
+      console.log(`🔁 Cached without a Race session — refetching: ${meeting.meeting_name}`);
+    }
+    const knownEmpty = prevEmpty.get(meeting.meeting_key);
+    if (!cached && !isRecent && knownEmpty && now - new Date(knownEmpty.checkedAt) < RECHECK_EMPTY_MS) {
+      console.log(`⏭️  Skipping (no lap data on OpenF1, checked ${String(knownEmpty.checkedAt).slice(0, 10)}): ${meeting.meeting_name}`);
+      emptyMeetings.push(knownEmpty);
       continue;
     }
 
@@ -430,6 +474,7 @@ async function main() {
 
     if (!sessions || sessions.length === 0) {
       console.log("   No sessions found");
+      if (!isRecent) markEmpty(meeting);
       continue;
     }
 
@@ -523,9 +568,9 @@ async function main() {
             const endIso = new Date(endMs).toISOString();
             console.log(`      🛰️  Fetching speed trace for ${ds.acronym} (lap ${fastLap.lap}, ${fastLap.lapTime.toFixed(3)}s)...`);
             const carData = await getCarData(session.session_key, ds.number, startIso, endIso);
-            await sleep(1500);
+            await sleep(2000); // 30 req/min free tier — 1.5s ran at 40/min
             const loc = await getLocation(session.session_key, ds.number, startIso, endIso);
-            await sleep(1500);
+            await sleep(2000); // 30 req/min free tier — 1.5s ran at 40/min
             const trace = buildSpeedTrace(carData, loc);
             if (trace.length > 0) {
               speedTraces[ds.number] = { lap: fastLap.lap, lapTime: fastLap.lapTime, trace };
@@ -630,6 +675,8 @@ async function main() {
         year: meeting.year,
         sessions: sessionsOut,
       });
+    } else if (!isRecent) {
+      markEmpty(meeting);
     }
   }
 
@@ -651,6 +698,7 @@ async function main() {
     fetchedAt: new Date().toISOString(),
     meetingCount: allMeetingData.length,
     driverHeadshots: headshotMap,
+    emptyMeetings,
     meetings: allMeetingData.map(m => ({
       meetingKey: m.meetingKey,
       meetingName: m.meetingName,
@@ -691,7 +739,10 @@ async function main() {
   console.log(`   Includes: sector times, speed traps, stint data\n`);
 }
 
-main().catch(err => {
-  console.error("❌ Error fetching OpenF1 data:", err);
-  process.exit(1);
-});
+// Only run when executed directly — the exported helpers are imported by test/
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main().catch(err => {
+    console.error("❌ Error fetching OpenF1 data:", err);
+    process.exit(1);
+  });
+}

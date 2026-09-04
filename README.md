@@ -38,7 +38,7 @@ Auto-deploys to GitHub Pages via GitHub Actions. Data refreshes weekly (or on-de
 2. In your new repo, click **"Add file"** → **"Upload files"**
 3. Drag and drop these files/folders:
    - `src/` (folder with `main.jsx` and `App.jsx`)
-   - `public/` (folder with `data.json` and `openf1-data.json`)
+   - `public/` (folder with `data.json` and `openf1/`)
    - `scripts/` (folder with `fetch-f1-data.mjs` and `fetch-openf1-data.mjs`)
    - `index.html`
    - `package.json`
@@ -125,12 +125,14 @@ jobs:
 
 ## 🔄 How Data Updates Work
 
-The GitHub Actions workflow runs automatically **every Sunday at 5 PM Central Time** and does:
+The GitHub Actions workflow runs automatically **Saturday 20:00, Sunday 23:00 and Monday 06:00 UTC** (and on every push to `main`) and does:
 
 1. `node scripts/fetch-f1-data.mjs` — Pulls standings, results, pit stops, schedule from Jolpica API → `public/data.json`
-2. `node scripts/fetch-openf1-data.mjs` — Pulls sector times, speed traps, stint data from OpenF1 API → `public/openf1-data.json`
-3. `npm run build` — Builds the React app with fresh data
-4. Deploys to GitHub Pages
+2. `node scripts/fetch-openf1-data.mjs` — Pulls sector times, speed traps, stint data from OpenF1 API → `public/openf1/index.json` + `public/openf1/meetings/` (incremental; past weekends come from the committed cache)
+3. `node scripts/validate-data.mjs` — Refuses to deploy malformed or shrunken data
+4. `npm run build` — Builds the React app with fresh data
+5. Deploys to GitHub Pages
+6. Commits the fetched data back to `main` so the next run starts from it (run `git pull` before pushing local changes)
 
 You can also trigger it manually anytime from the Actions tab (useful after race weekends).
 
@@ -153,7 +155,7 @@ npm run fetch-openf1     # OpenF1 API only
 npm run dev
 ```
 
-The dashboard ships with mock data in `public/data.json` and `public/openf1-data.json`, so `npm run dev` works immediately without fetching.
+The dashboard ships with the last deployed data in `public/data.json` and `public/openf1/`, so `npm run dev` works immediately without fetching. `npm test` runs the unit tests for the fetch-script helpers.
 
 ---
 
@@ -171,7 +173,7 @@ f1-dashboard/
 │   └── App.jsx                 ← Dashboard (all tabs, all visualizations)
 ├── public/
 │   ├── data.json               ← Jolpica data (generated)
-│   └── openf1-data.json        ← OpenF1 data (generated)
+│   └── openf1/                 ← OpenF1 data: index.json + meetings/{key}.json (generated)
 ├── index.html
 ├── package.json
 ├── vite.config.js

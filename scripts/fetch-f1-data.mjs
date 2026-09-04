@@ -9,6 +9,8 @@
  * Base URL: https://api.jolpi.ca/ergast/f1/
  */
 
+import { pathToFileURL } from "node:url";
+
 const SEASON = 2026;
 const BASE = "https://api.jolpi.ca/ergast/f1";
 
@@ -139,14 +141,40 @@ const CIRCUIT_COUNTRIES = {
   spa: "BE", hungaroring: "HU", zandvoort: "NL", monza: "IT",
   valencia: "ES", madring: "ES", baku: "AZ", marina_bay: "SG", americas: "US",
   rodriguez: "MX", interlagos: "BR", vegas: "US", losail: "QA",
-  yas_marina: "AE",
+  yas_marina: "AE", sepang: "MY",
 };
 
-function getCountryCode(circuitId) {
+export function getCountryCode(circuitId) {
   for (const [key, code] of Object.entries(CIRCUIT_COUNTRIES)) {
     if (circuitId.toLowerCase().includes(key)) return code;
   }
   return "XX";
+}
+
+// Race completion = date + UTC start time + 3h buffer. A bare date parses as
+// midnight UTC, which marked races "completed" up to ~20 hours early.
+export function raceEnded(r, now = new Date()) {
+  const start = new Date(`${r.date}T${r.time || "12:00:00Z"}`);
+  return now - start > 3 * 3600 * 1000;
+}
+
+// The current race weekend: from 3 days before the race until it ends. Its
+// qualifying / sprint results are fetched early so the Saturday build has them.
+export function weekendActive(r, now = new Date()) {
+  const start = new Date(`${r.date}T${r.time || "12:00:00Z"}`);
+  return !raceEnded(r, now) && start - now < 3 * 24 * 3600 * 1000;
+}
+
+// Jolpica formats long stops (red flags etc.) as "mm:ss.xxx" — parseFloat
+// would silently read "31:24.123" as a plausible-looking 31 seconds.
+export function parsePitSeconds(str) {
+  if (!str) return 0;
+  const s = String(str);
+  if (s.includes(":")) {
+    const [m, rest] = s.split(":");
+    return (parseInt(m) || 0) * 60 + (parseFloat(rest) || 0);
+  }
+  return parseFloat(s) || 0;
 }
 
 async function main() {
@@ -173,12 +201,9 @@ async function main() {
   // A bare date parses as midnight UTC, which marked races "completed" up to
   // ~20 hours before they actually ran.
   const now = new Date();
-  const raceEnded = (r) => {
-    const start = new Date(`${r.date}T${r.time || "12:00:00Z"}`);
-    return now - start > 3 * 3600 * 1000;
-  };
-  const completedRaces = schedule.filter(r => raceEnded(r));
-  console.log(`✅ ${completedRaces.length} races completed\n`);
+  const completedRaces = schedule.filter(r => raceEnded(r, now));
+  const activeWeekend = schedule.filter(r => weekendActive(r, now));
+  console.log(`✅ ${completedRaces.length} races completed${activeWeekend.length ? `, ${activeWeekend[0].raceName} weekend in progress` : ""}\n`);
 
   // 4. Fetch results for each completed race
   const raceResults = [];
@@ -186,21 +211,26 @@ async function main() {
   const allPitStops = [];
   const allQualifying = [];
 
-  for (const race of completedRaces) {
+  for (const race of [...completedRaces, ...activeWeekend]) {
     const round = parseInt(race.round);
-    console.log(`📊 Fetching Round ${round}: ${race.raceName}...`);
-    
-    const results = await getRaceResults(round);
-    if (results) raceResults.push(results);
-    await sleep(400);
+    const ended = raceEnded(race, now);
+    console.log(`📊 Fetching Round ${round}: ${race.raceName}${ended ? "" : " (weekend in progress — quali/sprint only)"}...`);
+
+    if (ended) {
+      const results = await getRaceResults(round);
+      if (results) raceResults.push(results);
+      await sleep(400);
+    }
 
     const sprint = await getSprintResults(round);
     if (sprint) sprintResults.push(sprint);
     await sleep(400);
 
-    const pits = await getPitStops(round);
-    if (pits.length > 0) allPitStops.push({ round, raceName: race.raceName, pitStops: pits });
-    await sleep(400);
+    if (ended) {
+      const pits = await getPitStops(round);
+      if (pits.length > 0) allPitStops.push({ round, raceName: race.raceName, pitStops: pits });
+      await sleep(400);
+    }
 
     const quali = await getQualifying(round);
     if (quali.length > 0) allQualifying.push({ round, raceName: race.raceName, results: quali });
@@ -305,7 +335,7 @@ async function main() {
     date: race.date,
     time: race.time || null,
     country: getCountryCode(race.Circuit.circuitId),
-    completed: raceEnded(race),
+    completed: raceEnded(race, now),
     sprint: race.Sprint ? true : false,
     winner: (() => {
       const rr = raceResults.find(r => r.round === race.round);
@@ -326,18 +356,6 @@ async function main() {
       team: teamName(ds.Constructors[0]?.constructorId),
     };
   }
-
-  // Jolpica formats long stops (red flags etc.) as "mm:ss.xxx" — parseFloat
-  // would silently read "31:24.123" as a plausible-looking 31 seconds.
-  const parsePitSeconds = (str) => {
-    if (!str) return 0;
-    const s = String(str);
-    if (s.includes(":")) {
-      const [m, rest] = s.split(":");
-      return (parseInt(m) || 0) * 60 + (parseFloat(rest) || 0);
-    }
-    return parseFloat(s) || 0;
-  };
 
   const mapStops = (stops) => stops.map(p => {
     const info = driverLookup[p.driverId] || { name: p.driverId, fullName: p.driverId, team: "" };
@@ -405,7 +423,10 @@ async function main() {
   console.log(`   ${sched.length} scheduled races\n`);
 }
 
-main().catch(err => {
-  console.error("❌ Error fetching data:", err);
-  process.exit(1);
-});
+// Only run when executed directly — the exported helpers are imported by test/
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main().catch(err => {
+    console.error("❌ Error fetching data:", err);
+    process.exit(1);
+  });
+}

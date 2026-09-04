@@ -2,6 +2,7 @@ name: Fetch F1 Data & Deploy
 
 on:
   schedule:
+    - cron: '0 20 * * 6'   # Saturday 20:00 UTC — qualifying / sprint results + OpenF1 practice & quali sessions
     - cron: '0 23 * * 0'   # Sunday 23:00 UTC — catches most race results
     - cron: '0 6 * * 1'    # Monday 06:00 UTC — retry for late races (Miami/Austin/Mexico end ~22:00 UTC Sunday, after the first cron)
   push:
@@ -9,7 +10,7 @@ on:
   workflow_dispatch:         # Manual trigger
 
 permissions:
-  contents: read
+  contents: write            # the "commit fetched data back" step pushes to main
   pages: write
   id-token: write
 
@@ -34,6 +35,8 @@ jobs:
           cache: 'npm'
       - name: Install dependencies
         run: npm ci
+      - name: Run unit tests
+        run: npm test
       - name: Fetch F1 data from Jolpica API
         run: node scripts/fetch-f1-data.mjs
       - name: Fetch sector & speed data from OpenF1 API
@@ -59,3 +62,20 @@ jobs:
           path: './dist'
       - id: deployment
         uses: actions/deploy-pages@v4
+      # Persist the fetched data in git. One step, three jobs:
+      #  1. the OpenF1 incremental cache survives between runs — CI checks out
+      #     fresh, so before this every run refetched every meeting since the
+      #     last human commit (~1 min per meeting, heading for the 30-min cap)
+      #  2. validate-data.mjs compares against what actually shipped last time
+      #  3. the commit counts as repo activity, so GitHub never again disables
+      #     the crons for 60-day inactivity (which froze the site in Aug 2026)
+      # GITHUB_TOKEN pushes never trigger workflows, so this cannot loop.
+      - name: Commit fetched data back to main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/data.json public/openf1 public/driver-quotes.json
+          if git diff --cached --quiet; then echo "No data changes to commit"; exit 0; fi
+          git commit -m "data: refresh $(date -u +'%Y-%m-%d %H:%M UTC') [skip ci]"
+          git pull --rebase origin main || { echo "::warning::rebase onto main failed — skipping data commit"; exit 0; }
+          git push origin HEAD:main || echo "::warning::could not push data commit (deploy already succeeded)"

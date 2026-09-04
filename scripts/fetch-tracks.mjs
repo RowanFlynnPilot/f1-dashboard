@@ -43,6 +43,8 @@ const RACE_TO_FILE = {
   "Las Vegas Grand Prix":    "us-2023",
   "Qatar Grand Prix":        "qa-2004",
   "Abu Dhabi Grand Prix":    "ae-2009",
+  // 2026 R16 — Jolpica's name for the relocated Bahrain round at Sepang
+  "Bahrain Grand Prix in Malaysia": "my-1999",
 };
 
 // Normalize a LineString of [lng, lat] points into an SVG path string fitted

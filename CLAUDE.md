@@ -4,7 +4,7 @@
 
 A React + Vite single-page F1 dashboard deployed to GitHub Pages via GitHub Actions. Pulls data from three sources: Jolpica API (race results, standings, qualifying), OpenF1 API (sector times, speed traps, driver headshots), and YouTube transcripts (post-race driver quotes via Claude API).
 
-**Live URL:** `https://<USERNAME>.github.io/f1-dashboard/`
+**Live URL:** `https://rowanflynnpilot.github.io/f1-dashboard/`
 **Repo:** `f1-dashboard` on GitHub
 
 ## Architecture
@@ -18,6 +18,7 @@ f1-dashboard/
 │   ├── fetch-driver-quotes.py      ← YouTube + Claude API → public/driver-quotes.json
 │   ├── fetch-tracks.mjs            ← Circuit GeoJSON → public/tracks.json (manual, not in CI)
 │   └── validate-data.mjs           ← CI gate: fails the deploy if fetched data is malformed or shrank vs HEAD
+├── test/scripts.test.mjs           ← node:test unit tests for the fetch-script helpers (CI gate, `npm test`)
 ├── src/
 │   ├── main.jsx                    ← React entry point
 │   └── App.jsx                     ← ~3600 lines, ALL tabs and components in one file
@@ -48,6 +49,7 @@ f1-dashboard/
 - Rate limit: be polite, 400ms sleep between requests
 - Fetched by: `scripts/fetch-f1-data.mjs`
 - Output: `public/data.json`
+- Race results + pit stops are fetched once a race has ended (date + start time + 3h). Qualifying and sprint results are also fetched for the **in-progress weekend** (from 3 days before the race), so the Saturday build already carries them.
 
 ### OpenF1 API
 - Base URL: `https://api.openf1.org/v1`
@@ -55,6 +57,10 @@ f1-dashboard/
 - Fetched by: `scripts/fetch-openf1-data.mjs`
 - Output: `public/openf1/index.json` + `public/openf1/meetings/{meetingKey}.json` (the legacy single-file `public/openf1-data.json` is removed by the script; the app still falls back to reading it for old checkouts)
 - **Incremental**: meetings older than 8 days are served from the previous output (past weekends are immutable); only new/recent meetings are refetched. Cached sessions also backfill any session a flaky refetch drops, and an empty `/meetings` response aborts instead of wiping good data.
+- **Cache persistence**: the cache is whatever is committed in `public/openf1/`. CI checks out fresh, so the deploy workflow commits the fetched data back to `main` after each successful deploy — without that step every run refetched every meeting since the last human commit.
+- **"Final" needs a Race session**: a cached meeting older than 8 days is only accepted as-is if it has a Race session (or is older than 30 days), so a flaky run inside the fresh window can't freeze a half-fetched weekend.
+- **Negative cache**: meetings OpenF1 lists but has no lap data for (pre-season tests, cancelled rounds) are recorded in `index.json` → `emptyMeetings` and skipped for 30 days instead of costing ~12 requests every run.
+- `fetchJSON` retries 429/5xx/timeouts with backoff; a 404 on `/laps` just means the session has no data.
 - Key endpoints: `/meetings`, `/sessions`, `/drivers`, `/laps`, `/stints`
 
 ### YouTube + Claude API (driver quotes)
@@ -75,7 +81,7 @@ YouTube blocks GitHub Actions IPs, so transcripts cannot be fetched in CI. The f
    ```
    This auto-discovers new "Drivers React" videos from the F1 YouTube RSS feed and caches their transcripts to `scripts/transcripts/`. May also write to `scripts/video-ids.json`.
 
-2. **If videos have aged off RSS** (older than ~15 most recent F1 uploads), find the IDs manually and add to `scripts/video-ids.json`, then re-run step 1.
+2. **If videos have aged off RSS** (older than ~15 most recent F1 uploads), find the IDs manually and add to `scripts/video-ids.json`, then re-run step 1. A YouTube search-results page can be scraped for `"videoId":"…"` / title pairs; only accept videos owned by the FORMULA 1 channel. F1's video titles don't always match Jolpica's race names (2026 R7 is "Barcelona-Catalunya Grand Prix" on YouTube, "Barcelona Grand Prix" in the API) — add such cases to `YOUTUBE_RACE_ALIASES` in the script so RSS discovery keeps working.
 
 3. **Commit and push**:
    ```bash
@@ -146,7 +152,7 @@ The `normTeam()` function maps API team names to the short forms used by `TC` an
 The `DH` (Driver Headshot) component has a multi-level fallback system:
 
 1. **Base64 images** (`DRIVER_IMAGES` map in App.jsx) — Baked into the code, guaranteed to work
-2. **F1.com Cloudinary CDN URLs** (`openf1-data.json` → `driverHeadshots` map) — Current 2026 team photos
+2. **F1.com Cloudinary CDN URLs** (`openf1/index.json` → `driverHeadshots` map) — Current 2026 team photos
 3. **Team-colored acronym badge** — Fallback if both fail (e.g., "VER" in Red Bull blue circle)
 
 ### Known headshot quirks
@@ -179,10 +185,11 @@ Position movement (`mv` field) is computed by subtracting last-round points from
 # Local development
 npm run dev                     # Start Vite dev server (hot reload)
 npm run build                   # Production build → dist/
+npm test                        # node:test unit tests for the fetch-script helpers (also a CI gate)
 
 # Data fetching
 npm run fetch-data              # Jolpica API → data.json
-npm run fetch-openf1            # OpenF1 API → openf1-data.json
+npm run fetch-openf1            # OpenF1 API → openf1/index.json + openf1/meetings/ (incremental)
 npm run fetch-all               # Both of the above
 npm run fetch-quotes            # YouTube + Claude → driver-quotes.json
 
@@ -195,17 +202,21 @@ python3 scripts/fetch-driver-quotes.py --race "Japanese Grand Prix"
 
 The workflow runs on:
 - Push to `main`
-- Weekly schedule: Sunday 23:00 UTC + Monday 06:00 UTC (retry for races that finish after the Sunday cron, e.g. Miami/Austin/Mexico ending ~22:00 UTC)
+- Weekly schedule: Saturday 20:00 UTC (qualifying / sprint + OpenF1 practice sessions), Sunday 23:00 UTC (race), Monday 06:00 UTC (retry for races that finish after the Sunday cron, e.g. Miami/Austin/Mexico ending ~22:00 UTC)
 - Manual trigger (`workflow_dispatch`)
 
 Steps:
-1. Checkout → Setup Node 20 (npm cache) → `npm ci`
+1. Checkout → Setup Node 20 (npm cache) → `npm ci` → `npm test`
 2. Fetch Jolpica data (retry/backoff on 429/5xx; only 404 means "no data")
 3. Fetch OpenF1 data (incremental — see above)
 4. Setup Python 3.12 → `pip install youtube-transcript-api` → fetch driver quotes (only if `ANTHROPIC_API_KEY` secret exists, `continue-on-error: true`)
 5. `node scripts/validate-data.mjs` — hard-fails the deploy if data is malformed or shrank vs the committed baseline (a failed build keeps the previous deploy live)
 6. `npm run build`
 7. Deploy to GitHub Pages
+8. **Commit the fetched data back to `main`** (`public/data.json`, `public/openf1/`, `public/driver-quotes.json`) as `github-actions[bot]`. This persists the OpenF1 cache, makes the validator's baseline the last deployed data, and counts as repository activity. `GITHUB_TOKEN` pushes never trigger workflows, so it can't loop. **Run `git pull` before pushing local work** — main moves after every deploy.
+
+### Why the commit-back step matters
+GitHub disables scheduled workflows after 60 days without a commit. That happened in August 2026 (last human push June 12 → crons silently stopped, site froze at the Hungarian GP). The bot commit after each run keeps the repo active year-round, including the off-season. `.github/dependabot.yml` (monthly, grouped) is a second source of activity.
 
 ### Required secrets
 - `ANTHROPIC_API_KEY` — For driver quotes extraction (optional — quotes step is skipped if not set)
@@ -222,7 +233,8 @@ Steps:
 1. Change `SEASON` constant at top of `fetch-f1-data.mjs` and `fetch-openf1-data.mjs`
 2. Update `DRIVER_IMAGES` base64 map with new driver photos
 3. Update `DH_USE_B64` set if any CDN headshots fail
-4. Update `openf1-data.json` headshot URLs with new team/driver codes
+4. Update `openf1/index.json` headshot URLs with new team/driver codes (they come from the OpenF1 `/drivers` endpoint on the next fetch)
+5. Run `npm run fetch-tracks` after any calendar change and add new circuits to `CIRCUIT_COUNTRIES` in `fetch-f1-data.mjs` (2026 R16 "Bahrain Grand Prix in Malaysia" at Sepang needed both)
 
 ### Race results dropdown
 The Race Results tab has a dropdown selector (`selRace` state). Value is `"all"` or a race identifier (`1`, `2`, `"2S"` for sprints). Sprint identifiers have an "S" suffix.

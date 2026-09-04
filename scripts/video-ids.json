@@ -28,6 +28,45 @@
       "qualifying": "88gDTJs1j94",
       "sprint": "GseDkNNzHMo",
       "sprintQualifying": "JwMaJw6B868"
+    },
+    "6": {
+      "raceName": "Monaco Grand Prix",
+      "race": "5jLDJ4dL5yE",
+      "qualifying": "RTZQ55o7TZY"
+    },
+    "7": {
+      "raceName": "Barcelona Grand Prix",
+      "race": "AwyzwUDPZjo",
+      "qualifying": "dPkTlE4MQts"
+    },
+    "8": {
+      "raceName": "Austrian Grand Prix",
+      "race": "aWOnR4NnfoU",
+      "qualifying": "fKz_kJoEEWo"
+    },
+    "9": {
+      "raceName": "British Grand Prix",
+      "race": "NTGyynCtPxs",
+      "qualifying": "1aOGNCgw1jg",
+      "sprint": "_ACwTmitSpg",
+      "sprintQualifying": "7fJ3EMPFeZA"
+    },
+    "10": {
+      "raceName": "Belgian Grand Prix",
+      "race": "v6vOHV0eb8U",
+      "qualifying": "cmGo1yVNHKY"
+    },
+    "11": {
+      "raceName": "Hungarian Grand Prix",
+      "race": "nUYE_xadzSM",
+      "qualifying": "VmIhRVJt5ac"
+    },
+    "12": {
+      "raceName": "Dutch Grand Prix",
+      "race": "No8O1zMhGuk",
+      "qualifying": "qLtbGPPYRQQ",
+      "sprint": "iaLg_yoCZNQ",
+      "sprintQualifying": "hJDhN1fNalc"
     }
   }
 }
