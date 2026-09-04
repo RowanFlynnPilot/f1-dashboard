@@ -1,6 +1,6 @@
 {
   "season": 2026,
-  "fetchedAt": "2026-06-12T01:08:21Z",
+  "fetchedAt": "2026-09-04T20:35:10Z",
   "rounds": [
     {
       "round": 1,
@@ -1179,6 +1179,120 @@
               "context": "Reflecting on fortunate points finish"
             }
           ]
+        }
+      }
+    },
+    {
+      "round": 6,
+      "raceName": "Monaco Grand Prix",
+      "sessions": {
+        "qualifying": {
+          "videoId": "RTZQ55o7TZY",
+          "quotes": []
+        },
+        "race": {
+          "videoId": "5jLDJ4dL5yE",
+          "quotes": []
+        }
+      }
+    },
+    {
+      "round": 7,
+      "raceName": "Barcelona Grand Prix",
+      "sessions": {
+        "qualifying": {
+          "videoId": "dPkTlE4MQts",
+          "quotes": []
+        },
+        "race": {
+          "videoId": "AwyzwUDPZjo",
+          "quotes": []
+        }
+      }
+    },
+    {
+      "round": 8,
+      "raceName": "Austrian Grand Prix",
+      "sessions": {
+        "qualifying": {
+          "videoId": "fKz_kJoEEWo",
+          "quotes": []
+        },
+        "race": {
+          "videoId": "aWOnR4NnfoU",
+          "quotes": []
+        }
+      }
+    },
+    {
+      "round": 9,
+      "raceName": "British Grand Prix",
+      "sessions": {
+        "sprintQualifying": {
+          "videoId": "7fJ3EMPFeZA",
+          "quotes": []
+        },
+        "sprint": {
+          "videoId": "_ACwTmitSpg",
+          "quotes": []
+        },
+        "qualifying": {
+          "videoId": "1aOGNCgw1jg",
+          "quotes": []
+        },
+        "race": {
+          "videoId": "NTGyynCtPxs",
+          "quotes": []
+        }
+      }
+    },
+    {
+      "round": 10,
+      "raceName": "Belgian Grand Prix",
+      "sessions": {
+        "qualifying": {
+          "videoId": "cmGo1yVNHKY",
+          "quotes": []
+        },
+        "race": {
+          "videoId": "v6vOHV0eb8U",
+          "quotes": []
+        }
+      }
+    },
+    {
+      "round": 11,
+      "raceName": "Hungarian Grand Prix",
+      "sessions": {
+        "qualifying": {
+          "videoId": "VmIhRVJt5ac",
+          "quotes": []
+        },
+        "race": {
+          "videoId": "nUYE_xadzSM",
+          "quotes": []
+        }
+      }
+    },
+    {
+      "round": 12,
+      "raceName": "Dutch Grand Prix",
+      "sessions": {
+        "sprintQualifying": {
+          "videoId": "hJDhN1fNalc",
+          "quotes": []
+        },
+        "sprint": {
+          "videoId": "iaLg_yoCZNQ",
+          "quotes": []
+        },
+        "qualifying": {
+          "videoId": "qLtbGPPYRQQ",
+          "quotes": []
+        },
+        "race": {
+          "videoId": "No8O1zMhGuk",
+          "quotes": []
         }
       }
     }
