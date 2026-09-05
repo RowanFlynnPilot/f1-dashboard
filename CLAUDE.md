@@ -206,7 +206,7 @@ The workflow runs on:
 - Manual trigger (`workflow_dispatch`)
 
 Steps:
-1. Checkout → Setup Node 20 (npm cache) → `npm ci` → `npm test`
+1. Checkout → Setup Node 22 (npm cache) → `npm ci` → `npm test`
 2. Fetch Jolpica data (retry/backoff on 429/5xx; only 404 means "no data")
 3. Fetch OpenF1 data (incremental — see above)
 4. Setup Python 3.12 → `pip install youtube-transcript-api` → fetch driver quotes (only if `ANTHROPIC_API_KEY` secret exists, `continue-on-error: true`)
