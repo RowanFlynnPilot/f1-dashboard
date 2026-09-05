@@ -584,7 +584,7 @@ function DH({name,size=32,headshots}){const[tryLevel,setTryLevel]=useState(0);
     return (<div style={{width:size,height:size,borderRadius:"50%",background:`${tc}22`,border:`2px solid ${tc}66`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:size*0.32,fontWeight:800,color:tc,flexShrink:0,letterSpacing:0.5}}>{acr}</div>);
   }
   return (<img src={u} alt={name} onError={()=>setTryLevel(prev=>prev+1)} style={{width:size,height:size,borderRadius:"50%",objectFit:"cover",objectPosition:"top center",flexShrink:0,background:"rgba(255,255,255,0.05)"}}/>);}
-function TL({team,size=20}){const[e,sE]=useState(false);const u=TEAM_LOGOS[team];if(!u||e)return null;const isData=u.startsWith("data:");return (<img src={u} alt={team} {...(isData?{}:{referrerPolicy:"no-referrer",crossOrigin:"anonymous"})} onError={()=>sE(true)} style={{width:size,height:size,objectFit:"contain",flexShrink:0}}/>);}
+function TL({team,size=20}){const[e,sE]=useState(false);const u=TEAM_LOGOS[team];if(!u||e)return null;const isData=u.startsWith("data:");return (<img src={u} alt={team} {...(isData?{}:{referrerPolicy:"no-referrer",crossOrigin:"anonymous"})} onError={()=>sE(true)} style={{width:size,height:size,objectFit:"contain",flexShrink:0,...(team==="Cadillac"?{filter:"invert(1) brightness(1.15)"}:{})}}/>);}
 
 // Inline SVG circuit outline. Sourced from bacinger/f1-circuits via fetch-tracks.mjs.
 // Caller controls the container size — SVG scales to fit while preserving aspect.
@@ -786,6 +786,7 @@ export default function F1Dashboard(){
   const[quotes,setQuotes]=useState(null);
   const[quotesSession,setQuotesSession]=useState("race");
   const[quoteDriver,setQuoteDriver]=useState(null); // null = all drivers
+  const[quotesShowAll,setQuotesShowAll]=useState(false); // older rounds collapsed by default
   const[progHover,setProgHover]=useState(null);
   const[progHidden,setProgHidden]=useState(()=>new Set());
   const[tracks,setTracks]=useState(null);
@@ -796,13 +797,38 @@ export default function F1Dashboard(){
   // stays here because the lazy meeting-payload loader effect below depends on it.
   const[telMeetingKey,setTelMeetingKey]=useState(null);
 
+  // Mobile tab bar scrolls sideways — show a trailing-edge fade until the user
+  // reaches the end so it's obvious there are more tabs.
+  const tabBarRef=useRef(null);
+  const[tabsFade,setTabsFade]=useState(false);
+  const measureTabs=(el)=>{if(el)setTabsFade(el.scrollWidth>el.clientWidth+2&&el.scrollLeft+el.clientWidth<el.scrollWidth-2);};
+  useEffect(()=>{
+    const el=tabBarRef.current;if(!el)return;
+    const m=()=>measureTabs(el);m();
+    window.addEventListener("resize",m);
+    return()=>window.removeEventListener("resize",m);
+  },[loading]); // the bar only exists once the loading screen is gone
+  // The fade-up entrance runs only the first time each tab is opened — replaying
+  // it on every switch made navigation feel laggy on slower phones.
+  const visitedTabs=useRef(new Set());
+  const tabSeen=visitedTabs.current.has(tab);
+  useEffect(()=>{const id=setTimeout(()=>visitedTabs.current.add(tab),1200);return()=>clearTimeout(id);},[tab]);
+
   useEffect(()=>{
     // data.json alone gates first paint — the dashboard used to stay on the
     // loading screen until the multi-MB telemetry payload finished downloading.
     // Everything else streams in and populates state when it lands.
     fetch(import.meta.env.BASE_URL + "data.json")
       .then(r=>{if(!r.ok)throw new Error(`HTTP ${r.status}`);return r.json()})
-      .then(raw=>{setData(transformData(raw));setLoading(false);})
+      .then(raw=>{
+        const t=transformData(raw);
+        setData(t);
+        // Default the Race Results dropdown to the latest round — "All" was a
+        // 17-card, 10,000 px page with the newest race at the bottom
+        const lastGP=t?.races?.filter(r=>!r.sprint).slice(-1)[0];
+        if(lastGP)setSelRace(lastGP.r);
+        setLoading(false);
+      })
       .catch(e=>{console.error("Failed to load data:",e);setError(e.message);setLoading(false);});
     // OpenF1 index (light). Falls back to the legacy single-file payload for
     // checkouts whose public/ data predates the split layout.
@@ -897,7 +923,8 @@ export default function F1Dashboard(){
             <span style={{fontSize:12,color:"rgba(255,255,255,0.5)"}}>{label}</span>
           </div>);})()}
         </div>
-        <div className="tab-bar" role="tablist" onKeyDown={e=>{
+        <div className={`tab-wrap${tabsFade?" fade-r":""}`}>
+        <div className="tab-bar" role="tablist" ref={tabBarRef} onScroll={e=>measureTabs(e.currentTarget)} onKeyDown={e=>{
           if(e.key!=="ArrowLeft"&&e.key!=="ArrowRight")return;
           e.preventDefault();
           const i=TABS.findIndex(t=>t.id===tab);
@@ -907,10 +934,12 @@ export default function F1Dashboard(){
         }} style={{display:"flex",gap:0,marginTop:20,borderBottom:"1px solid rgba(255,255,255,0.06)",overflowX:"auto"}}>
           {TABS.map(t=>{const[emoji,...rest]=t.label.split(" ");return <button key={t.id} role="tab" aria-selected={tab===t.id} className={`tb ${tab===t.id?"a":""}`} onClick={()=>setTab(t.id)}><span aria-hidden="true">{emoji}</span> {rest.join(" ")}</button>;})}
         </div>
+        </div>
       </div>
 
       <div className="main">
         <TabErrorBoundary key={tab}>
+        <div className={tabSeen?"no-anim":undefined}>
 
         {/* ═══ OVERVIEW ═══ */}
         {tab==="Overview"&&(
@@ -978,10 +1007,10 @@ export default function F1Dashboard(){
                       <div>
                         <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:"rgba(255,255,255,0.4)",fontWeight:600}}>Race Recap · Round {lastRaceFull.r}</div>
                         <div style={{fontSize:18,fontWeight:700,marginTop:4}}>{lastRaceFull.nm}</div>
-                        <div style={{fontSize:11,color:"rgba(255,255,255,0.4)",marginTop:2}}>{lastRaceFull.ci} · {lastRaceFull.dt}</div>
+                        <div style={{fontSize:11,color:"rgba(255,255,255,0.4)",marginTop:2}}>{lastRaceFull.ci} · {raceDateFmt(lastRaceFull.dt)}</div>
                       </div>
                     </div>
-                    <div style={{cursor:"pointer",fontSize:11,color:"#E80020",fontWeight:600}} onClick={()=>setTab("Race Results")}>Full results →</div>
+                    <div style={{cursor:"pointer",fontSize:11,color:"#E80020",fontWeight:600}} onClick={()=>{setSelRace(lastRaceFull.r);setTab("Race Results");}}>Full results →</div>
                   </div>
                   <div className="recap-podium" style={{display:"grid",gridTemplateColumns:"repeat(3, 1fr)",gap:12}}>
                     {lastRaceFull.pod.map((p,idx)=>{
@@ -1023,6 +1052,7 @@ export default function F1Dashboard(){
               <SC label="Avg Pit Stop" value={avgP} sub={pitRaceName||""} accent="#FFD700"/>
               <SC label="Fastest Pit Stop" value={fastestPit?`${fastestPit.s.toFixed(3)}s`:"N/A"} sub={fastestPit?`${fastestPit.d}`:""} accent="#27F4D2" icon={fastestPit&&fastestPit.t?<TL team={fastestPit.t} size={24}/>:null}/>
               <SC label="Completed Races" value={`${completedRounds}`} sub={`of ${totalRounds} scheduled`} accent="#d946ef"/>
+              <SC label="Different Winners" value={String(new Set(races.filter(r=>!r.sprint&&r.w).map(r=>r.w)).size)} sub={`across ${races.filter(r=>!r.sprint).length} grands prix`} accent="#FF8000"/>
             </div>
             <div className="g2">
               {/* Drivers */}
@@ -1084,7 +1114,7 @@ export default function F1Dashboard(){
                 <div>
                   <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:"#E80020",marginBottom:6}}>Next Race · Round {nextRace.r}</div>
                   <div style={{fontSize:22,fontWeight:700}}>{nextRace.nm}</div>
-                  <div style={{fontSize:13,color:"rgba(255,255,255,0.5)",marginTop:4}}>{nextRace.ci} · {nextRace.dt}</div>
+                  <div style={{fontSize:13,color:"rgba(255,255,255,0.5)",marginTop:4}}>{nextRace.ci} · {raceDateFmt(nextRace.dt,nextRace.tt)}{nextRace.tt?` · ${new Date(`${nextRace.dt}T${nextRace.tt}`).toLocaleTimeString(undefined,{hour:"numeric",minute:"2-digit"})}`:""}</div>
                 </div>
               </div>
             </div>
@@ -1093,7 +1123,7 @@ export default function F1Dashboard(){
             {quotes&&quotes.rounds&&quotes.rounds.length>0&&(()=>{
               const lastRound=quotes.rounds[quotes.rounds.length-1];
               const raceQuotes=lastRound.sessions?.race?.quotes||[];
-              const showQuotes=raceQuotes.slice(0,4);
+              const showQuotes=raceQuotes.slice(0,3);
               if(showQuotes.length===0)return null;
               // Quotes need a manual transcript step (YouTube blocks CI) — say so when they lag the results
               const latestGP=races.filter(r=>!r.sprint).slice(-1)[0];
@@ -1349,7 +1379,7 @@ export default function F1Dashboard(){
                       {race.sprint&&<span style={{fontSize:9,fontWeight:700,letterSpacing:.5,padding:"2px 6px",borderRadius:3,background:"rgba(232,0,32,0.15)",color:"#E80020"}}>SPRINT</span>}
                       <span style={{fontSize:20,fontWeight:700}}>{race.nm}</span>
                     </div>
-                    <div style={{fontSize:12,color:"rgba(255,255,255,0.4)"}}>{race.ci} · {race.dt}, 2026</div>
+                    <div style={{fontSize:12,color:"rgba(255,255,255,0.4)"}}>{race.ci} · {raceDateFmt(race.dt)}, 2026</div>
                   </div>
                   {race.tm&&<div style={{textAlign:"right"}}>
                     <div style={{fontSize:12,color:"rgba(255,255,255,0.4)"}}>Race Time</div>
@@ -1918,7 +1948,7 @@ export default function F1Dashboard(){
                 {chart.map((d,i)=>(
                   <div key={`${curPr.r}-${d.d}-${d.l}`} style={{display:"flex",alignItems:"center",gap:8}}>
                     <TL team={d.t} size={22}/>
-                    <div style={{width:80,fontSize:12,color:"rgba(255,255,255,0.7)",textAlign:"right",flexShrink:0}}>{d.d}</div>
+                    <div style={{width:96,fontSize:12,color:"rgba(255,255,255,0.7)",textAlign:"right",flexShrink:0,whiteSpace:"nowrap"}}>{d.d}<span style={{color:"rgba(255,255,255,0.3)",fontSize:10,marginLeft:4}}>L{d.l}</span></div>
                     <div style={{flex:1,height:22,background:"rgba(255,255,255,0.04)",borderRadius:4,overflow:"hidden",position:"relative"}}>
                       <div style={{height:"100%",width:`${(d.s/maxS)*100}%`,background:TC[d.t]||"#555",borderRadius:4,transition:"width 1s cubic-bezier(0.22,1,0.36,1)",transitionDelay:`${i*50}ms`,opacity:.8}}/>
                       <div style={{position:"absolute",right:8,top:"50%",transform:"translateY(-50%)",fontSize:11,color:"rgba(255,255,255,0.6)",fontVariantNumeric:"tabular-nums"}}>{d.s.toFixed(3)}s</div>
@@ -1993,10 +2023,16 @@ export default function F1Dashboard(){
                     <button key={name} onClick={()=>setQuoteDriver(activeDriver===name?null:name)} style={{padding:"6px 14px",borderRadius:8,border:"1px solid "+(activeDriver===name?"#E80020":"rgba(255,255,255,0.08)"),background:activeDriver===name?"rgba(232,0,32,0.15)":"rgba(255,255,255,0.02)",color:activeDriver===name?"#fff":"rgba(255,255,255,0.5)",cursor:"pointer",fontSize:12,fontWeight:600,fontFamily:"'Outfit',sans-serif"}}>{name} <span style={{fontWeight:400,opacity:0.55}}>{cnt}</span></button>
                   ))}
                 </div>
-                {[...quotes.rounds].reverse().map(round=>{
+                {(()=>{
+                  // Newest first; rounds with nothing to show for this session/driver are dropped.
+                  // Only the latest two rounds are expanded unless a driver filter is active.
+                  const roundsDesc=[...quotes.rounds].reverse().filter(r=>(r.sessions?.[activeSession]?.quotes||[]).some(q=>!activeDriver||q.driver===activeDriver));
+                  const visibleRounds=quotesShowAll||activeDriver?roundsDesc:roundsDesc.slice(0,2);
+                  const hiddenRounds=roundsDesc.length-visibleRounds.length;
+                  return(<>
+                {visibleRounds.map(round=>{
                   const sess=round.sessions?.[activeSession];
                   const roundQuotes=(sess?.quotes||[]).filter(q=>!activeDriver||q.driver===activeDriver);
-                  if(roundQuotes.length===0)return null;
                   return(
                     <div key={round.round} style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20}}>
                       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
@@ -2027,6 +2063,18 @@ export default function F1Dashboard(){
                     </div>
                   );
                 })}
+                {hiddenRounds>0&&(
+                  <button onClick={()=>setQuotesShowAll(true)} style={{alignSelf:"center",padding:"10px 22px",borderRadius:8,border:"1px solid rgba(255,255,255,0.10)",background:"rgba(255,255,255,0.03)",color:"rgba(255,255,255,0.7)",cursor:"pointer",fontSize:13,fontWeight:600,fontFamily:"'Outfit',sans-serif"}}>
+                    Show {hiddenRounds} earlier round{hiddenRounds>1?"s":""}
+                  </button>
+                )}
+                {quotesShowAll&&roundsDesc.length>2&&(
+                  <button onClick={()=>{setQuotesShowAll(false);window.scrollTo({top:0,behavior:"smooth"});}} style={{alignSelf:"center",padding:"8px 18px",borderRadius:8,border:"1px solid rgba(255,255,255,0.08)",background:"none",color:"rgba(255,255,255,0.45)",cursor:"pointer",fontSize:12,fontFamily:"'Outfit',sans-serif"}}>
+                    Collapse to latest rounds
+                  </button>
+                )}
+                  </>);
+                })()}
               </>
               );
             })()}
@@ -2078,6 +2126,7 @@ export default function F1Dashboard(){
 
         {/* ═══ TELEMETRY ═══ */}
         {tab==="Telemetry"&&<TelemetryTab openf1={openf1} tracks={tracks} telMeetingKey={telMeetingKey} setTelMeetingKey={setTelMeetingKey}/>}
+        </div>
         </TabErrorBoundary>
       </div>
     </div>
@@ -2300,7 +2349,7 @@ const ReplayPanel=memo(function ReplayPanel({cur,race,tracks,allDrivers,telMeeti
                 const periods=race.raceControlPeriods||[];
                 const yellowLaps=race.yellowFlagLaps||[];
                 const activePeriod=periods.find(p=>leaderLap>=p.lapStart&&leaderLap<=p.lapEnd);
-                const yellowActive=!activePeriod&&yellowLaps.includes(leaderLap);
+                const yellowActive=!activePeriod&&replayTime>0&&yellowLaps.includes(leaderLap);
                 // Format helpers
                 const fmtTime=(s)=>{const m=Math.floor(s/60);const sec=Math.floor(s%60);return`${m}:${String(sec).padStart(2,"0")}`;};
                 const fmtGapToLeader=(d)=>{

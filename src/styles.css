@@ -2,6 +2,13 @@
    browser can parse/cache them once instead of re-parsing per render. */
 *{box-sizing:border-box;margin:0;padding:0}
 ::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:2px}
+/* Buttons, tabs and chips: no iOS tap flash, no text selection on long-press */
+button,[role=tab]{-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
+/* Entrance animation only on a tab's first visit (see visitedTabs in App.jsx) */
+.no-anim .fu,.no-anim .fu>*{animation:none}
+/* Trailing-edge fade on the scrollable tab bar */
+.tab-wrap{position:relative}
+.tab-wrap.fade-r::after{content:"";position:absolute;top:20px;right:0;bottom:0;width:56px;pointer-events:none;background:linear-gradient(to right,rgba(10,10,15,0),rgba(10,10,15,0.95))}
 @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
 @keyframes pulseOnce{0%{transform:scale(1)}30%{transform:scale(1.18)}100%{transform:scale(1)}}
