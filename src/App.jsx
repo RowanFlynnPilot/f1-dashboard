@@ -61,7 +61,7 @@ function inkify(hex){
 }
 const TC_RAW = { Mercedes: "#27F4D2", Ferrari: "#E80020", McLaren: "#FF8000", "Red Bull": "#3671C6", "Racing Bulls": "#6692FF", Alpine: "#FF87BC", "Aston Martin": "#229971", Haas: "#B6BABD", Williams: "#64C4FF", Audi: "#FF0000", Cadillac: "#D4AF37" };
 const TC = Object.fromEntries(Object.entries(TC_RAW).map(([k,v])=>[k,inkify(v)]));
-const TB = { Mercedes: "rgba(39,244,210,0.10)", Ferrari: "rgba(232,0,32,0.10)", McLaren: "rgba(255,128,0,0.10)", "Red Bull": "rgba(54,113,198,0.10)", "Racing Bulls": "rgba(102,146,255,0.10)", Alpine: "rgba(255,135,188,0.10)", "Aston Martin": "rgba(34,153,113,0.10)", Haas: "rgba(182,186,189,0.10)", Williams: "rgba(100,196,255,0.10)", Audi: "rgba(255,0,0,0.06)", Cadillac: "rgba(212,175,55,0.10)" };
+const TB = { Mercedes: "rgba(27,127,75,0.10)", Ferrari: "rgba(214,40,40,0.10)", McLaren: "rgba(255,128,0,0.10)", "Red Bull": "rgba(54,113,198,0.10)", "Racing Bulls": "rgba(102,146,255,0.10)", Alpine: "rgba(255,135,188,0.10)", "Aston Martin": "rgba(34,153,113,0.10)", Haas: "rgba(182,186,189,0.10)", Williams: "rgba(100,196,255,0.10)", Audi: "rgba(255,0,0,0.06)", Cadillac: "rgba(212,175,55,0.10)" };
 
 // Normalize OpenF1 team names to match TC/TL keys
 function normTeam(t){if(!t)return"";return t.replace(" F1 Team","").replace("Red Bull Racing","Red Bull").replace("Kick Sauber","Audi").trim();}
@@ -727,7 +727,7 @@ function splitTrackIntoSectors(track){
 
 function SC({label,value,sub,accent,icon}){return (<div style={{background:"var(--w03)",border:"1px solid var(--w06)",borderRadius:2,padding:"14px 16px",flex:1,minWidth:130}}><div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:"var(--w40)",marginBottom:8,fontFamily:"var(--font-ui)"}}>{label}</div><div style={{display:"flex",alignItems:"center",gap:8}}>{icon}{" "}<span style={{fontSize:22,fontWeight:700,color:accent||"var(--fg)",lineHeight:1,fontFamily:"var(--font-ui)"}}>{value}</span></div>{sub&&<div style={{fontSize:11,color:"var(--w50)",marginTop:6,fontFamily:"var(--font-ui)"}}>{sub}</div>}</div>);}
 
-function SB({status}){const m={done:{bg:"rgba(39,244,210,0.12)",c:"var(--green)",t:"COMPLETED"},next:{bg:"rgba(232,0,32,0.15)",c:"var(--red)",t:"NEXT RACE"},postponed:{bg:"rgba(255,165,0,0.12)",c:"var(--amber)",t:"POSTPONED"},upcoming:{bg:"var(--w05)",c:"var(--w40)",t:"UPCOMING"}};const s=m[status]||m.upcoming;return (<span style={{fontSize:10,fontWeight:700,letterSpacing:1,padding:"3px 8px",borderRadius:4,background:s.bg,color:s.c}}>{s.t}</span>);}
+function SB({status}){const m={done:{bg:"rgba(27,127,75,0.12)",c:"var(--green)",t:"COMPLETED"},next:{bg:"rgba(214,40,40,0.15)",c:"var(--red)",t:"NEXT RACE"},postponed:{bg:"rgba(183,121,31,0.12)",c:"var(--amber)",t:"POSTPONED"},upcoming:{bg:"var(--w05)",c:"var(--w40)",t:"UPCOMING"}};const s=m[status]||m.upcoming;return (<span style={{fontSize:10,fontWeight:700,letterSpacing:1,padding:"3px 8px",borderRadius:2,background:s.bg,color:s.c}}>{s.t}</span>);}
 
 // ── The timekeeper's lap chart ──────────────────────────────────────────────
 // One column per lap, one row per position. Each car's line is inked in its
@@ -836,6 +836,11 @@ function LapScrubber({lap,setLap,total}){
     </div>
   );
 }
+
+// Inline SVG control glyphs, one stroke weight (the stopwatch play mark is the model)
+const IcoPlay=()=><svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true"><path d="M2 1l9 5-9 5z"/></svg>;
+const IcoPause=()=><svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true"><rect x="1.5" y="1" width="3.2" height="10"/><rect x="7.3" y="1" width="3.2" height="10"/></svg>;
+const IcoRestart=()=><svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true"><rect x="1" y="1" width="2" height="10"/><path d="M11 1L4 6l7 5z"/></svg>;
 
 const TABS=[{id:"Overview",label:"Overview"},{id:"Standings",label:"Standings"},{id:"Race Results",label:"Race Results"},{id:"Sector Times",label:"Sector Times"},{id:"Telemetry",label:"Telemetry"},{id:"Head to Head",label:"Head to Head"},{id:"Pit Stops",label:"Pit Stops"},{id:"Quotes",label:"Quotes"},{id:"Schedule",label:"Schedule"}];
 
@@ -1342,7 +1347,7 @@ export default function F1Dashboard(){
                       const color=TC[s.team]||"var(--fg)";
                       const visible=isVisible(s.name);
                       return(
-                        <button key={s.name} onClick={()=>toggle(s.name)} style={{display:"flex",alignItems:"center",gap:6,fontSize:11,background:"none",border:"none",color:"inherit",cursor:"pointer",padding:"3px 6px",borderRadius:4,opacity:visible?1:0.35,transition:"opacity 0.2s",fontFamily:"var(--font-ui)"}}>
+                        <button key={s.name} onClick={()=>toggle(s.name)} style={{display:"flex",alignItems:"center",gap:6,fontSize:11,background:"none",border:"none",color:"inherit",cursor:"pointer",padding:"3px 6px",borderRadius:2,opacity:visible?1:0.35,transition:"opacity 0.2s",fontFamily:"var(--font-ui)"}}>
                           {isSecond?(
                             <svg width={16} height={4} style={{display:"block"}}><line x1={0} y1={2} x2={16} y2={2} stroke={color} strokeWidth={2.5} strokeDasharray="4 3"/></svg>
                           ):(
@@ -1451,8 +1456,8 @@ export default function F1Dashboard(){
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:16,marginBottom:20}}>
                   <div>
                     <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:6}}>
-                      <span style={{background:"var(--red)",color:"var(--fg)",fontSize:11,fontWeight:700,padding:"3px 10px",borderRadius:4}}>R{race.r}</span>
-                      {race.sprint&&<span style={{fontSize:9,fontWeight:700,letterSpacing:.5,padding:"2px 6px",borderRadius:3,background:"rgba(232,0,32,0.15)",color:"var(--red)"}}>SPRINT</span>}
+                      <span style={{background:"var(--red)",color:"var(--fg)",fontSize:11,fontWeight:700,padding:"3px 10px",borderRadius:2}}>R{race.r}</span>
+                      {race.sprint&&<span style={{fontSize:9,fontWeight:700,letterSpacing:.5,padding:"2px 6px",borderRadius:2,background:"rgba(214,40,40,0.15)",color:"var(--red)"}}>SPRINT</span>}
                       <span style={{fontSize:20,fontWeight:700}}>{race.nm}</span>
                     </div>
                     <div style={{fontSize:12,color:"var(--w40)"}}>{race.ci} · {raceDateFmt(race.dt)}, 2026</div>
@@ -1464,7 +1469,7 @@ export default function F1Dashboard(){
                 </div>
                 <div className="pod" style={{marginBottom:16}}>
                   {race.pod.map(p=>(
-                    <div key={p.p} style={{flex:1,background:p.p===1?"rgba(255,215,0,0.08)":"var(--w03)",border:`1px solid ${p.p===1?"rgba(255,215,0,0.2)":"var(--w06)"}`,borderRadius:2,padding:"14px 14px",display:"flex",alignItems:"center",gap:10}}>
+                    <div key={p.p} style={{flex:1,background:p.p===1?"rgba(154,123,31,0.08)":"var(--w03)",border:`1px solid ${p.p===1?"rgba(154,123,31,0.2)":"var(--w06)"}`,borderRadius:2,padding:"14px 14px",display:"flex",alignItems:"center",gap:10}}>
                       <div style={{fontSize:22,fontWeight:900,color:p.p===1?"var(--gold)":p.p===2?"#C0C0C0":"#CD7F32",lineHeight:1}}>P{p.p}</div>
                       <TL team={p.t} size={34}/>
                       <div style={{flex:1,minWidth:0}}>
@@ -1570,7 +1575,7 @@ export default function F1Dashboard(){
           if(!openf1||!openf1.meetings||openf1.meetings.length===0)return(
             <div className="fu" style={{textAlign:"center",padding:60}}>
               <div style={{fontSize:22,fontWeight:700,color:"var(--w50)",marginBottom:8}}>No OpenF1 Data Available</div>
-              <div style={{fontSize:13,color:"var(--w35)"}}>Run <code style={{background:"var(--w08)",padding:"2px 8px",borderRadius:4}}>npm run fetch-openf1</code> to pull sector times & speed trap data</div>
+              <div style={{fontSize:13,color:"var(--w35)"}}>Run <code style={{background:"var(--w08)",padding:"2px 8px",borderRadius:2}}>npm run fetch-openf1</code> to pull sector times & speed trap data</div>
             </div>
           );
           const curMtg=openf1.meetings.find(m=>m.meetingKey===selMeeting)||openf1.meetings[0];
@@ -1601,7 +1606,7 @@ export default function F1Dashboard(){
                 <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:"var(--w40)"}}>Session</div>
                 <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
                   {curMtg.sessions.map(s=>(
-                    <button key={s.sessionKey} onClick={()=>setSelSession(s.sessionKey)} style={{cursor:"pointer",padding:"5px 12px",borderRadius:6,border:selSession===s.sessionKey?"1px solid rgba(39,244,210,0.4)":"1px solid var(--w06)",background:selSession===s.sessionKey?"rgba(39,244,210,0.1)":"var(--w02)",color:selSession===s.sessionKey?"var(--green)":"var(--w40)",fontSize:11,fontWeight:selSession===s.sessionKey?600:400,fontFamily:"var(--font-ui)",transition:"all .2s"}}>{s.sessionName}</button>
+                    <button key={s.sessionKey} onClick={()=>setSelSession(s.sessionKey)} style={{cursor:"pointer",padding:"5px 12px",borderRadius:2,border:selSession===s.sessionKey?"1px solid rgba(27,127,75,0.4)":"1px solid var(--w06)",background:selSession===s.sessionKey?"rgba(27,127,75,0.1)":"var(--w02)",color:selSession===s.sessionKey?"var(--green)":"var(--w40)",fontSize:11,fontWeight:selSession===s.sessionKey?600:400,fontFamily:"var(--font-ui)",transition:"all .2s"}}>{s.sessionName}</button>
                   ))}
                 </div>
               </div>
@@ -1649,7 +1654,7 @@ export default function F1Dashboard(){
                           const time=[sb.fastestS1,sb.fastestS2,sb.fastestS3][i];
                           return(
                             <div key={idx} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 12px",borderRadius:2,background:"var(--w02)",border:`1px solid ${sColors[i]}30`}}>
-                              <div style={{fontSize:10,fontWeight:700,letterSpacing:1,padding:"4px 8px",borderRadius:4,background:`${sColors[i]}22`,color:sColors[i],minWidth:32,textAlign:"center"}}>S{idx}</div>
+                              <div style={{fontSize:10,fontWeight:700,letterSpacing:1,padding:"4px 8px",borderRadius:2,background:`${sColors[i]}22`,color:sColors[i],minWidth:32,textAlign:"center"}}>S{idx}</div>
                               <div style={{flex:1,minWidth:0}}>
                                 <div style={{fontSize:13,fontWeight:600,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{d?.name||"—"}</div>
                                 <div style={{fontSize:10,color:"var(--w40)",marginTop:1}}>{d?normTeam(d.team||""):""}</div>
@@ -1722,7 +1727,7 @@ export default function F1Dashboard(){
                         const tc=inkify(d.teamColour)||"var(--fg)";
                         const atMax=!on&&selected.length>=4;
                         return(
-                          <button key={d.acronym} disabled={atMax} onClick={()=>toggle(d.acronym)} style={{display:"flex",alignItems:"center",gap:6,padding:"5px 10px",borderRadius:6,border:`1px solid ${on?tc:"var(--w08)"}`,background:on?`${tc}1a`:"var(--w02)",color:on?"var(--fg)":"var(--w55)",cursor:atMax?"not-allowed":"pointer",fontSize:11,fontWeight:on?700:500,fontFamily:"var(--font-ui)",opacity:atMax?0.35:1,transition:"all .15s"}}>
+                          <button key={d.acronym} disabled={atMax} onClick={()=>toggle(d.acronym)} style={{display:"flex",alignItems:"center",gap:6,padding:"5px 10px",borderRadius:2,border:`1px solid ${on?tc:"var(--w08)"}`,background:on?`${tc}1a`:"var(--w02)",color:on?"var(--fg)":"var(--w55)",cursor:atMax?"not-allowed":"pointer",fontSize:11,fontWeight:on?700:500,fontFamily:"var(--font-ui)",opacity:atMax?0.35:1,transition:"all .15s"}}>
                             <div style={{width:3,height:11,background:tc,borderRadius:1,opacity:on?1:0.5}}/>
                             <span style={{letterSpacing:0.5}}>{d.acronym}</span>
                           </button>
@@ -1756,7 +1761,7 @@ export default function F1Dashboard(){
                               const pct=time&&max?25+75*((time-min)/((max-min)||1)):0;
                               return(
                                 <div key={si} style={{display:"flex",alignItems:"center",gap:8}}>
-                                  <div style={{flex:1,height:14,background:"var(--w04)",borderRadius:3,overflow:"hidden",position:"relative"}}>
+                                  <div style={{flex:1,height:14,background:"var(--w04)",borderRadius:2,overflow:"hidden",position:"relative"}}>
                                     <div style={{position:"absolute",left:0,top:0,bottom:0,width:`${pct}%`,background:tc,borderRadius:1,transformOrigin:"left",animation:"barGrow 0.7s cubic-bezier(0.22,1,0.36,1) both"}}/>
                                   </div>
                                   <div style={{minWidth:78,textAlign:"right"}}>
@@ -1849,7 +1854,7 @@ export default function F1Dashboard(){
                     return(
                       <div key={i} style={{display:"flex",alignItems:"center",gap:8}}>
                         <div style={{width:30,fontSize:11,fontWeight:600,color:i===0?"#FF8000":"var(--w40)",textAlign:"right"}}>{d.acronym}</div>
-                        <div style={{flex:1,height:20,background:"var(--w04)",borderRadius:4,overflow:"hidden",position:"relative"}}>
+                        <div style={{flex:1,height:20,background:"var(--w04)",borderRadius:2,overflow:"hidden",position:"relative"}}>
                           <div style={{height:"100%",width:`${pct}%`,background:inkify(d.teamColour)||"var(--ink-4)",borderRadius:1}}/>
                           <div style={{position:"absolute",right:8,top:"50%",transform:"translateY(-50%)",fontSize:10,color:"var(--w60)",fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)",fontWeight:i===0?700:400}}>{d.maxSTSpeed||"—"}</div>
                         </div>
@@ -1875,7 +1880,7 @@ export default function F1Dashboard(){
               <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:"var(--w40)"}}>Compare by</div>
               <div style={{display:"flex",gap:4}}>
                 {[{id:"qual",label:"Qualifying Position"},{id:"race",label:"Average Finish"},{id:"pts",label:"Points Scored"}].map(m=>(
-                  <button key={m.id} onClick={()=>setH2hMetric(m.id)} style={{cursor:"pointer",padding:"8px 16px",borderRadius:6,border:h2hMetric===m.id?"1px solid rgba(232,0,32,0.4)":"1px solid var(--w08)",background:h2hMetric===m.id?"rgba(232,0,32,0.12)":"var(--w03)",color:h2hMetric===m.id?"var(--red)":"var(--w50)",fontSize:12,fontWeight:h2hMetric===m.id?600:400,fontFamily:"var(--font-ui)",transition:"all .2s"}}>{m.label}</button>
+                  <button key={m.id} onClick={()=>setH2hMetric(m.id)} style={{cursor:"pointer",padding:"8px 16px",borderRadius:2,border:h2hMetric===m.id?"1px solid rgba(214,40,40,0.4)":"1px solid var(--w08)",background:h2hMetric===m.id?"rgba(214,40,40,0.12)":"var(--w03)",color:h2hMetric===m.id?"var(--red)":"var(--w50)",fontSize:12,fontWeight:h2hMetric===m.id?600:400,fontFamily:"var(--font-ui)",transition:"all .2s"}}>{m.label}</button>
                 ))}
               </div>
             </div>
@@ -1952,7 +1957,7 @@ export default function F1Dashboard(){
                     </div>
 
                     {/* Battle Bar */}
-                    <div style={{display:"flex",height:8,borderRadius:4,overflow:"hidden",background:"var(--w04)"}}>
+                    <div style={{display:"flex",height:8,borderRadius:2,overflow:"hidden",background:"var(--w04)"}}>
                       <div style={{width:`${d1Pct}%`,background:d1Leads?tc:"var(--w15)",borderRadius:"4px 0 0 4px"}}/>
                       <div style={{width:2,background:"var(--bench)",flexShrink:0}}/>
                       <div style={{width:`${d2Pct}%`,background:d2Leads?tc:"var(--w15)",borderRadius:"0 4px 4px 0"}}/>
@@ -1965,7 +1970,7 @@ export default function F1Dashboard(){
                           const d1Won=typeof rd.d1==="number"&&typeof rd.d2==="number"?rd.d1<rd.d2:false;
                           const d2Won=typeof rd.d1==="number"&&typeof rd.d2==="number"?rd.d2<rd.d1:false;
                           return(
-                            <div key={i} style={{background:"var(--w03)",borderRadius:6,padding:"6px 10px",fontSize:11,border:"1px solid var(--w04)",minWidth:80}}>
+                            <div key={i} style={{background:"var(--w03)",borderRadius:2,padding:"6px 10px",fontSize:11,border:"1px solid var(--w04)",minWidth:80}}>
                               <div style={{color:"var(--w35)",marginBottom:3,fontSize:10}}>{rd.race}</div>
                               <div style={{display:"flex",justifyContent:"space-between",gap:8}}>
                                 <span style={{fontWeight:d1Won?700:400,color:d1Won?tc:"var(--w40)"}}>P{rd.d1}</span>
@@ -2007,7 +2012,7 @@ export default function F1Dashboard(){
             {prs.length>1&&(
               <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
                 <span style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:"var(--w40)",fontWeight:600}}>Race</span>
-                <select value={String(curPr.r)} onChange={e=>setSelPitRace(e.target.value)} style={{appearance:"none",WebkitAppearance:"none",background:"var(--w04)",border:"1px solid var(--w10)",borderRadius:6,padding:"6px 28px 6px 12px",color:"var(--fg)",fontSize:12,fontWeight:500,fontFamily:"var(--font-ui)",cursor:"pointer",outline:"none",minWidth:220}}>
+                <select value={String(curPr.r)} onChange={e=>setSelPitRace(e.target.value)} style={{appearance:"none",WebkitAppearance:"none",background:"var(--w04)",border:"1px solid var(--w10)",borderRadius:2,padding:"6px 28px 6px 12px",color:"var(--fg)",fontSize:12,fontWeight:500,fontFamily:"var(--font-ui)",cursor:"pointer",outline:"none",minWidth:220}}>
                   {prs.map(p=><option key={p.r} value={String(p.r)} style={{background:"var(--sheet)"}}>{`R${p.r} — ${p.nm}`}</option>)}
                 </select>
               </div>
@@ -2025,8 +2030,8 @@ export default function F1Dashboard(){
                   <div key={`${curPr.r}-${d.d}-${d.l}`} style={{display:"flex",alignItems:"center",gap:8}}>
                     <TL team={d.t} size={22}/>
                     <div style={{width:96,fontSize:12,color:"var(--w70)",textAlign:"right",flexShrink:0,whiteSpace:"nowrap"}}>{d.d}<span style={{color:"var(--w30)",fontSize:10,marginLeft:4}}>L{d.l}</span></div>
-                    <div style={{flex:1,height:22,background:"var(--w04)",borderRadius:4,overflow:"hidden",position:"relative"}}>
-                      <div style={{height:"100%",width:`${(d.s/maxS)*100}%`,background:TC[d.t]||"var(--ink-4)",borderRadius:4,opacity:.8}}/>
+                    <div style={{flex:1,height:22,background:"var(--w04)",borderRadius:2,overflow:"hidden",position:"relative"}}>
+                      <div style={{height:"100%",width:`${(d.s/maxS)*100}%`,background:TC[d.t]||"var(--ink-4)",borderRadius:2,opacity:.8}}/>
                       <div style={{position:"absolute",right:8,top:"50%",transform:"translateY(-50%)",fontSize:11,color:"var(--w60)",fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)"}}>{d.s.toFixed(3)}s</div>
                     </div>
                   </div>
@@ -2090,13 +2095,13 @@ export default function F1Dashboard(){
                 </div>
                 <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
                   {availableSessions.map(s=>(
-                    <button key={s} onClick={()=>{setQuotesSession(s);setQuoteDriver(null);}} style={{padding:"8px 20px",borderRadius:2,border:"1px solid "+(activeSession===s?"var(--red)":"var(--w08)"),background:activeSession===s?"rgba(232,0,32,0.15)":"var(--w02)",color:activeSession===s?"var(--fg)":"var(--w50)",cursor:"pointer",fontSize:13,fontWeight:600,fontFamily:"var(--font-ui)"}}>{SESSION_LABELS[s]}</button>
+                    <button key={s} onClick={()=>{setQuotesSession(s);setQuoteDriver(null);}} style={{padding:"8px 20px",borderRadius:2,border:"1px solid "+(activeSession===s?"var(--red)":"var(--w08)"),background:activeSession===s?"rgba(214,40,40,0.15)":"var(--w02)",color:activeSession===s?"var(--fg)":"var(--w50)",cursor:"pointer",fontSize:13,fontWeight:600,fontFamily:"var(--font-ui)"}}>{SESSION_LABELS[s]}</button>
                   ))}
                 </div>
                 <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
-                  <button onClick={()=>setQuoteDriver(null)} style={{padding:"6px 14px",borderRadius:2,border:"1px solid "+(activeDriver===null?"var(--red)":"var(--w08)"),background:activeDriver===null?"rgba(232,0,32,0.15)":"var(--w02)",color:activeDriver===null?"var(--fg)":"var(--w50)",cursor:"pointer",fontSize:12,fontWeight:600,fontFamily:"var(--font-ui)"}}>All</button>
+                  <button onClick={()=>setQuoteDriver(null)} style={{padding:"6px 14px",borderRadius:2,border:"1px solid "+(activeDriver===null?"var(--red)":"var(--w08)"),background:activeDriver===null?"rgba(214,40,40,0.15)":"var(--w02)",color:activeDriver===null?"var(--fg)":"var(--w50)",cursor:"pointer",fontSize:12,fontWeight:600,fontFamily:"var(--font-ui)"}}>All</button>
                   {quoteDrivers.map(([name,cnt])=>(
-                    <button key={name} onClick={()=>setQuoteDriver(activeDriver===name?null:name)} style={{padding:"6px 14px",borderRadius:2,border:"1px solid "+(activeDriver===name?"var(--red)":"var(--w08)"),background:activeDriver===name?"rgba(232,0,32,0.15)":"var(--w02)",color:activeDriver===name?"var(--fg)":"var(--w50)",cursor:"pointer",fontSize:12,fontWeight:600,fontFamily:"var(--font-ui)"}}>{name} <span style={{fontWeight:400,opacity:0.55}}>{cnt}</span></button>
+                    <button key={name} onClick={()=>setQuoteDriver(activeDriver===name?null:name)} style={{padding:"6px 14px",borderRadius:2,border:"1px solid "+(activeDriver===name?"var(--red)":"var(--w08)"),background:activeDriver===name?"rgba(214,40,40,0.15)":"var(--w02)",color:activeDriver===name?"var(--fg)":"var(--w50)",cursor:"pointer",fontSize:12,fontWeight:600,fontFamily:"var(--font-ui)"}}>{name} <span style={{fontWeight:400,opacity:0.55}}>{cnt}</span></button>
                   ))}
                 </div>
                 {(()=>{
@@ -2171,9 +2176,9 @@ export default function F1Dashboard(){
               <div style={{fontSize:12,color:"var(--w35)",marginBottom:20}}>{sched.length} races · {sched.filter(r=>r.sp).length} Sprint weekends</div>
               {sched.map(race=>{
                 return(
-                <div key={race.r} className="sr" style={{background:race.st==="next"?"rgba(232,0,32,0.08)":race.st==="postponed"?"rgba(255,165,0,0.04)":"transparent",border:race.st==="next"?"1px solid rgba(232,0,32,0.2)":"1px solid transparent"}}>
+                <div key={race.r} className="sr" style={{background:race.st==="next"?"rgba(214,40,40,0.08)":race.st==="postponed"?"rgba(183,121,31,0.04)":"transparent",border:race.st==="next"?"1px solid rgba(214,40,40,0.2)":"1px solid transparent"}}>
                   <div style={{width:36,fontSize:13,fontWeight:700,color:race.st==="done"?"var(--green)":race.st==="next"?"var(--red)":"var(--w30)",flexShrink:0}}>R{race.r}</div>
-                  {race.fc && <div style={{width:36,height:24,borderRadius:3,flexShrink:0,marginRight:10,background:"var(--w06)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700,color:"var(--w40)",letterSpacing:.5,opacity:race.st==="postponed"?0.4:1}}>{race.fc}</div>}
+                  {race.fc && <div style={{width:36,height:24,borderRadius:2,flexShrink:0,marginRight:10,background:"var(--w06)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700,color:"var(--w40)",letterSpacing:.5,opacity:race.st==="postponed"?0.4:1}}>{race.fc}</div>}
                   {tracks&&tracks[race.nm]&&(
                     <div style={{width:44,height:32,marginRight:12,flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",opacity:race.st==="postponed"?0.3:0.75}}>
                       <TrackMap raceName={race.nm} tracks={tracks} stroke={race.st==="next"?"var(--red)":race.st==="done"?"var(--green)":"var(--w55)"} strokeWidth={1.8} height={32} width={44}/>
@@ -2182,8 +2187,8 @@ export default function F1Dashboard(){
                   <div style={{flex:1,minWidth:0}}>
                     <div style={{display:"flex",alignItems:"center",gap:8}}>
                       <span style={{fontSize:14,fontWeight:600,color:race.st==="postponed"?"var(--w40)":"var(--fg)"}}>{race.nm}</span>
-                      {race.sp&&<span style={{fontSize:9,fontWeight:700,letterSpacing:.5,padding:"2px 6px",borderRadius:3,background:"rgba(232,0,32,0.15)",color:"var(--red)"}}>SPRINT</span>}
-                      {race.st==="next"&&<span style={{fontSize:10,fontWeight:600,padding:"2px 8px",borderRadius:3,background:"rgba(232,0,32,0.1)",color:"var(--w70)"}}>{countdownLabel(race.dt,race.tt)}</span>}
+                      {race.sp&&<span style={{fontSize:9,fontWeight:700,letterSpacing:.5,padding:"2px 6px",borderRadius:2,background:"rgba(214,40,40,0.15)",color:"var(--red)"}}>SPRINT</span>}
+                      {race.st==="next"&&<span style={{fontSize:10,fontWeight:600,padding:"2px 8px",borderRadius:2,background:"rgba(214,40,40,0.1)",color:"var(--w70)"}}>{countdownLabel(race.dt,race.tt)}</span>}
                     </div>
                     <div style={{fontSize:11,color:"var(--w35)",marginTop:2}}>{race.ci}</div>
                   </div>
@@ -2267,7 +2272,7 @@ const TelemetryTab=memo(function TelemetryTab({openf1,tracks,telMeetingKey,setTe
             <div className="fu" style={{textAlign:"center",padding:60,color:"var(--w40)"}}>
               <svg width="40" height="40" viewBox="0 0 40 40" aria-hidden="true" style={{display:"block",margin:"0 auto 12px"}}><circle cx="20" cy="22" r="14" fill="none" stroke="var(--ink-3)" strokeWidth="2"/><path d="M20 12v10l6 4" fill="none" stroke="var(--ink-3)" strokeWidth="2" strokeLinecap="round"/><path d="M16 5h8M20 5v3" stroke="var(--ink-3)" strokeWidth="2" strokeLinecap="round"/></svg>
               <div style={{fontSize:16,fontWeight:600,marginBottom:4}}>No race telemetry available yet</div>
-              <div style={{fontSize:13}}>Run <code style={{background:"var(--w08)",padding:"2px 8px",borderRadius:4}}>npm run fetch-openf1</code> after a race finishes.</div>
+              <div style={{fontSize:13}}>Run <code style={{background:"var(--w08)",padding:"2px 8px",borderRadius:2}}>npm run fetch-openf1</code> after a race finishes.</div>
             </div>
           );
           // Full meeting payload still streaming in (lazy-loaded per meeting)
@@ -2285,7 +2290,7 @@ const TelemetryTab=memo(function TelemetryTab({openf1,tracks,telMeetingKey,setTe
                 <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:"var(--w40)"}}>Race</div>
                 <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
                   {raceMeetings.map(rm=>(
-                    <button key={rm.meeting.meetingKey} onClick={()=>{setTelMeetingKey(rm.meeting.meetingKey);setTelSelected(new Set());}} style={{cursor:"pointer",padding:"6px 14px",borderRadius:6,border:activeKey===rm.meeting.meetingKey?"1px solid rgba(232,0,32,0.4)":"1px solid var(--w08)",background:activeKey===rm.meeting.meetingKey?"rgba(232,0,32,0.12)":"var(--w03)",color:activeKey===rm.meeting.meetingKey?"var(--red)":"var(--w50)",fontSize:12,fontWeight:activeKey===rm.meeting.meetingKey?600:400,fontFamily:"var(--font-ui)"}}>{rm.meeting.meetingName.replace(" Grand Prix","")}</button>
+                    <button key={rm.meeting.meetingKey} onClick={()=>{setTelMeetingKey(rm.meeting.meetingKey);setTelSelected(new Set());}} style={{cursor:"pointer",padding:"6px 14px",borderRadius:2,border:activeKey===rm.meeting.meetingKey?"1px solid rgba(214,40,40,0.4)":"1px solid var(--w08)",background:activeKey===rm.meeting.meetingKey?"rgba(214,40,40,0.12)":"var(--w03)",color:activeKey===rm.meeting.meetingKey?"var(--red)":"var(--w50)",fontSize:12,fontWeight:activeKey===rm.meeting.meetingKey?600:400,fontFamily:"var(--font-ui)"}}>{rm.meeting.meetingName.replace(" Grand Prix","")}</button>
                   ))}
                 </div>
               </div>
@@ -2307,7 +2312,7 @@ const TelemetryTab=memo(function TelemetryTab({openf1,tracks,telMeetingKey,setTe
                     const on=selected.has(d.acronym);
                     const tc=inkify(d.teamColour)||"var(--fg)";
                     return(
-                      <button key={d.acronym} onClick={()=>toggleTel(d.acronym)} style={{display:"flex",alignItems:"center",gap:6,padding:"5px 10px",borderRadius:6,border:`1px solid ${on?tc:"var(--w08)"}`,background:on?`${tc}1a`:"var(--w02)",color:on?"var(--fg)":"var(--w50)",cursor:"pointer",fontSize:11,fontWeight:on?700:500,fontFamily:"var(--font-ui)"}}>
+                      <button key={d.acronym} onClick={()=>toggleTel(d.acronym)} style={{display:"flex",alignItems:"center",gap:6,padding:"5px 10px",borderRadius:2,border:`1px solid ${on?tc:"var(--w08)"}`,background:on?`${tc}1a`:"var(--w02)",color:on?"var(--fg)":"var(--w50)",cursor:"pointer",fontSize:11,fontWeight:on?700:500,fontFamily:"var(--font-ui)"}}>
                         <div style={{width:3,height:11,background:tc,borderRadius:1,opacity:on?1:0.5}}/>
                         <span style={{letterSpacing:0.5}}>{d.acronym}</span>
                       </button>
@@ -2465,18 +2470,18 @@ const ReplayPanel=memo(function ReplayPanel({cur,race,tracks,allDrivers,telMeeti
                         <div style={{fontSize:11,color:"var(--w40)",marginTop:2}}>{cur.meeting.meetingName} · Lap {leaderLap} of {totalLaps} · {fmtTime(tClamped)}</div>
                       </div>
                       <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
-                        <button onClick={()=>{if(replayTime>=raceDuration-0.5)setReplayTime(0);setReplayPlaying(p=>!p);}} style={{width:38,height:38,borderRadius:"50%",border:"1px solid var(--w15)",background:replayPlaying?"rgba(232,0,32,0.18)":"var(--w06)",color:"var(--fg)",cursor:"pointer",fontSize:14,fontFamily:"var(--font-ui)",display:"flex",alignItems:"center",justifyContent:"center"}}>{replayPlaying?"⏸":"▶"}</button>
-                        <button onClick={()=>{setReplayPlaying(false);setReplayTime(0);}} title="Restart" style={{width:30,height:30,borderRadius:6,border:"1px solid var(--w08)",background:"var(--w03)",color:"var(--w55)",cursor:"pointer",fontSize:12,fontFamily:"var(--font-ui)"}}>⏮</button>
-                        <div style={{display:"flex",gap:3,border:"1px solid var(--w08)",borderRadius:6,padding:2,background:"var(--w02)"}}>
+                        <button onClick={()=>{if(replayTime>=raceDuration-0.5)setReplayTime(0);setReplayPlaying(p=>!p);}} style={{width:38,height:38,borderRadius:"50%",border:"1px solid var(--w15)",background:replayPlaying?"rgba(214,40,40,0.18)":"var(--w06)",color:"var(--fg)",cursor:"pointer",fontSize:14,fontFamily:"var(--font-ui)",display:"flex",alignItems:"center",justifyContent:"center"}}>{replayPlaying?<IcoPause/>:<IcoPlay/>}</button>
+                        <button onClick={()=>{setReplayPlaying(false);setReplayTime(0);}} title="Restart" style={{width:30,height:30,borderRadius:2,border:"1px solid var(--w08)",background:"var(--w03)",color:"var(--w55)",cursor:"pointer",fontSize:12,fontFamily:"var(--font-ui)"}}><IcoRestart/></button>
+                        <div style={{display:"flex",gap:3,border:"1px solid var(--w08)",borderRadius:2,padding:2,background:"var(--w02)"}}>
                           {[1,2,4,8,16].map(s=>(
-                            <button key={s} onClick={()=>setReplaySpeed(s)} style={{padding:"3px 9px",borderRadius:4,border:"none",background:replaySpeed===s?"rgba(232,0,32,0.18)":"transparent",color:replaySpeed===s?"var(--fg)":"var(--w50)",cursor:"pointer",fontSize:10,fontWeight:replaySpeed===s?700:500,fontFamily:"var(--font-ui)"}}>{s}×</button>
+                            <button key={s} onClick={()=>setReplaySpeed(s)} style={{padding:"3px 9px",borderRadius:2,border:"none",background:replaySpeed===s?"rgba(214,40,40,0.18)":"transparent",color:replaySpeed===s?"var(--fg)":"var(--w50)",cursor:"pointer",fontSize:10,fontWeight:replaySpeed===s?700:500,fontFamily:"var(--font-ui)"}}>{s}×</button>
                           ))}
                         </div>
                       </div>
                     </div>
                     {/* Scrubber */}
                     <div style={{position:"relative",height:28,marginBottom:14}}>
-                      <div style={{position:"absolute",inset:"12px 0",borderRadius:3,background:"var(--w04)"}}/>
+                      <div style={{position:"absolute",inset:"12px 0",borderRadius:2,background:"var(--w04)"}}/>
                       {scrubberPeriods.map((p,i)=>{
                         const st=periodStyle[p.type];if(!st)return null;
                         const left=(p.start/raceDuration)*100;
@@ -2492,7 +2497,7 @@ const ReplayPanel=memo(function ReplayPanel({cur,race,tracks,allDrivers,telMeeti
                       if(activePeriod){const st=periodStyle[activePeriod.type];label=st?.label||activePeriod.type;color=st?.fill||"var(--fg)";bg=`${color}22`;}
                       else{label="LOCAL YELLOW";color="var(--yellow)";bg="rgba(255,200,0,0.10)";}
                       return(
-                        <div style={{padding:"6px 12px",background:bg,border:`1px solid ${color}55`,borderRadius:6,marginBottom:14,fontSize:11,fontWeight:700,letterSpacing:1,color,textTransform:"uppercase",display:"flex",alignItems:"center",gap:8}}>
+                        <div style={{padding:"6px 12px",background:bg,border:`1px solid ${color}55`,borderRadius:2,marginBottom:14,fontSize:11,fontWeight:700,letterSpacing:1,color,textTransform:"uppercase",display:"flex",alignItems:"center",gap:8}}>
                           <div style={{width:8,height:8,background:color,borderRadius:"50%",animation:"pulse 1.2s ease-in-out infinite"}}/>{label} active
                         </div>
                       );
@@ -2562,7 +2567,7 @@ const ReplayPanel=memo(function ReplayPanel({cur,race,tracks,allDrivers,telMeeti
                                 <div style={{fontSize:10,fontWeight:800,color:"var(--w40)",fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)",minWidth:18}}>P{rank}</div>
                                 <div style={{width:3,height:14,background:inkify(d.teamColour)||"var(--fg)",borderRadius:1}}/>
                                 <div style={{fontSize:13,fontWeight:700,letterSpacing:0.3}}>{d.acronym}</div>
-                                {compound&&<div style={{marginLeft:"auto",display:"inline-flex",alignItems:"center",justifyContent:"center",width:18,height:18,borderRadius:3,background:ccol,fontSize:9,fontWeight:800,color:cdark?"var(--bench)":"var(--fg)"}}>{compound[0]}</div>}
+                                {compound&&<div style={{marginLeft:"auto",display:"inline-flex",alignItems:"center",justifyContent:"center",width:18,height:18,borderRadius:2,background:ccol,fontSize:9,fontWeight:800,color:cdark?"var(--bench)":"var(--fg)"}}>{compound[0]}</div>}
                               </div>
                               <div style={{fontSize:11,color:"var(--w60)",marginBottom:3,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{d.name||d.acronym}</div>
                               <div style={{fontSize:10,color:inkify(d.teamColour)||"var(--w50)",fontWeight:600}}>{normTeam(d.team||"")}</div>
@@ -2585,7 +2590,7 @@ const ReplayPanel=memo(function ReplayPanel({cur,race,tracks,allDrivers,telMeeti
                           const ccol=COMPOUND_COLORS[compound]||"var(--w20)";
                           const cdark=compound==="HARD";
                           return(
-                            <div key={d.number} style={{display:"grid",gridTemplateColumns:"20px 26px 1fr 22px 50px",gap:5,padding:"4px 7px",alignItems:"center",background:idx<3?`${tc}14`:"var(--w02)",border:idx<3?`1px solid ${tc}30`:"1px solid var(--w04)",borderRadius:5,opacity:s.finished?0.55:1,transition:"opacity 0.2s"}}>
+                            <div key={d.number} style={{display:"grid",gridTemplateColumns:"20px 26px 1fr 22px 50px",gap:5,padding:"4px 7px",alignItems:"center",background:idx<3?`${tc}14`:"var(--w02)",border:idx<3?`1px solid ${tc}30`:"1px solid var(--w04)",borderRadius:2,opacity:s.finished?0.55:1,transition:"opacity 0.2s"}}>
                               <div style={{fontSize:11,fontWeight:800,color:idx<3?tc:"var(--w40)",fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)"}}>{idx+1}</div>
                               <div style={{width:3,height:16,background:tc,borderRadius:1.5}}/>
                               <div style={{minWidth:0}}>
@@ -2593,7 +2598,7 @@ const ReplayPanel=memo(function ReplayPanel({cur,race,tracks,allDrivers,telMeeti
                                 <div style={{fontSize:8,color:"var(--w40)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",lineHeight:1.1,marginTop:1}}>L{Math.floor(s.progress)+(s.finished?0:1)}{s.finished?" · FIN":""}</div>
                               </div>
                               <div style={{textAlign:"center"}}>
-                                {compound&&<div style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:16,height:16,borderRadius:3,background:ccol,fontSize:9,fontWeight:800,color:cdark?"var(--bench)":"var(--fg)"}}>{compound[0]}</div>}
+                                {compound&&<div style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:16,height:16,borderRadius:2,background:ccol,fontSize:9,fontWeight:800,color:cdark?"var(--bench)":"var(--fg)"}}>{compound[0]}</div>}
                               </div>
                               <div style={{textAlign:"right",fontSize:10,fontWeight:600,fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)",color:idx===0?"var(--green)":"var(--w60)"}}>{fmtGapToLeader(s)}</div>
                             </div>
@@ -2949,20 +2954,20 @@ const LapComparePanel=memo(function LapComparePanel({openf1,telMeetingKey,allDri
                       <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
                         <span style={{fontSize:10,color:"var(--w40)",textTransform:"uppercase",letterSpacing:1}}>A</span>
                         {usable.map(d=>{const on=d.acronym===acrA;const dc=inkify(d.teamColour)||"var(--fg)";return(
-                          <button key={"lcA-"+d.acronym} onClick={()=>{setLapCompareA(d.acronym);setLapCompareLap(null);}} style={{padding:"3px 8px",borderRadius:4,border:`1px solid ${on?dc:"var(--w08)"}`,background:on?`${dc}1a`:"var(--w02)",color:on?"var(--fg)":"var(--w55)",cursor:"pointer",fontSize:10,fontWeight:on?700:500,fontFamily:"var(--font-ui)",letterSpacing:0.4}}>{d.acronym}</button>
+                          <button key={"lcA-"+d.acronym} onClick={()=>{setLapCompareA(d.acronym);setLapCompareLap(null);}} style={{padding:"3px 8px",borderRadius:2,border:`1px solid ${on?dc:"var(--w08)"}`,background:on?`${dc}1a`:"var(--w02)",color:on?"var(--fg)":"var(--w55)",cursor:"pointer",fontSize:10,fontWeight:on?700:500,fontFamily:"var(--font-ui)",letterSpacing:0.4}}>{d.acronym}</button>
                         );})}
                       </div>
                       <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
                         <span style={{fontSize:10,color:"var(--w40)",textTransform:"uppercase",letterSpacing:1}}>B</span>
                         {usable.map(d=>{const on=d.acronym===acrB;const dc=inkify(d.teamColour)||"var(--fg)";return(
-                          <button key={"lcB-"+d.acronym} onClick={()=>{setLapCompareB(d.acronym);setLapCompareLap(null);}} style={{padding:"3px 8px",borderRadius:4,border:`1px solid ${on?dc:"var(--w08)"}`,background:on?`${dc}1a`:"var(--w02)",color:on?"var(--fg)":"var(--w55)",cursor:"pointer",fontSize:10,fontWeight:on?700:500,fontFamily:"var(--font-ui)",letterSpacing:0.4}}>{d.acronym}</button>
+                          <button key={"lcB-"+d.acronym} onClick={()=>{setLapCompareB(d.acronym);setLapCompareLap(null);}} style={{padding:"3px 8px",borderRadius:2,border:`1px solid ${on?dc:"var(--w08)"}`,background:on?`${dc}1a`:"var(--w02)",color:on?"var(--fg)":"var(--w55)",cursor:"pointer",fontSize:10,fontWeight:on?700:500,fontFamily:"var(--font-ui)",letterSpacing:0.4}}>{d.acronym}</button>
                         );})}
                       </div>
                     </div>
                     {/* Lap dropdown selector */}
                     <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10,flexWrap:"wrap"}}>
                       <span style={{fontSize:10,textTransform:"uppercase",letterSpacing:1,color:"var(--w40)",fontWeight:600}}>Lap</span>
-                      <select value={lapCompareLap||""} onChange={(e)=>{const v=parseInt(e.target.value);if(!isNaN(v))onPickLap(v);}} style={{appearance:"none",WebkitAppearance:"none",background:"var(--w04)",border:"1px solid var(--w10)",borderRadius:6,padding:"6px 28px 6px 12px",color:"var(--fg)",fontSize:12,fontWeight:500,fontFamily:"var(--font-ui)",cursor:"pointer",outline:"none",minWidth:200}}>
+                      <select value={lapCompareLap||""} onChange={(e)=>{const v=parseInt(e.target.value);if(!isNaN(v))onPickLap(v);}} style={{appearance:"none",WebkitAppearance:"none",background:"var(--w04)",border:"1px solid var(--w10)",borderRadius:2,padding:"6px 28px 6px 12px",color:"var(--fg)",fontSize:12,fontWeight:500,fontFamily:"var(--font-ui)",cursor:"pointer",outline:"none",minWidth:200}}>
                         {!lapCompareLap&&<option value="" disabled style={{background:"var(--sheet)"}}>Select a lap…</option>}
                         {(()=>{
                           // Union of usable laps across both drivers
@@ -2983,7 +2988,7 @@ const LapComparePanel=memo(function LapComparePanel({openf1,telMeetingKey,allDri
                         })()}
                       </select>
                       {lapCompareLap&&(dataA?.error||dataB?.error)&&(
-                        <button onClick={onRetry} style={{padding:"5px 12px",borderRadius:6,border:"1px solid rgba(232,0,32,0.4)",background:"rgba(232,0,32,0.15)",color:"var(--fg)",cursor:"pointer",fontSize:11,fontWeight:600,fontFamily:"var(--font-ui)"}}>↻ Retry</button>
+                        <button onClick={onRetry} style={{padding:"5px 12px",borderRadius:2,border:"1px solid rgba(214,40,40,0.4)",background:"rgba(214,40,40,0.15)",color:"var(--fg)",cursor:"pointer",fontSize:11,fontWeight:600,fontFamily:"var(--font-ui)"}}>Retry</button>
                       )}
                     </div>
                     {/* Lap selector chart */}
@@ -3081,15 +3086,15 @@ const LapComparePanel=memo(function LapComparePanel({openf1,telMeetingKey,allDri
                             <>
                               {/* Playback controls */}
                               <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10,flexWrap:"wrap"}}>
-                                <button onClick={()=>{if(playT>=playDuration-0.05)setLapComparePlayTime(0);setLapComparePlaying(p=>!p);}} style={{width:32,height:32,borderRadius:"50%",border:"1px solid var(--w15)",background:lapComparePlaying?"rgba(232,0,32,0.18)":"var(--w06)",color:"var(--fg)",cursor:"pointer",fontSize:12,fontFamily:"var(--font-ui)",display:"flex",alignItems:"center",justifyContent:"center"}}>{lapComparePlaying?"⏸":"▶"}</button>
-                                <button onClick={()=>{setLapComparePlaying(false);setLapComparePlayTime(0);}} style={{width:28,height:28,borderRadius:5,border:"1px solid var(--w08)",background:"var(--w03)",color:"var(--w55)",cursor:"pointer",fontSize:11,fontFamily:"var(--font-ui)"}}>⏮</button>
+                                <button onClick={()=>{if(playT>=playDuration-0.05)setLapComparePlayTime(0);setLapComparePlaying(p=>!p);}} style={{width:32,height:32,borderRadius:"50%",border:"1px solid var(--w15)",background:lapComparePlaying?"rgba(214,40,40,0.18)":"var(--w06)",color:"var(--fg)",cursor:"pointer",fontSize:12,fontFamily:"var(--font-ui)",display:"flex",alignItems:"center",justifyContent:"center"}}>{lapComparePlaying?<IcoPause/>:<IcoPlay/>}</button>
+                                <button onClick={()=>{setLapComparePlaying(false);setLapComparePlayTime(0);}} style={{width:28,height:28,borderRadius:2,border:"1px solid var(--w08)",background:"var(--w03)",color:"var(--w55)",cursor:"pointer",fontSize:11,fontFamily:"var(--font-ui)"}}><IcoRestart/></button>
                                 <div style={{fontSize:11,color:"var(--w70)",fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)",minWidth:90}}>{playT.toFixed(2)}s / {playDuration.toFixed(2)}s</div>
                                 <input type="range" min={0} max={playDuration} step={0.05} value={playT} onChange={(e)=>{setLapComparePlaying(false);setLapComparePlayTime(parseFloat(e.target.value));}} style={{flex:1,minWidth:200,height:24,margin:0,appearance:"none",WebkitAppearance:"none",cursor:"pointer",background:"transparent"}}/>
                                 {/* Zoom controls */}
-                                <div style={{display:"flex",gap:2,border:"1px solid var(--w08)",borderRadius:6,padding:2,background:"var(--w02)"}}>
-                                  <button onClick={()=>{const z1=Math.max(1,lapZoom*0.8);setLapZoom(z1);setLapPan(p=>clampPan(p,z1));}} style={{width:24,height:24,borderRadius:4,border:"none",background:"transparent",color:"var(--w60)",cursor:"pointer",fontSize:12,fontFamily:"var(--font-ui)"}}>−</button>
-                                  <button onClick={()=>{setLapZoom(1.6);setLapPan({x:0,y:0});}} title="Reset zoom" style={{padding:"3px 8px",borderRadius:4,border:"none",background:"transparent",color:"var(--w55)",cursor:"pointer",fontSize:10,fontFamily:"var(--font-ui)"}}>{(lapZoom*100|0)}%</button>
-                                  <button onClick={()=>setLapZoom(z=>Math.min(6,z*1.25))} style={{width:24,height:24,borderRadius:4,border:"none",background:"transparent",color:"var(--w60)",cursor:"pointer",fontSize:12,fontFamily:"var(--font-ui)"}}>+</button>
+                                <div style={{display:"flex",gap:2,border:"1px solid var(--w08)",borderRadius:2,padding:2,background:"var(--w02)"}}>
+                                  <button onClick={()=>{const z1=Math.max(1,lapZoom*0.8);setLapZoom(z1);setLapPan(p=>clampPan(p,z1));}} style={{width:24,height:24,borderRadius:2,border:"none",background:"transparent",color:"var(--w60)",cursor:"pointer",fontSize:12,fontFamily:"var(--font-ui)"}}>−</button>
+                                  <button onClick={()=>{setLapZoom(1.6);setLapPan({x:0,y:0});}} title="Reset zoom" style={{padding:"3px 8px",borderRadius:2,border:"none",background:"transparent",color:"var(--w55)",cursor:"pointer",fontSize:10,fontFamily:"var(--font-ui)"}}>{(lapZoom*100|0)}%</button>
+                                  <button onClick={()=>setLapZoom(z=>Math.min(6,z*1.25))} style={{width:24,height:24,borderRadius:2,border:"none",background:"transparent",color:"var(--w60)",cursor:"pointer",fontSize:12,fontFamily:"var(--font-ui)"}}>+</button>
                                 </div>
                               </div>
                               {/* Track view (live x/y) */}
@@ -3264,7 +3269,7 @@ const LapTimesChart=memo(function LapTimesChart({maxLap,yMin,yMax,race,visibleDr
                 const fmtLapTime=(s)=>{if(!s)return"—";const m=Math.floor(s/60);const r=(s%60).toFixed(3);return `${m}:${r.padStart(6,"0")}`;};
                 const periods=race.raceControlPeriods||[];
                 const yellowLaps=race.yellowFlagLaps||[];
-                const periodStyle={SC:{fill:"rgba(255,218,0,0.10)",border:"rgba(255,218,0,0.45)",label:"SC",color:"var(--yellow)"},VSC:{fill:"rgba(255,152,0,0.08)",border:"rgba(255,152,0,0.40)",label:"VSC",color:"var(--amber)"},RED:{fill:"rgba(232,0,32,0.14)",border:"rgba(232,0,32,0.55)",label:"RED",color:"var(--red)"}};
+                const periodStyle={SC:{fill:"rgba(255,218,0,0.10)",border:"rgba(255,218,0,0.45)",label:"SC",color:"var(--yellow)"},VSC:{fill:"rgba(255,152,0,0.08)",border:"rgba(255,152,0,0.40)",label:"VSC",color:"var(--amber)"},RED:{fill:"rgba(214,40,40,0.14)",border:"rgba(214,40,40,0.55)",label:"RED",color:"var(--red)"}};
                 const onMove=(e)=>{
                   const rect=e.currentTarget.getBoundingClientRect();
                   const xView=((e.clientX-rect.left)/rect.width)*W;
@@ -3289,7 +3294,7 @@ const LapTimesChart=memo(function LapTimesChart({maxLap,yMin,yMax,race,visibleDr
                     <div style={{display:"flex",gap:14,flexWrap:"wrap",marginBottom:14,fontSize:10,color:"var(--w50)"}}>
                       <div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:14,height:8,background:"rgba(255,218,0,0.45)",borderRadius:2}}/><span>Safety Car</span></div>
                       <div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:14,height:8,background:"rgba(255,152,0,0.45)",borderRadius:2}}/><span>Virtual SC</span></div>
-                      <div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:14,height:8,background:"rgba(232,0,32,0.55)",borderRadius:2}}/><span>Red Flag</span></div>
+                      <div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:14,height:8,background:"rgba(214,40,40,0.55)",borderRadius:2}}/><span>Red Flag</span></div>
                       <div style={{display:"flex",alignItems:"center",gap:6}}><svg width={14} height={8}><line x1={7} y1={0} x2={7} y2={8} stroke="rgba(255,200,0,0.7)" strokeWidth={1.5} strokeDasharray="2 2"/><circle cx={7} cy={2} r={2} fill="var(--yellow)"/></svg><span>Local yellow flag</span></div>
                     </div>
                     <div style={{position:"relative"}}>
@@ -3365,7 +3370,7 @@ const LapTimesChart=memo(function LapTimesChart({maxLap,yMin,yMax,race,visibleDr
                           <div style={{position:"absolute",top:6,[placeRight?"left":"right"]:`${placeRight?leftPct+1.5:100-leftPct+1.5}%`,background:"var(--panel-2)",border:"1px solid var(--rule)",borderRadius:2,padding:"10px 12px",pointerEvents:"none",minWidth:200,boxShadow:"0 6px 18px -4px rgba(0,0,0,0.35)"}}>
                             <div style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:"var(--w40)",fontWeight:600,marginBottom:4}}>Lap {hoverLap}</div>
                             {yellowLaps.includes(hoverLap)&&(
-                              <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6,padding:"3px 7px",background:"rgba(255,200,0,0.10)",border:"1px solid rgba(255,200,0,0.35)",borderRadius:4,fontSize:9,fontWeight:700,color:"var(--yellow)",letterSpacing:0.5}}>
+                              <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6,padding:"3px 7px",background:"rgba(255,200,0,0.10)",border:"1px solid rgba(255,200,0,0.35)",borderRadius:2,fontSize:9,fontWeight:700,color:"var(--yellow)",letterSpacing:0.5}}>
                                 <div style={{width:6,height:6,background:"var(--yellow)",borderRadius:"50%"}}/>YELLOW FLAG
                               </div>
                             )}
@@ -3425,7 +3430,7 @@ const TireStrategyPanel=memo(function TireStrategyPanel({race,maxLap,allDrivers,
                               <div style={{width:3,height:14,background:inkify(d.teamColour)||"var(--fg)",borderRadius:1}}/>
                               {d.acronym}
                             </div>
-                            <div style={{flex:1,display:"flex",height:22,background:"var(--w03)",borderRadius:4,overflow:"hidden",position:"relative"}}>
+                            <div style={{flex:1,display:"flex",height:22,background:"var(--w03)",borderRadius:2,overflow:"hidden",position:"relative"}}>
                               {myStints.map((s,i)=>{
                                 const start=Math.max(1,s.lapStart||1);
                                 const end=Math.min(maxLap,s.lapEnd||maxLap);
@@ -3466,7 +3471,7 @@ const TireStrategyPanel=memo(function TireStrategyPanel({race,maxLap,allDrivers,
                       return(
                         <div style={{position:"absolute",left:hovered.x,top:hovered.y+6,transform:"translateX(-50%)",background:"var(--panel-2)",border:`1px solid ${col}40`,borderRadius:2,padding:"12px 14px",pointerEvents:"none",minWidth:220,boxShadow:"0 6px 18px -4px rgba(0,0,0,0.35)",zIndex:10}}>
                           <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
-                            <div style={{fontSize:9,fontWeight:800,letterSpacing:1.2,padding:"3px 8px",borderRadius:4,background:col,color:dark?"var(--bench)":"var(--fg)"}}>{c}</div>
+                            <div style={{fontSize:9,fontWeight:800,letterSpacing:1.2,padding:"3px 8px",borderRadius:2,background:col,color:dark?"var(--bench)":"var(--fg)"}}>{c}</div>
                             <div style={{fontSize:11,color:"var(--w70)",fontWeight:600}}>{driver.acronym} · Stint {stint.stintNumber}</div>
                           </div>
                           <div style={{display:"grid",gridTemplateColumns:"auto 1fr",gap:"5px 14px",fontSize:11}}>
@@ -3627,8 +3632,8 @@ const TireManagementPanel=memo(function TireManagementPanel({race,allDrivers,max
                             const on=activeCompound===c;
                             const dark=c==="HARD";
                             return(
-                              <button key={c} onClick={()=>setTireCompound(c)} style={{display:"flex",alignItems:"center",gap:6,padding:"5px 10px",borderRadius:6,border:`1px solid ${on?col:"var(--w08)"}`,background:on?`${col}22`:"var(--w02)",color:on?"var(--fg)":"var(--w55)",cursor:"pointer",fontSize:11,fontWeight:on?700:500,fontFamily:"var(--font-ui)"}}>
-                                <div style={{width:14,height:14,borderRadius:3,background:col,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:800,color:dark?"var(--bench)":"var(--fg)"}}>{c[0]}</div>
+                              <button key={c} onClick={()=>setTireCompound(c)} style={{display:"flex",alignItems:"center",gap:6,padding:"5px 10px",borderRadius:2,border:`1px solid ${on?col:"var(--w08)"}`,background:on?`${col}22`:"var(--w02)",color:on?"var(--fg)":"var(--w55)",cursor:"pointer",fontSize:11,fontWeight:on?700:500,fontFamily:"var(--font-ui)"}}>
+                                <div style={{width:14,height:14,borderRadius:2,background:col,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:800,color:dark?"var(--bench)":"var(--fg)"}}>{c[0]}</div>
                                 <span style={{letterSpacing:0.5}}>{c[0]+c.slice(1).toLowerCase()}</span>
                               </button>
                             );
@@ -3699,7 +3704,7 @@ const TireManagementPanel=memo(function TireManagementPanel({race,allDrivers,max
                                 const dark=c==="HARD";
                                 return(
                                   <div key={c} style={{display:"flex",alignItems:"center",gap:6,padding:"6px 8px"}}>
-                                    <div style={{width:14,height:14,borderRadius:3,background:col,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:800,color:dark?"var(--bench)":"var(--fg)"}}>{c[0]}</div>
+                                    <div style={{width:14,height:14,borderRadius:2,background:col,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:800,color:dark?"var(--bench)":"var(--fg)"}}>{c[0]}</div>
                                     <span style={{fontSize:10,textTransform:"uppercase",letterSpacing:0.8,color:"var(--w55)",fontWeight:600}}>{c[0]+c.slice(1).toLowerCase()}</span>
                                   </div>
                                 );
@@ -3717,7 +3722,7 @@ const TireManagementPanel=memo(function TireManagementPanel({race,allDrivers,max
                                   {compounds.map(c=>{
                                     const t=bests[c];
                                     if(t==null)return(
-                                      <div key={c} style={{padding:"6px 8px",fontSize:11,color:"var(--w18)",background:"var(--w015)",borderRadius:4,textAlign:"center"}}>—</div>
+                                      <div key={c} style={{padding:"6px 8px",fontSize:11,color:"var(--w18)",background:"var(--w015)",borderRadius:2,textAlign:"center"}}>—</div>
                                     );
                                     const range=globalRange[c];
                                     const norm=range&&range.max>range.min?(t-range.min)/(range.max-range.min):0;
@@ -3729,7 +3734,7 @@ const TireManagementPanel=memo(function TireManagementPanel({race,allDrivers,max
                                     const bgAlpha=Math.round(intensity*60).toString(16).padStart(2,"0");
                                     const gap=t-range.min;
                                     return(
-                                      <div key={c} className="heatmap-cell" style={{padding:"7px 9px",borderRadius:4,background:`${col}${bgAlpha}`,border:`1px solid ${isBest?col:"var(--w04)"}`,position:"relative"}}>
+                                      <div key={c} className="heatmap-cell" style={{padding:"7px 9px",borderRadius:2,background:`${col}${bgAlpha}`,border:`1px solid ${isBest?col:"var(--w04)"}`,position:"relative"}}>
                                         <div style={{fontSize:11,fontWeight:700,fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)",color:isBest?"var(--fg)":"var(--w85)"}}>{fmtBest(t)}</div>
                                         <div style={{fontSize:9,fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)",color:isBest?col:"var(--w45)",fontWeight:isBest?700:500,marginTop:1,letterSpacing:0.3}}>{isBest?"FASTEST":`+${gap.toFixed(3)}`}</div>
                                       </div>
@@ -3820,7 +3825,7 @@ const TireManagementPanel=memo(function TireManagementPanel({race,allDrivers,max
                                 const dark=a.compound==="HARD";
                                 const tc=inkify(a.driver.teamColour)||"var(--fg)";
                                 return(
-                                  <button key={key} onClick={()=>togglePick(key)} title="Click to remove" style={{display:"flex",alignItems:"center",gap:5,padding:"3px 7px 3px 6px",borderRadius:5,border:`1px solid ${tc}`,background:`${tc}1a`,color:"var(--ink)",cursor:"pointer",fontSize:10,fontWeight:700,fontFamily:"var(--font-ui)"}}>
+                                  <button key={key} onClick={()=>togglePick(key)} title="Click to remove" style={{display:"flex",alignItems:"center",gap:5,padding:"3px 7px 3px 6px",borderRadius:2,border:`1px solid ${tc}`,background:`${tc}1a`,color:"var(--ink)",cursor:"pointer",fontSize:10,fontWeight:700,fontFamily:"var(--font-ui)"}}>
                                     <div style={{width:11,height:11,borderRadius:2,background:col,display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,fontWeight:800,color:dark?"var(--bench)":"var(--fg)"}}>{a.compound[0]}</div>
                                     <span style={{letterSpacing:0.4}}>{a.driver.acronym}</span>
                                     <span style={{fontSize:9,color:"var(--w55)",fontWeight:400}}>S{a.stint.stintNumber}</span>
@@ -3834,13 +3839,13 @@ const TireManagementPanel=memo(function TireManagementPanel({race,allDrivers,max
                           <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6,flexWrap:"wrap"}}>
                             <span style={{fontSize:9,textTransform:"uppercase",letterSpacing:1,color:"var(--w30)",fontWeight:600,minWidth:54}}>Compound</span>
                             <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
-                              <button onClick={()=>setOverlayCompoundFilter("ALL")} style={{padding:"3px 9px",borderRadius:5,border:`1px solid ${activeFilter==="ALL"?"var(--fg)":"var(--w08)"}`,background:activeFilter==="ALL"?"var(--w08)":"var(--w02)",color:activeFilter==="ALL"?"var(--fg)":"var(--w55)",cursor:"pointer",fontSize:10,fontWeight:activeFilter==="ALL"?700:500,fontFamily:"var(--font-ui)"}}>All <span style={{color:"var(--w40)",fontWeight:400,marginLeft:2}}>{analyzed.length}</span></button>
+                              <button onClick={()=>setOverlayCompoundFilter("ALL")} style={{padding:"3px 9px",borderRadius:2,border:`1px solid ${activeFilter==="ALL"?"var(--fg)":"var(--w08)"}`,background:activeFilter==="ALL"?"var(--w08)":"var(--w02)",color:activeFilter==="ALL"?"var(--fg)":"var(--w55)",cursor:"pointer",fontSize:10,fontWeight:activeFilter==="ALL"?700:500,fontFamily:"var(--font-ui)"}}>All <span style={{color:"var(--w40)",fontWeight:400,marginLeft:2}}>{analyzed.length}</span></button>
                               {availCompounds.map(c=>{
                                 const col=COMPOUND_COLORS[c]||"var(--ink-4)";
                                 const dark=c==="HARD";
                                 const on=activeFilter===c;
                                 return(
-                                  <button key={c} onClick={()=>setOverlayCompoundFilter(c)} style={{display:"flex",alignItems:"center",gap:5,padding:"3px 9px",borderRadius:5,border:`1px solid ${on?col:"var(--w08)"}`,background:on?`${col}22`:"var(--w02)",color:on?"var(--fg)":"var(--w55)",cursor:"pointer",fontSize:10,fontWeight:on?700:500,fontFamily:"var(--font-ui)"}}>
+                                  <button key={c} onClick={()=>setOverlayCompoundFilter(c)} style={{display:"flex",alignItems:"center",gap:5,padding:"3px 9px",borderRadius:2,border:`1px solid ${on?col:"var(--w08)"}`,background:on?`${col}22`:"var(--w02)",color:on?"var(--fg)":"var(--w55)",cursor:"pointer",fontSize:10,fontWeight:on?700:500,fontFamily:"var(--font-ui)"}}>
                                     <div style={{width:11,height:11,borderRadius:2,background:col,display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,fontWeight:800,color:dark?"var(--bench)":"var(--fg)"}}>{c[0]}</div>
                                     <span>{c[0]+c.slice(1).toLowerCase()}</span>
                                     <span style={{color:"var(--w40)",fontWeight:400}}>{compoundCounts[c]}</span>
@@ -3853,12 +3858,12 @@ const TireManagementPanel=memo(function TireManagementPanel({race,allDrivers,max
                           <div style={{display:"flex",alignItems:"flex-start",gap:6,marginBottom:8,flexWrap:"wrap"}}>
                             <span style={{fontSize:9,textTransform:"uppercase",letterSpacing:1,color:"var(--w30)",fontWeight:600,minWidth:54,paddingTop:4}}>Driver</span>
                             <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
-                              <button onClick={()=>setOverlayDriverFilter("ALL")} style={{padding:"3px 9px",borderRadius:5,border:`1px solid ${activeDriverFilter==="ALL"?"var(--fg)":"var(--w08)"}`,background:activeDriverFilter==="ALL"?"var(--w08)":"var(--w02)",color:activeDriverFilter==="ALL"?"var(--fg)":"var(--w55)",cursor:"pointer",fontSize:10,fontWeight:activeDriverFilter==="ALL"?700:500,fontFamily:"var(--font-ui)"}}>All <span style={{color:"var(--w40)",fontWeight:400,marginLeft:2}}>{driverFilterOptions.length}</span></button>
+                              <button onClick={()=>setOverlayDriverFilter("ALL")} style={{padding:"3px 9px",borderRadius:2,border:`1px solid ${activeDriverFilter==="ALL"?"var(--fg)":"var(--w08)"}`,background:activeDriverFilter==="ALL"?"var(--w08)":"var(--w02)",color:activeDriverFilter==="ALL"?"var(--fg)":"var(--w55)",cursor:"pointer",fontSize:10,fontWeight:activeDriverFilter==="ALL"?700:500,fontFamily:"var(--font-ui)"}}>All <span style={{color:"var(--w40)",fontWeight:400,marginLeft:2}}>{driverFilterOptions.length}</span></button>
                               {driverFilterOptions.map(d=>{
                                 const on=activeDriverFilter===d.number;
                                 const tc=inkify(d.teamColour)||"var(--fg)";
                                 return(
-                                  <button key={d.number} onClick={()=>setOverlayDriverFilter(d.number)} style={{display:"flex",alignItems:"center",gap:4,padding:"3px 8px",borderRadius:5,border:`1px solid ${on?tc:"var(--w08)"}`,background:on?`${tc}22`:"var(--w02)",color:on?"var(--fg)":"var(--w55)",cursor:"pointer",fontSize:10,fontWeight:on?700:500,fontFamily:"var(--font-ui)"}}>
+                                  <button key={d.number} onClick={()=>setOverlayDriverFilter(d.number)} style={{display:"flex",alignItems:"center",gap:4,padding:"3px 8px",borderRadius:2,border:`1px solid ${on?tc:"var(--w08)"}`,background:on?`${tc}22`:"var(--w02)",color:on?"var(--fg)":"var(--w55)",cursor:"pointer",fontSize:10,fontWeight:on?700:500,fontFamily:"var(--font-ui)"}}>
                                     <div style={{width:2,height:10,background:tc,borderRadius:1}}/>
                                     <span style={{letterSpacing:0.4}}>{d.acronym}</span>
                                     <span style={{color:"var(--w40)",fontWeight:400}}>{driverStintCounts[d.number]}</span>
@@ -3876,7 +3881,7 @@ const TireManagementPanel=memo(function TireManagementPanel({race,allDrivers,max
                               const tc=inkify(a.driver.teamColour)||"var(--fg)";
                               const atMax=selectedKeys.size>=4;
                               return(
-                                <button key={key} disabled={atMax} onClick={()=>togglePick(key)} style={{display:"flex",alignItems:"center",gap:5,padding:"3px 7px",borderRadius:5,border:"1px solid var(--w08)",background:"var(--w02)",color:"var(--w55)",cursor:atMax?"not-allowed":"pointer",fontSize:10,fontWeight:500,fontFamily:"var(--font-ui)",opacity:atMax?0.4:1}}>
+                                <button key={key} disabled={atMax} onClick={()=>togglePick(key)} style={{display:"flex",alignItems:"center",gap:5,padding:"3px 7px",borderRadius:2,border:"1px solid var(--w08)",background:"var(--w02)",color:"var(--w55)",cursor:atMax?"not-allowed":"pointer",fontSize:10,fontWeight:500,fontFamily:"var(--font-ui)",opacity:atMax?0.4:1}}>
                                   <div style={{width:11,height:11,borderRadius:2,background:col,display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,fontWeight:800,color:dark?"var(--bench)":"var(--fg)"}}>{a.compound[0]}</div>
                                   <span style={{letterSpacing:0.4,color:tc,fontWeight:600}}>{a.driver.acronym}</span>
                                   <span style={{fontSize:9,color:"var(--w40)",fontWeight:400}}>S{a.stint.stintNumber}</span>
@@ -3939,7 +3944,7 @@ const TireManagementPanel=memo(function TireManagementPanel({race,allDrivers,max
                     {hoveredEntry&&(
                       <div style={{position:"absolute",left:tireHover.x,top:tireHover.y-90,transform:"translateX(-50%)",background:"var(--panel-2)",border:`1px solid ${COMPOUND_COLORS[hoveredEntry.compound]||"var(--ink-4)"}40`,borderRadius:2,padding:"10px 12px",pointerEvents:"none",minWidth:220,boxShadow:"0 6px 18px -4px rgba(0,0,0,0.35)",zIndex:10}}>
                         <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
-                          <div style={{fontSize:9,fontWeight:800,letterSpacing:1.2,padding:"3px 8px",borderRadius:4,background:COMPOUND_COLORS[hoveredEntry.compound],color:hoveredEntry.compound==="HARD"?"var(--bench)":"var(--fg)"}}>{hoveredEntry.compound}</div>
+                          <div style={{fontSize:9,fontWeight:800,letterSpacing:1.2,padding:"3px 8px",borderRadius:2,background:COMPOUND_COLORS[hoveredEntry.compound],color:hoveredEntry.compound==="HARD"?"var(--bench)":"var(--fg)"}}>{hoveredEntry.compound}</div>
                           <div style={{fontSize:11,color:"var(--w70)",fontWeight:600}}>{hoveredEntry.driver.acronym} · Stint {hoveredEntry.stint.stintNumber}</div>
                         </div>
                         <div style={{display:"grid",gridTemplateColumns:"auto 1fr",gap:"5px 14px",fontSize:11}}>
@@ -3987,7 +3992,7 @@ const PositionChartPanel=memo(function PositionChartPanel({maxLap,visibleDrivers
                 };
                 const hoverLap=telPosHover?.lap||null;
                 const periods=race.raceControlPeriods||[];
-                const periodStyle={SC:{fill:"rgba(255,218,0,0.10)",border:"rgba(255,218,0,0.45)",label:"SC",color:"var(--yellow)"},VSC:{fill:"rgba(255,152,0,0.08)",border:"rgba(255,152,0,0.40)",label:"VSC",color:"var(--amber)"},RED:{fill:"rgba(232,0,32,0.14)",border:"rgba(232,0,32,0.55)",label:"RED",color:"var(--red)"}};
+                const periodStyle={SC:{fill:"rgba(255,218,0,0.10)",border:"rgba(255,218,0,0.45)",label:"SC",color:"var(--yellow)"},VSC:{fill:"rgba(255,152,0,0.08)",border:"rgba(255,152,0,0.40)",label:"VSC",color:"var(--amber)"},RED:{fill:"rgba(214,40,40,0.14)",border:"rgba(214,40,40,0.55)",label:"RED",color:"var(--red)"}};
                 return(
                   <div style={{background:"var(--w02)",border:"1px solid var(--w06)",borderRadius:2,padding:20}}>
                     <div style={{fontSize:15,fontWeight:700,marginBottom:4}}>Position by Lap</div>
@@ -4123,7 +4128,7 @@ const DeltaChartPanel=memo(function DeltaChartPanel({allDrivers,maxLap,race}){
                 };
                 const hoverLap=deltaHover?.lap||null;
                 const periods=race.raceControlPeriods||[];
-                const periodStyle={SC:{fill:"rgba(255,218,0,0.10)",border:"rgba(255,218,0,0.45)",label:"SC",color:"var(--yellow)"},VSC:{fill:"rgba(255,152,0,0.08)",border:"rgba(255,152,0,0.40)",label:"VSC",color:"var(--amber)"},RED:{fill:"rgba(232,0,32,0.14)",border:"rgba(232,0,32,0.55)",label:"RED",color:"var(--red)"}};
+                const periodStyle={SC:{fill:"rgba(255,218,0,0.10)",border:"rgba(255,218,0,0.45)",label:"SC",color:"var(--yellow)"},VSC:{fill:"rgba(255,152,0,0.08)",border:"rgba(255,152,0,0.40)",label:"VSC",color:"var(--amber)"},RED:{fill:"rgba(214,40,40,0.14)",border:"rgba(214,40,40,0.55)",label:"RED",color:"var(--red)"}};
                 return(
                   <div style={{background:"var(--w02)",border:"1px solid var(--w06)",borderRadius:2,padding:20,position:"relative"}}>
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:4,flexWrap:"wrap",gap:8}}>
@@ -4135,13 +4140,13 @@ const DeltaChartPanel=memo(function DeltaChartPanel({allDrivers,maxLap,race}){
                       <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
                         <span style={{fontSize:10,color:"var(--w40)",textTransform:"uppercase",letterSpacing:1}}>A</span>
                         {usable.map(d=>{const on=d.acronym===acrA;const dc=inkify(d.teamColour)||"var(--fg)";return(
-                          <button key={"a-"+d.acronym} onClick={()=>setDeltaA(d.acronym)} style={{padding:"3px 8px",borderRadius:4,border:`1px solid ${on?dc:"var(--w08)"}`,background:on?`${dc}1a`:"var(--w02)",color:on?"var(--fg)":"var(--w55)",cursor:"pointer",fontSize:10,fontWeight:on?700:500,fontFamily:"var(--font-ui)",letterSpacing:0.4}}>{d.acronym}</button>
+                          <button key={"a-"+d.acronym} onClick={()=>setDeltaA(d.acronym)} style={{padding:"3px 8px",borderRadius:2,border:`1px solid ${on?dc:"var(--w08)"}`,background:on?`${dc}1a`:"var(--w02)",color:on?"var(--fg)":"var(--w55)",cursor:"pointer",fontSize:10,fontWeight:on?700:500,fontFamily:"var(--font-ui)",letterSpacing:0.4}}>{d.acronym}</button>
                         );})}
                       </div>
                       <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
                         <span style={{fontSize:10,color:"var(--w40)",textTransform:"uppercase",letterSpacing:1}}>B</span>
                         {usable.map(d=>{const on=d.acronym===acrB;const dc=inkify(d.teamColour)||"var(--fg)";return(
-                          <button key={"b-"+d.acronym} onClick={()=>setDeltaB(d.acronym)} style={{padding:"3px 8px",borderRadius:4,border:`1px solid ${on?dc:"var(--w08)"}`,background:on?`${dc}1a`:"var(--w02)",color:on?"var(--fg)":"var(--w55)",cursor:"pointer",fontSize:10,fontWeight:on?700:500,fontFamily:"var(--font-ui)",letterSpacing:0.4}}>{d.acronym}</button>
+                          <button key={"b-"+d.acronym} onClick={()=>setDeltaB(d.acronym)} style={{padding:"3px 8px",borderRadius:2,border:`1px solid ${on?dc:"var(--w08)"}`,background:on?`${dc}1a`:"var(--w02)",color:on?"var(--fg)":"var(--w55)",cursor:"pointer",fontSize:10,fontWeight:on?700:500,fontFamily:"var(--font-ui)",letterSpacing:0.4}}>{d.acronym}</button>
                         );})}
                       </div>
                     </div>
@@ -4259,7 +4264,7 @@ const SpeedTracePanel=memo(function SpeedTracePanel({allDrivers}){
                         const on=selected.has(d.acronym);
                         const tc=inkify(d.teamColour)||"var(--fg)";
                         return(
-                          <button key={d.acronym} onClick={()=>toggle(d.acronym)} style={{display:"flex",alignItems:"center",gap:6,padding:"5px 10px",borderRadius:6,border:`1px solid ${on?tc:"var(--w08)"}`,background:on?`${tc}1a`:"var(--w02)",color:on?"var(--fg)":"var(--w55)",cursor:"pointer",fontSize:11,fontWeight:on?700:500,fontFamily:"var(--font-ui)"}}>
+                          <button key={d.acronym} onClick={()=>toggle(d.acronym)} style={{display:"flex",alignItems:"center",gap:6,padding:"5px 10px",borderRadius:2,border:`1px solid ${on?tc:"var(--w08)"}`,background:on?`${tc}1a`:"var(--w02)",color:on?"var(--fg)":"var(--w55)",cursor:"pointer",fontSize:11,fontWeight:on?700:500,fontFamily:"var(--font-ui)"}}>
                             <div style={{width:3,height:11,background:tc,borderRadius:1,opacity:on?1:0.5}}/>
                             <span style={{letterSpacing:0.5}}>{d.acronym}</span>
                             <span style={{fontSize:9,color:"var(--w40)",fontWeight:400,fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)"}}>{d.fastLapTrace.lapTime.toFixed(3)}s</span>
