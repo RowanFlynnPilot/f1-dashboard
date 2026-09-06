@@ -44,7 +44,23 @@ const TEAM_LOGOS = {
   "Ferrari": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAVsElEQVR42tWad5Rd1X3vP3ufcuv0pg5ISEIaSXQwNkYEAybAA1MMNizjh98y8VsxhBhcnrMSh9gxdlxC4pI4xlmhmGIwLsoDYgyiiy5QGUmMRm2k6e1OueWcs/cvf5wZpJFG0ow1gHPWuuvOmnPvPb/fd39/31/ZW3H4Sw56R429q70fteNvaxQKjU652EqFqVVIg0AdUKUhZ6AL6Na43YIeEOyIQTBYZPzD1T7PEjmcdfta+Id/4J1HqLFPqwkdjZ3VaNdFyhSmSmFrBGqBWg01PtmaCmbUzuDo+vkcN2MJx1TPZ0+ulY3tG9netY2OnnYGewegpwS9FnpA94DTD2pIkNBgMMj+fut97Bp/cxoAUOOXQQEOGoUDaYVUKqIaBbWjq1rr4dWkqamrY27dUSyesZilDY0srWtkYfnRzHEqKc8DHb2wpw0a6mFWPcMZzR6bo2V4Jxt7mmjq2MiWjs3s6tpBd083Qe8I9ATQLdCjcXpBD1gYEUQMFrvvmozhceQAuDiiPAcpV9gqsLVAnYJaBTVJymsrmVk3kwX1C1kyYylLGxo5rupYjk7OpCH0cfpGYGcrbGkmaNpAcfMmgh3bibq7IJ+HZAqnrhb/qKNJLj6OxNJlcNxiOGoetraMbj9kZ6mTzf1b2djdxKaOJrZ1NtPWvZuBnn6ktwTdBnpA9YDbBwwKElgiomlgwBUpYZZDorqMuro65tUfzaKG42hsaGRp7XEsyM5jtqogOxxBWzc0b8Vs2kihqYlCSzNhWxs2l0MFEY5WOJ6PTvgozwOtwVokjLBBgA0CjDWI56LKy3FnziK5YAHpJUtxlzTCooUwu4F8uU8bg7SMtLKpZwsbOzeypXMzO7u2093dSaFnCHpDuK945ADc+uy3ZMWCEzmuYgFH+XXUllx09yDs2AWbN1Fs2kh+y2ZKu3Yhvb04xTxJFAnfw08k0L4HjgsojEBkLMYKVkBGhUxrhaMVrtY4Oo46jEGCkCAoUQoCSiJEiQRU1+DPnUd60WJSSxvhuCUw/2ior6QnadkV9rAl18Kmnk18fcWNRw5AYfVLkuzqJlq/juLmzZS2byVs78QMDeFEESnPJZNM4CZ8jHLpN5r2kqW1FNEaGDpsRA+GQceSdyyBKxhXsEoQLSAKbRWuUXiRIhlpyo2iGoeZ2mWO5zAn4TI7oalxwZOYLSPFEvkwJNQOuiyLX99AYv4CUouPw21cBgsXoj6w/MgB2FzVIDWlkAhQnoeXSJBNJvA9h0Kk2JaPeHMk5M0wYJsfkqsK0bMiKudZ6udYZsyGhnpDbTVUlEM2rUj4FscRtBKUgsgoSiXNSAFyQ9DbD51dmo52RecuTV+rJtrjkO31Oarocrzjc1ImwcKMQ9aDMIoYLgYExRKEIYggCZ+ZAx1HDkDznAVSrV0SjiKjFQMlwyu5gCcLJdZlSpTmh8w5MeL4kywnLBMWH22ZVWfRaTmwjDDE6VMDzujjQ4EQ8Eb/r/e1avSPInT2appbHd7aqFj7hmLHGy6q2WNpLsE5iSQfrPCoSzkULQwbAbHUtTYfOQBtcxbITMfl9cGAXw6VeLmyQPrUEmecZ/jIWZYTFhkSZaPJ1wABEIExYGW/OkkpHA/27HZ5YU2Stg644foCmfoIOwhRCNoZX+coRawLLuADbmy2LSjWt2hWv+Dw7O8c+tb4nNCd5OOZJKdXehirSLa+feQArKo/Sh7MFdjVmOecqyKu/F8RjYstOBKvXhEiExusdWywmuBXjQFxNY89nuG7d2g6uxR72kt8+IMul1zi8Omrh0jXCgyBjM/o7wAiEoOqBFwHSAK+AlG0bNM88pjD4w+4lL+e4nPZDBf07JxMoXfoq64uIz+9KyFB3hURJVJCogEk6IvfzSBiD/fKIRI5IhHy9ibkU9dogYTU1VWL65bL8SecK6eekpIvf6lMXn42IeFw/NuH+91oAAn6kagfkQKj9jny4CO+zJ2Xlsn4d1iEljdmZN2rRcAQFOKMpqeIq9Lw2lvQ1jGP5188jS3NhsbGRfz0pz8jnx9mxoxaduzIcewxwoP3R5xwahE7ODGTDlqvx5kTzwWymnPOTrD62cIkCr3DXCaCwQEoKwfXnZpR1iqctPDic7P4ym3Hs7u1FcfdQDIBxgT09PRQVlbGFVd8kl/84n56B/q49Ys+112nuObqItrIpJ+nVGwfCqJcnAwmc+nJcMRxpub4vquCgtffrKK6KsPISB9bm1to2rSHzs5uVqxYDsDdd99NFAlByTJ/Pjz9tM/La1LoNFg79edOxV6Xd/HSWpASXPmxTbS3NXHSsnLCyOfVtRmKRbjuuhv40Y9+QE9PL3PnziWX6+L1tZprrrIYUdjwDwN+Kte7CoBSce6fOUv45u0avNyo7OS58KOdfOlLLSg1RE1NHaBIpRTXXi3UzYxoXGxQ9nDt/jQsEu/2pcAGgskbgn4IhhQ9O0G5J3PeeSsplUIqK6tIpXwGB2HNy8I1VwdUVoWIffcZMO0AjOXq/ZmgdVwr+WWab35HuPjiW4Ai1gqVlZWUZcspyxrWrnP5/79J4qQsYt/15ZneEBAB7SpwIcoLjrP3XhiCX+3y0D2WppZLqZ7RzKpVj+I4DtXVVWzf3sGZH1QsXxaxvVWRH3JJetEBMSAyvazQ0+q8r8gNwI6tCrdSYW2s4mEAfrXi+accrrrO0t/XxR133EEymUJrTaFQoL19Gy+94tHfL5x/foBz0Gf8EYaACOAoBgaEG246hsuuXc4/fNPHqfBwUuDXaNav9bj51irOOONsdu9uYWQkj1JQVlaGCOQGhpg7J43va8KCQyIbIWY/Y5Oatt3+tArjtABgLeiUsPb1Sl56tZING7fz5b+KuPaTSTa97fHzu5KccaYikV7C6aevYOXKj1AsFgmCgNmzZtLW1sHMWcL8+RHGwDELQmxp/ABYpTV33JFm+w4HnQVr/og0QCkNkaW9exmnnJKF6G22717JfQ88w++fqqS/L0A78Pprz/HiC6vRWnPGGWfQ1NTEtu27iCLDsQtS1NdH3HSjpTiiyPgxAMaAW6F4+N4ErbuFz33Wsm5NkhWnFrGFI9eDwzLAikJEHabgsYh1uP2766gqe5pf/tqyZOFWauvquemmm/H8EM8D101QXl5OMpmkoqIiZo4aobxc09un6O5yefQxTXu7Rnl7W2IsrHpcc+FHLV/9mkdV/aEzhIhMuoI8LABhIJjo4G2TsaAy8MoaqCivYtfuBs47LyIKd7Fo0XyampooFIoo5SAiRFGEUorHH38crRN86EOLWPNMwC1/ETJ3juLP/2/AipOKEO6t76NBh7Z2+PytDh85y5DKKKIRFafWiWwyilJJTU8I5AtCsSRUqENsmyjFY0/4lGUtTz8fUCwkUDpJMvEKr736KqlUGmPGB20ykaCqKsmZZ93Arm23cOtXDO1bQ/I5Qyo1Pv6dpNDWCSPDFs/T/PxuzU23lDAjjANBBJQDQaAZyU8TA0ZGhOFhDc4+lNyv8TCDDk8/p9m8pY/TTurhW9/w+dS1n6C+YSGep3BddQBFPd9nx45d5HLDPPHs2Yz0GGbOisik7DiyRRGolOX8c2I7vvvPDtd+MkBFB4l/DSN5xeDQNAEwPCL09msmSsxjRYlYoX/AZc7cRZx++gf44l/2cvOND3Hyif2MjGgGhwStQGuNGrXaWovv+zz80J0Uo5Xc90AFpFU8XbL79RMiXHS+oX/AoJ2I2rkRpnggAHE6htygIjco0xMC1grtHRr0gQwYM8CKsGJ5JRddMMJvHjuK5s2KE0/t575/1/zjyUlWr4ZnnodSaZhUKi5+RATf99m1aw+//tVd3F/MkBsscusXDZjYQT3W1kZw7HxDOl1GwiuBVfFcbKJNTBc6uxUjI9NWLbjyj99OiUg8BptoNBX0K+ncifS3akmns/LIfcn4871KRJC+PQmprkrLpZdeKZWVZZJIJCSTyUgqlZJsNiuAeJ4nkJGL/zQr3W1ePHrrR0wOkUDJtvXIeeedK3+ycr6MdCmR4fjevnaE/YgIcu/PUgK+TFMhJGx5Wx1yeuY6Qn09lFcrZs8UvvfPLvkhD+0JxR6oaoi488cFamtquOWWr2JMMDpE1QRBwNKlS6mqqiKbjfjPxyznX+DT0+2hEnGRJaIwRjH/mFlksnPp6xVw1cQVKYzaa5kmACxNmxUEalxzc0C6LIBOWb7/LcsLLxluvtHFyShcD6Ihw2Wf0Fxw7k9o2bqeCy+6BmtDtNZYaznzzDNJJHxKJaGyUrF2nfCZz/oox4lF0Fds2y40zGgkCHIkEhP7F+uFYkMT0wmAsKVZ6O900N7EmQDifG2H4eKLi1x84Uzau+YioaBVDFzYb7jykw5/dv19ZNObqKmZS6lUJJlMcO8999LR0Y3vewSBUFEBqx6Dn9/tk6zVdLca1m66mMEhTamwjrp5LiYYPy8UiW0IBhw2bp48AIcVQaWgq9uyYZPDh8+Na/SDMUGsIAr+6dvtrG9yUSoWyLGCJugzfGClRqm3aGnJ0tvrYY2gNFRV+gwNm/g7FiDkBz9xKKtN8vW/M6SyPntav8eD9yhkgkZAJN4naN7ksmPn5AcJh2WAo0Ek4vk1Dmh1UAbEJTFQgvnHFrj0iiGkOL5QiZ2zrF3r09YunHWmRymwVFc5NDQ4hKGgNYShZdbMajY0+XzsMuH1tS7FkV/xn7/t4dQzLJKXA6pAa0FcWPOKJgjMIcN1SgDEDhuefBoI4u3rw43ATABm+EDd1Bq0wIdOF1pbQ6wR5s11cV1heChEKYVSmiAo0bj8FM49Zw4Ljw2prnY5YUU5S5cJ0WDMmImYqkTx+9Wjg8jpa4ZiHXjldcvOFo1OHX5UrRUT1ulKgxRg8ZKQxiWaV9+wrFimWb4sTd9AEte1GGPJZlI88bunyCR3cc7KJDXVlmTCYgZHjxpMsEhuAvr3ODz7ggB2+pohkTjmh4YMj//eA39qs/qxNBZFcQ8flMCvMFxzlZDLCf39Bc4//+Ok0uUYE+E4cTXo+4r/878Np53scPQ8yxWXqoOOw4wFScHTz3m0dxi05pChOuWBSPxjIQ89oiBwDh8G79BS4WRAJwWvSuNWQqIcKCk+82lDRTnk82ke/uUa+vs68X2fMLTk84rv3S585KISb7wpXPhRy9l/OoyIndAxRUz/XzziAOGUZgTuZFdRKeH5NYYNb7osO9Fg8hy0HR2zqlhyuOULNUS2iqrKbSxeVMGKJUWWLx9ixjElvv0NzR0/jOjoeotSCZRKkkgofvIj4brPFOlp1dRUW27+ixJm0MZbXxOEqJuC3c0ejz9hp0T/KU2EtIZSKeSun6f4zmkhYu0h+WMNeJmIk04y3Ha70LbHIZ3xSaVq+cubz8NG61j31htUVtewbHkNI/nZPPnkKlY9lObD5xUwOUs6obj+UxFYe9A61BpwEor7HnIZyIVxdzqFcdmkD0qO0aqhIc2GlyOq6wJkEltXKg27W8D3fYaGDNt2KFrba1i7Lst//EcnwyMel19axu72o+jpepmWtwWTD/fuJTgg4cSWisTCWgxcTvhAgreb82g9bho0LQP0sbOX4jgIePKdv0+LiDpoc7T/Hr4UR/fvg7hZGXu1b/fl7/8mKW++lpBLL3bFdRPy+K89ERM3NnbwwIZnXBPWF58JuOsnGQFftN5rK5PcVZvSVDjWgogf/RsMdno4icOrrdZgS2ADMHmIBuKXGVDMmBHw1a+VOP7kEmd9EBxvAS+umT1u8Q7GMCFOieGQw/d/GIv0uz4Wjzs4YcfOkJ/+zEOn9aTibezYjNZxSnUc0I4QFhRYYdfb9by09iouOKeHGz7XjS3GzznUZSLQZYoHHvB5a320P/WnXwP2H4LMaEiz7mVDdV0JCSc+NWIM7+RkK6OHndTee24G1q11uONfrqaqfD23374eX0FYjGN7fxKPnUEam/wUih4nneHTvDWPUhMCML0aMF4LXPnC57MioiTsO8i5IItIUYmEo3E/MqoL/fGg5IUn62XW7EY57ZS0DPYhZljtPetjx+tF/H0lJqfeif1v3ZYR8EbtmfA1/QzYdzV8P8Wap4QTTi0SDe/tEq0FJ6X4xQMpNm6B2TMgsnDVxwJqaiOUD6+9lODya7I4jsujv+5jSaNBQmHDRp9nnnPJF4SGektVpUWsZriomT1DcfqpJZLZiJ1bk5z0IYfcYH4UnT/Yv6kzABhVXC0rz8yKKTgS5uITYyaHyDBS7NVSUZ6V361KSRR68sWbM/LoL5MiFin2K/n45cslkVoh//B1JSKOhIPI9k2uXH9dubzwVEZad/hy5WVl8vk/y8iq3yTk1WcTMtwVP0eMlssuyQo4Eyn/lBjwBwOwNxR8+f7tmdEZ4CjFc4gpKPnyLWlZvCgjf/e3SRloT0ix3xMzhJhBLX/9/8rlX3+QkXBYx7M8gwx2OHL7bVnZ1ZKQ9hZPPnt9VkR0vMAGMaMzv3v+LS2QOBT13xsAlIqZkEmnZO2LSZEozt8mh0geGez0ZfV/peTyS9NSX5+V3z6cFBuquDYYjWubQySvpPlNT4baHRHRsnlDSj56blYuuyQrbzclJRhUUupFpIRsb0pKbU1GtI6f/74CsG8oHL+8TIZ7fYmGlNgRpGu7J5delJXtmxIiouSJVQm56vJysQVHTC4GqtSH2ALS3uLJn5xVIS+u9iUIkNbNKTnt5DJpXu+LGdESDSgJB5Eo78nZZ2YmQ/33DoB9s8KnPlEmYh0xRaT5TU9+8L0yEXHi8Oh35cffz4rNq3equ2gAkRDZ8Iovj9xXFqu/aLntrzLyta+mRSQGKlZ9LV/487LDqf57lwUOHI1DZHxu/1uPr3wtjykI99+fprNTUTdL2L3d4corSyxcFGALeztJK4Cn+fefpbEi5AYVXd3wzW8UcSTChOBXw50/TPPZGy2OU5xKs6PeEwaMZ0JS7rkz3kiRgpIdTZ68+kxCBts8kZISM8EZYBlGZETLK88kZMMrvojRIsNIqSfWiUcfSYnnJScb9+99CIwXRSW+n5LfPjwKwnCs4DLChM6PA8LEIREN7HX+uSeTUl6WFoWaqvPvPQBjICilJJ1KyaO/ikEo9hy6q9u3czQ5YsUX5MXVSampSguoyYre+w/AGAigJJlMycP3je4r9k8ChNyY4CFPPpaSqorMkTj//gGwFwRE65T8+I6MiDhiBpVE/Qdf/bg+0HL/XWlJJVNH6vz7C8DecEAgIV+4sUyifLzru/8gJegbHZhErnz9r7MCyRg8dUTOv/8AjIEwNkk69+ystGxOiEgcDlF/LIwiSMcuXy6/JPvOZEcdufN/HACMT5GO1NWm5c5/SYvJO3GbXHLkwXvTMm9ORsCdSpHzPwuAvSAogYR87OKM/P6/UvLpazKjlFfT7fykAPhvclDUh9dFIHAAAAAASUVORK5CYII=",
 };
 
-const TC = { Mercedes: "#27F4D2", Ferrari: "#E80020", McLaren: "#FF8000", "Red Bull": "#3671C6", "Racing Bulls": "#6692FF", Alpine: "#FF87BC", "Aston Martin": "#229971", Haas: "#B6BABD", Williams: "#64C4FF", Audi: "#FF0000", Cadillac: "#D4AF37" }; // Cadillac's brand near-black is invisible on this background — use their gold accent
+// Team colours as ink on paper. Broadcast liveries are tuned for black screens;
+// inkify() clamps lightness so pale ones (Mercedes teal, Williams blue, Haas
+// silver) still read at text sizes on the sheet while keeping their hue.
+function inkify(hex){
+  if(!hex||typeof hex!=="string")return hex;
+  let h=hex.trim().replace("#","");
+  if(h.length===3)h=h.split("").map(c=>c+c).join("");
+  if(h.length!==6||/[^0-9a-f]/i.test(h))return hex;
+  const r=parseInt(h.slice(0,2),16)/255,g=parseInt(h.slice(2,4),16)/255,b=parseInt(h.slice(4,6),16)/255;
+  const L=0.2126*r+0.7152*g+0.0722*b;
+  if(L<=0.30)return "#"+h.toLowerCase();
+  const k=Math.sqrt(0.30/L)*0.92;
+  const to=(v)=>Math.round(Math.max(0,Math.min(255,v*k*255))).toString(16).padStart(2,"0");
+  return "#"+to(r)+to(g)+to(b);
+}
+const TC_RAW = { Mercedes: "#27F4D2", Ferrari: "#E80020", McLaren: "#FF8000", "Red Bull": "#3671C6", "Racing Bulls": "#6692FF", Alpine: "#FF87BC", "Aston Martin": "#229971", Haas: "#B6BABD", Williams: "#64C4FF", Audi: "#FF0000", Cadillac: "#D4AF37" };
+const TC = Object.fromEntries(Object.entries(TC_RAW).map(([k,v])=>[k,inkify(v)]));
 const TB = { Mercedes: "rgba(39,244,210,0.10)", Ferrari: "rgba(232,0,32,0.10)", McLaren: "rgba(255,128,0,0.10)", "Red Bull": "rgba(54,113,198,0.10)", "Racing Bulls": "rgba(102,146,255,0.10)", Alpine: "rgba(255,135,188,0.10)", "Aston Martin": "rgba(34,153,113,0.10)", Haas: "rgba(182,186,189,0.10)", Williams: "rgba(100,196,255,0.10)", Audi: "rgba(255,0,0,0.06)", Cadillac: "rgba(212,175,55,0.10)" };
 
 // Normalize OpenF1 team names to match TC/TL keys
@@ -535,10 +551,10 @@ class TabErrorBoundary extends Component {
   render() {
     if (this.state.error) {
       return (
-        <div className="fu" style={{ textAlign: "center", padding: 60, color: "rgba(255,255,255,0.5)" }}>
-          <div style={{ fontSize: 40, marginBottom: 12 }}>⚠️</div>
-          <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 6, color: "#fff" }}>This tab hit an error</div>
-          <div style={{ fontSize: 12, color: "rgba(255,255,255,0.35)", fontFamily: "monospace" }}>{String(this.state.error?.message || this.state.error)}</div>
+        <div className="fu" style={{ textAlign: "center", padding: 60, color: "var(--w50)" }}>
+          <div className="num" style={{ fontSize: 34, fontWeight: 700, marginBottom: 12, color: "var(--red)" }}>!</div>
+          <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 6, color: "var(--fg)" }}>This tab hit an error</div>
+          <div style={{ fontSize: 12, color: "var(--w35)", fontFamily: "monospace" }}>{String(this.state.error?.message || this.state.error)}</div>
           <div style={{ fontSize: 12, marginTop: 10 }}>The other tabs still work — this is likely a data quirk from the latest fetch.</div>
         </div>
       );
@@ -580,15 +596,15 @@ function DH({name,size=32,headshots}){const[tryLevel,setTryLevel]=useState(0);
   const u=urls[tryLevel];
   if(!u){
     const acr=of1?.acronym||name.split(" ").map(n=>n[0]).join("").slice(0,3);
-    const tc=of1?.teamColour||TC[of1?.team]||"rgba(255,255,255,0.2)";
+    const tc=of1?.teamColour||TC[of1?.team]||"var(--w20)";
     return (<div style={{width:size,height:size,borderRadius:"50%",background:`${tc}22`,border:`2px solid ${tc}66`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:size*0.32,fontWeight:800,color:tc,flexShrink:0,letterSpacing:0.5}}>{acr}</div>);
   }
-  return (<img src={u} alt={name} onError={()=>setTryLevel(prev=>prev+1)} style={{width:size,height:size,borderRadius:"50%",objectFit:"cover",objectPosition:"top center",flexShrink:0,background:"rgba(255,255,255,0.05)"}}/>);}
+  return (<img src={u} alt={name} onError={()=>setTryLevel(prev=>prev+1)} style={{width:size,height:size,borderRadius:"50%",objectFit:"cover",objectPosition:"top center",flexShrink:0,background:"var(--w05)"}}/>);}
 function TL({team,size=20}){const[e,sE]=useState(false);const u=TEAM_LOGOS[team];if(!u||e)return null;const isData=u.startsWith("data:");return (<img src={u} alt={team} {...(isData?{}:{referrerPolicy:"no-referrer",crossOrigin:"anonymous"})} onError={()=>sE(true)} style={{width:size,height:size,objectFit:"contain",flexShrink:0,...(team==="Cadillac"?{filter:"invert(1) brightness(1.15)"}:{})}}/>);}
 
 // Inline SVG circuit outline. Sourced from bacinger/f1-circuits via fetch-tracks.mjs.
 // Caller controls the container size — SVG scales to fit while preserving aspect.
-function TrackMap({raceName,tracks,stroke="#fff",strokeWidth=2,opacity=1,fill="none",height,width,style}){
+function TrackMap({raceName,tracks,stroke="var(--fg)",strokeWidth=2,opacity=1,fill="none",height,width,style}){
   const t=tracks?.[raceName];
   if(!t)return null;
   return(
@@ -709,14 +725,122 @@ function splitTrackIntoSectors(track){
   };
 }
 
-function SC({label,value,sub,accent,icon}){return (<div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:10,padding:"14px 16px",flex:1,minWidth:130}}><div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:"rgba(255,255,255,0.4)",marginBottom:8,fontFamily:"'Outfit',sans-serif"}}>{label}</div><div style={{display:"flex",alignItems:"center",gap:8}}>{icon}{" "}<span style={{fontSize:22,fontWeight:700,color:accent||"#fff",lineHeight:1,fontFamily:"'Outfit',sans-serif"}}>{value}</span></div>{sub&&<div style={{fontSize:11,color:"rgba(255,255,255,0.5)",marginTop:6,fontFamily:"'Outfit',sans-serif"}}>{sub}</div>}</div>);}
+function SC({label,value,sub,accent,icon}){return (<div style={{background:"var(--w03)",border:"1px solid var(--w06)",borderRadius:2,padding:"14px 16px",flex:1,minWidth:130}}><div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:"var(--w40)",marginBottom:8,fontFamily:"var(--font-ui)"}}>{label}</div><div style={{display:"flex",alignItems:"center",gap:8}}>{icon}{" "}<span style={{fontSize:22,fontWeight:700,color:accent||"var(--fg)",lineHeight:1,fontFamily:"var(--font-ui)"}}>{value}</span></div>{sub&&<div style={{fontSize:11,color:"var(--w50)",marginTop:6,fontFamily:"var(--font-ui)"}}>{sub}</div>}</div>);}
 
-function SB({status}){const m={done:{bg:"rgba(39,244,210,0.12)",c:"#27F4D2",t:"COMPLETED"},next:{bg:"rgba(232,0,32,0.15)",c:"#E80020",t:"NEXT RACE"},postponed:{bg:"rgba(255,165,0,0.12)",c:"#FFA500",t:"POSTPONED"},upcoming:{bg:"rgba(255,255,255,0.05)",c:"rgba(255,255,255,0.4)",t:"UPCOMING"}};const s=m[status]||m.upcoming;return (<span style={{fontSize:10,fontWeight:700,letterSpacing:1,padding:"3px 8px",borderRadius:4,background:s.bg,color:s.c}}>{s.t}</span>);}
+function SB({status}){const m={done:{bg:"rgba(39,244,210,0.12)",c:"var(--green)",t:"COMPLETED"},next:{bg:"rgba(232,0,32,0.15)",c:"var(--red)",t:"NEXT RACE"},postponed:{bg:"rgba(255,165,0,0.12)",c:"var(--amber)",t:"POSTPONED"},upcoming:{bg:"var(--w05)",c:"var(--w40)",t:"UPCOMING"}};const s=m[status]||m.upcoming;return (<span style={{fontSize:10,fontWeight:700,letterSpacing:1,padding:"3px 8px",borderRadius:4,background:s.bg,color:s.c}}>{s.t}</span>);}
 
-const TABS=[{id:"Overview",label:"📊 Overview"},{id:"Standings",label:"🏆 Standings"},{id:"Race Results",label:"🏁 Race Results"},{id:"Sector Times",label:"⏱️ Sector Times"},{id:"Telemetry",label:"📈 Telemetry"},{id:"Head to Head",label:"🥊 Head to Head"},{id:"Pit Stops",label:"🔧 Pit Stops"},{id:"Quotes",label:"💬 Quotes"},{id:"Schedule",label:"📅 Schedule"}];
+// ── The timekeeper's lap chart ──────────────────────────────────────────────
+// One column per lap, one row per position. Each car's line is inked in its
+// team colour; the winner's line is traced in red. Yellow-flag laps and
+// safety-car periods band the sheet. Scrubbed by the stopwatch beneath it,
+// which shares its lap cursor with the read-out (and the replay via #lap=).
+const LapChart=memo(function LapChart({session,lap,setLap}){
+  const[focus,setFocus]=useState(null);
+  const wrapRef=useRef(null);
+  const[compact,setCompact]=useState(false);
+  useEffect(()=>{
+    const el=wrapRef.current;if(!el)return;
+    const m=()=>setCompact(el.clientWidth<640);m();
+    const ro=new ResizeObserver(m);ro.observe(el);return()=>ro.disconnect();
+  },[]);
+  const drivers=session.drivers||[];
+  const total=Math.max(1,...drivers.map(d=>(d.positions||[]).reduce((m,q)=>Math.max(m,q.l||0),0)));
+  const n=Math.max(drivers.length,20);
+  // Compact (phone) keeps the same 1000-unit width but taller rows and larger type,
+  // so the whole race fits the screen and the scrubber hand stays over its lap.
+  const W=1000,ML=compact?58:40,MR=compact?86:56,MT=compact?30:16,MB=compact?14:8,rowH=compact?46:23;
+  const fs=compact?24:12,fsLap=compact?21:10.5,sw=compact?2.6:1.4,swW=compact?4:2.2,pr=compact?5:2.6;
+  const H=MT+MB+n*rowH;
+  const x=(l)=>ML+((l-1)/Math.max(1,total-1))*(W-ML-MR);
+  const y=(p)=>MT+(p-0.5)*rowH;
+  const {paths,winner,finals,starts}=useMemo(()=>{
+    let winner=null;const finals=[],starts=[];
+    const paths=drivers.map(d=>{
+      const pts=(d.positions||[]).filter(q=>q.p&&q.l>=1);
+      if(pts.length===0)return null;
+      const dstr=pts.map((q,i)=>`${i===0?"M":"L"}${x(q.l).toFixed(1)},${y(q.p).toFixed(1)}`).join("");
+      const last=pts[pts.length-1];
+      if(last.p===1&&last.l>=total-1)winner=d.number;
+      finals.push({d,p:last.p,l:last.l});starts.push({d,p:pts[0].p});
+      const pitLaps=(d.lapTimes||[]).filter(t=>t.pit).map(t=>t.l);
+      const pits=pitLaps.map(l=>{const q=pts.find(z=>z.l===l);return q?{x:x(q.l),y:y(q.p)}:null;}).filter(Boolean);
+      return {d,dstr,pits,len:pts.length};
+    }).filter(Boolean);
+    return {paths,winner,finals,starts};
+  },[drivers,total]);
+  const yellow=new Set(session.yellowFlagLaps||[]);
+  const periods=session.raceControlPeriods||[];
+  const cur=Math.max(1,Math.min(total,lap));
+  const lapFromEvent=(e)=>{
+    const r=e.currentTarget.getBoundingClientRect();
+    const px=((e.clientX-r.left)/r.width)*W;
+    return Math.round(1+((px-ML)/(W-ML-MR))*(total-1));
+  };
+  const onPointer=(e)=>{if(e.buttons!==1&&e.type!=="pointerdown")return;setLap(Math.max(1,Math.min(total,lapFromEvent(e))));};
+  return(
+    <div ref={wrapRef} className={`lapchart${focus?" has-focus":""}${compact?" compact":""}`}>
+      <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`Lap chart, ${total} laps, ${drivers.length} cars`} onPointerDown={onPointer} onPointerMove={onPointer} style={{touchAction:"pan-y",cursor:"crosshair"}}>
+        {/* period bands */}
+        {periods.map((pr,i)=>{const c=pr.type==="RED"?"var(--red)":pr.type==="VSC"?"var(--amber)":"var(--yellow)";return <rect key={i} x={x(pr.lapStart)-((W-ML-MR)/(total-1))/2} y={0} width={Math.max(2,x(pr.lapEnd)-x(pr.lapStart)+((W-ML-MR)/(total-1)))} height={H} fill={c} opacity={0.14}/>;})}
+        {[...yellow].filter(l=>l>=1&&l<=total).map(l=>{const cw=(W-ML-MR)/Math.max(1,total-1);return <rect key={"y"+l} x={x(l)-cw/2} y={0} width={cw} height={H} fill="var(--yellow)" opacity={0.12}/>;})}
+        {/* rules: rows + every 5th lap */}
+        {Array.from({length:n+1},(_,i)=><line key={"r"+i} x1={ML-4} x2={W-MR+4} y1={MT+i*rowH} y2={MT+i*rowH} stroke={i%5===0?"var(--rule)":"var(--rule-faint)"} strokeWidth={i%5===0?0.8:0.5}/>)}
+        {Array.from({length:total},(_,i)=>i+1).filter(l=>l===1||l%5===0||l===total).map(l=><g key={"c"+l}><line x1={x(l)} x2={x(l)} y1={MT-2} y2={H-MB} stroke={l%10===0||l===1||l===total?"var(--rule)":"var(--rule-faint)"} strokeWidth={0.6}/><text x={x(l)} y={MT-6} textAnchor="middle" className="lc-lap" style={{fontSize:fsLap}}>{l}</text></g>)}
+        {/* car lines */}
+        {paths.map(({d,dstr,pits})=>{const col=inkify(d.teamColour||"var(--ink-4)");const isW=d.number===winner;return(
+          <g key={d.number} className={`${isW?"leader ":""}${focus===d.number?"focus":""}`} onPointerEnter={()=>setFocus(d.number)} onPointerLeave={()=>setFocus(null)}>
+            <path d={dstr} fill="none" stroke={isW?"var(--red)":col} strokeWidth={isW?swW:sw} strokeLinejoin="round" strokeLinecap="round" className={isW?"leader ink-draw":"ink-draw"} style={{"--len":4000}}/>
+            {pits.map((pt,i)=><circle key={i} cx={pt.x} cy={pt.y} r={pr} fill="var(--sheet)" stroke={isW?"var(--red)":col} strokeWidth={sw}/>)}
+          </g>);})}
+        {/* start + finish numerals */}
+        {starts.map(({d,p})=><text key={"s"+d.number} x={ML-8} y={y(p)+fs*0.35} textAnchor="end" className="lc-num" style={{fontSize:fs}} fill={inkify(d.teamColour||"var(--ink-4)")}>{d.number}</text>)}
+        {finals.map(({d,p,l})=>{const retired=l<total-1;return <text key={"f"+d.number} x={retired?x(l)+7:W-MR+8} y={y(p)+fs*0.35} className="lc-num" fill={d.number===winner?"var(--red)":inkify(d.teamColour||"var(--ink-4)")} opacity={retired?0.75:1} style={{fontSize:retired?fs*0.85:fs,fontStyle:retired?"italic":"normal"}}>{retired?`${d.acronym} ×`:d.acronym}</text>;})}
+        {/* lap cursor */}
+        <line className="lc-cursor" x1={x(cur)} x2={x(cur)} y1={0} y2={H} style={{strokeWidth:compact?2.5:1.25}}/>
+        <text x={x(cur)} y={H+fs*0.9} textAnchor="middle" className="lc-num" fill="var(--red)" style={{fontSize:fs*0.85}}>L{cur}</text>
+      </svg>
+    </div>
+  );
+});
+
+const LapReadout=memo(function LapReadout({session,lap}){
+  const drivers=session.drivers||[];
+  const order=drivers.map(d=>{const q=(d.positions||[]).find(z=>z.l===lap);const t=(d.lapTimes||[]).find(z=>z.l===lap);return q?{d,p:q.p,pit:!!t?.pit}:null;}).filter(Boolean).sort((a,b)=>a.p-b.p);
+  return(
+    <div className="readout" aria-live="polite">
+      <span className="ro-lap">LAP {lap}</span>
+      {order.map(o=><span key={o.d.number} className={`ro-car${o.pit?" pit":""}`} title={`${o.d.name}${o.pit?" · pit stop this lap":""}`}><i>{o.p}</i><b style={{color:inkify(o.d.teamColour||"var(--ink-4)")}}>{o.d.acronym}</b></span>)}
+    </div>
+  );
+});
+
+// Stopwatch scrubber: drives the lap cursor; play advances a lap every 160 ms.
+function LapScrubber({lap,setLap,total}){
+  const[playing,setPlaying]=useState(false);
+  useEffect(()=>{if(!playing)return;const id=setInterval(()=>setLap(l=>{if(l>=total){setPlaying(false);return l;}return l+1;}),160);return()=>clearInterval(id);},[playing,total,setLap]);
+  const pct=(l)=>((l-1)/Math.max(1,total-1))*100;
+  const ticks=[];for(let l=1;l<=total;l++){if(l===1||l%5===0||l===total)ticks.push(l);}
+  return(
+    <div className="scrub">
+      <button type="button" aria-label={playing?"Pause lap playback":"Play laps"} onClick={()=>{if(!playing&&lap>=total)setLap(1);setPlaying(p=>!p);}}>
+        {playing?<svg viewBox="0 0 12 12"><rect x="1.5" y="1" width="3.2" height="10"/><rect x="7.3" y="1" width="3.2" height="10"/></svg>:<svg viewBox="0 0 12 12"><path d="M2 1l9 5-9 5z"/></svg>}
+      </button>
+      <div className="track">
+        <div className="rail"/>
+        {ticks.map(l=><span key={l} className={`tick${l%10===0||l===1||l===total?" major":""}`} style={{left:`${pct(l)}%`}}/>)}
+        {ticks.filter(l=>l===1||l%10===0||(l===total&&total%10>=4)).map(l=><span key={"t"+l} className={`tick-lbl${l===total?" last":""}`} style={{left:`${pct(l)}%`}}>{l}</span>)}
+        <div className="hand" style={{left:`${pct(lap)}%`}}/>
+        <input type="range" min={1} max={total} step={1} value={lap} aria-label="Lap" onChange={e=>{setPlaying(false);setLap(parseInt(e.target.value));}}/>
+      </div>
+      <div className="lapno">LAP {String(lap).padStart(2,"0")}<small> / {total}</small></div>
+    </div>
+  );
+}
+
+const TABS=[{id:"Overview",label:"Overview"},{id:"Standings",label:"Standings"},{id:"Race Results",label:"Race Results"},{id:"Sector Times",label:"Sector Times"},{id:"Telemetry",label:"Telemetry"},{id:"Head to Head",label:"Head to Head"},{id:"Pit Stops",label:"Pit Stops"},{id:"Quotes",label:"Quotes"},{id:"Schedule",label:"Schedule"}];
 
 // F1 tire compound color map (broadcast graphics convention)
-const COMPOUND_COLORS={SOFT:"#FF3344",MEDIUM:"#FFDA00",HARD:"#EEEEEE",INTERMEDIATE:"#43B02A",WET:"#0067AD",UNKNOWN:"#888"};
+const COMPOUND_COLORS={SOFT:"#FF3344",MEDIUM:"var(--yellow)",HARD:"var(--ink)",INTERMEDIATE:"#43B02A",WET:"#0067AD",UNKNOWN:"var(--ink-4)"};
 
 // Race Results OpenF1 enrichment table — module-scope so it can own the show-all
 // toggle (its call site is an IIFE inside a .map(), which can't hold hooks).
@@ -726,37 +850,37 @@ const SectorEnrichment=memo(function SectorEnrichment({sess,isExact,sessLabel,ta
   const fmtS=(v)=>v?v.toFixed(3):"—";
   const shown=sess.drivers.slice(0,showAll?undefined:5);
   return(
-    <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:10,padding:16,marginBottom:12}}>
+    <div style={{background:"var(--w02)",border:"1px solid var(--w06)",borderRadius:2,padding:16,marginBottom:12}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12,flexWrap:"wrap",gap:8}}>
-        <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:"rgba(255,255,255,0.4)"}}>{sessLabel} · {showAll?`All ${sess.drivers.length}`:"Top 5"} <span style={{fontSize:9,opacity:0.6,letterSpacing:0}}>(via OpenF1){!isExact?` · ${targetSession} data unavailable`:""}</span></div>
-        <div style={{display:"flex",gap:12,fontSize:10,color:"rgba(255,255,255,0.3)"}}>
+        <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:"var(--w40)"}}>{sessLabel} · {showAll?`All ${sess.drivers.length}`:"Top 5"} <span style={{fontSize:9,opacity:0.6,letterSpacing:0}}>(via OpenF1){!isExact?` · ${targetSession} data unavailable`:""}</span></div>
+        <div style={{display:"flex",gap:12,fontSize:10,color:"var(--w30)"}}>
           <span>I1: {sb.topI1Speed||"—"} km/h</span>
           <span>I2: {sb.topI2Speed||"—"} km/h</span>
           <span>ST: {sb.topSTSpeed||"—"} km/h</span>
         </div>
       </div>
       <div style={{overflowX:"auto",WebkitOverflowScrolling:"touch"}}><table style={{width:"100%",borderCollapse:"collapse",minWidth:600,fontSize:12}}>
-        <thead><tr style={{borderBottom:"1px solid rgba(255,255,255,0.06)"}}>
-          {["","Driver","Best S1","Best S2","Best S3","Theo. Best","Top Speed"].map(h=><th key={h} style={{textAlign:h==="Driver"?"left":"right",padding:"5px 8px",fontSize:9,textTransform:"uppercase",letterSpacing:.8,color:"rgba(255,255,255,0.3)",fontWeight:500}}>{h}</th>)}
+        <thead><tr style={{borderBottom:"1px solid var(--w06)"}}>
+          {["","Driver","Best S1","Best S2","Best S3","Theo. Best","Top Speed"].map(h=><th key={h} style={{textAlign:h==="Driver"?"left":"right",padding:"5px 8px",fontSize:9,textTransform:"uppercase",letterSpacing:.8,color:"var(--w30)",fontWeight:500}}>{h}</th>)}
         </tr></thead>
         <tbody>{shown.map((d,i)=>{
           const isFS1=d.bestS1&&sb.fastestS1&&Math.abs(d.bestS1-sb.fastestS1)<0.001;
           const isFS2=d.bestS2&&sb.fastestS2&&Math.abs(d.bestS2-sb.fastestS2)<0.001;
           const isFS3=d.bestS3&&sb.fastestS3&&Math.abs(d.bestS3-sb.fastestS3)<0.001;
           return(
-          <tr key={i} style={{borderBottom:"1px solid rgba(255,255,255,0.03)"}}>
-            <td style={{padding:"5px 8px",width:20,fontSize:11,fontWeight:700,color:i<3?"#fff":"rgba(255,255,255,0.35)"}}>{i+1}</td>
-            <td style={{padding:"5px 8px"}}><div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:3,height:14,borderRadius:1,background:d.teamColour||"#555"}}/><span style={{fontWeight:600,fontSize:12}}>{d.acronym}</span><span style={{fontSize:10,color:"rgba(255,255,255,0.2)",margin:"0 2px"}}>|</span><span style={{fontSize:10,color:"rgba(255,255,255,0.35)"}}>{normTeam(d.team||"")}</span></div></td>
-            <td style={{padding:"5px 8px",textAlign:"right",fontVariantNumeric:"tabular-nums",color:isFS1?"#d946ef":"rgba(255,255,255,0.6)",fontWeight:isFS1?700:400}}>{fmtS(d.bestS1)}</td>
-            <td style={{padding:"5px 8px",textAlign:"right",fontVariantNumeric:"tabular-nums",color:isFS2?"#d946ef":"rgba(255,255,255,0.6)",fontWeight:isFS2?700:400}}>{fmtS(d.bestS2)}</td>
-            <td style={{padding:"5px 8px",textAlign:"right",fontVariantNumeric:"tabular-nums",color:isFS3?"#d946ef":"rgba(255,255,255,0.6)",fontWeight:isFS3?700:400}}>{fmtS(d.bestS3)}</td>
-            <td style={{padding:"5px 8px",textAlign:"right",fontVariantNumeric:"tabular-nums",fontWeight:700,color:i===0?"#27F4D2":"rgba(255,255,255,0.7)"}}>{fmtS(d.theoreticalBest)}</td>
-            <td style={{padding:"5px 8px",textAlign:"right",fontVariantNumeric:"tabular-nums",color:"rgba(255,255,255,0.5)"}}>{d.maxSTSpeed||"—"}</td>
+          <tr key={i} style={{borderBottom:"1px solid var(--w03)"}}>
+            <td style={{padding:"5px 8px",width:20,fontSize:11,fontWeight:700,color:i<3?"var(--fg)":"var(--w35)"}}>{i+1}</td>
+            <td style={{padding:"5px 8px"}}><div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:3,height:14,borderRadius:1,background:inkify(d.teamColour)||"var(--ink-4)"}}/><span style={{fontWeight:600,fontSize:12}}>{d.acronym}</span><span style={{fontSize:10,color:"var(--w20)",margin:"0 2px"}}>|</span><span style={{fontSize:10,color:"var(--w35)"}}>{normTeam(d.team||"")}</span></div></td>
+            <td style={{padding:"5px 8px",textAlign:"right",fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)",color:isFS1?"var(--purple)":"var(--w60)",fontWeight:isFS1?700:400}}>{fmtS(d.bestS1)}</td>
+            <td style={{padding:"5px 8px",textAlign:"right",fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)",color:isFS2?"var(--purple)":"var(--w60)",fontWeight:isFS2?700:400}}>{fmtS(d.bestS2)}</td>
+            <td style={{padding:"5px 8px",textAlign:"right",fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)",color:isFS3?"var(--purple)":"var(--w60)",fontWeight:isFS3?700:400}}>{fmtS(d.bestS3)}</td>
+            <td style={{padding:"5px 8px",textAlign:"right",fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)",fontWeight:700,color:i===0?"var(--green)":"var(--w70)"}}>{fmtS(d.theoreticalBest)}</td>
+            <td style={{padding:"5px 8px",textAlign:"right",fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)",color:"var(--w50)"}}>{d.maxSTSpeed||"—"}</td>
           </tr>);
         })}</tbody>
       </table></div>
       {sess.drivers.length>5&&(
-        <button onClick={()=>setShowAll(v=>!v)} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:6,padding:"8px 14px",background:"rgba(255,255,255,0.04)",borderRadius:8,border:"1px solid rgba(255,255,255,0.08)",color:"rgba(255,255,255,0.6)",fontSize:12,fontWeight:500,fontFamily:"'Outfit',sans-serif",transition:"all 0.2s",marginTop:10}}>
+        <button onClick={()=>setShowAll(v=>!v)} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:6,padding:"8px 14px",background:"var(--w04)",borderRadius:2,border:"1px solid var(--w08)",color:"var(--w60)",fontSize:12,fontWeight:500,fontFamily:"var(--font-ui)",transition:"all 0.2s",marginTop:10}}>
           {showAll?"Top 5":`Show all ${sess.drivers.length}`}
           <span style={{transform:showAll?"rotate(180deg)":"rotate(0)",transition:"transform 0.3s",display:"inline-block"}}>▾</span>
         </button>
@@ -787,6 +911,10 @@ export default function F1Dashboard(){
   const[quotesSession,setQuotesSession]=useState("race");
   const[quoteDriver,setQuoteDriver]=useState(null); // null = all drivers
   const[quotesShowAll,setQuotesShowAll]=useState(false); // older rounds collapsed by default
+  // Lap cursor for the overview lap chart. Deep-linkable: #lap=34 restores it,
+  // and the Telemetry replay reads it to open on the same lap.
+  const[lapCursor,setLapCursorRaw]=useState(()=>{const m=/lap=(\d+)/.exec(typeof location!=="undefined"?location.hash:"");return m?parseInt(m[1]):1;});
+  const setLapCursor=(v)=>setLapCursorRaw(prev=>{const next=typeof v==="function"?v(prev):v;try{history.replaceState(null,"",`#lap=${next}`);}catch{}return next;});
   const[progHover,setProgHover]=useState(null);
   const[progHidden,setProgHidden]=useState(()=>new Set());
   const[tracks,setTracks]=useState(null);
@@ -866,6 +994,10 @@ export default function F1Dashboard(){
     const lastKey=meta[meta.length-1].meetingKey;
     const wanted=new Set();
     if(tab==="Sector Times")wanted.add(selMeeting||lastKey);
+    if(tab==="Overview"){ // the lap chart on the first sheet
+      const lastRace=[...meta].reverse().find(m=>m.sessions.some(s=>s.sessionName==="Race"));
+      if(lastRace)wanted.add(lastRace.meetingKey);
+    }
     if(tab==="Telemetry"){
       const lastRace=[...meta].reverse().find(m=>m.sessions.some(s=>s.sessionName==="Race"));
       wanted.add(telMeetingKey||lastRace?.meetingKey||lastKey);
@@ -881,8 +1013,8 @@ export default function F1Dashboard(){
     }
   },[openf1Index,openf1Meetings,tab,selMeeting,telMeetingKey]);
 
-  if(loading)return(<div style={{minHeight:"100vh",background:"#0a0a0f",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Outfit',sans-serif"}}><div style={{textAlign:"center"}}><div style={{fontSize:32,fontWeight:700,marginBottom:8}}>Loading F1 Data...</div><div style={{color:"rgba(255,255,255,0.4)"}}>Fetching from Jolpica API</div></div></div>);
-  if(error||!data)return(<div style={{minHeight:"100vh",background:"#0a0a0f",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Outfit',sans-serif"}}><div style={{textAlign:"center"}}><div style={{fontSize:32,fontWeight:700,color:"#E80020",marginBottom:8}}>Failed to Load Data</div><div style={{color:"rgba(255,255,255,0.5)"}}>{error||"No data available. Run: npm run fetch-data"}</div></div></div>);
+  if(loading)return(<div className="bench" style={{display:"flex",alignItems:"center",justifyContent:"center"}}><div style={{textAlign:"center",color:"#E6ECF1"}}><div className="head" style={{fontSize:30,fontWeight:700,marginBottom:6}}>Opening the season sheets</div><div className="num" style={{color:"#93A1AF",fontSize:13}}>reading data.json …</div></div></div>);
+  if(error||!data)return(<div className="bench" style={{display:"flex",alignItems:"center",justifyContent:"center"}}><div style={{textAlign:"center",color:"#E6ECF1"}}><div className="head" style={{fontSize:30,fontWeight:700,color:"#FF5A5A",marginBottom:6}}>The data sheet is missing</div><div className="num" style={{color:"#93A1AF",fontSize:13}}>{error||"No data available. Run: npm run fetch-data"}</div></div></div>);
 
   const{DS,CS,races,pits,pitsByRace,sched,qualifying,h2h,completedRounds,totalRounds,fetchedAt,pitRaceName,leader,lastWinner,fastestLap,narrative,progression}=data;
   const avgP=pits.length>0?`${(pits.reduce((a,b)=>a+b.s,0)/pits.length).toFixed(3)}s`:"N/A";
@@ -893,37 +1025,33 @@ export default function F1Dashboard(){
   const headshots=openf1?.driverHeadshots||{};
 
   return(
-    <div style={{minHeight:"100vh",background:"#0a0a0f",color:"#fff",fontFamily:"'Outfit',sans-serif"}}>
+    <div className="bench">
       {/* Global styles live in src/styles.css; fonts load from index.html */}
 
-      {/* Header */}
-      <div className="hdr" style={{position:"relative",background:"linear-gradient(180deg,rgba(232,0,32,0.08) 0%,transparent 100%)"}}>
-        <div style={{position:"absolute",top:0,left:0,right:0,height:2,background:"linear-gradient(90deg,transparent,#E80020,transparent)"}}/>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:16}}>
+
+      <header className="hdr">
+        <div className="hdr-row">
           <div className="fu">
-            <div style={{display:"flex",alignItems:"center",gap:16,marginBottom:8}}>
-              <img src={F1_LOGO} alt="Formula 1" style={{height:52,objectFit:"contain"}}/>
-              <div style={{height:36,width:2,background:"rgba(255,255,255,0.15)"}}/>
-              <div>
-                <div style={{fontSize:22,fontWeight:700,color:"#fff",letterSpacing:3,textTransform:"uppercase",lineHeight:1.1}}>2026 Season Dashboard</div>
-                <div style={{fontSize:12,color:"rgba(255,255,255,0.35)",letterSpacing:1.5,marginTop:4,textTransform:"uppercase"}}>Formula 1 World Championship</div>
-              </div>
+            <div className="hdr-mark">
+              <img src={F1_LOGO} alt="Formula 1"/>
+              <div className="sep"/>
+              <h1 className="hdr-title">2026 Season Sheets<small>Formula 1 World Championship · kept lap by lap</small></h1>
             </div>
-            <div style={{fontSize:13,color:"rgba(255,255,255,0.7)",marginTop:4}}>Round {completedRounds} of {totalRounds} completed{nextRace?` · Next: ${nextRace.nm} · ${raceDateFmt(nextRace.dt,nextRace.tt)} (${countdownLabel(nextRace.dt,nextRace.tt)})`:""}</div>
           </div>
           {(()=>{
-            // Honest freshness indicator — the dot used to pulse green forever,
-            // implying live data even when the weekly build had gone stale.
             const ageDays=Math.floor((Date.now()-new Date(fetchedAt).getTime())/86400000);
-            const c=ageDays<4?"#27F4D2":ageDays<10?"#FFA500":"#E80020";
-            const label=ageDays<=0?"Data updated today":ageDays===1?"Data updated yesterday":`Data updated ${ageDays} days ago`;
+            const cls=ageDays<4?"":ageDays<10?"amber":"red";
+            const label=ageDays<=0?"data fetched today":ageDays===1?"data fetched yesterday":`data fetched ${ageDays} days ago`;
             return(
-          <div className="fu" style={{animationDelay:"0.1s",display:"flex",alignItems:"center",gap:8}} title={new Date(fetchedAt).toLocaleString()}>
-            <div style={{width:8,height:8,borderRadius:"50%",background:c,animation:ageDays<4?"pulse 2s infinite":"none"}}/>
-            <span style={{fontSize:12,color:"rgba(255,255,255,0.5)"}}>{label}</span>
+          <div className="stamp fu" style={{animationDelay:"0.1s"}} title={new Date(fetchedAt).toLocaleString()}>
+            <div><b>ROUND {completedRounds} / {totalRounds}</b> completed</div>
+            {nextRace&&<div>next · <b>{nextRace.nm.replace(" Grand Prix"," GP").toUpperCase()}</b> · {raceDateFmt(nextRace.dt,nextRace.tt)} · {countdownLabel(nextRace.dt,nextRace.tt)}</div>}
+            {(()=>{const pending=sched.filter(r=>r.st==="done"&&!races.some(x=>!x.sprint&&x.r===r.r));return pending.length?<div style={{color:"#F2B8B8"}}>R{pending[0].r} {pending[0].nm.replace(" Grand Prix"," GP")} · results pending next fetch</div>:null;})()}
+            <div className="fresh"><i className={cls}/>{label} · Jolpica · OpenF1</div>
           </div>);})()}
         </div>
-        <div className={`tab-wrap${tabsFade?" fade-r":""}`}>
+      </header>
+            <div className={`tab-wrap${tabsFade?" fade-r":""}`}>
         <div className="tab-bar" role="tablist" ref={tabBarRef} onScroll={e=>measureTabs(e.currentTarget)} onKeyDown={e=>{
           if(e.key!=="ArrowLeft"&&e.key!=="ArrowRight")return;
           e.preventDefault();
@@ -931,157 +1059,111 @@ export default function F1Dashboard(){
           const next=(i+(e.key==="ArrowRight"?1:-1)+TABS.length)%TABS.length;
           setTab(TABS[next].id);
           e.currentTarget.children[next]?.focus();
-        }} style={{display:"flex",gap:0,marginTop:20,borderBottom:"1px solid rgba(255,255,255,0.06)",overflowX:"auto"}}>
-          {TABS.map(t=>{const[emoji,...rest]=t.label.split(" ");return <button key={t.id} role="tab" aria-selected={tab===t.id} className={`tb ${tab===t.id?"a":""}`} onClick={()=>setTab(t.id)}><span aria-hidden="true">{emoji}</span> {rest.join(" ")}</button>;})}
-        </div>
+        }}>
+          {TABS.map(t=>{return <button key={t.id} role="tab" aria-selected={tab===t.id} className={`tb ${tab===t.id?"a":""}`} onClick={()=>setTab(t.id)}>{t.label}</button>;})}
         </div>
       </div>
 
-      <div className="main">
+      <main className="main">
         <TabErrorBoundary key={tab}>
-        <div className={tabSeen?"no-anim":undefined}>
+        <div className={(tabSeen?"no-anim ":"")+"sheet"}>
+        <div className="sheet-band">
+          <span><b>{tab.toUpperCase()}</b> · sheet {String(TABS.findIndex(t=>t.id===tab)+1).padStart(2,"0")} of {String(TABS.length).padStart(2,"0")}</span>
+          <span>sources · Jolpica F1 · OpenF1{quotes?" · F1 YouTube via Claude":""} · fetched {new Date(fetchedAt).toLocaleString(undefined,{dateStyle:"medium",timeStyle:"short"})}</span>
+        </div>
 
         {/* ═══ OVERVIEW ═══ */}
         {tab==="Overview"&&(
-          <div className="fu" style={{display:"flex",flexDirection:"column",gap:24}}>
-            {/* Championship Leader Hero */}
-            {leader&&leader.pts>0&&(()=>{
-              const p2=DS[1];
-              const gap=p2?leader.pts-p2.pts:0;
-              const tc=TC[leader.t]||"#E80020";
+          <div className="fu" style={{display:"flex",flexDirection:"column",gap:20}}>
+
+            {(()=>{
+              const lastRaceFull=races.filter(r=>!r.sprint).slice(-1)[0];
+              // The race session of the newest meeting that has one (lazy-loaded; falls back to a note while it lands)
+              const raceMeeting=openf1?[...openf1.meetings].reverse().find(m=>m.sessions.some(s=>s.sessionName==="Race"&&s.drivers)):null;
+              const raceSession=raceMeeting?raceMeeting.sessions.find(s=>s.sessionName==="Race"&&s.drivers):null;
+              const total=raceSession?Math.max(1,...raceSession.drivers.map(d=>(d.positions||[]).reduce((m,q)=>Math.max(m,q.l||0),0))):0;
+              const winnerName=lastRaceFull?.w||"";
               return(
-                <div className="hero" style={{position:"relative",background:`linear-gradient(135deg, ${tc}22 0%, ${tc}0a 40%, rgba(255,255,255,0.02) 100%)`,border:`1px solid ${tc}40`,borderRadius:16,padding:"32px 36px",overflow:"hidden"}}>
-                  <div style={{position:"absolute",right:-30,top:-40,opacity:0.07,pointerEvents:"none",transform:"scale(1.2)"}}>
-                    <TL team={leader.t} size={280}/>
-                  </div>
-                  <div style={{position:"relative",display:"flex",alignItems:"center",gap:32,flexWrap:"wrap"}}>
-                    <div className="hero-avatar" style={{flexShrink:0,borderRadius:"50%",border:`3px solid ${tc}`,boxShadow:`0 0 40px ${tc}33`,overflow:"hidden",background:"rgba(0,0,0,0.3)"}}>
-                      <DH name={leader.n} size={140} headshots={headshots}/>
+              <div className="hero-grid">
+                <div>
+                  <h2 className="sheet-h" style={{fontSize:30}}>Lap chart · {lastRaceFull?lastRaceFull.nm:"—"}</h2>
+                  <p className="sheet-sub">{lastRaceFull?`Round ${lastRaceFull.r} · ${lastRaceFull.ci} · ${raceDateFmt(lastRaceFull.dt)}`:""}{total?` · ${total} laps`:""}{winnerName?` · won by ${winnerName}`:""}{lastRaceFull?.tm?` in ${lastRaceFull.tm}`:""}</p>
+                  {raceSession?(
+                    <div style={{marginTop:14}}>
+                      <LapChart session={raceSession} lap={Math.min(lapCursor,total)} setLap={setLapCursor}/>
+                      <LapReadout session={raceSession} lap={Math.min(lapCursor,total)}/>
+                      <LapScrubber lap={Math.min(lapCursor,total)} setLap={setLapCursor} total={total}/>
+                      <p className="sheet-sub" style={{marginTop:10}}>Red line: the winner. Circles: pit stops. Yellow columns: local yellows. Drag the stopwatch, or press play. <a href="#lap" onClick={e=>{e.preventDefault();setTab("Telemetry");}}>Open this lap in the replay →</a></p>
                     </div>
-                    <div style={{flex:1,minWidth:240}}>
-                      <div style={{fontSize:10,textTransform:"uppercase",letterSpacing:2.5,color:tc,fontWeight:700,marginBottom:10,opacity:0.9}}>Championship Leader · After Round {completedRounds}</div>
-                      <div className="hero-name" style={{fontWeight:800,lineHeight:1.05,marginBottom:8,letterSpacing:-0.5}}>{leader.n}</div>
-                      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:24}}>
-                        <TL team={leader.t} size={22}/>
-                        <span style={{fontSize:14,color:"rgba(255,255,255,0.65)",fontWeight:500}}>{leader.t}</span>
-                      </div>
-                      <div style={{display:"flex",gap:36,flexWrap:"wrap",alignItems:"baseline"}}>
-                        <div>
-                          <div className="hero-pts" style={{fontWeight:900,color:tc,lineHeight:0.9,textShadow:`0 0 32px ${tc}50`}}><AnimatedNum value={leader.pts} duration={1400}/></div>
-                          <div style={{fontSize:10,textTransform:"uppercase",letterSpacing:2.5,color:"rgba(255,255,255,0.4)",marginTop:8,fontWeight:600}}>Points</div>
-                        </div>
-                        {p2&&gap>0&&(
-                          <div>
-                            <div className="hero-sub" style={{fontWeight:800,color:"#27F4D2",lineHeight:1}}><AnimatedNum value={gap} duration={1400} prefix="+"/></div>
-                            <div style={{fontSize:10,textTransform:"uppercase",letterSpacing:2.5,color:"rgba(255,255,255,0.4)",marginTop:8,fontWeight:600}}>over {p2.n.split(" ").pop()}</div>
-                          </div>
-                        )}
-                        {leader.wins>0&&(
-                          <div>
-                            <div className="hero-sub" style={{fontWeight:800,color:"#fff",lineHeight:1}}><AnimatedNum value={leader.wins} duration={1100}/></div>
-                            <div style={{fontSize:10,textTransform:"uppercase",letterSpacing:2.5,color:"rgba(255,255,255,0.4)",marginTop:8,fontWeight:600}}>Race Win{leader.wins>1?"s":""}</div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
+                  ):(
+                    <div className="num" style={{marginTop:14,padding:"18px 0",borderTop:"1px solid var(--rule)",borderBottom:"1px solid var(--rule)",color:"var(--ink-3)",fontSize:12}}>{openf1?"Lap positions for this round are not in the OpenF1 sheet yet.":"Fetching the lap sheet …"}</div>
+                  )}
+                  <div style={{marginTop:22}}>
+                  <div className="ledger">
+                    <span><i>avg pit</i><b>{avgP}</b></span>
+                    <span><i>fastest pit</i><b>{fastestPit?`${fastestPit.s.toFixed(3)}s`:"N/A"}</b><small>{fastestPit?fastestPit.d:""}</small></span>
+                    <span><i>rounds</i><b>{completedRounds}<em>/{totalRounds}</em></b></span>
+                    <span><i>winners</i><b>{String(new Set(races.filter(r=>!r.sprint&&r.w).map(r=>r.w)).size)}</b><em style={{fontStyle:"normal",color:"var(--ink-4)"}}>/{races.filter(r=>!r.sprint).length}</em></span>
                   </div>
+                              </div>
                 </div>
+                <div>
+                  <h2 className="sheet-h" style={{fontSize:30}}>Standings</h2>
+                  <p className="sheet-sub">Drivers · after round {completedRounds}{leader&&DS[1]?` · ${leader.n.split(" ").pop()} leads by ${leader.pts-DS[1].pts}`:""}{leader&&leader.wins?` · ${leader.wins} win${leader.wins>1?"s":""}`:""}</p>
+                  <ol className="billing" style={{marginTop:12}}>
+                    {DS.map((d,i)=>{const tier=i===0?"t1":i<3?"t2":i<6?"t3":i<10?"t4":"t5";return(
+                      <li key={d.n} className={tier}>
+                        <span className="rk">{d.p}</span>
+                        <span className="nm"><em style={{background:TC[d.t]||"var(--ink-4)"}}/>{d.n.split(" ").pop()}{tier!=="t5"&&<small>{d.t}</small>}</span>
+                        <span className="pt">{d.pts}{d.d!=="—"&&<small>{d.d}</small>}</span>
+                      </li>);})}
+                  </ol>
+                </div>
+              </div>
               );
             })()}
-            {/* Race Recap */}
+            
             {(()=>{
               const lastRaceFull=races.filter(r=>!r.sprint).slice(-1)[0];
               if(!lastRaceFull||!lastRaceFull.pod||lastRaceFull.pod.length<3)return null;
               const fullName=(lastName)=>DS.find(d=>d.n.split(" ").pop()===lastName)?.n||lastName;
-              const winnerTC=TC[lastRaceFull.pod[0].t]||"#E80020";
-              const medals=["#FFD700","#C0C0C0","#CD7F32"];
+              const fl=lastRaceFull.fl;
               return(
-                <div style={{position:"relative",background:`linear-gradient(135deg, ${winnerTC}0c 0%, rgba(255,255,255,0.02) 60%)`,border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20,overflow:"hidden"}}>
-                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16,flexWrap:"wrap",gap:16}}>
-                    <div style={{display:"flex",alignItems:"center",gap:18,flexWrap:"wrap"}}>
-                      {tracks&&tracks[lastRaceFull.nm]&&(
-                        <div style={{width:90,height:60,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-                          <TrackMap raceName={lastRaceFull.nm} tracks={tracks} stroke={winnerTC} strokeWidth={2.5} opacity={0.9} height={60} width={90}/>
-                        </div>
-                      )}
-                      <div>
-                        <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:"rgba(255,255,255,0.4)",fontWeight:600}}>Race Recap · Round {lastRaceFull.r}</div>
-                        <div style={{fontSize:18,fontWeight:700,marginTop:4}}>{lastRaceFull.nm}</div>
-                        <div style={{fontSize:11,color:"rgba(255,255,255,0.4)",marginTop:2}}>{lastRaceFull.ci} · {raceDateFmt(lastRaceFull.dt)}</div>
-                      </div>
+                <div>
+                  <div className="rule-h"/>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",gap:16,flexWrap:"wrap",marginBottom:12}}>
+                    <div>
+                      <h2 className="sheet-h">Classification · {lastRaceFull.nm}</h2>
+                      <p className="sheet-sub">Top three{fl?.driver?` · fastest lap ${fl.driver} (${fl.team}) ${fl.time||""}`:""}</p>
                     </div>
-                    <div style={{cursor:"pointer",fontSize:11,color:"#E80020",fontWeight:600}} onClick={()=>{setSelRace(lastRaceFull.r);setTab("Race Results");}}>Full results →</div>
+                    <a href="#results" onClick={e=>{e.preventDefault();setSelRace(lastRaceFull.r);setTab("Race Results");}} className="head" style={{fontSize:13,color:"var(--red)",fontWeight:700}}>Full classification →</a>
                   </div>
-                  <div className="recap-podium" style={{display:"grid",gridTemplateColumns:"repeat(3, 1fr)",gap:12}}>
-                    {lastRaceFull.pod.map((p,idx)=>{
-                      const tc=TC[p.t]||"#fff";
-                      const medal=medals[idx];
-                      return(
-                        <div key={idx} style={{position:"relative",padding:14,paddingLeft:18,background:`linear-gradient(135deg, ${tc}1a 0%, ${tc}05 100%)`,border:`1px solid ${tc}35`,borderRadius:10,overflow:"hidden"}}>
-                          <div style={{position:"absolute",top:0,left:0,width:4,height:"100%",background:medal,boxShadow:`0 0 12px ${medal}66`}}/>
-                          <div style={{position:"absolute",right:-8,top:-12,opacity:0.08,pointerEvents:"none"}}><TL team={p.t} size={70}/></div>
-                          <div style={{position:"relative",display:"flex",alignItems:"center",gap:12}}>
-                            <div style={{fontSize:26,fontWeight:900,color:medal,width:22,textAlign:"center",textShadow:`0 0 14px ${medal}66`}}>{idx+1}</div>
-                            <DH name={fullName(p.d)} size={48} headshots={headshots}/>
-                            <div style={{flex:1,minWidth:0}}>
-                              <div style={{fontSize:13,fontWeight:700,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{p.d}</div>
-                              <div style={{fontSize:10,color:tc,marginTop:2,fontWeight:500}}>{p.t}</div>
-                              <div style={{fontSize:10,color:"rgba(255,255,255,0.5)",marginTop:2,fontVariantNumeric:"tabular-nums"}}>{p.g}</div>
-                            </div>
-                          </div>
+                  <div className="podium">
+                    {lastRaceFull.pod.map((p,idx)=>(
+                      <div key={idx}>
+                        <div className="pos">{idx+1}</div>
+                        <DH name={fullName(p.d)} size={44} headshots={headshots}/>
+                        <div className="who">
+                          <b style={{color:TC[p.t]||"var(--ink)"}}>{fullName(p.d)}</b>
+                          <span>{p.t}</span>
+                          <span className="gap">{p.g}</span>
                         </div>
-                      );
-                    })}
-                  </div>
-                  {(()=>{const fl=lastRaceFull.fl;const flDriver=fl?.driver;const flTeam=fl?.team;const flTime=fl?.time;if(!flDriver)return null;return(
-                    <div style={{marginTop:12,padding:"10px 14px",background:"rgba(232,0,32,0.06)",border:"1px solid rgba(232,0,32,0.18)",borderRadius:8,display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
-                      <div style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:"#E80020",fontWeight:800,padding:"3px 8px",background:"rgba(232,0,32,0.14)",borderRadius:4}}>⚡ FASTEST LAP</div>
-                      <div style={{fontSize:13,fontWeight:700}}>{flDriver}</div>
-                      <div style={{display:"flex",alignItems:"center",gap:6}}>
-                        <TL team={flTeam} size={16}/>
-                        <span style={{fontSize:11,color:"rgba(255,255,255,0.55)"}}>{flTeam}</span>
                       </div>
-                      <div style={{flex:1}}/>
-                      <div style={{fontSize:14,fontWeight:700,fontVariantNumeric:"tabular-nums",color:"#fff"}}>{flTime||""}</div>
-                    </div>
-                  );})()}
+                    ))}
+                  </div>
                 </div>
               );
             })()}
-            <div style={{display:"flex",gap:12,flexWrap:"wrap"}}>
-              <SC label="Avg Pit Stop" value={avgP} sub={pitRaceName||""} accent="#FFD700"/>
-              <SC label="Fastest Pit Stop" value={fastestPit?`${fastestPit.s.toFixed(3)}s`:"N/A"} sub={fastestPit?`${fastestPit.d}`:""} accent="#27F4D2" icon={fastestPit&&fastestPit.t?<TL team={fastestPit.t} size={24}/>:null}/>
-              <SC label="Completed Races" value={`${completedRounds}`} sub={`of ${totalRounds} scheduled`} accent="#d946ef"/>
-              <SC label="Different Winners" value={String(new Set(races.filter(r=>!r.sprint&&r.w).map(r=>r.w)).size)} sub={`across ${races.filter(r=>!r.sprint).length} grands prix`} accent="#FF8000"/>
-            </div>
+                        <div className="rule-h"/>
             <div className="g2">
-              {/* Drivers */}
-              <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20}}>
-                <div style={{fontSize:13,textTransform:"uppercase",letterSpacing:1.5,color:"rgba(255,255,255,0.4)",marginBottom:16,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                  <span>Drivers' Championship</span>
-                  <span style={{fontSize:10,color:"rgba(255,255,255,0.25)",letterSpacing:0.5,textTransform:"none"}}>+pts last race →</span>
-                </div>
-                {DS.map((d,i)=>(
-                  <div key={d.n} className="dr">
-                    <div style={{width:24,fontSize:14,fontWeight:700,color:i<3?"#fff":"rgba(255,255,255,0.4)"}}>{d.p}</div>
-                    <DH name={d.n} size={30} headshots={headshots}/>
-                    <div style={{width:3,height:22,borderRadius:2,background:TC[d.t],margin:"0 8px",opacity:.8}}/>
-                    <div style={{flex:1,minWidth:0}}>
-                      <div style={{fontSize:13,fontWeight:600,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{d.n}</div>
-                      <div style={{fontSize:11,color:"rgba(255,255,255,0.4)",marginTop:1}}>{d.t}</div>
-                    </div>
-                    <div style={{fontSize:12,color:d.d!=="—"?"#27F4D2":"rgba(255,255,255,0.25)",marginRight:12,fontWeight:500}}>{d.d}</div>
-                    <div style={{fontSize:16,fontWeight:700,width:36,textAlign:"right"}}>{d.pts}</div>
-                  </div>
-                ))}
-              </div>
               {/* Constructors */}
-              <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20,display:"flex",flexDirection:"column"}}>
-                <div style={{fontSize:13,textTransform:"uppercase",letterSpacing:1.5,color:"rgba(255,255,255,0.4)",marginBottom:16}}>Constructors' Championship</div>
+              <div style={{display:"flex",flexDirection:"column"}}>
+                <h2 className="sheet-h" style={{fontSize:20}}>Constructors' championship</h2>
+                <p className="sheet-sub" style={{marginBottom:12}}>After round {completedRounds} · bars scaled to the leading driver</p>
                 {CS.map((c,i)=>(
-                  <div key={c.t} style={{padding:"9px 12px",borderRadius:8,marginBottom:4}}>
+                  <div key={c.t} style={{padding:"9px 12px",borderRadius:2,marginBottom:4}}>
                     <div style={{display:"flex",alignItems:"center",marginBottom:4}}>
-                      <div style={{width:24,fontSize:14,fontWeight:700,color:i<3?"#fff":"rgba(255,255,255,0.4)"}}>{c.p}</div>
+                      <div style={{width:24,fontSize:14,fontWeight:700,color:i<3?"var(--fg)":"var(--w40)"}}>{c.p}</div>
                       <TL team={c.t} size={22}/>
                       <div style={{width:3,height:22,borderRadius:2,background:TC[c.t],margin:"0 8px",opacity:.8}}/>
                       <div style={{flex:1,fontSize:13,fontWeight:600}}>{c.t}</div>
@@ -1090,35 +1172,32 @@ export default function F1Dashboard(){
                     <div style={{marginLeft:35,display:"flex",flexDirection:"column",gap:3}}>
                       {c.dr.map((d,di)=>(
                         <div key={di} style={{display:"flex",alignItems:"center",gap:6}}>
-                          <div style={{width:60,fontSize:10,color:"rgba(255,255,255,0.45)",textAlign:"right"}}>{d.n}</div>
-                          <div style={{flex:1,height:4,background:"rgba(255,255,255,0.04)",borderRadius:2,overflow:"hidden"}}>
-                            <div style={{height:"100%",width:`${d.pts>0?Math.max((d.pts/maxDriverPts)*100,2):0}%`,background:TC[c.t],borderRadius:2,opacity:di===0?1:0.55,transition:"width 1.2s cubic-bezier(0.22,1,0.36,1)"}}/>
+                          <div style={{width:60,fontSize:10,color:"var(--w45)",textAlign:"right"}}>{d.n}</div>
+                          <div style={{flex:1,height:4,background:"var(--w04)",borderRadius:2,overflow:"hidden"}}>
+                            <div style={{height:"100%",width:`${d.pts>0?Math.max((d.pts/maxDriverPts)*100,2):0}%`,background:TC[c.t],borderRadius:2,opacity:di===0?1:0.55}}/>
                           </div>
-                          <div style={{width:20,fontSize:10,fontWeight:600,color:"rgba(255,255,255,0.5)",textAlign:"right"}}>{d.pts}</div>
+                          <div style={{width:20,fontSize:10,fontWeight:600,color:"var(--w50)",textAlign:"right"}}>{d.pts}</div>
                         </div>
                       ))}
                     </div>
                   </div>
                 ))}
               </div>
-            </div>
-            {/* Next Race */}
             {nextRace&&(
-            <div style={{background:"linear-gradient(135deg,rgba(232,0,32,0.08),rgba(255,255,255,0.02))",border:"1px solid rgba(232,0,32,0.15)",borderRadius:12,padding:24,display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:16}}>
-              <div style={{display:"flex",alignItems:"center",gap:22,flexWrap:"wrap"}}>
+            <div>
+              <h2 className="sheet-h" style={{fontSize:30}}>Next race · {nextRace.nm}</h2>
+              <p className="sheet-sub">Round {nextRace.r} · {countdownLabel(nextRace.dt,nextRace.tt)} · {nextRace.ci} · {raceDateFmt(nextRace.dt,nextRace.tt)}{nextRace.tt?` · lights out ${new Date(`${nextRace.dt}T${nextRace.tt}`).toLocaleTimeString(undefined,{hour:"numeric",minute:"2-digit"})} local`:""}{nextRace.sp?" · sprint weekend":""}</p>
+              <div style={{borderTop:"1px solid var(--rule)",marginTop:12,paddingTop:16}}>
                 {tracks&&tracks[nextRace.nm]&&(
-                  <div style={{width:130,height:90,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-                    <TrackMap raceName={nextRace.nm} tracks={tracks} stroke="#E80020" strokeWidth={2.5} opacity={0.9} height={90} width={130}/>
+                  <div style={{display:"flex",justifyContent:"center",padding:"6px 0 8px"}}>
+                    <TrackMap raceName={nextRace.nm} tracks={tracks} stroke="var(--ink)" strokeWidth={2.2} opacity={1} height={220} width={320}/>
                   </div>
                 )}
-                <div>
-                  <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:"#E80020",marginBottom:6}}>Next Race · Round {nextRace.r}</div>
-                  <div style={{fontSize:22,fontWeight:700}}>{nextRace.nm}</div>
-                  <div style={{fontSize:13,color:"rgba(255,255,255,0.5)",marginTop:4}}>{nextRace.ci} · {raceDateFmt(nextRace.dt,nextRace.tt)}{nextRace.tt?` · ${new Date(`${nextRace.dt}T${nextRace.tt}`).toLocaleTimeString(undefined,{hour:"numeric",minute:"2-digit"})}`:""}</div>
-                </div>
+                <a href="#schedule" onClick={e=>{e.preventDefault();setTab("Schedule");}} className="head" style={{display:"inline-block",marginTop:14,fontSize:13,color:"var(--red)",fontWeight:700}}>Full calendar →</a>
               </div>
             </div>
             )}
+            </div>
             {/* Driver Reactions */}
             {quotes&&quotes.rounds&&quotes.rounds.length>0&&(()=>{
               const lastRound=quotes.rounds[quotes.rounds.length-1];
@@ -1129,25 +1208,22 @@ export default function F1Dashboard(){
               const latestGP=races.filter(r=>!r.sprint).slice(-1)[0];
               const quoteLag=!!latestGP&&lastRound.round<latestGP.r;
               return(
-                <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20}}>
+                <div style={{borderTop:"1px solid var(--rule)",paddingTop:18}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
                     <div>
-                      <div style={{fontSize:13,textTransform:"uppercase",letterSpacing:1.5,color:"rgba(255,255,255,0.4)"}}>Driver Reactions</div>
-                      <div style={{fontSize:11,color:"rgba(255,255,255,0.25)",marginTop:2}}>{lastRound.raceName}{quoteLag?` · later rounds (through the ${latestGP.nm}) not yet transcribed`:""}</div>
+                      <h2 className="sheet-h">Driver reactions</h2>
+                      <p className="sheet-sub">{lastRound.raceName}{quoteLag?` · later rounds (through the ${latestGP.nm}) not yet transcribed`:""}</p>
                     </div>
-                    <div onClick={()=>setTab("Quotes")} style={{fontSize:11,color:"#E80020",cursor:"pointer",fontWeight:600}}>View all →</div>
+                    <a href="#quotes" onClick={e=>{e.preventDefault();setTab("Quotes");}} className="head" style={{fontSize:13,color:"var(--red)",fontWeight:700}}>All quotes →</a>
                   </div>
-                  <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:12}}>
+                  <div className="entries">
                     {showQuotes.map((q,i)=>(
-                      <div key={i} style={{background:"rgba(255,255,255,0.02)",border:`1px solid ${TC[q.team]||"rgba(255,255,255,0.06)"}33`,borderRadius:10,padding:14,display:"flex",gap:12}}>
-                        <DH name={q.driver} size={36} headshots={headshots}/>
+                      <div key={i} className="entry">
+                        <DH name={q.driver} size={40} headshots={headshots}/>
                         <div style={{flex:1,minWidth:0}}>
-                          <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
-                            <span style={{fontSize:12,fontWeight:600}}>{q.driver.split(" ").pop()}</span>
-                            <span style={{fontSize:10,color:TC[q.team]||"rgba(255,255,255,0.4)"}}>{q.team}</span>
-                          </div>
-                          <div style={{fontSize:11,color:"rgba(255,255,255,0.7)",lineHeight:1.5,fontStyle:"italic"}}>"{q.quote.length>120?q.quote.slice(0,120)+"…":q.quote}"</div>
-                          {q.context&&<div style={{fontSize:10,color:"rgba(255,255,255,0.3)",marginTop:4}}>{q.context}</div>}
+                          <div className="head" style={{fontSize:17,fontWeight:700,lineHeight:1,display:"flex",alignItems:"baseline",gap:8}}>{q.driver.split(" ").pop()}<span className="num" style={{fontSize:11,fontWeight:400,textTransform:"none",letterSpacing:0,color:TC[q.team]||"var(--ink-3)"}}>{q.team}</span></div>
+                          <p style={{margin:"6px 0 0",fontSize:13.5,lineHeight:1.5,color:"var(--ink)"}}>“{q.quote.length>160?q.quote.slice(0,160)+"…":q.quote}”</p>
+                          {q.context&&<div className="num" style={{fontSize:11,color:"var(--ink-3)",marginTop:5}}>{q.context}</div>}
                         </div>
                       </div>
                     ))}
@@ -1191,30 +1267,30 @@ export default function F1Dashboard(){
               const hoverIdx=progHover;
               const standingsNow=hoverIdx!==null?progression.standings[hoverIdx]:null;
               return(
-                <div style={{position:"relative",background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20}}>
+                <div style={{position:"relative",background:"var(--w02)",border:"1px solid var(--w06)",borderRadius:2,padding:20}}>
                   <div style={{fontSize:15,fontWeight:700,marginBottom:4}}>Points Progression</div>
-                  <div style={{fontSize:12,color:"rgba(255,255,255,0.35)",marginBottom:16}}>Top 6 drivers · cumulative points by round · hover for details, click legend to filter{progression.labels.some(l=>l.endsWith(" S"))&&" · S = sprint weekend (sprint points included in that round's jump)"}</div>
+                  <div style={{fontSize:12,color:"var(--w35)",marginBottom:16}}>Top 6 drivers · cumulative points by round · hover for details, click legend to filter{progression.labels.some(l=>l.endsWith(" S"))&&" · S = sprint weekend (sprint points included in that round's jump)"}</div>
                   <div style={{position:"relative"}}>
                     <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{width:"100%",height:240,display:"block",touchAction:"pan-y"}} onPointerMove={onMove} onPointerLeave={()=>setProgHover(null)}>
                       {/* Y gridlines + labels */}
                       {yTicks.map(t=>(
                         <g key={t}>
-                          <line x1={padL} x2={W-padR} y1={yOf(t)} y2={yOf(t)} stroke="rgba(255,255,255,0.06)" strokeWidth={1}/>
-                          <text x={padL-8} y={yOf(t)+4} textAnchor="end" fill="rgba(255,255,255,0.4)" fontSize="10" fontFamily="'Outfit',sans-serif">{t}</text>
+                          <line x1={padL} x2={W-padR} y1={yOf(t)} y2={yOf(t)} stroke="var(--w06)" strokeWidth={1}/>
+                          <text x={padL-8} y={yOf(t)+4} textAnchor="end" fill="var(--w40)" fontSize="10" fontFamily="var(--font-ui)">{t}</text>
                         </g>
                       ))}
                       {/* X labels */}
                       {progression.labels.map((label,i)=>(
-                        <text key={i} x={xOf(i)} y={H-padB+18} textAnchor="middle" fill={hoverIdx===i?"#fff":"rgba(255,255,255,0.45)"} fontWeight={hoverIdx===i?600:400} fontSize="10" fontFamily="'Outfit',sans-serif">{label}</text>
+                        <text key={i} x={xOf(i)} y={H-padB+18} textAnchor="middle" fill={hoverIdx===i?"var(--fg)":"var(--w45)"} fontWeight={hoverIdx===i?600:400} fontSize="10" fontFamily="var(--font-ui)">{label}</text>
                       ))}
                       {/* Hover vertical line */}
                       {hoverIdx!==null&&hoverIdx>0&&(
-                        <line x1={xOf(hoverIdx)} x2={xOf(hoverIdx)} y1={padT} y2={padT+plotH} stroke="rgba(255,255,255,0.25)" strokeWidth={1} strokeDasharray="3 3" pointerEvents="none"/>
+                        <line x1={xOf(hoverIdx)} x2={xOf(hoverIdx)} y1={padT} y2={padT+plotH} stroke="var(--w25)" strokeWidth={1} strokeDasharray="3 3" pointerEvents="none"/>
                       )}
                       {/* Lines */}
                       {(()=>{const seenTeam={};return progression.series.map(s=>{
                         const visible=isVisible(s.name);
-                        const color=TC[s.team]||"#fff";
+                        const color=TC[s.team]||"var(--fg)";
                         const isSecond=!!seenTeam[s.team];
                         seenTeam[s.team]=true;
                         if(!visible)return null;
@@ -1223,7 +1299,7 @@ export default function F1Dashboard(){
                           <g key={s.name} pointerEvents="none">
                             <path d={path} stroke={color} strokeWidth={2.5} fill="none" strokeLinecap="round" strokeLinejoin="round" strokeDasharray={isSecond?"5 4":"none"} opacity={isSecond?0.85:1}/>
                             {s.points.map((v,i)=>i>0&&(
-                              <circle key={i} cx={xOf(i)} cy={yOf(v)} r={hoverIdx===i?5:3.5} fill={isSecond?"#0a0a0f":color} stroke={color} strokeWidth={1.5}/>
+                              <circle key={i} cx={xOf(i)} cy={yOf(v)} r={hoverIdx===i?5:3.5} fill={isSecond?"var(--bench)":color} stroke={color} strokeWidth={1.5}/>
                             ))}
                           </g>
                         );
@@ -1243,15 +1319,15 @@ export default function F1Dashboard(){
                       const leftPct=(xOf(hoverIdx)/W)*100;
                       const placeRight=leftPct<60;
                       return(
-                        <div style={{position:"absolute",top:8,[placeRight?"left":"right"]:`${placeRight?leftPct+1.5:100-leftPct+1.5}%`,background:"rgba(14,14,22,0.96)",border:"1px solid rgba(255,255,255,0.10)",borderRadius:8,padding:"10px 12px",pointerEvents:"none",minWidth:200,boxShadow:"0 8px 24px rgba(0,0,0,0.5)"}}>
-                          <div style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:"rgba(255,255,255,0.4)",fontWeight:600,marginBottom:2}}>{progression.labels[hoverIdx]}</div>
+                        <div style={{position:"absolute",top:8,[placeRight?"left":"right"]:`${placeRight?leftPct+1.5:100-leftPct+1.5}%`,background:"var(--panel-2)",border:"1px solid var(--rule)",borderRadius:2,padding:"10px 12px",pointerEvents:"none",minWidth:200,boxShadow:"0 6px 18px -4px rgba(0,0,0,0.35)"}}>
+                          <div style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:"var(--w40)",fontWeight:600,marginBottom:2}}>{progression.labels[hoverIdx]}</div>
                           <div style={{fontSize:12,fontWeight:700,marginBottom:10}}>{progression.raceNames[hoverIdx]}</div>
                           {rows.map(r=>(
                             <div key={r.name} style={{display:"flex",alignItems:"center",gap:8,marginBottom:4,fontSize:11}}>
-                              <div style={{width:18,color:"rgba(255,255,255,0.45)",fontWeight:600,fontVariantNumeric:"tabular-nums"}}>P{r.pos}</div>
-                              <div style={{width:3,height:11,background:TC[r.team]||"#fff",borderRadius:1,opacity:0.85}}/>
-                              <div style={{flex:1,color:"#fff",fontWeight:500}}>{r.name.split(" ").pop()}</div>
-                              <div style={{color:"rgba(255,255,255,0.85)",fontWeight:700,fontVariantNumeric:"tabular-nums"}}>{r.pts}</div>
+                              <div style={{width:18,color:"var(--w45)",fontWeight:600,fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)"}}>P{r.pos}</div>
+                              <div style={{width:3,height:11,background:TC[r.team]||"var(--fg)",borderRadius:1,opacity:0.85}}/>
+                              <div style={{flex:1,color:"var(--fg)",fontWeight:500}}>{r.name.split(" ").pop()}</div>
+                              <div style={{color:"var(--w85)",fontWeight:700,fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)"}}>{r.pts}</div>
                             </div>
                           ))}
                         </div>
@@ -1263,16 +1339,16 @@ export default function F1Dashboard(){
                     {(()=>{const seenTeam={};return progression.series.map(s=>{
                       const isSecond=!!seenTeam[s.team];
                       seenTeam[s.team]=true;
-                      const color=TC[s.team]||"#fff";
+                      const color=TC[s.team]||"var(--fg)";
                       const visible=isVisible(s.name);
                       return(
-                        <button key={s.name} onClick={()=>toggle(s.name)} style={{display:"flex",alignItems:"center",gap:6,fontSize:11,background:"none",border:"none",color:"inherit",cursor:"pointer",padding:"3px 6px",borderRadius:4,opacity:visible?1:0.35,transition:"opacity 0.2s",fontFamily:"'Outfit',sans-serif"}}>
+                        <button key={s.name} onClick={()=>toggle(s.name)} style={{display:"flex",alignItems:"center",gap:6,fontSize:11,background:"none",border:"none",color:"inherit",cursor:"pointer",padding:"3px 6px",borderRadius:4,opacity:visible?1:0.35,transition:"opacity 0.2s",fontFamily:"var(--font-ui)"}}>
                           {isSecond?(
                             <svg width={16} height={4} style={{display:"block"}}><line x1={0} y1={2} x2={16} y2={2} stroke={color} strokeWidth={2.5} strokeDasharray="4 3"/></svg>
                           ):(
                             <div style={{width:14,height:2.5,background:color,borderRadius:1}}/>
                           )}
-                          <span style={{color:"rgba(255,255,255,0.75)",fontWeight:500,textDecoration:visible?"none":"line-through"}}>{s.name.split(" ").pop()}</span>
+                          <span style={{color:"var(--w75)",fontWeight:500,textDecoration:visible?"none":"line-through"}}>{s.name.split(" ").pop()}</span>
                         </button>
                       );
                     })})()}
@@ -1281,51 +1357,51 @@ export default function F1Dashboard(){
               );
             })()}
             <div className="g2">
-              <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20}}>
+              <div style={{background:"var(--w02)",border:"1px solid var(--w06)",borderRadius:2,padding:20}}>
                 <div style={{fontSize:15,fontWeight:700,marginBottom:4}}>Drivers' World Championship</div>
-                <div style={{fontSize:12,color:"rgba(255,255,255,0.35)",marginBottom:16}}>{"After Round " + completedRounds}</div>
+                <div style={{fontSize:12,color:"var(--w35)",marginBottom:16}}>{"After Round " + completedRounds}</div>
                 {(()=>{const maxPts=Math.max(1,...DS.map(d=>d.pts||0));return DS.map((d,i)=>(
                   <div key={d.n} className="dr" style={{background:i<3?TB[d.t]:"transparent",marginBottom:1}}>
-                    <div style={{width:24,fontSize:13,fontWeight:700,color:i<3?"#fff":"rgba(255,255,255,0.35)"}}>{d.p}</div>
+                    <div style={{width:24,fontSize:13,fontWeight:700,color:i<3?"var(--fg)":"var(--w35)"}}>{d.p}</div>
                     <DH name={d.n} size={28} headshots={headshots}/>
                     <div style={{width:3,height:20,borderRadius:2,background:TC[d.t],margin:"0 8px",opacity:.8}}/>
                     <div style={{flex:1,minWidth:0}}>
                       <div style={{fontSize:13,fontWeight:600,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{d.n}</div>
-                      <div style={{fontSize:10,color:"rgba(255,255,255,0.35)",marginTop:1}}>{d.t}</div>
+                      <div style={{fontSize:10,color:"var(--w35)",marginTop:1}}>{d.t}</div>
                     </div>
-                    <div style={{width:36,textAlign:"center",fontSize:10,color:"rgba(255,215,0,0.85)",fontWeight:600}}>{d.wins>0?`🏆${d.wins}`:""}</div>
-                    <div className={d.mv!==0?"pulse-once":""} style={{width:40,textAlign:"center",fontSize:11,fontWeight:600,color:d.mv>0?"#27F4D2":d.mv<0?"#E80020":"rgba(255,255,255,0.15)",display:"inline-block"}}>{d.mv>0?`▲${d.mv}`:d.mv<0?`▼${Math.abs(d.mv)}`:"—"}</div>
-                    <div style={{width:40,textAlign:"center",fontSize:11,fontWeight:600,color:d.d!=="—"?"#27F4D2":"rgba(255,255,255,0.2)"}}>{d.d}</div>
+                    <div className="num" style={{width:36,textAlign:"center",fontSize:11,color:"var(--ink-2)",fontWeight:700}} title={d.wins>0?`${d.wins} win${d.wins>1?"s":""}`:""}>{d.wins>0?`${d.wins}W`:""}</div>
+                    <div className={d.mv!==0?"pulse-once":""} style={{width:40,textAlign:"center",fontSize:11,fontWeight:600,color:d.mv>0?"var(--green)":d.mv<0?"var(--red)":"var(--w15)",display:"inline-block"}}>{d.mv>0?`▲${d.mv}`:d.mv<0?`▼${Math.abs(d.mv)}`:"—"}</div>
+                    <div style={{width:40,textAlign:"center",fontSize:11,fontWeight:600,color:d.d!=="—"?"var(--green)":"var(--w20)"}}>{d.d}</div>
                     <div style={{width:55,marginRight:8,overflow:"hidden"}}><div style={{height:4,width:`${d.pts>0?Math.max((d.pts/maxPts)*100,3):0}%`,background:TC[d.t],borderRadius:2,transformOrigin:"left",animation:"barGrow 1.1s cubic-bezier(0.22,1,0.36,1) both",animationDelay:`${600+i*40}ms`}}/></div>
                     <div style={{fontSize:14,fontWeight:700,width:32,textAlign:"right"}}>{d.pts}</div>
                   </div>
                 ))})()}
               </div>
-              <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20}}>
+              <div style={{background:"var(--w02)",border:"1px solid var(--w06)",borderRadius:2,padding:20}}>
                 <div style={{fontSize:15,fontWeight:700,marginBottom:4}}>Constructors' World Championship</div>
-                <div style={{fontSize:12,color:"rgba(255,255,255,0.35)",marginBottom:16}}>{"After Round " + completedRounds}</div>
+                <div style={{fontSize:12,color:"var(--w35)",marginBottom:16}}>{"After Round " + completedRounds}</div>
                 {(()=>{const maxDriverPts=Math.max(1,...CS.flatMap(c=>(c.dr||[]).map(d=>d.pts||0)));return CS.map((c,i)=>(
-                  <div key={c.t} style={{position:"relative",padding:"14px 16px",borderRadius:10,marginBottom:4,background:i<3?TB[c.t]:"transparent",border:i<3?`1px solid ${TC[c.t]}22`:"1px solid transparent",overflow:"hidden"}}>
+                  <div key={c.t} style={{position:"relative",padding:"14px 16px",borderRadius:2,marginBottom:4,background:i<3?TB[c.t]:"transparent",border:i<3?`1px solid ${TC[c.t]}22`:"1px solid transparent",overflow:"hidden"}}>
                     {i<3&&(
                       <div style={{position:"absolute",right:-10,top:-18,opacity:0.10,pointerEvents:"none"}}>
                         <TL team={c.t} size={120}/>
                       </div>
                     )}
                     <div style={{position:"relative",display:"flex",alignItems:"center",marginBottom:8}}>
-                      <div style={{width:24,fontSize:16,fontWeight:800,color:i<3?TC[c.t]:"rgba(255,255,255,0.3)"}}>{c.p}</div>
+                      <div style={{width:24,fontSize:16,fontWeight:800,color:i<3?TC[c.t]:"var(--w30)"}}>{c.p}</div>
                       <TL team={c.t} size={26}/>
                       <div style={{flex:1,marginLeft:10}}><span style={{fontSize:15,fontWeight:700}}>{c.t}</span></div>
-                      <div className={c.mv!==0?"pulse-once":""} style={{width:40,textAlign:"center",fontSize:11,fontWeight:600,color:c.mv>0?"#27F4D2":c.mv<0?"#E80020":"rgba(255,255,255,0.15)",display:"inline-block"}}>{c.mv>0?`▲${c.mv}`:c.mv<0?`▼${Math.abs(c.mv)}`:"—"}</div>
-                      <div style={{fontSize:20,fontWeight:800}}>{c.pts}<span style={{fontSize:11,fontWeight:400,color:"rgba(255,255,255,0.4)",marginLeft:4}}>PTS</span></div>
+                      <div className={c.mv!==0?"pulse-once":""} style={{width:40,textAlign:"center",fontSize:11,fontWeight:600,color:c.mv>0?"var(--green)":c.mv<0?"var(--red)":"var(--w15)",display:"inline-block"}}>{c.mv>0?`▲${c.mv}`:c.mv<0?`▼${Math.abs(c.mv)}`:"—"}</div>
+                      <div style={{fontSize:20,fontWeight:800}}>{c.pts}<span style={{fontSize:11,fontWeight:400,color:"var(--w40)",marginLeft:4}}>PTS</span></div>
                     </div>
                     <div style={{position:"relative",marginLeft:24}}>
                       {c.dr.map((d,di)=>(
                         <div key={di} style={{display:"flex",alignItems:"center",gap:8,marginBottom:3}}>
-                          <div style={{width:70,fontSize:11,color:"rgba(255,255,255,0.5)",textAlign:"right"}}>{d.n}</div>
-                          <div style={{flex:1,height:4,background:"rgba(255,255,255,0.04)",borderRadius:2,overflow:"hidden"}}>
+                          <div style={{width:70,fontSize:11,color:"var(--w50)",textAlign:"right"}}>{d.n}</div>
+                          <div style={{flex:1,height:4,background:"var(--w04)",borderRadius:2,overflow:"hidden"}}>
                             <div style={{height:"100%",width:`${d.pts>0?Math.max((d.pts/maxDriverPts)*100,2):0}%`,background:TC[c.t],borderRadius:2,opacity:di===0?1:0.55,transformOrigin:"left",animation:"barGrow 1.1s cubic-bezier(0.22,1,0.36,1) both",animationDelay:`${700+i*60+di*40}ms`}}/>
                           </div>
-                          <div style={{width:24,fontSize:11,fontWeight:600,color:"rgba(255,255,255,0.6)",textAlign:"right"}}>{d.pts}</div>
+                          <div style={{width:24,fontSize:11,fontWeight:600,color:"var(--w60)",textAlign:"right"}}>{d.pts}</div>
                         </div>
                       ))}
                     </div>
@@ -1335,17 +1411,17 @@ export default function F1Dashboard(){
             </div>
             {/* Narrative */}
             {narrative&&narrative.length>0&&(
-            <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20}}>
-              <div style={{fontSize:13,textTransform:"uppercase",letterSpacing:1.5,color:"rgba(255,255,255,0.4)",marginBottom:16}}>Season Narrative</div>
+            <div style={{background:"var(--w02)",border:"1px solid var(--w06)",borderRadius:2,padding:20}}>
+              <div style={{fontSize:13,textTransform:"uppercase",letterSpacing:1.5,color:"var(--w40)",marginBottom:16}}>Season Narrative</div>
               <div className="g4">
                 {narrative.map((n,i)=>(
-                  <div key={i} style={{position:"relative",padding:16,background:TB[n.t],borderRadius:10,border:`1px solid ${TC[n.t]}20`,overflow:"hidden"}}>
+                  <div key={i} style={{position:"relative",padding:16,background:TB[n.t],borderRadius:2,border:`1px solid ${TC[n.t]}20`,overflow:"hidden"}}>
                     <div style={{position:"absolute",right:-14,bottom:-14,opacity:0.10,pointerEvents:"none",transform:"scale(1.1)"}}>
                       <TL team={n.t} size={130}/>
                     </div>
-                    <div style={{position:"relative",display:"flex",alignItems:"center",gap:6,marginBottom:8}}><TL team={n.t} size={18}/><span style={{fontSize:11,color:"rgba(255,255,255,0.4)",textTransform:"uppercase",letterSpacing:1}}>{n.ti}</span></div>
+                    <div style={{position:"relative",display:"flex",alignItems:"center",gap:6,marginBottom:8}}><TL team={n.t} size={18}/><span style={{fontSize:11,color:"var(--w40)",textTransform:"uppercase",letterSpacing:1}}>{n.ti}</span></div>
                     <div style={{position:"relative",fontSize:16,fontWeight:700,color:TC[n.t]}}>{n.t}</div>
-                    <div style={{position:"relative",fontSize:12,color:"rgba(255,255,255,0.5)",marginTop:4,lineHeight:1.4}}>{n.desc}</div>
+                    <div style={{position:"relative",fontSize:12,color:"var(--w50)",marginTop:4,lineHeight:1.4}}>{n.desc}</div>
                   </div>
                 ))}
               </div>
@@ -1359,15 +1435,15 @@ export default function F1Dashboard(){
           <div className="fu" style={{display:"flex",flexDirection:"column",gap:24}}>
             {/* Race Selector Dropdown */}
             <div style={{display:"flex",alignItems:"center",gap:14}}>
-              <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:"rgba(255,255,255,0.4)",flexShrink:0}}>Race</div>
+              <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:"var(--w40)",flexShrink:0}}>Race</div>
               <div style={{position:"relative",flex:1,maxWidth:360}}>
-                <select value={selRace} onChange={e=>{const v=e.target.value;setSelRace(v==="all"?"all":v.includes("S")?v:parseInt(v));}} style={{width:"100%",appearance:"none",WebkitAppearance:"none",MozAppearance:"none",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.10)",borderRadius:8,padding:"10px 40px 10px 14px",color:"#fff",fontSize:13,fontWeight:500,fontFamily:"'Outfit',sans-serif",cursor:"pointer",outline:"none",transition:"border-color .2s"}}>
-                  <option value="all" style={{background:"#14141f",color:"#fff"}}>All Races & Sprints</option>
+                <select value={selRace} onChange={e=>{const v=e.target.value;setSelRace(v==="all"?"all":v.includes("S")?v:parseInt(v));}} style={{width:"100%",appearance:"none",WebkitAppearance:"none",MozAppearance:"none",background:"var(--w04)",border:"1px solid var(--w10)",borderRadius:2,padding:"10px 40px 10px 14px",color:"var(--fg)",fontSize:13,fontWeight:500,fontFamily:"var(--font-ui)",cursor:"pointer",outline:"none",transition:"border-color .2s"}}>
+                  <option value="all" style={{background:"var(--sheet)",color:"var(--fg)"}}>All Races & Sprints</option>
                   {races.map(race=>(
-                    <option key={race.r} value={race.r} style={{background:"#14141f",color:"#fff"}}>{race.sprint?"🏁 ":"🏆 "}R{typeof race.r==="string"?race.r.replace("S",""):race.r} — {race.nm}</option>
+                    <option key={race.r} value={race.r} style={{background:"var(--sheet)",color:"var(--fg)"}}>{race.sprint?"SPRINT · ":"RACE · "}R{typeof race.r==="string"?race.r.replace("S",""):race.r} — {race.nm}</option>
                   ))}
                 </select>
-                <div style={{position:"absolute",right:14,top:"50%",transform:"translateY(-50%)",pointerEvents:"none",color:"rgba(255,255,255,0.4)",fontSize:11}}>▾</div>
+                <div style={{position:"absolute",right:14,top:"50%",transform:"translateY(-50%)",pointerEvents:"none",color:"var(--w40)",fontSize:11}}>▾</div>
               </div>
             </div>
             {races.filter(race=>selRace==="all"||selRace===race.r).map(race=>(
@@ -1375,41 +1451,41 @@ export default function F1Dashboard(){
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:16,marginBottom:20}}>
                   <div>
                     <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:6}}>
-                      <span style={{background:"#E80020",color:"#fff",fontSize:11,fontWeight:700,padding:"3px 10px",borderRadius:4}}>R{race.r}</span>
-                      {race.sprint&&<span style={{fontSize:9,fontWeight:700,letterSpacing:.5,padding:"2px 6px",borderRadius:3,background:"rgba(232,0,32,0.15)",color:"#E80020"}}>SPRINT</span>}
+                      <span style={{background:"var(--red)",color:"var(--fg)",fontSize:11,fontWeight:700,padding:"3px 10px",borderRadius:4}}>R{race.r}</span>
+                      {race.sprint&&<span style={{fontSize:9,fontWeight:700,letterSpacing:.5,padding:"2px 6px",borderRadius:3,background:"rgba(232,0,32,0.15)",color:"var(--red)"}}>SPRINT</span>}
                       <span style={{fontSize:20,fontWeight:700}}>{race.nm}</span>
                     </div>
-                    <div style={{fontSize:12,color:"rgba(255,255,255,0.4)"}}>{race.ci} · {raceDateFmt(race.dt)}, 2026</div>
+                    <div style={{fontSize:12,color:"var(--w40)"}}>{race.ci} · {raceDateFmt(race.dt)}, 2026</div>
                   </div>
                   {race.tm&&<div style={{textAlign:"right"}}>
-                    <div style={{fontSize:12,color:"rgba(255,255,255,0.4)"}}>Race Time</div>
-                    <div style={{fontSize:16,fontWeight:600,fontVariantNumeric:"tabular-nums"}}>{race.tm}</div>
+                    <div style={{fontSize:12,color:"var(--w40)"}}>Race Time</div>
+                    <div style={{fontSize:16,fontWeight:600,fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)"}}>{race.tm}</div>
                   </div>}
                 </div>
                 <div className="pod" style={{marginBottom:16}}>
                   {race.pod.map(p=>(
-                    <div key={p.p} style={{flex:1,background:p.p===1?"rgba(255,215,0,0.08)":"rgba(255,255,255,0.03)",border:`1px solid ${p.p===1?"rgba(255,215,0,0.2)":"rgba(255,255,255,0.06)"}`,borderRadius:10,padding:"14px 14px",display:"flex",alignItems:"center",gap:10}}>
-                      <div style={{fontSize:22,fontWeight:900,color:p.p===1?"#FFD700":p.p===2?"#C0C0C0":"#CD7F32",lineHeight:1}}>P{p.p}</div>
+                    <div key={p.p} style={{flex:1,background:p.p===1?"rgba(255,215,0,0.08)":"var(--w03)",border:`1px solid ${p.p===1?"rgba(255,215,0,0.2)":"var(--w06)"}`,borderRadius:2,padding:"14px 14px",display:"flex",alignItems:"center",gap:10}}>
+                      <div style={{fontSize:22,fontWeight:900,color:p.p===1?"var(--gold)":p.p===2?"#C0C0C0":"#CD7F32",lineHeight:1}}>P{p.p}</div>
                       <TL team={p.t} size={34}/>
                       <div style={{flex:1,minWidth:0}}>
                         <div style={{display:"flex",alignItems:"center",gap:5}}>
                           <div style={{width:3,height:16,borderRadius:2,background:TC[p.t]}}/>
                           <span style={{fontSize:14,fontWeight:600}}>{p.d}</span>
                         </div>
-                        <div style={{fontSize:11,color:"rgba(255,255,255,0.4)",marginTop:2,marginLeft:9}}>{p.g}</div>
+                        <div style={{fontSize:11,color:"var(--w40)",marginTop:2,marginLeft:9}}>{p.g}</div>
                       </div>
                     </div>
                   ))}
                 </div>
                 <div style={{display:"flex",gap:12,alignItems:"center",flexWrap:"wrap",marginBottom:12}}>
                   {race.fl&&race.fl.driver&&(
-                  <div style={{display:"flex",alignItems:"center",gap:8,padding:"8px 14px",background:"rgba(128,0,128,0.1)",borderRadius:8,border:"1px solid rgba(128,0,128,0.2)"}}>
-                    <span style={{fontSize:11,color:"rgba(255,255,255,0.5)"}}>⚡ Fastest Lap</span>
+                  <div style={{display:"flex",alignItems:"center",gap:8,padding:"8px 14px",background:"rgba(128,0,128,0.1)",borderRadius:2,border:"1px solid rgba(128,0,128,0.2)"}}>
+                    <span className="head" style={{fontSize:11,color:"var(--red)",fontWeight:700}}>Fastest lap</span>
                     <span style={{fontSize:13,fontWeight:600}}>{race.fl.driver}</span>
-                    <span style={{fontSize:13,fontWeight:700,color:"#d946ef",fontVariantNumeric:"tabular-nums"}}>{race.fl.time}</span>
+                    <span style={{fontSize:13,fontWeight:700,color:"var(--purple)",fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)"}}>{race.fl.time}</span>
                   </div>
                   )}
-                  <button onClick={()=>setExpandedRace(expandedRace===race.r?null:race.r)} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:6,padding:"8px 14px",background:"rgba(255,255,255,0.04)",borderRadius:8,border:"1px solid rgba(255,255,255,0.08)",color:"rgba(255,255,255,0.6)",fontSize:12,fontWeight:500,fontFamily:"'Outfit',sans-serif",transition:"all 0.2s"}}>
+                  <button onClick={()=>setExpandedRace(expandedRace===race.r?null:race.r)} style={{cursor:"pointer",display:"flex",alignItems:"center",gap:6,padding:"8px 14px",background:"var(--w04)",borderRadius:2,border:"1px solid var(--w08)",color:"var(--w60)",fontSize:12,fontWeight:500,fontFamily:"var(--font-ui)",transition:"all 0.2s"}}>
                     {expandedRace===race.r?"Hide":"View"} Full Classification
                     <span style={{transform:expandedRace===race.r?"rotate(180deg)":"rotate(0)",transition:"transform 0.3s",display:"inline-block"}}>▾</span>
                   </button>
@@ -1445,10 +1521,10 @@ export default function F1Dashboard(){
                   // Grand Prix grid from qualifying (sprints set their grid in sprint quali, which we don't carry)
                   const quali=!race.sprint?qualifying.find(q=>q.round===(typeof race.r==="string"?parseInt(race.r):race.r)):null;
                   return(
-                  <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:10,overflow:"hidden",marginTop:4}}>
+                  <div style={{background:"var(--w02)",border:"1px solid var(--w06)",borderRadius:2,overflow:"hidden",marginTop:4}}>
                     <div style={{overflowX:"auto",WebkitOverflowScrolling:"touch"}}><table style={{width:"100%",borderCollapse:"collapse",minWidth:600,fontSize:13}}>
-                      <thead><tr style={{borderBottom:"1px solid rgba(255,255,255,0.08)"}}>
-                        {(quali?["Pos","","Driver","Team","Grid","+/−","Gap to Winner"]:["Pos","","Driver","Team","Gap to Winner"]).map(h=><th key={h} style={{textAlign:"left",padding:"8px 10px",fontSize:10,textTransform:"uppercase",letterSpacing:1,color:"rgba(255,255,255,0.3)",fontWeight:500}}>{h}</th>)}
+                      <thead><tr style={{borderBottom:"1px solid var(--w08)"}}>
+                        {(quali?["Pos","","Driver","Team","Grid","+/−","Gap to Winner"]:["Pos","","Driver","Team","Gap to Winner"]).map(h=><th key={h} style={{textAlign:"left",padding:"8px 10px",fontSize:10,textTransform:"uppercase",letterSpacing:1,color:"var(--w30)",fontWeight:500}}>{h}</th>)}
                       </tr></thead>
                       <tbody>
                         {race.full.map((r,i)=>{
@@ -1458,14 +1534,14 @@ export default function F1Dashboard(){
                           const grid=quali?quali.results.find(x=>x.d===r.d)?.pos:null;
                           const gain=grid&&isFinisher?grid-r.p:null;
                           return(
-                            <tr key={i} style={{borderBottom:"1px solid rgba(255,255,255,0.03)",opacity:isDNF||isDNS?0.5:1}}>
-                              <td style={{padding:"7px 10px",fontWeight:700,width:36,color:isFinisher&&r.p<=3?(r.p===1?"#FFD700":r.p===2?"#C0C0C0":"#CD7F32"):"rgba(255,255,255,0.5)",fontSize:12}}>{r.p}</td>
+                            <tr key={i} style={{borderBottom:"1px solid var(--w03)",opacity:isDNF||isDNS?0.5:1}}>
+                              <td style={{padding:"7px 10px",fontWeight:700,width:36,color:isFinisher&&r.p<=3?(r.p===1?"var(--gold)":r.p===2?"#C0C0C0":"#CD7F32"):"var(--w50)",fontSize:12}}>{r.p}</td>
                               <td style={{padding:"7px 4px",width:28}}><TL team={r.t} size={20}/></td>
                               <td style={{padding:"7px 10px",fontWeight:600}}>{r.d}</td>
-                              <td style={{padding:"7px 10px",color:"rgba(255,255,255,0.4)",fontSize:12}}>{r.t}</td>
-                              {quali&&<td style={{padding:"7px 10px",fontVariantNumeric:"tabular-nums",color:"rgba(255,255,255,0.45)",fontSize:12}}>{grid?`P${grid}`:"—"}</td>}
-                              {quali&&<td style={{padding:"7px 10px",fontSize:11,fontWeight:600,color:gain>0?"#27F4D2":gain<0?"#E80020":"rgba(255,255,255,0.25)"}}>{gain==null?"":gain>0?`▲${gain}`:gain<0?`▼${-gain}`:"—"}</td>}
-                              <td style={{padding:"7px 10px",fontVariantNumeric:"tabular-nums",color:r.g==="WINNER"?"#27F4D2":isDNF?"#E80020":isDNS?"rgba(255,255,255,0.3)":"rgba(255,255,255,0.6)",fontSize:12,fontWeight:r.g==="WINNER"?600:400}}>{r.g}</td>
+                              <td style={{padding:"7px 10px",color:"var(--w40)",fontSize:12}}>{r.t}</td>
+                              {quali&&<td style={{padding:"7px 10px",fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)",color:"var(--w45)",fontSize:12}}>{grid?`P${grid}`:"—"}</td>}
+                              {quali&&<td style={{padding:"7px 10px",fontSize:11,fontWeight:600,color:gain>0?"var(--green)":gain<0?"var(--red)":"var(--w25)"}}>{gain==null?"":gain>0?`▲${gain}`:gain<0?`▼${-gain}`:"—"}</td>}
+                              <td style={{padding:"7px 10px",fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)",color:r.g==="WINNER"?"var(--green)":isDNF?"var(--red)":isDNS?"var(--w30)":"var(--w60)",fontSize:12,fontWeight:r.g==="WINNER"?600:400}}>{r.g}</td>
                             </tr>
                           );
                         })}
@@ -1475,13 +1551,13 @@ export default function F1Dashboard(){
                   );})()}
               </div>
             ))}
-            <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20}}>
-              <div style={{fontSize:13,textTransform:"uppercase",letterSpacing:1.5,color:"rgba(255,255,255,0.4)",marginBottom:16}}>2026 Season Key Facts</div>
+            <div style={{background:"var(--w02)",border:"1px solid var(--w06)",borderRadius:2,padding:20}}>
+              <div style={{fontSize:13,textTransform:"uppercase",letterSpacing:1.5,color:"var(--w40)",marginBottom:16}}>2026 Season Key Facts</div>
               <div className="g3">
                 {[{l:"New Regulations",v:"Active aero, 50/50 ICE/ERS split, new chassis"},{l:"New Teams",v:"Cadillac (11th team), Audi (ex-Sauber)"},{l:"New Engine Suppliers",v:"Audi, Honda (Aston Martin), Ford (Red Bull)"},{l:"Calendar",v:"22 races (Bahrain & Saudi postponed)"},{l:"Defending Champions",v:"Norris (WDC) · McLaren (WCC)"},{l:"Youngest Pole",v:"Antonelli — 19y 201d (China)"}].map((f,i)=>(
-                  <div key={i} style={{padding:14,background:"rgba(255,255,255,0.02)",borderRadius:8}}>
-                    <div style={{fontSize:11,color:"rgba(255,255,255,0.4)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}}>{f.l}</div>
-                    <div style={{fontSize:13,color:"rgba(255,255,255,0.75)",lineHeight:1.4}}>{f.v}</div>
+                  <div key={i} style={{padding:14,background:"var(--w02)",borderRadius:2}}>
+                    <div style={{fontSize:11,color:"var(--w40)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}}>{f.l}</div>
+                    <div style={{fontSize:13,color:"var(--w75)",lineHeight:1.4}}>{f.v}</div>
                   </div>
                 ))}
               </div>
@@ -1493,15 +1569,15 @@ export default function F1Dashboard(){
         {tab==="Sector Times"&&(()=>{
           if(!openf1||!openf1.meetings||openf1.meetings.length===0)return(
             <div className="fu" style={{textAlign:"center",padding:60}}>
-              <div style={{fontSize:22,fontWeight:700,color:"rgba(255,255,255,0.5)",marginBottom:8}}>No OpenF1 Data Available</div>
-              <div style={{fontSize:13,color:"rgba(255,255,255,0.35)"}}>Run <code style={{background:"rgba(255,255,255,0.08)",padding:"2px 8px",borderRadius:4}}>npm run fetch-openf1</code> to pull sector times & speed trap data</div>
+              <div style={{fontSize:22,fontWeight:700,color:"var(--w50)",marginBottom:8}}>No OpenF1 Data Available</div>
+              <div style={{fontSize:13,color:"var(--w35)"}}>Run <code style={{background:"var(--w08)",padding:"2px 8px",borderRadius:4}}>npm run fetch-openf1</code> to pull sector times & speed trap data</div>
             </div>
           );
           const curMtg=openf1.meetings.find(m=>m.meetingKey===selMeeting)||openf1.meetings[0];
           // Full meeting payload still streaming in (lazy-loaded per meeting)
           if(!curMtg.sessions.some(s=>s.drivers))return(
-            <div className="fu" style={{textAlign:"center",padding:60,color:"rgba(255,255,255,0.4)"}}>
-              <div style={{fontSize:40,marginBottom:12}}>⏱️</div>
+            <div className="fu" style={{textAlign:"center",padding:60,color:"var(--w40)"}}>
+              <svg width="40" height="40" viewBox="0 0 40 40" aria-hidden="true" style={{display:"block",margin:"0 auto 12px"}}><circle cx="20" cy="22" r="14" fill="none" stroke="var(--ink-3)" strokeWidth="2"/><path d="M20 12v10l6 4" fill="none" stroke="var(--ink-3)" strokeWidth="2" strokeLinecap="round"/><path d="M16 5h8M20 5v3" stroke="var(--ink-3)" strokeWidth="2" strokeLinecap="round"/></svg>
               <div style={{fontSize:16,fontWeight:600,marginBottom:4}}>Loading sector data…</div>
               <div style={{fontSize:13}}>{curMtg.meetingName}</div>
             </div>
@@ -1515,17 +1591,17 @@ export default function F1Dashboard(){
             <div className="fu" style={{display:"flex",flexDirection:"column",gap:24}}>
               {/* Meeting + Session Selectors */}
               <div style={{display:"flex",gap:12,flexWrap:"wrap",alignItems:"center"}}>
-                <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:"rgba(255,255,255,0.4)"}}>Meeting</div>
-                <select value={String(curMtg.meetingKey)} onChange={e=>{const m=openf1.meetings.find(x=>String(x.meetingKey)===e.target.value);if(!m)return;setSelMeeting(m.meetingKey);const rs=m.sessions.find(s=>s.sessionName==="Race")||m.sessions[m.sessions.length-1];if(rs)setSelSession(rs.sessionKey);}} style={{appearance:"none",WebkitAppearance:"none",MozAppearance:"none",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.10)",borderRadius:8,padding:"8px 36px 8px 12px",color:"#fff",fontSize:12,fontWeight:500,fontFamily:"'Outfit',sans-serif",cursor:"pointer",outline:"none",minWidth:200,transition:"border-color .2s"}}>
+                <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:"var(--w40)"}}>Meeting</div>
+                <select value={String(curMtg.meetingKey)} onChange={e=>{const m=openf1.meetings.find(x=>String(x.meetingKey)===e.target.value);if(!m)return;setSelMeeting(m.meetingKey);const rs=m.sessions.find(s=>s.sessionName==="Race")||m.sessions[m.sessions.length-1];if(rs)setSelSession(rs.sessionKey);}} style={{appearance:"none",WebkitAppearance:"none",MozAppearance:"none",background:"var(--w04)",border:"1px solid var(--w10)",borderRadius:2,padding:"8px 36px 8px 12px",color:"var(--fg)",fontSize:12,fontWeight:500,fontFamily:"var(--font-ui)",cursor:"pointer",outline:"none",minWidth:200,transition:"border-color .2s"}}>
                   {openf1.meetings.map(m=>(
-                    <option key={m.meetingKey} value={String(m.meetingKey)} style={{background:"#14141f",color:"#fff"}}>{m.meetingName.replace(" Grand Prix","")}</option>
+                    <option key={m.meetingKey} value={String(m.meetingKey)} style={{background:"var(--sheet)",color:"var(--fg)"}}>{m.meetingName.replace(" Grand Prix","")}</option>
                   ))}
                 </select>
-                <div style={{height:20,width:1,background:"rgba(255,255,255,0.1)",margin:"0 4px"}}/>
-                <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:"rgba(255,255,255,0.4)"}}>Session</div>
+                <div style={{height:20,width:1,background:"var(--w10)",margin:"0 4px"}}/>
+                <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:"var(--w40)"}}>Session</div>
                 <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
                   {curMtg.sessions.map(s=>(
-                    <button key={s.sessionKey} onClick={()=>setSelSession(s.sessionKey)} style={{cursor:"pointer",padding:"5px 12px",borderRadius:6,border:selSession===s.sessionKey?"1px solid rgba(39,244,210,0.4)":"1px solid rgba(255,255,255,0.06)",background:selSession===s.sessionKey?"rgba(39,244,210,0.1)":"rgba(255,255,255,0.02)",color:selSession===s.sessionKey?"#27F4D2":"rgba(255,255,255,0.4)",fontSize:11,fontWeight:selSession===s.sessionKey?600:400,fontFamily:"'Outfit',sans-serif",transition:"all .2s"}}>{s.sessionName}</button>
+                    <button key={s.sessionKey} onClick={()=>setSelSession(s.sessionKey)} style={{cursor:"pointer",padding:"5px 12px",borderRadius:6,border:selSession===s.sessionKey?"1px solid rgba(39,244,210,0.4)":"1px solid var(--w06)",background:selSession===s.sessionKey?"rgba(39,244,210,0.1)":"var(--w02)",color:selSession===s.sessionKey?"var(--green)":"var(--w40)",fontSize:11,fontWeight:selSession===s.sessionKey?600:400,fontFamily:"var(--font-ui)",transition:"all .2s"}}>{s.sessionName}</button>
                   ))}
                 </div>
               </div>
@@ -1542,27 +1618,27 @@ export default function F1Dashboard(){
                   findSecDriver("bestS2",sb.fastestS2),
                   findSecDriver("bestS3",sb.fastestS3),
                 ];
-                const sColors=sDrivers.map(d=>d?.teamColour||"rgba(255,255,255,0.4)");
+                const sColors=sDrivers.map(d=>d?.teamColour||"var(--w40)");
                 const paths=[sectors.s1,sectors.s2,sectors.s3];
                 return(
-                  <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20}}>
+                  <div style={{background:"var(--w02)",border:"1px solid var(--w06)",borderRadius:2,padding:20}}>
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:4,flexWrap:"wrap",gap:8}}>
                       <div style={{fontSize:15,fontWeight:700}}>Sector Map</div>
-                      <div style={{fontSize:11,color:"rgba(255,255,255,0.4)"}}>{mtgName} · {curSess.sessionName}</div>
+                      <div style={{fontSize:11,color:"var(--w40)"}}>{mtgName} · {curSess.sessionName}</div>
                     </div>
-                    <div style={{fontSize:12,color:"rgba(255,255,255,0.35)",marginBottom:16}}>Each third of the lap coloured by the team that set the fastest sector time</div>
+                    <div style={{fontSize:12,color:"var(--w35)",marginBottom:16}}>Each third of the lap coloured by the team that set the fastest sector time</div>
                     <div style={{display:"flex",gap:24,alignItems:"center",flexWrap:"wrap"}}>
                       <div style={{flex:"1 1 320px",minWidth:280,height:200,display:"flex",alignItems:"center",justifyContent:"center"}}>
                         <svg viewBox={sectors.viewBox} preserveAspectRatio="xMidYMid meet" style={{display:"block",width:"100%",height:200,overflow:"visible"}}>
                           {/* Underlay base track for continuity */}
-                          <path d={track.path} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={5} strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d={track.path} fill="none" stroke="var(--w06)" strokeWidth={5} strokeLinecap="round" strokeLinejoin="round"/>
                           {/* Sector segments */}
                           {paths.map((p,i)=>(
                             <path key={i} d={p} fill="none" stroke={sColors[i]} strokeWidth={3.5} strokeLinecap="round" strokeLinejoin="round" opacity={0.95}/>
                           ))}
                           {/* Boundary markers */}
                           {sectors.boundaries.map((pt,i)=>(
-                            <circle key={i} cx={pt[0]} cy={pt[1]} r={1.8} fill="#fff" stroke="rgba(0,0,0,0.6)" strokeWidth={0.6}/>
+                            <circle key={i} cx={pt[0]} cy={pt[1]} r={1.8} fill="var(--fg)" stroke="rgba(0,0,0,0.6)" strokeWidth={0.6}/>
                           ))}
                         </svg>
                       </div>
@@ -1572,17 +1648,17 @@ export default function F1Dashboard(){
                           const d=sDrivers[i];
                           const time=[sb.fastestS1,sb.fastestS2,sb.fastestS3][i];
                           return(
-                            <div key={idx} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 12px",borderRadius:8,background:"rgba(255,255,255,0.02)",border:`1px solid ${sColors[i]}30`}}>
+                            <div key={idx} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 12px",borderRadius:2,background:"var(--w02)",border:`1px solid ${sColors[i]}30`}}>
                               <div style={{fontSize:10,fontWeight:700,letterSpacing:1,padding:"4px 8px",borderRadius:4,background:`${sColors[i]}22`,color:sColors[i],minWidth:32,textAlign:"center"}}>S{idx}</div>
                               <div style={{flex:1,minWidth:0}}>
                                 <div style={{fontSize:13,fontWeight:600,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{d?.name||"—"}</div>
-                                <div style={{fontSize:10,color:"rgba(255,255,255,0.4)",marginTop:1}}>{d?normTeam(d.team||""):""}</div>
+                                <div style={{fontSize:10,color:"var(--w40)",marginTop:1}}>{d?normTeam(d.team||""):""}</div>
                               </div>
-                              <div style={{fontSize:13,fontWeight:700,fontVariantNumeric:"tabular-nums",color:sColors[i]}}>{fmtS(time)}s</div>
+                              <div style={{fontSize:13,fontWeight:700,fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)",color:sColors[i]}}>{fmtS(time)}s</div>
                             </div>
                           );
                         })}
-                        <div style={{fontSize:10,color:"rgba(255,255,255,0.3)",marginTop:4,fontStyle:"italic"}}>Sectors split by track length, not official timing-line positions</div>
+                        <div style={{fontSize:10,color:"var(--w30)",marginTop:4,fontStyle:"italic"}}>Sectors split by track length, not official timing-line positions</div>
                       </div>
                     </div>
                   </div>
@@ -1591,9 +1667,9 @@ export default function F1Dashboard(){
 
               {/* Summary Cards */}
               <div style={{display:"flex",gap:12,flexWrap:"wrap"}}>
-                {(()=>{const d1=drivers.find(d=>d.bestS1&&Math.abs(d.bestS1-sb.fastestS1)<0.001);return <SC label="Fastest S1" value={sb.fastestS1?fmtS(sb.fastestS1)+"s":"—"} sub={d1?.acronym||""} accent="#d946ef" icon={d1?<TL team={normTeam(d1.team)} size={22}/>:null}/>;})()}
-                {(()=>{const d2=drivers.find(d=>d.bestS2&&Math.abs(d.bestS2-sb.fastestS2)<0.001);return <SC label="Fastest S2" value={sb.fastestS2?fmtS(sb.fastestS2)+"s":"—"} sub={d2?.acronym||""} accent="#d946ef" icon={d2?<TL team={normTeam(d2.team)} size={22}/>:null}/>;})()}
-                {(()=>{const d3=drivers.find(d=>d.bestS3&&Math.abs(d.bestS3-sb.fastestS3)<0.001);return <SC label="Fastest S3" value={sb.fastestS3?fmtS(sb.fastestS3)+"s":"—"} sub={d3?.acronym||""} accent="#d946ef" icon={d3?<TL team={normTeam(d3.team)} size={22}/>:null}/>;})()}
+                {(()=>{const d1=drivers.find(d=>d.bestS1&&Math.abs(d.bestS1-sb.fastestS1)<0.001);return <SC label="Fastest S1" value={sb.fastestS1?fmtS(sb.fastestS1)+"s":"—"} sub={d1?.acronym||""} accent="var(--purple)" icon={d1?<TL team={normTeam(d1.team)} size={22}/>:null}/>;})()}
+                {(()=>{const d2=drivers.find(d=>d.bestS2&&Math.abs(d.bestS2-sb.fastestS2)<0.001);return <SC label="Fastest S2" value={sb.fastestS2?fmtS(sb.fastestS2)+"s":"—"} sub={d2?.acronym||""} accent="var(--purple)" icon={d2?<TL team={normTeam(d2.team)} size={22}/>:null}/>;})()}
+                {(()=>{const d3=drivers.find(d=>d.bestS3&&Math.abs(d.bestS3-sb.fastestS3)<0.001);return <SC label="Fastest S3" value={sb.fastestS3?fmtS(sb.fastestS3)+"s":"—"} sub={d3?.acronym||""} accent="var(--purple)" icon={d3?<TL team={normTeam(d3.team)} size={22}/>:null}/>;})()}
                 {(()=>{const di=drivers.find(d=>d.maxI1Speed===sb.topI1Speed);return <SC label="Top Speed (I1)" value={`${sb.topI1Speed||"—"} km/h`} sub={di?.acronym||""} accent="#FF8000" icon={di?<TL team={normTeam(di.team)} size={22}/>:null}/>;})()}
                 {(()=>{const di=drivers.find(d=>d.maxI2Speed===sb.topI2Speed);return <SC label="Top Speed (I2)" value={`${sb.topI2Speed||"—"} km/h`} sub={di?.acronym||""} accent="#FF8000" icon={di?<TL team={normTeam(di.team)} size={22}/>:null}/>;})()}
                 {(()=>{const di=drivers.find(d=>d.maxSTSpeed===sb.topSTSpeed);return <SC label="Top Speed (ST)" value={`${sb.topSTSpeed||"—"} km/h`} sub={di?.acronym||""} accent="#FF8000" icon={di?<TL team={normTeam(di.team)} size={22}/>:null}/>;})()}
@@ -1633,20 +1709,20 @@ export default function F1Dashboard(){
                   Math.min(...selectedDrivers.filter(d=>d.bestS3).map(d=>d.bestS3))||0,
                 ];
                 return(
-                  <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20}}>
+                  <div style={{background:"var(--w02)",border:"1px solid var(--w06)",borderRadius:2,padding:20}}>
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:4,flexWrap:"wrap",gap:8}}>
                       <div style={{fontSize:15,fontWeight:700}}>Driver Compare</div>
-                      <div style={{fontSize:11,color:"rgba(255,255,255,0.4)"}}>{selectedDrivers.length} of 4 max selected · Click to toggle</div>
+                      <div style={{fontSize:11,color:"var(--w40)"}}>{selectedDrivers.length} of 4 max selected · Click to toggle</div>
                     </div>
-                    <div style={{fontSize:12,color:"rgba(255,255,255,0.35)",marginBottom:16}}>Pick drivers to see their best sectors side-by-side. Bars are rescaled to each sector's spread — fastest at 25%, slowest at 100% — so small gaps stay visible.</div>
+                    <div style={{fontSize:12,color:"var(--w35)",marginBottom:16}}>Pick drivers to see their best sectors side-by-side. Bars are rescaled to each sector's spread — fastest at 25%, slowest at 100% — so small gaps stay visible.</div>
                     {/* Driver picker */}
                     <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:18}}>
                       {drivers.map(d=>{
                         const on=selected.includes(d.acronym);
-                        const tc=d.teamColour||"#fff";
+                        const tc=inkify(d.teamColour)||"var(--fg)";
                         const atMax=!on&&selected.length>=4;
                         return(
-                          <button key={d.acronym} disabled={atMax} onClick={()=>toggle(d.acronym)} style={{display:"flex",alignItems:"center",gap:6,padding:"5px 10px",borderRadius:6,border:`1px solid ${on?tc:"rgba(255,255,255,0.08)"}`,background:on?`${tc}1a`:"rgba(255,255,255,0.02)",color:on?"#fff":"rgba(255,255,255,0.55)",cursor:atMax?"not-allowed":"pointer",fontSize:11,fontWeight:on?700:500,fontFamily:"'Outfit',sans-serif",opacity:atMax?0.35:1,transition:"all .15s"}}>
+                          <button key={d.acronym} disabled={atMax} onClick={()=>toggle(d.acronym)} style={{display:"flex",alignItems:"center",gap:6,padding:"5px 10px",borderRadius:6,border:`1px solid ${on?tc:"var(--w08)"}`,background:on?`${tc}1a`:"var(--w02)",color:on?"var(--fg)":"var(--w55)",cursor:atMax?"not-allowed":"pointer",fontSize:11,fontWeight:on?700:500,fontFamily:"var(--font-ui)",opacity:atMax?0.35:1,transition:"all .15s"}}>
                             <div style={{width:3,height:11,background:tc,borderRadius:1,opacity:on?1:0.5}}/>
                             <span style={{letterSpacing:0.5}}>{d.acronym}</span>
                           </button>
@@ -1656,19 +1732,19 @@ export default function F1Dashboard(){
                     {/* Compare grid */}
                     <div className="compare-grid-wrap">
                     <div className="compare-grid" style={{display:"grid",gridTemplateColumns:"minmax(110px,140px) repeat(3, 1fr)",gap:"10px 16px",alignItems:"center"}}>
-                      <div style={{fontSize:10,textTransform:"uppercase",letterSpacing:1,color:"rgba(255,255,255,0.3)",fontWeight:600}}>Driver</div>
+                      <div style={{fontSize:10,textTransform:"uppercase",letterSpacing:1,color:"var(--w30)",fontWeight:600}}>Driver</div>
                       {["Sector 1","Sector 2","Sector 3"].map(h=>(
-                        <div key={h} style={{fontSize:10,textTransform:"uppercase",letterSpacing:1,color:"rgba(255,255,255,0.3)",fontWeight:600}}>{h}</div>
+                        <div key={h} style={{fontSize:10,textTransform:"uppercase",letterSpacing:1,color:"var(--w30)",fontWeight:600}}>{h}</div>
                       ))}
                       {selectedDrivers.map(d=>{
-                        const tc=d.teamColour||"#fff";
+                        const tc=inkify(d.teamColour)||"var(--fg)";
                         return(
                           <Fragment key={d.acronym}>
                             <div style={{display:"flex",alignItems:"center",gap:8,minWidth:0}}>
                               <div style={{width:3,height:24,background:tc,borderRadius:1.5,flexShrink:0}}/>
                               <div style={{minWidth:0}}>
                                 <div style={{fontSize:13,fontWeight:700,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{d.acronym}</div>
-                                <div style={{fontSize:10,color:"rgba(255,255,255,0.4)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{normTeam(d.team||"")}</div>
+                                <div style={{fontSize:10,color:"var(--w40)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{normTeam(d.team||"")}</div>
                               </div>
                             </div>
                             {[1,2,3].map(si=>{
@@ -1680,12 +1756,12 @@ export default function F1Dashboard(){
                               const pct=time&&max?25+75*((time-min)/((max-min)||1)):0;
                               return(
                                 <div key={si} style={{display:"flex",alignItems:"center",gap:8}}>
-                                  <div style={{flex:1,height:14,background:"rgba(255,255,255,0.04)",borderRadius:3,overflow:"hidden",position:"relative"}}>
-                                    <div style={{position:"absolute",left:0,top:0,bottom:0,width:`${pct}%`,background:`linear-gradient(90deg, ${tc}c0 0%, ${tc}80 100%)`,borderRadius:3,transformOrigin:"left",animation:"barGrow 0.7s cubic-bezier(0.22,1,0.36,1) both"}}/>
+                                  <div style={{flex:1,height:14,background:"var(--w04)",borderRadius:3,overflow:"hidden",position:"relative"}}>
+                                    <div style={{position:"absolute",left:0,top:0,bottom:0,width:`${pct}%`,background:tc,borderRadius:1,transformOrigin:"left",animation:"barGrow 0.7s cubic-bezier(0.22,1,0.36,1) both"}}/>
                                   </div>
                                   <div style={{minWidth:78,textAlign:"right"}}>
-                                    <div style={{fontSize:12,fontWeight:700,fontVariantNumeric:"tabular-nums",color:isFastest?"#d946ef":"#fff"}}>{time?time.toFixed(3):"—"}</div>
-                                    <div style={{fontSize:9,color:isFastest?"#d946ef":"rgba(255,255,255,0.4)",fontVariantNumeric:"tabular-nums",marginTop:1}}>{isFastest?"FASTEST":delta>0?`+${delta.toFixed(3)}`:""}</div>
+                                    <div style={{fontSize:12,fontWeight:700,fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)",color:isFastest?"var(--purple)":"var(--fg)"}}>{time?time.toFixed(3):"—"}</div>
+                                    <div style={{fontSize:9,color:isFastest?"var(--purple)":"var(--w40)",fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)",marginTop:1}}>{isFastest?"FASTEST":delta>0?`+${delta.toFixed(3)}`:""}</div>
                                   </div>
                                 </div>
                               );
@@ -1702,16 +1778,16 @@ export default function F1Dashboard(){
                       if(valid.length===0)return null;
                       const bestTb=Math.min(...valid.map(t=>t.tb));
                       return(
-                        <div style={{display:"flex",alignItems:"center",gap:18,flexWrap:"wrap",marginTop:16,paddingTop:14,borderTop:"1px solid rgba(255,255,255,0.06)"}}>
-                          <div style={{fontSize:10,textTransform:"uppercase",letterSpacing:1,color:"rgba(255,255,255,0.3)",fontWeight:600}}>Theoretical best</div>
+                        <div style={{display:"flex",alignItems:"center",gap:18,flexWrap:"wrap",marginTop:16,paddingTop:14,borderTop:"1px solid var(--w06)"}}>
+                          <div style={{fontSize:10,textTransform:"uppercase",letterSpacing:1,color:"var(--w30)",fontWeight:600}}>Theoretical best</div>
                           {theo.map(({d,tb})=>{
                             const isBest=tb&&Math.abs(tb-bestTb)<0.0005;
                             return(
                               <div key={d.acronym} style={{display:"flex",alignItems:"center",gap:7}}>
-                                <div style={{width:3,height:14,background:d.teamColour||"#fff",borderRadius:1.5}}/>
-                                <span style={{fontSize:11,fontWeight:600,color:"rgba(255,255,255,0.6)"}}>{d.acronym}</span>
-                                <span style={{fontSize:12,fontWeight:700,fontVariantNumeric:"tabular-nums",color:isBest?"#27F4D2":"#fff"}}>{tb?fmtLap(tb):"—"}</span>
-                                {tb&&!isBest&&<span style={{fontSize:10,fontVariantNumeric:"tabular-nums",color:"rgba(255,255,255,0.5)"}}>+{(tb-bestTb).toFixed(3)}s</span>}
+                                <div style={{width:3,height:14,background:inkify(d.teamColour)||"var(--fg)",borderRadius:1.5}}/>
+                                <span style={{fontSize:11,fontWeight:600,color:"var(--w60)"}}>{d.acronym}</span>
+                                <span style={{fontSize:12,fontWeight:700,fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)",color:isBest?"var(--green)":"var(--fg)"}}>{tb?fmtLap(tb):"—"}</span>
+                                {tb&&!isBest&&<span style={{fontSize:10,fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)",color:"var(--w50)"}}>+{(tb-bestTb).toFixed(3)}s</span>}
                               </div>
                             );
                           })}
@@ -1723,12 +1799,12 @@ export default function F1Dashboard(){
               })()}
 
               {/* Driver Sector Comparison Table */}
-              <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20}}>
+              <div style={{background:"var(--w02)",border:"1px solid var(--w06)",borderRadius:2,padding:20}}>
                 <div style={{fontSize:15,fontWeight:700,marginBottom:4}}>{curMtg.meetingName} — {curSess.sessionName} Sector Analysis</div>
-                <div style={{fontSize:12,color:"rgba(255,255,255,0.35)",marginBottom:20}}>{drivers.length} drivers · Sorted by theoretical best lap · <span style={{color:"#d946ef"}}>Purple</span> = session fastest sector</div>
+                <div style={{fontSize:12,color:"var(--w35)",marginBottom:20}}>{drivers.length} drivers · Sorted by theoretical best lap · <span style={{color:"var(--purple)"}}>Purple</span> = session fastest sector</div>
                 <div style={{overflowX:"auto",WebkitOverflowScrolling:"touch"}}><table style={{width:"100%",borderCollapse:"collapse",minWidth:800,fontSize:13}}>
-                  <thead><tr style={{borderBottom:"1px solid rgba(255,255,255,0.08)"}}>
-                    {["#","","Driver","Team","Best S1","Best S2","Best S3","Theo. Best","Best Lap","I1","I2","ST"].map(h=><th key={h} style={{textAlign:["Driver","Team"].includes(h)?"left":"right",padding:"8px 10px",fontSize:10,textTransform:"uppercase",letterSpacing:.8,color:"rgba(255,255,255,0.3)",fontWeight:500,whiteSpace:"nowrap"}}>{h}</th>)}
+                  <thead><tr style={{borderBottom:"1px solid var(--w08)"}}>
+                    {["#","","Driver","Team","Best S1","Best S2","Best S3","Theo. Best","Best Lap","I1","I2","ST"].map(h=><th key={h} style={{textAlign:["Driver","Team"].includes(h)?"left":"right",padding:"8px 10px",fontSize:10,textTransform:"uppercase",letterSpacing:.8,color:"var(--w30)",fontWeight:500,whiteSpace:"nowrap"}}>{h}</th>)}
                   </tr></thead>
                   <tbody>
                     {drivers.map((d,i)=>{
@@ -1738,22 +1814,22 @@ export default function F1Dashboard(){
                       const isTopI1=d.maxI1Speed&&d.maxI1Speed===sb.topI1Speed;
                       const isTopI2=d.maxI2Speed&&d.maxI2Speed===sb.topI2Speed;
                       const isTopST=d.maxSTSpeed&&d.maxSTSpeed===sb.topSTSpeed;
-                      const sCol=(isBest)=>isBest?"#d946ef":"rgba(255,255,255,0.6)";
-                      const spCol=(isBest)=>isBest?"#FF8000":"rgba(255,255,255,0.5)";
+                      const sCol=(isBest)=>isBest?"var(--purple)":"var(--w60)";
+                      const spCol=(isBest)=>isBest?"#FF8000":"var(--w50)";
                       return(
-                        <tr key={i} style={{borderBottom:"1px solid rgba(255,255,255,0.04)",background:i<3?`${d.teamColour}08`:"transparent"}}>
-                          <td style={{padding:"8px 10px",fontWeight:700,width:28,color:i<3?"#fff":"rgba(255,255,255,0.35)",fontSize:12,textAlign:"right"}}>{i+1}</td>
-                          <td style={{padding:"8px 4px",width:24}}><div style={{width:3,height:18,borderRadius:2,background:d.teamColour||"#555"}}/></td>
-                          <td style={{padding:"8px 10px",fontWeight:600,whiteSpace:"nowrap"}}>{d.acronym} <span style={{fontWeight:400,fontSize:11,color:"rgba(255,255,255,0.2)"}}>|</span> <span style={{fontWeight:400,fontSize:11,color:"rgba(255,255,255,0.35)"}}>{d.name?.split(" ").pop()}</span></td>
-                          <td style={{padding:"8px 10px",color:"rgba(255,255,255,0.4)",fontSize:11}}>{normTeam(d.team||"")}</td>
-                          <td style={{padding:"8px 10px",textAlign:"right",fontVariantNumeric:"tabular-nums",color:sCol(isFS1),fontWeight:isFS1?700:400}}>{fmtS(d.bestS1)}</td>
-                          <td style={{padding:"8px 10px",textAlign:"right",fontVariantNumeric:"tabular-nums",color:sCol(isFS2),fontWeight:isFS2?700:400}}>{fmtS(d.bestS2)}</td>
-                          <td style={{padding:"8px 10px",textAlign:"right",fontVariantNumeric:"tabular-nums",color:sCol(isFS3),fontWeight:isFS3?700:400}}>{fmtS(d.bestS3)}</td>
-                          <td style={{padding:"8px 10px",textAlign:"right",fontVariantNumeric:"tabular-nums",fontWeight:700,color:i===0?"#27F4D2":i<3?"#fff":"rgba(255,255,255,0.7)"}}>{fmtS(d.theoreticalBest)}</td>
-                          <td style={{padding:"8px 10px",textAlign:"right",fontVariantNumeric:"tabular-nums",fontSize:12,color:"rgba(255,255,255,0.5)"}}>{fmtLap(d.bestLap)}</td>
-                          <td style={{padding:"8px 10px",textAlign:"right",fontVariantNumeric:"tabular-nums",color:spCol(isTopI1),fontWeight:isTopI1?700:400}}>{d.maxI1Speed||"—"}</td>
-                          <td style={{padding:"8px 10px",textAlign:"right",fontVariantNumeric:"tabular-nums",color:spCol(isTopI2),fontWeight:isTopI2?700:400}}>{d.maxI2Speed||"—"}</td>
-                          <td style={{padding:"8px 10px",textAlign:"right",fontVariantNumeric:"tabular-nums",color:spCol(isTopST),fontWeight:isTopST?700:400}}>{d.maxSTSpeed||"—"}</td>
+                        <tr key={i} style={{borderBottom:"1px solid var(--w04)",background:i<3?`${inkify(d.teamColour)}08`:"transparent"}}>
+                          <td style={{padding:"8px 10px",fontWeight:700,width:28,color:i<3?"var(--fg)":"var(--w35)",fontSize:12,textAlign:"right"}}>{i+1}</td>
+                          <td style={{padding:"8px 4px",width:24}}><div style={{width:3,height:18,borderRadius:2,background:inkify(d.teamColour)||"var(--ink-4)"}}/></td>
+                          <td style={{padding:"8px 10px",fontWeight:600,whiteSpace:"nowrap"}}>{d.acronym} <span style={{fontWeight:400,fontSize:11,color:"var(--w20)"}}>|</span> <span style={{fontWeight:400,fontSize:11,color:"var(--w35)"}}>{d.name?.split(" ").pop()}</span></td>
+                          <td style={{padding:"8px 10px",color:"var(--w40)",fontSize:11}}>{normTeam(d.team||"")}</td>
+                          <td style={{padding:"8px 10px",textAlign:"right",fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)",color:sCol(isFS1),fontWeight:isFS1?700:400}}>{fmtS(d.bestS1)}</td>
+                          <td style={{padding:"8px 10px",textAlign:"right",fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)",color:sCol(isFS2),fontWeight:isFS2?700:400}}>{fmtS(d.bestS2)}</td>
+                          <td style={{padding:"8px 10px",textAlign:"right",fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)",color:sCol(isFS3),fontWeight:isFS3?700:400}}>{fmtS(d.bestS3)}</td>
+                          <td style={{padding:"8px 10px",textAlign:"right",fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)",fontWeight:700,color:i===0?"var(--green)":i<3?"var(--fg)":"var(--w70)"}}>{fmtS(d.theoreticalBest)}</td>
+                          <td style={{padding:"8px 10px",textAlign:"right",fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)",fontSize:12,color:"var(--w50)"}}>{fmtLap(d.bestLap)}</td>
+                          <td style={{padding:"8px 10px",textAlign:"right",fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)",color:spCol(isTopI1),fontWeight:isTopI1?700:400}}>{d.maxI1Speed||"—"}</td>
+                          <td style={{padding:"8px 10px",textAlign:"right",fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)",color:spCol(isTopI2),fontWeight:isTopI2?700:400}}>{d.maxI2Speed||"—"}</td>
+                          <td style={{padding:"8px 10px",textAlign:"right",fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)",color:spCol(isTopST),fontWeight:isTopST?700:400}}>{d.maxSTSpeed||"—"}</td>
                         </tr>
                       );
                     })}
@@ -1762,9 +1838,9 @@ export default function F1Dashboard(){
               </div>
 
               {/* Speed Trap Visual Comparison */}
-              <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20}}>
+              <div style={{background:"var(--w02)",border:"1px solid var(--w06)",borderRadius:2,padding:20}}>
                 <div style={{fontSize:15,fontWeight:700,marginBottom:4}}>Speed Trap Comparison</div>
-                <div style={{fontSize:12,color:"rgba(255,255,255,0.35)",marginBottom:20}}>Maximum speed recorded at the speed trap (km/h)</div>
+                <div style={{fontSize:12,color:"var(--w35)",marginBottom:20}}>Maximum speed recorded at the speed trap (km/h)</div>
                 <div style={{display:"flex",flexDirection:"column",gap:5}}>
                   {[...drivers].sort((a,b)=>(b.maxSTSpeed||0)-(a.maxSTSpeed||0)).slice(0,15).map((d,i)=>{
                     const maxAll=sb.topSTSpeed||330;
@@ -1772,10 +1848,10 @@ export default function F1Dashboard(){
                     const pct=d.maxSTSpeed?Math.max(((d.maxSTSpeed-minShow)/(maxAll-minShow))*100,3):0;
                     return(
                       <div key={i} style={{display:"flex",alignItems:"center",gap:8}}>
-                        <div style={{width:30,fontSize:11,fontWeight:600,color:i===0?"#FF8000":"rgba(255,255,255,0.4)",textAlign:"right"}}>{d.acronym}</div>
-                        <div style={{flex:1,height:20,background:"rgba(255,255,255,0.04)",borderRadius:4,overflow:"hidden",position:"relative"}}>
-                          <div style={{height:"100%",width:`${pct}%`,background:`linear-gradient(90deg,${d.teamColour||"#555"}88,${d.teamColour||"#555"})`,borderRadius:4,transition:"width 1s cubic-bezier(0.22,1,0.36,1)",transitionDelay:`${i*40}ms`}}/>
-                          <div style={{position:"absolute",right:8,top:"50%",transform:"translateY(-50%)",fontSize:10,color:"rgba(255,255,255,0.6)",fontVariantNumeric:"tabular-nums",fontWeight:i===0?700:400}}>{d.maxSTSpeed||"—"}</div>
+                        <div style={{width:30,fontSize:11,fontWeight:600,color:i===0?"#FF8000":"var(--w40)",textAlign:"right"}}>{d.acronym}</div>
+                        <div style={{flex:1,height:20,background:"var(--w04)",borderRadius:4,overflow:"hidden",position:"relative"}}>
+                          <div style={{height:"100%",width:`${pct}%`,background:inkify(d.teamColour)||"var(--ink-4)",borderRadius:1}}/>
+                          <div style={{position:"absolute",right:8,top:"50%",transform:"translateY(-50%)",fontSize:10,color:"var(--w60)",fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)",fontWeight:i===0?700:400}}>{d.maxSTSpeed||"—"}</div>
                         </div>
                       </div>
                     );
@@ -1784,8 +1860,8 @@ export default function F1Dashboard(){
               </div>
 
               {/* Data source note */}
-              <div style={{fontSize:11,color:"rgba(255,255,255,0.25)",textAlign:"center",padding:8}}>
-                Sector times & speed trap data sourced from <a href="https://openf1.org" target="_blank" rel="noopener noreferrer" style={{color:"rgba(255,255,255,0.35)",textDecoration:"underline"}}>OpenF1 API</a> · Last updated {new Date(openf1.fetchedAt).toLocaleDateString()}
+              <div style={{fontSize:11,color:"var(--w25)",textAlign:"center",padding:8}}>
+                Sector times & speed trap data sourced from <a href="https://openf1.org" target="_blank" rel="noopener noreferrer" style={{color:"var(--w35)",textDecoration:"underline"}}>OpenF1 API</a> · Last updated {new Date(openf1.fetchedAt).toLocaleDateString()}
               </div>
             </div>
           );
@@ -1796,10 +1872,10 @@ export default function F1Dashboard(){
           <div className="fu" style={{display:"flex",flexDirection:"column",gap:24}}>
             {/* Metric Toggle */}
             <div style={{display:"flex",alignItems:"center",gap:14,flexWrap:"wrap"}}>
-              <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:"rgba(255,255,255,0.4)"}}>Compare by</div>
+              <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:"var(--w40)"}}>Compare by</div>
               <div style={{display:"flex",gap:4}}>
                 {[{id:"qual",label:"Qualifying Position"},{id:"race",label:"Average Finish"},{id:"pts",label:"Points Scored"}].map(m=>(
-                  <button key={m.id} onClick={()=>setH2hMetric(m.id)} style={{cursor:"pointer",padding:"8px 16px",borderRadius:6,border:h2hMetric===m.id?"1px solid rgba(232,0,32,0.4)":"1px solid rgba(255,255,255,0.08)",background:h2hMetric===m.id?"rgba(232,0,32,0.12)":"rgba(255,255,255,0.03)",color:h2hMetric===m.id?"#E80020":"rgba(255,255,255,0.5)",fontSize:12,fontWeight:h2hMetric===m.id?600:400,fontFamily:"'Outfit',sans-serif",transition:"all .2s"}}>{m.label}</button>
+                  <button key={m.id} onClick={()=>setH2hMetric(m.id)} style={{cursor:"pointer",padding:"8px 16px",borderRadius:6,border:h2hMetric===m.id?"1px solid rgba(232,0,32,0.4)":"1px solid var(--w08)",background:h2hMetric===m.id?"rgba(232,0,32,0.12)":"var(--w03)",color:h2hMetric===m.id?"var(--red)":"var(--w50)",fontSize:12,fontWeight:h2hMetric===m.id?600:400,fontFamily:"var(--font-ui)",transition:"all .2s"}}>{m.label}</button>
                 ))}
               </div>
             </div>
@@ -1807,7 +1883,7 @@ export default function F1Dashboard(){
             {/* Team Battles */}
             <div style={{display:"flex",flexDirection:"column",gap:16}}>
               {h2h.map(battle=>{
-                const tc=TC[battle.team]||"#555";
+                const tc=TC[battle.team]||"var(--ink-4)";
                 const d1Last=battle.d1.n.split(" ").pop();
                 const d2Last=battle.d2.n.split(" ").pop();
 
@@ -1838,13 +1914,13 @@ export default function F1Dashboard(){
                 const tied=d1Val===d2Val;
 
                 return(
-                  <div key={battle.team} style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20,overflow:"hidden"}}>
+                  <div key={battle.team} style={{background:"var(--w02)",border:"1px solid var(--w06)",borderRadius:2,padding:20,overflow:"hidden"}}>
                     {/* Team Header */}
                     <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16}}>
                       <TL team={battle.team} size={28}/>
                       <div style={{width:3,height:22,borderRadius:2,background:tc,opacity:.8}}/>
                       <span style={{fontSize:16,fontWeight:700}}>{battle.team}</span>
-                      <span style={{fontSize:11,color:"rgba(255,255,255,0.3)",marginLeft:"auto"}}>{metricNote}{(()=>{if(h2hMetric!=="qual"&&h2hMetric!=="race")return "";const n=(h2hMetric==="qual"?battle.qual?.details:battle.race?.details)?.length;return n!=null?` · ${n} of ${completedRounds} rounds compared`:"";})()}</span>
+                      <span style={{fontSize:11,color:"var(--w30)",marginLeft:"auto"}}>{metricNote}{(()=>{if(h2hMetric!=="qual"&&h2hMetric!=="race")return "";const n=(h2hMetric==="qual"?battle.qual?.details:battle.race?.details)?.length;return n!=null?` · ${n} of ${completedRounds} rounds compared`:"";})()}</span>
                     </div>
 
                     {/* Driver vs Driver */}
@@ -1853,33 +1929,33 @@ export default function F1Dashboard(){
                       <div style={{flex:1,textAlign:"right"}}>
                         <div style={{display:"flex",alignItems:"center",justifyContent:"flex-end",gap:8,marginBottom:6}}>
                           <div>
-                            <div style={{fontSize:15,fontWeight:700,color:d1Leads?"#fff":"rgba(255,255,255,0.5)"}}>{d1Last}</div>
-                            <div style={{fontSize:20,fontWeight:800,color:d1Leads?tc:"rgba(255,255,255,0.4)"}}>{d1Label}</div>
+                            <div style={{fontSize:15,fontWeight:700,color:d1Leads?"var(--fg)":"var(--w50)"}}>{d1Last}</div>
+                            <div style={{fontSize:20,fontWeight:800,color:d1Leads?tc:"var(--w40)"}}>{d1Label}</div>
                           </div>
                           <DH name={battle.d1.n} size={44} headshots={headshots}/>
                         </div>
                       </div>
 
                       {/* VS badge */}
-                      <div style={{flexShrink:0,width:40,height:40,borderRadius:"50%",background:"rgba(255,255,255,0.06)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:800,color:"rgba(255,255,255,0.3)"}}>VS</div>
+                      <div style={{flexShrink:0,width:40,height:40,borderRadius:"50%",background:"var(--w06)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:800,color:"var(--w30)"}}>VS</div>
 
                       {/* Driver 2 */}
                       <div style={{flex:1}}>
                         <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
                           <DH name={battle.d2.n} size={44} headshots={headshots}/>
                           <div>
-                            <div style={{fontSize:15,fontWeight:700,color:d2Leads?"#fff":"rgba(255,255,255,0.5)"}}>{d2Last}</div>
-                            <div style={{fontSize:20,fontWeight:800,color:d2Leads?tc:"rgba(255,255,255,0.4)"}}>{d2Label}</div>
+                            <div style={{fontSize:15,fontWeight:700,color:d2Leads?"var(--fg)":"var(--w50)"}}>{d2Last}</div>
+                            <div style={{fontSize:20,fontWeight:800,color:d2Leads?tc:"var(--w40)"}}>{d2Label}</div>
                           </div>
                         </div>
                       </div>
                     </div>
 
                     {/* Battle Bar */}
-                    <div style={{display:"flex",height:8,borderRadius:4,overflow:"hidden",background:"rgba(255,255,255,0.04)"}}>
-                      <div style={{width:`${d1Pct}%`,background:d1Leads?tc:"rgba(255,255,255,0.15)",borderRadius:"4px 0 0 4px",transition:"width .8s cubic-bezier(0.22,1,0.36,1)"}}/>
-                      <div style={{width:2,background:"#0a0a0f",flexShrink:0}}/>
-                      <div style={{width:`${d2Pct}%`,background:d2Leads?tc:"rgba(255,255,255,0.15)",borderRadius:"0 4px 4px 0",transition:"width .8s cubic-bezier(0.22,1,0.36,1)"}}/>
+                    <div style={{display:"flex",height:8,borderRadius:4,overflow:"hidden",background:"var(--w04)"}}>
+                      <div style={{width:`${d1Pct}%`,background:d1Leads?tc:"var(--w15)",borderRadius:"4px 0 0 4px"}}/>
+                      <div style={{width:2,background:"var(--bench)",flexShrink:0}}/>
+                      <div style={{width:`${d2Pct}%`,background:d2Leads?tc:"var(--w15)",borderRadius:"0 4px 4px 0"}}/>
                     </div>
 
                     {/* Per-race detail row (Qualifying / Race) */}
@@ -1889,12 +1965,12 @@ export default function F1Dashboard(){
                           const d1Won=typeof rd.d1==="number"&&typeof rd.d2==="number"?rd.d1<rd.d2:false;
                           const d2Won=typeof rd.d1==="number"&&typeof rd.d2==="number"?rd.d2<rd.d1:false;
                           return(
-                            <div key={i} style={{background:"rgba(255,255,255,0.03)",borderRadius:6,padding:"6px 10px",fontSize:11,border:"1px solid rgba(255,255,255,0.04)",minWidth:80}}>
-                              <div style={{color:"rgba(255,255,255,0.35)",marginBottom:3,fontSize:10}}>{rd.race}</div>
+                            <div key={i} style={{background:"var(--w03)",borderRadius:6,padding:"6px 10px",fontSize:11,border:"1px solid var(--w04)",minWidth:80}}>
+                              <div style={{color:"var(--w35)",marginBottom:3,fontSize:10}}>{rd.race}</div>
                               <div style={{display:"flex",justifyContent:"space-between",gap:8}}>
-                                <span style={{fontWeight:d1Won?700:400,color:d1Won?tc:"rgba(255,255,255,0.4)"}}>P{rd.d1}</span>
-                                <span style={{color:"rgba(255,255,255,0.15)"}}>—</span>
-                                <span style={{fontWeight:d2Won?700:400,color:d2Won?tc:"rgba(255,255,255,0.4)"}}>P{rd.d2}</span>
+                                <span style={{fontWeight:d1Won?700:400,color:d1Won?tc:"var(--w40)"}}>P{rd.d1}</span>
+                                <span style={{color:"var(--w15)"}}>—</span>
+                                <span style={{fontWeight:d2Won?700:400,color:d2Won?tc:"var(--w40)"}}>P{rd.d2}</span>
                               </div>
                             </div>
                           );
@@ -1912,9 +1988,9 @@ export default function F1Dashboard(){
         {tab==="Pit Stops"&&(()=>{
           const prs=pitsByRace.length>0?pitsByRace:(pits.length>0?[{r:null,nm:pitRaceName,stops:pits}]:[]);
           if(prs.length===0)return(
-            <div className="fu" style={{textAlign:"center",padding:60,color:"rgba(255,255,255,0.4)"}}>
-              <div style={{fontSize:40,marginBottom:12}}>🔧</div>
-              <div style={{fontSize:16,fontWeight:600,marginBottom:4,color:"#fff"}}>No pit stop data yet</div>
+            <div className="fu" style={{textAlign:"center",padding:60,color:"var(--w40)"}}>
+              <svg width="40" height="40" viewBox="0 0 40 40" aria-hidden="true" style={{display:"block",margin:"0 auto 12px"}}><circle cx="20" cy="22" r="14" fill="none" stroke="var(--ink-3)" strokeWidth="2"/><path d="M20 12v10l6 4" fill="none" stroke="var(--ink-3)" strokeWidth="2" strokeLinecap="round"/><path d="M16 5h8M20 5v3" stroke="var(--ink-3)" strokeWidth="2" strokeLinecap="round"/></svg>
+              <div style={{fontSize:16,fontWeight:600,marginBottom:4,color:"var(--fg)"}}>No pit stop data yet</div>
               <div style={{fontSize:13}}>Pit stops appear here after the first race of the season.</div>
             </div>
           );
@@ -1930,47 +2006,47 @@ export default function F1Dashboard(){
           <div className="fu" style={{display:"flex",flexDirection:"column",gap:24}}>
             {prs.length>1&&(
               <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
-                <span style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:"rgba(255,255,255,0.4)",fontWeight:600}}>Race</span>
-                <select value={String(curPr.r)} onChange={e=>setSelPitRace(e.target.value)} style={{appearance:"none",WebkitAppearance:"none",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.10)",borderRadius:6,padding:"6px 28px 6px 12px",color:"#fff",fontSize:12,fontWeight:500,fontFamily:"'Outfit',sans-serif",cursor:"pointer",outline:"none",minWidth:220}}>
-                  {prs.map(p=><option key={p.r} value={String(p.r)} style={{background:"#14141f"}}>{`R${p.r} — ${p.nm}`}</option>)}
+                <span style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:"var(--w40)",fontWeight:600}}>Race</span>
+                <select value={String(curPr.r)} onChange={e=>setSelPitRace(e.target.value)} style={{appearance:"none",WebkitAppearance:"none",background:"var(--w04)",border:"1px solid var(--w10)",borderRadius:6,padding:"6px 28px 6px 12px",color:"var(--fg)",fontSize:12,fontWeight:500,fontFamily:"var(--font-ui)",cursor:"pointer",outline:"none",minWidth:220}}>
+                  {prs.map(p=><option key={p.r} value={String(p.r)} style={{background:"var(--sheet)"}}>{`R${p.r} — ${p.nm}`}</option>)}
                 </select>
               </div>
             )}
             <div style={{display:"flex",gap:16,flexWrap:"wrap"}}>
-              <SC label="Fastest Pit Stop" value={cFastest?`${cFastest.s.toFixed(3)}s`:"N/A"} sub={cFastest?`${cFastest.d} · Lap ${cFastest.l}`:""} accent="#FFD700" icon={cFastest&&cFastest.t?<TL team={cFastest.t} size={24}/>:null}/>
-              <SC label="Avg Pit Stop" value={cAvg} sub={`${cpits.length} stops · ${cName}`} accent="#27F4D2"/>
-              <SC label="Slowest Pit Stop" value={cSlowest?`${cSlowest.s.toFixed(3)}s`:"N/A"} sub={cSlowest?`${cSlowest.d} · Lap ${cSlowest.l}`:""} accent="#E80020" icon={cSlowest&&cSlowest.t?<TL team={cSlowest.t} size={24}/>:null}/>
+              <SC label="Fastest Pit Stop" value={cFastest?`${cFastest.s.toFixed(3)}s`:"N/A"} sub={cFastest?`${cFastest.d} · Lap ${cFastest.l}`:""} accent="var(--gold)" icon={cFastest&&cFastest.t?<TL team={cFastest.t} size={24}/>:null}/>
+              <SC label="Avg Pit Stop" value={cAvg} sub={`${cpits.length} stops · ${cName}`} accent="var(--green)"/>
+              <SC label="Slowest Pit Stop" value={cSlowest?`${cSlowest.s.toFixed(3)}s`:"N/A"} sub={cSlowest?`${cSlowest.d} · Lap ${cSlowest.l}`:""} accent="var(--red)" icon={cSlowest&&cSlowest.t?<TL team={cSlowest.t} size={24}/>:null}/>
             </div>
-            <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20}}>
+            <div style={{background:"var(--w02)",border:"1px solid var(--w06)",borderRadius:2,padding:20}}>
               <div style={{fontSize:15,fontWeight:700,marginBottom:4}}>{cName + " — Pit Stop Times"}</div>
-              <div style={{fontSize:12,color:"rgba(255,255,255,0.35)",marginBottom:20}}>Sorted by duration</div>
+              <div style={{fontSize:12,color:"var(--w35)",marginBottom:20}}>Sorted by duration</div>
               <div style={{display:"flex",flexDirection:"column",gap:5}}>
                 {chart.map((d,i)=>(
                   <div key={`${curPr.r}-${d.d}-${d.l}`} style={{display:"flex",alignItems:"center",gap:8}}>
                     <TL team={d.t} size={22}/>
-                    <div style={{width:96,fontSize:12,color:"rgba(255,255,255,0.7)",textAlign:"right",flexShrink:0,whiteSpace:"nowrap"}}>{d.d}<span style={{color:"rgba(255,255,255,0.3)",fontSize:10,marginLeft:4}}>L{d.l}</span></div>
-                    <div style={{flex:1,height:22,background:"rgba(255,255,255,0.04)",borderRadius:4,overflow:"hidden",position:"relative"}}>
-                      <div style={{height:"100%",width:`${(d.s/maxS)*100}%`,background:TC[d.t]||"#555",borderRadius:4,transition:"width 1s cubic-bezier(0.22,1,0.36,1)",transitionDelay:`${i*50}ms`,opacity:.8}}/>
-                      <div style={{position:"absolute",right:8,top:"50%",transform:"translateY(-50%)",fontSize:11,color:"rgba(255,255,255,0.6)",fontVariantNumeric:"tabular-nums"}}>{d.s.toFixed(3)}s</div>
+                    <div style={{width:96,fontSize:12,color:"var(--w70)",textAlign:"right",flexShrink:0,whiteSpace:"nowrap"}}>{d.d}<span style={{color:"var(--w30)",fontSize:10,marginLeft:4}}>L{d.l}</span></div>
+                    <div style={{flex:1,height:22,background:"var(--w04)",borderRadius:4,overflow:"hidden",position:"relative"}}>
+                      <div style={{height:"100%",width:`${(d.s/maxS)*100}%`,background:TC[d.t]||"var(--ink-4)",borderRadius:4,opacity:.8}}/>
+                      <div style={{position:"absolute",right:8,top:"50%",transform:"translateY(-50%)",fontSize:11,color:"var(--w60)",fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)"}}>{d.s.toFixed(3)}s</div>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
-            <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20}}>
+            <div style={{background:"var(--w02)",border:"1px solid var(--w06)",borderRadius:2,padding:20}}>
               <div style={{fontSize:15,fontWeight:700,marginBottom:16}}>{"Full Pit Stop Summary — " + cName}</div>
               <div style={{overflowX:"auto",WebkitOverflowScrolling:"touch"}}><table style={{width:"100%",borderCollapse:"collapse",minWidth:600,fontSize:13}}>
-                <thead><tr style={{borderBottom:"1px solid rgba(255,255,255,0.08)"}}>
-                  {["#","Driver","Team","Lap","Duration"].map(h=><th key={h} style={{textAlign:"left",padding:"8px 12px",fontSize:11,textTransform:"uppercase",letterSpacing:1,color:"rgba(255,255,255,0.35)",fontWeight:500}}>{h}</th>)}
+                <thead><tr style={{borderBottom:"1px solid var(--w08)"}}>
+                  {["#","Driver","Team","Lap","Duration"].map(h=><th key={h} style={{textAlign:"left",padding:"8px 12px",fontSize:11,textTransform:"uppercase",letterSpacing:1,color:"var(--w35)",fontWeight:500}}>{h}</th>)}
                 </tr></thead>
                 <tbody>
                   {cpits.map((d,i)=>(
-                    <tr key={`${curPr.r}-${d.d}-${d.l}-${i}`} style={{borderBottom:"1px solid rgba(255,255,255,0.04)"}}>
-                      <td style={{padding:"10px 12px",color:"rgba(255,255,255,0.4)",fontWeight:600}}>{i+1}</td>
+                    <tr key={`${curPr.r}-${d.d}-${d.l}-${i}`} style={{borderBottom:"1px solid var(--w04)"}}>
+                      <td style={{padding:"10px 12px",color:"var(--w40)",fontWeight:600}}>{i+1}</td>
                       <td style={{padding:"10px 12px"}}><div style={{display:"flex",alignItems:"center",gap:8}}><TL team={d.t} size={24}/><div style={{width:3,height:16,borderRadius:2,background:TC[d.t]}}/><span style={{fontWeight:600}}>{d.d}</span></div></td>
-                      <td style={{padding:"10px 12px"}}><div style={{display:"flex",alignItems:"center",gap:6,color:"rgba(255,255,255,0.5)"}}><TL team={d.t} size={16}/>{d.t}</div></td>
-                      <td style={{padding:"10px 12px",fontVariantNumeric:"tabular-nums"}}>{d.l}</td>
-                      <td style={{padding:"10px 12px",fontWeight:700,fontVariantNumeric:"tabular-nums",color:d.s<23?"#27F4D2":d.s>26?"#E80020":"#fff"}}>{d.s.toFixed(3)}s</td>
+                      <td style={{padding:"10px 12px"}}><div style={{display:"flex",alignItems:"center",gap:6,color:"var(--w50)"}}><TL team={d.t} size={16}/>{d.t}</div></td>
+                      <td style={{padding:"10px 12px",fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)"}}>{d.l}</td>
+                      <td style={{padding:"10px 12px",fontWeight:700,fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)",color:d.s<23?"var(--green)":d.s>26?"var(--red)":"var(--fg)"}}>{d.s.toFixed(3)}s</td>
                     </tr>
                   ))}
                 </tbody>
@@ -1983,8 +2059,8 @@ export default function F1Dashboard(){
         {tab==="Quotes"&&(
           <div className="fu" style={{display:"flex",flexDirection:"column",gap:24}}>
             {!quotes||!quotes.rounds||quotes.rounds.length===0?(
-              <div style={{textAlign:"center",padding:60,color:"rgba(255,255,255,0.4)"}}>
-                <div style={{fontSize:40,marginBottom:12}}>💬</div>
+              <div style={{textAlign:"center",padding:60,color:"var(--w40)"}}>
+                <svg width="40" height="40" viewBox="0 0 40 40" aria-hidden="true" style={{display:"block",margin:"0 auto 12px"}}><circle cx="20" cy="22" r="14" fill="none" stroke="var(--ink-3)" strokeWidth="2"/><path d="M20 12v10l6 4" fill="none" stroke="var(--ink-3)" strokeWidth="2" strokeLinecap="round"/><path d="M16 5h8M20 5v3" stroke="var(--ink-3)" strokeWidth="2" strokeLinecap="round"/></svg>
                 <div style={{fontSize:16,fontWeight:600,marginBottom:4}}>No driver quotes available yet</div>
                 <div style={{fontSize:13}}>Quotes are extracted from official F1 YouTube post-session videos</div>
               </div>
@@ -2004,23 +2080,23 @@ export default function F1Dashboard(){
               return(
               <>
                 {quoteLag>0&&(
-                  <div style={{fontSize:12,color:"rgba(255,255,255,0.45)",background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:10,padding:"10px 14px"}}>
-                    Quotes run through the <b style={{color:"#fff"}}>{lastQuoteRound.raceName}</b>. {quoteLag} later round{quoteLag>1?"s":""} (up to the {latestGP.nm}) {quoteLag>1?"haven't":"hasn't"} been transcribed yet.
+                  <div style={{fontSize:12,color:"var(--w45)",background:"var(--w02)",border:"1px solid var(--w06)",borderRadius:2,padding:"10px 14px"}}>
+                    Quotes run through the <b style={{color:"var(--fg)"}}>{lastQuoteRound.raceName}</b>. {quoteLag} later round{quoteLag>1?"s":""} (up to the {latestGP.nm}) {quoteLag>1?"haven't":"hasn't"} been transcribed yet.
                   </div>
                 )}
                 <div style={{display:"flex",gap:12,flexWrap:"wrap"}}>
-                  <SC label="Rounds with Quotes" value={String(quotes.rounds.length)} sub={quotes.rounds.map(r=>r.raceName.replace(" Grand Prix","")).join(" · ")} accent="#E80020"/>
-                  <SC label="Total Quotes" value={String(quotes.rounds.reduce((sum,r)=>sum+Object.values(r.sessions||{}).reduce((s2,sess)=>s2+(sess.quotes||[]).length,0),0))} sub={"Across "+availableSessions.map(s=>SESSION_LABELS[s].toLowerCase()).join(", ")} accent="#27F4D2"/>
+                  <SC label="Rounds with Quotes" value={String(quotes.rounds.length)} sub={quotes.rounds.map(r=>r.raceName.replace(" Grand Prix","")).join(" · ")} accent="var(--red)"/>
+                  <SC label="Total Quotes" value={String(quotes.rounds.reduce((sum,r)=>sum+Object.values(r.sessions||{}).reduce((s2,sess)=>s2+(sess.quotes||[]).length,0),0))} sub={"Across "+availableSessions.map(s=>SESSION_LABELS[s].toLowerCase()).join(", ")} accent="var(--green)"/>
                 </div>
                 <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
                   {availableSessions.map(s=>(
-                    <button key={s} onClick={()=>{setQuotesSession(s);setQuoteDriver(null);}} style={{padding:"8px 20px",borderRadius:8,border:"1px solid "+(activeSession===s?"#E80020":"rgba(255,255,255,0.08)"),background:activeSession===s?"rgba(232,0,32,0.15)":"rgba(255,255,255,0.02)",color:activeSession===s?"#fff":"rgba(255,255,255,0.5)",cursor:"pointer",fontSize:13,fontWeight:600,fontFamily:"'Outfit',sans-serif"}}>{SESSION_LABELS[s]}</button>
+                    <button key={s} onClick={()=>{setQuotesSession(s);setQuoteDriver(null);}} style={{padding:"8px 20px",borderRadius:2,border:"1px solid "+(activeSession===s?"var(--red)":"var(--w08)"),background:activeSession===s?"rgba(232,0,32,0.15)":"var(--w02)",color:activeSession===s?"var(--fg)":"var(--w50)",cursor:"pointer",fontSize:13,fontWeight:600,fontFamily:"var(--font-ui)"}}>{SESSION_LABELS[s]}</button>
                   ))}
                 </div>
                 <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
-                  <button onClick={()=>setQuoteDriver(null)} style={{padding:"6px 14px",borderRadius:8,border:"1px solid "+(activeDriver===null?"#E80020":"rgba(255,255,255,0.08)"),background:activeDriver===null?"rgba(232,0,32,0.15)":"rgba(255,255,255,0.02)",color:activeDriver===null?"#fff":"rgba(255,255,255,0.5)",cursor:"pointer",fontSize:12,fontWeight:600,fontFamily:"'Outfit',sans-serif"}}>All</button>
+                  <button onClick={()=>setQuoteDriver(null)} style={{padding:"6px 14px",borderRadius:2,border:"1px solid "+(activeDriver===null?"var(--red)":"var(--w08)"),background:activeDriver===null?"rgba(232,0,32,0.15)":"var(--w02)",color:activeDriver===null?"var(--fg)":"var(--w50)",cursor:"pointer",fontSize:12,fontWeight:600,fontFamily:"var(--font-ui)"}}>All</button>
                   {quoteDrivers.map(([name,cnt])=>(
-                    <button key={name} onClick={()=>setQuoteDriver(activeDriver===name?null:name)} style={{padding:"6px 14px",borderRadius:8,border:"1px solid "+(activeDriver===name?"#E80020":"rgba(255,255,255,0.08)"),background:activeDriver===name?"rgba(232,0,32,0.15)":"rgba(255,255,255,0.02)",color:activeDriver===name?"#fff":"rgba(255,255,255,0.5)",cursor:"pointer",fontSize:12,fontWeight:600,fontFamily:"'Outfit',sans-serif"}}>{name} <span style={{fontWeight:400,opacity:0.55}}>{cnt}</span></button>
+                    <button key={name} onClick={()=>setQuoteDriver(activeDriver===name?null:name)} style={{padding:"6px 14px",borderRadius:2,border:"1px solid "+(activeDriver===name?"var(--red)":"var(--w08)"),background:activeDriver===name?"rgba(232,0,32,0.15)":"var(--w02)",color:activeDriver===name?"var(--fg)":"var(--w50)",cursor:"pointer",fontSize:12,fontWeight:600,fontFamily:"var(--font-ui)"}}>{name} <span style={{fontWeight:400,opacity:0.55}}>{cnt}</span></button>
                   ))}
                 </div>
                 {(()=>{
@@ -2034,28 +2110,28 @@ export default function F1Dashboard(){
                   const sess=round.sessions?.[activeSession];
                   const roundQuotes=(sess?.quotes||[]).filter(q=>!activeDriver||q.driver===activeDriver);
                   return(
-                    <div key={round.round} style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20}}>
+                    <div key={round.round} style={{background:"var(--w02)",border:"1px solid var(--w06)",borderRadius:2,padding:20}}>
                       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
                         <div>
                           <div style={{fontSize:15,fontWeight:700}}>{round.raceName}</div>
-                          <div style={{fontSize:11,color:"rgba(255,255,255,0.35)",marginTop:2}}>Round {round.round} · Post-{SESSION_LABELS[activeSession].toLowerCase()} reactions</div>
+                          <div style={{fontSize:11,color:"var(--w35)",marginTop:2}}>Round {round.round} · Post-{SESSION_LABELS[activeSession].toLowerCase()} reactions</div>
                         </div>
-                        <div style={{fontSize:11,color:"rgba(255,255,255,0.25)"}}>{roundQuotes.length} quotes</div>
+                        <div style={{fontSize:11,color:"var(--w25)"}}>{roundQuotes.length} quotes</div>
                       </div>
                       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(320px,1fr))",gap:12}}>
                         {roundQuotes.map((q,i)=>(
-                          <div key={i} style={{background:`linear-gradient(135deg,${TC[q.team]||"#555"}11,rgba(255,255,255,0.02))`,border:`1px solid ${TC[q.team]||"rgba(255,255,255,0.06)"}33`,borderRadius:10,padding:16,display:"flex",gap:12}}>
+                          <div key={i} style={{borderTop:`2px solid ${TC[q.team]||"var(--rule)"}`,borderBottom:"1px solid var(--rule-faint)",padding:"12px 0 14px",display:"flex",gap:12}}>
                             <div style={{flexShrink:0}}>
                               <DH name={q.driver} size={40} headshots={headshots}/>
                             </div>
                             <div style={{flex:1,minWidth:0}}>
                               <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6}}>
                                 <span style={{fontSize:13,fontWeight:700}}>{q.driver}</span>
-                                <div style={{width:3,height:12,borderRadius:2,background:TC[q.team]||"#555",opacity:.7}}/>
-                                <span style={{fontSize:11,color:"rgba(255,255,255,0.4)"}}>{q.team}</span>
+                                <div style={{width:3,height:12,borderRadius:2,background:TC[q.team]||"var(--ink-4)",opacity:.7}}/>
+                                <span style={{fontSize:11,color:"var(--w40)"}}>{q.team}</span>
                               </div>
-                              <div style={{fontSize:12,color:"rgba(255,255,255,0.8)",lineHeight:1.6,fontStyle:"italic"}}>"{q.quote}"</div>
-                              {q.context&&<div style={{fontSize:10,color:"rgba(255,255,255,0.3)",marginTop:6,textTransform:"uppercase",letterSpacing:.5}}>{q.context}</div>}
+                              <div style={{fontSize:12,color:"var(--w80)",lineHeight:1.6,fontStyle:"italic"}}>"{q.quote}"</div>
+                              {q.context&&<div style={{fontSize:10,color:"var(--w30)",marginTop:6,textTransform:"uppercase",letterSpacing:.5}}>{q.context}</div>}
                             </div>
                           </div>
                         ))}
@@ -2064,12 +2140,12 @@ export default function F1Dashboard(){
                   );
                 })}
                 {hiddenRounds>0&&(
-                  <button onClick={()=>setQuotesShowAll(true)} style={{alignSelf:"center",padding:"10px 22px",borderRadius:8,border:"1px solid rgba(255,255,255,0.10)",background:"rgba(255,255,255,0.03)",color:"rgba(255,255,255,0.7)",cursor:"pointer",fontSize:13,fontWeight:600,fontFamily:"'Outfit',sans-serif"}}>
+                  <button onClick={()=>setQuotesShowAll(true)} style={{alignSelf:"center",padding:"10px 22px",borderRadius:2,border:"1px solid var(--w10)",background:"var(--w03)",color:"var(--w70)",cursor:"pointer",fontSize:13,fontWeight:600,fontFamily:"var(--font-ui)"}}>
                     Show {hiddenRounds} earlier round{hiddenRounds>1?"s":""}
                   </button>
                 )}
                 {quotesShowAll&&roundsDesc.length>2&&(
-                  <button onClick={()=>{setQuotesShowAll(false);window.scrollTo({top:0,behavior:"smooth"});}} style={{alignSelf:"center",padding:"8px 18px",borderRadius:8,border:"1px solid rgba(255,255,255,0.08)",background:"none",color:"rgba(255,255,255,0.45)",cursor:"pointer",fontSize:12,fontFamily:"'Outfit',sans-serif"}}>
+                  <button onClick={()=>{setQuotesShowAll(false);window.scrollTo({top:0,behavior:"smooth"});}} style={{alignSelf:"center",padding:"8px 18px",borderRadius:2,border:"1px solid var(--w08)",background:"none",color:"var(--w45)",cursor:"pointer",fontSize:12,fontFamily:"var(--font-ui)"}}>
                     Collapse to latest rounds
                   </button>
                 )}
@@ -2085,38 +2161,38 @@ export default function F1Dashboard(){
         {tab==="Schedule"&&(
           <div className="fu" style={{display:"flex",flexDirection:"column",gap:24}}>
             <div style={{display:"flex",gap:16,flexWrap:"wrap"}}>
-              <SC label="Total Races" value={String(totalRounds)} sub="2 postponed (Bahrain, Saudi)" accent="#fff"/>
-              <SC label="Races Completed" value={String(completedRounds)} sub={sched.filter(r=>r.st==="done").map(r=>r.nm.replace(" Grand Prix","")).join(" · ")||"None yet"} accent="#27F4D2"/>
-              <SC label="Sprint Weekends" value={String(sched.filter(r=>r.sp).length)} sub={sched.filter(r=>r.sp).map(r=>r.fc).join(" · ")} accent="#E80020"/>
-              <SC label="Season Finale" value={sched.length>0?sched[sched.length-1].nm.replace(" Grand Prix",""):"TBD"} sub={sched.length>0?raceDateFmt(sched[sched.length-1].dt,sched[sched.length-1].tt):""} accent="#FFD700"/>
+              <SC label="Total Races" value={String(totalRounds)} sub="2 postponed (Bahrain, Saudi)" accent="var(--fg)"/>
+              <SC label="Races Completed" value={String(completedRounds)} sub={sched.filter(r=>r.st==="done").map(r=>r.nm.replace(" Grand Prix","")).join(" · ")||"None yet"} accent="var(--green)"/>
+              <SC label="Sprint Weekends" value={String(sched.filter(r=>r.sp).length)} sub={sched.filter(r=>r.sp).map(r=>r.fc).join(" · ")} accent="var(--red)"/>
+              <SC label="Season Finale" value={sched.length>0?sched[sched.length-1].nm.replace(" Grand Prix",""):"TBD"} sub={sched.length>0?raceDateFmt(sched[sched.length-1].dt,sched[sched.length-1].tt):""} accent="var(--gold)"/>
             </div>
-            <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20}}>
+            <div style={{background:"var(--w02)",border:"1px solid var(--w06)",borderRadius:2,padding:20}}>
               <div style={{fontSize:15,fontWeight:700,marginBottom:4}}>{SEASON} Race Calendar</div>
-              <div style={{fontSize:12,color:"rgba(255,255,255,0.35)",marginBottom:20}}>{sched.length} races · {sched.filter(r=>r.sp).length} Sprint weekends</div>
+              <div style={{fontSize:12,color:"var(--w35)",marginBottom:20}}>{sched.length} races · {sched.filter(r=>r.sp).length} Sprint weekends</div>
               {sched.map(race=>{
                 return(
                 <div key={race.r} className="sr" style={{background:race.st==="next"?"rgba(232,0,32,0.08)":race.st==="postponed"?"rgba(255,165,0,0.04)":"transparent",border:race.st==="next"?"1px solid rgba(232,0,32,0.2)":"1px solid transparent"}}>
-                  <div style={{width:36,fontSize:13,fontWeight:700,color:race.st==="done"?"#27F4D2":race.st==="next"?"#E80020":"rgba(255,255,255,0.3)",flexShrink:0}}>R{race.r}</div>
-                  {race.fc && <div style={{width:36,height:24,borderRadius:3,flexShrink:0,marginRight:10,background:"rgba(255,255,255,0.06)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700,color:"rgba(255,255,255,0.4)",letterSpacing:.5,opacity:race.st==="postponed"?0.4:1}}>{race.fc}</div>}
+                  <div style={{width:36,fontSize:13,fontWeight:700,color:race.st==="done"?"var(--green)":race.st==="next"?"var(--red)":"var(--w30)",flexShrink:0}}>R{race.r}</div>
+                  {race.fc && <div style={{width:36,height:24,borderRadius:3,flexShrink:0,marginRight:10,background:"var(--w06)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700,color:"var(--w40)",letterSpacing:.5,opacity:race.st==="postponed"?0.4:1}}>{race.fc}</div>}
                   {tracks&&tracks[race.nm]&&(
                     <div style={{width:44,height:32,marginRight:12,flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",opacity:race.st==="postponed"?0.3:0.75}}>
-                      <TrackMap raceName={race.nm} tracks={tracks} stroke={race.st==="next"?"#E80020":race.st==="done"?"#27F4D2":"rgba(255,255,255,0.55)"} strokeWidth={1.8} height={32} width={44}/>
+                      <TrackMap raceName={race.nm} tracks={tracks} stroke={race.st==="next"?"var(--red)":race.st==="done"?"var(--green)":"var(--w55)"} strokeWidth={1.8} height={32} width={44}/>
                     </div>
                   )}
                   <div style={{flex:1,minWidth:0}}>
                     <div style={{display:"flex",alignItems:"center",gap:8}}>
-                      <span style={{fontSize:14,fontWeight:600,color:race.st==="postponed"?"rgba(255,255,255,0.4)":"#fff"}}>{race.nm}</span>
-                      {race.sp&&<span style={{fontSize:9,fontWeight:700,letterSpacing:.5,padding:"2px 6px",borderRadius:3,background:"rgba(232,0,32,0.15)",color:"#E80020"}}>SPRINT</span>}
-                      {race.st==="next"&&<span style={{fontSize:10,fontWeight:600,padding:"2px 8px",borderRadius:3,background:"rgba(232,0,32,0.1)",color:"rgba(255,255,255,0.7)"}}>{countdownLabel(race.dt,race.tt)}</span>}
+                      <span style={{fontSize:14,fontWeight:600,color:race.st==="postponed"?"var(--w40)":"var(--fg)"}}>{race.nm}</span>
+                      {race.sp&&<span style={{fontSize:9,fontWeight:700,letterSpacing:.5,padding:"2px 6px",borderRadius:3,background:"rgba(232,0,32,0.15)",color:"var(--red)"}}>SPRINT</span>}
+                      {race.st==="next"&&<span style={{fontSize:10,fontWeight:600,padding:"2px 8px",borderRadius:3,background:"rgba(232,0,32,0.1)",color:"var(--w70)"}}>{countdownLabel(race.dt,race.tt)}</span>}
                     </div>
-                    <div style={{fontSize:11,color:"rgba(255,255,255,0.35)",marginTop:2}}>{race.ci}</div>
+                    <div style={{fontSize:11,color:"var(--w35)",marginTop:2}}>{race.ci}</div>
                   </div>
-                  <div style={{fontSize:12,color:"rgba(255,255,255,0.5)",marginRight:16,fontVariantNumeric:"tabular-nums",flexShrink:0,textAlign:"right",width:105}}>
+                  <div style={{fontSize:12,color:"var(--w50)",marginRight:16,fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)",flexShrink:0,textAlign:"right",width:105}}>
                     <div>{raceDateFmt(race.dt,race.tt)}</div>
-                    {race.tt&&<div style={{fontSize:10,color:"rgba(255,255,255,0.3)",marginTop:1}}>{raceTimeFmt(race.dt,race.tt)}</div>}
+                    {race.tt&&<div style={{fontSize:10,color:"var(--w30)",marginTop:1}}>{raceTimeFmt(race.dt,race.tt)}</div>}
                   </div>
                   <div style={{width:95,flexShrink:0,display:"flex",justifyContent:"flex-end"}}><SB status={race.st}/></div>
-                  {race.w&&<div style={{marginLeft:12,fontSize:12,color:"#27F4D2",fontWeight:600,flexShrink:0}}>🏆 {race.w}</div>}
+                  {race.w&&<div className="num" style={{marginLeft:12,fontSize:12,color:"var(--ink)",fontWeight:700,flexShrink:0}}>P1 {race.w}</div>}
                 </div>
                 );
               })}
@@ -2128,7 +2204,7 @@ export default function F1Dashboard(){
         {tab==="Telemetry"&&<TelemetryTab openf1={openf1} tracks={tracks} telMeetingKey={telMeetingKey} setTelMeetingKey={setTelMeetingKey}/>}
         </div>
         </TabErrorBoundary>
-      </div>
+      </main>
     </div>
   );
 }
@@ -2188,16 +2264,16 @@ const TelemetryTab=memo(function TelemetryTab({openf1,tracks,telMeetingKey,setTe
             return{yMin:Math.max(0,p10-1),yMax:p95+3}; // tail above for slow laps
           },[visibleDrivers]);
           if(raceMeetings.length===0)return(
-            <div className="fu" style={{textAlign:"center",padding:60,color:"rgba(255,255,255,0.4)"}}>
-              <div style={{fontSize:40,marginBottom:12}}>📈</div>
+            <div className="fu" style={{textAlign:"center",padding:60,color:"var(--w40)"}}>
+              <svg width="40" height="40" viewBox="0 0 40 40" aria-hidden="true" style={{display:"block",margin:"0 auto 12px"}}><circle cx="20" cy="22" r="14" fill="none" stroke="var(--ink-3)" strokeWidth="2"/><path d="M20 12v10l6 4" fill="none" stroke="var(--ink-3)" strokeWidth="2" strokeLinecap="round"/><path d="M16 5h8M20 5v3" stroke="var(--ink-3)" strokeWidth="2" strokeLinecap="round"/></svg>
               <div style={{fontSize:16,fontWeight:600,marginBottom:4}}>No race telemetry available yet</div>
-              <div style={{fontSize:13}}>Run <code style={{background:"rgba(255,255,255,0.08)",padding:"2px 8px",borderRadius:4}}>npm run fetch-openf1</code> after a race finishes.</div>
+              <div style={{fontSize:13}}>Run <code style={{background:"var(--w08)",padding:"2px 8px",borderRadius:4}}>npm run fetch-openf1</code> after a race finishes.</div>
             </div>
           );
           // Full meeting payload still streaming in (lazy-loaded per meeting)
           if(!race.drivers)return(
-            <div className="fu" style={{textAlign:"center",padding:60,color:"rgba(255,255,255,0.4)"}}>
-              <div style={{fontSize:40,marginBottom:12}}>📈</div>
+            <div className="fu" style={{textAlign:"center",padding:60,color:"var(--w40)"}}>
+              <svg width="40" height="40" viewBox="0 0 40 40" aria-hidden="true" style={{display:"block",margin:"0 auto 12px"}}><circle cx="20" cy="22" r="14" fill="none" stroke="var(--ink-3)" strokeWidth="2"/><path d="M20 12v10l6 4" fill="none" stroke="var(--ink-3)" strokeWidth="2" strokeLinecap="round"/><path d="M16 5h8M20 5v3" stroke="var(--ink-3)" strokeWidth="2" strokeLinecap="round"/></svg>
               <div style={{fontSize:16,fontWeight:600,marginBottom:4}}>Loading telemetry data…</div>
               <div style={{fontSize:13}}>{cur.meeting.meetingName}</div>
             </div>
@@ -2206,10 +2282,10 @@ const TelemetryTab=memo(function TelemetryTab({openf1,tracks,telMeetingKey,setTe
             <div className="fu" style={{display:"flex",flexDirection:"column",gap:24}}>
               {/* Meeting selector */}
               <div style={{display:"flex",alignItems:"center",gap:14,flexWrap:"wrap"}}>
-                <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:"rgba(255,255,255,0.4)"}}>Race</div>
+                <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:"var(--w40)"}}>Race</div>
                 <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
                   {raceMeetings.map(rm=>(
-                    <button key={rm.meeting.meetingKey} onClick={()=>{setTelMeetingKey(rm.meeting.meetingKey);setTelSelected(new Set());}} style={{cursor:"pointer",padding:"6px 14px",borderRadius:6,border:activeKey===rm.meeting.meetingKey?"1px solid rgba(232,0,32,0.4)":"1px solid rgba(255,255,255,0.08)",background:activeKey===rm.meeting.meetingKey?"rgba(232,0,32,0.12)":"rgba(255,255,255,0.03)",color:activeKey===rm.meeting.meetingKey?"#E80020":"rgba(255,255,255,0.5)",fontSize:12,fontWeight:activeKey===rm.meeting.meetingKey?600:400,fontFamily:"'Outfit',sans-serif"}}>{rm.meeting.meetingName.replace(" Grand Prix","")}</button>
+                    <button key={rm.meeting.meetingKey} onClick={()=>{setTelMeetingKey(rm.meeting.meetingKey);setTelSelected(new Set());}} style={{cursor:"pointer",padding:"6px 14px",borderRadius:6,border:activeKey===rm.meeting.meetingKey?"1px solid rgba(232,0,32,0.4)":"1px solid var(--w08)",background:activeKey===rm.meeting.meetingKey?"rgba(232,0,32,0.12)":"var(--w03)",color:activeKey===rm.meeting.meetingKey?"var(--red)":"var(--w50)",fontSize:12,fontWeight:activeKey===rm.meeting.meetingKey?600:400,fontFamily:"var(--font-ui)"}}>{rm.meeting.meetingName.replace(" Grand Prix","")}</button>
                   ))}
                 </div>
               </div>
@@ -2221,17 +2297,17 @@ const TelemetryTab=memo(function TelemetryTab({openf1,tracks,telMeetingKey,setTe
               <LapComparePanel openf1={openf1} telMeetingKey={telMeetingKey} allDrivers={allDrivers} cur={cur}/>
 
               {/* Driver chips */}
-              <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:16}}>
+              <div style={{background:"var(--w02)",border:"1px solid var(--w06)",borderRadius:2,padding:16}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:10}}>
-                  <div style={{fontSize:12,color:"rgba(255,255,255,0.5)",fontWeight:500}}>Drivers (click to toggle · max 8)</div>
-                  <div style={{fontSize:10,color:"rgba(255,255,255,0.3)"}}>{visibleDrivers.length} selected</div>
+                  <div style={{fontSize:12,color:"var(--w50)",fontWeight:500}}>Drivers (click to toggle · max 8)</div>
+                  <div style={{fontSize:10,color:"var(--w30)"}}>{visibleDrivers.length} selected</div>
                 </div>
                 <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
                   {sortedByFinish.map(d=>{
                     const on=selected.has(d.acronym);
-                    const tc=d.teamColour||"#fff";
+                    const tc=inkify(d.teamColour)||"var(--fg)";
                     return(
-                      <button key={d.acronym} onClick={()=>toggleTel(d.acronym)} style={{display:"flex",alignItems:"center",gap:6,padding:"5px 10px",borderRadius:6,border:`1px solid ${on?tc:"rgba(255,255,255,0.08)"}`,background:on?`${tc}1a`:"rgba(255,255,255,0.02)",color:on?"#fff":"rgba(255,255,255,0.5)",cursor:"pointer",fontSize:11,fontWeight:on?700:500,fontFamily:"'Outfit',sans-serif"}}>
+                      <button key={d.acronym} onClick={()=>toggleTel(d.acronym)} style={{display:"flex",alignItems:"center",gap:6,padding:"5px 10px",borderRadius:6,border:`1px solid ${on?tc:"var(--w08)"}`,background:on?`${tc}1a`:"var(--w02)",color:on?"var(--fg)":"var(--w50)",cursor:"pointer",fontSize:11,fontWeight:on?700:500,fontFamily:"var(--font-ui)"}}>
                         <div style={{width:3,height:11,background:tc,borderRadius:1,opacity:on?1:0.5}}/>
                         <span style={{letterSpacing:0.5}}>{d.acronym}</span>
                       </button>
@@ -2309,6 +2385,17 @@ const ReplayPanel=memo(function ReplayPanel({cur,race,tracks,allDrivers,telMeeti
     const minGap=Math.min(0,...series.flatMap(s=>s.pts.map(p=>p.gap)));
     return{series,totalLaps:lastLap(order[0][1]),maxGap,minGap};
   },[lapsByDriver]);
+  // Shared lap cursor: the overview lap chart writes #lap=N; open the replay on that lap.
+  useEffect(()=>{
+    const m=/lap=(\d+)/.exec(typeof location!=="undefined"?location.hash:"");
+    if(!m)return;
+    const L=parseInt(m[1]);
+    const entries=Object.values(lapsByDriver).filter(v=>v.cumArr.length>0);
+    if(L<=1||entries.length===0)return;
+    const lead=[...entries].sort((a,b)=>b.cumArr.length-a.cumArr.length||a.total-b.total)[0];
+    const e=lead.cumArr.find(x=>x.l===L-1);
+    if(e){setReplayPlaying(false);setReplayTime(e.cum+0.01);}
+  },[lapsByDriver]);
   return (()=>{
                 const raceDuration=Math.max(1,...Object.values(lapsByDriver).map(x=>x.total));
                 replayDurationRef.current=raceDuration; // rAF clock auto-pauses here
@@ -2369,27 +2456,27 @@ const ReplayPanel=memo(function ReplayPanel({cur,race,tracks,allDrivers,telMeeti
                   const ts=tAt(p.lapStart),te=tAt(p.lapEnd);
                   return ts!=null&&te!=null?{type:p.type,start:ts,end:te}:null;
                 }).filter(Boolean);
-                const periodStyle={SC:{fill:"#FFDA00",label:"SC"},VSC:{fill:"#FF9800",label:"VSC"},RED:{fill:"#E80020",label:"RED"}};
+                const periodStyle={SC:{fill:"var(--yellow)",label:"SC"},VSC:{fill:"var(--amber)",label:"VSC"},RED:{fill:"var(--red)",label:"RED"}};
                 return(
-                  <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:18,marginBottom:16}}>
+                  <div style={{background:"var(--w02)",border:"1px solid var(--w06)",borderRadius:2,padding:18,marginBottom:16}}>
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:14,flexWrap:"wrap",gap:8}}>
                       <div>
                         <div style={{fontSize:15,fontWeight:700}}>Race Replay</div>
-                        <div style={{fontSize:11,color:"rgba(255,255,255,0.4)",marginTop:2}}>{cur.meeting.meetingName} · Lap {leaderLap} of {totalLaps} · {fmtTime(tClamped)}</div>
+                        <div style={{fontSize:11,color:"var(--w40)",marginTop:2}}>{cur.meeting.meetingName} · Lap {leaderLap} of {totalLaps} · {fmtTime(tClamped)}</div>
                       </div>
                       <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
-                        <button onClick={()=>{if(replayTime>=raceDuration-0.5)setReplayTime(0);setReplayPlaying(p=>!p);}} style={{width:38,height:38,borderRadius:"50%",border:"1px solid rgba(255,255,255,0.15)",background:replayPlaying?"rgba(232,0,32,0.18)":"rgba(255,255,255,0.06)",color:"#fff",cursor:"pointer",fontSize:14,fontFamily:"'Outfit',sans-serif",display:"flex",alignItems:"center",justifyContent:"center"}}>{replayPlaying?"⏸":"▶"}</button>
-                        <button onClick={()=>{setReplayPlaying(false);setReplayTime(0);}} title="Restart" style={{width:30,height:30,borderRadius:6,border:"1px solid rgba(255,255,255,0.08)",background:"rgba(255,255,255,0.03)",color:"rgba(255,255,255,0.55)",cursor:"pointer",fontSize:12,fontFamily:"'Outfit',sans-serif"}}>⏮</button>
-                        <div style={{display:"flex",gap:3,border:"1px solid rgba(255,255,255,0.08)",borderRadius:6,padding:2,background:"rgba(255,255,255,0.02)"}}>
+                        <button onClick={()=>{if(replayTime>=raceDuration-0.5)setReplayTime(0);setReplayPlaying(p=>!p);}} style={{width:38,height:38,borderRadius:"50%",border:"1px solid var(--w15)",background:replayPlaying?"rgba(232,0,32,0.18)":"var(--w06)",color:"var(--fg)",cursor:"pointer",fontSize:14,fontFamily:"var(--font-ui)",display:"flex",alignItems:"center",justifyContent:"center"}}>{replayPlaying?"⏸":"▶"}</button>
+                        <button onClick={()=>{setReplayPlaying(false);setReplayTime(0);}} title="Restart" style={{width:30,height:30,borderRadius:6,border:"1px solid var(--w08)",background:"var(--w03)",color:"var(--w55)",cursor:"pointer",fontSize:12,fontFamily:"var(--font-ui)"}}>⏮</button>
+                        <div style={{display:"flex",gap:3,border:"1px solid var(--w08)",borderRadius:6,padding:2,background:"var(--w02)"}}>
                           {[1,2,4,8,16].map(s=>(
-                            <button key={s} onClick={()=>setReplaySpeed(s)} style={{padding:"3px 9px",borderRadius:4,border:"none",background:replaySpeed===s?"rgba(232,0,32,0.18)":"transparent",color:replaySpeed===s?"#fff":"rgba(255,255,255,0.5)",cursor:"pointer",fontSize:10,fontWeight:replaySpeed===s?700:500,fontFamily:"'Outfit',sans-serif"}}>{s}×</button>
+                            <button key={s} onClick={()=>setReplaySpeed(s)} style={{padding:"3px 9px",borderRadius:4,border:"none",background:replaySpeed===s?"rgba(232,0,32,0.18)":"transparent",color:replaySpeed===s?"var(--fg)":"var(--w50)",cursor:"pointer",fontSize:10,fontWeight:replaySpeed===s?700:500,fontFamily:"var(--font-ui)"}}>{s}×</button>
                           ))}
                         </div>
                       </div>
                     </div>
                     {/* Scrubber */}
                     <div style={{position:"relative",height:28,marginBottom:14}}>
-                      <div style={{position:"absolute",inset:"12px 0",borderRadius:3,background:"rgba(255,255,255,0.04)"}}/>
+                      <div style={{position:"absolute",inset:"12px 0",borderRadius:3,background:"var(--w04)"}}/>
                       {scrubberPeriods.map((p,i)=>{
                         const st=periodStyle[p.type];if(!st)return null;
                         const left=(p.start/raceDuration)*100;
@@ -2397,13 +2484,13 @@ const ReplayPanel=memo(function ReplayPanel({cur,race,tracks,allDrivers,telMeeti
                         return<div key={i} title={`${st.label} L${periods[i]?.lapStart}-${periods[i]?.lapEnd}`} style={{position:"absolute",top:11,left:`${left}%`,width:`${Math.max(0.5,width)}%`,height:6,background:st.fill,opacity:0.45,borderRadius:1}}/>;
                       })}
                       <input type="range" min={0} max={Math.floor(raceDuration)} step={0.5} value={tClamped} onChange={(e)=>{setReplayPlaying(false);setReplayTime(parseFloat(e.target.value));}} style={{position:"absolute",inset:0,width:"100%",height:28,margin:0,background:"transparent",appearance:"none",WebkitAppearance:"none",cursor:"pointer"}}/>
-                      <style>{`input[type=range]::-webkit-slider-thumb{appearance:none;width:14px;height:22px;border-radius:3px;background:#E80020;border:2px solid #fff;cursor:pointer;box-shadow:0 0 8px rgba(232,0,32,0.6)}input[type=range]::-moz-range-thumb{width:14px;height:22px;border-radius:3px;background:#E80020;border:2px solid #fff;cursor:pointer}input[type=range]::-webkit-slider-runnable-track{background:transparent}input[type=range]::-moz-range-track{background:transparent}`}</style>
+                      <style>{`input[type=range]::-webkit-slider-thumb{appearance:none;width:14px;height:22px;border-radius:3px;background:var(--red);border:2px solid var(--sheet);cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,0.35)}input[type=range]::-moz-range-thumb{width:14px;height:22px;border-radius:3px;background:var(--red);border:2px solid var(--sheet);cursor:pointer}input[type=range]::-webkit-slider-runnable-track{background:transparent}input[type=range]::-moz-range-track{background:transparent}`}</style>
                     </div>
                     {/* Race control banner */}
                     {(activePeriod||yellowActive)&&(()=>{
                       let label,color,bg;
-                      if(activePeriod){const st=periodStyle[activePeriod.type];label=st?.label||activePeriod.type;color=st?.fill||"#fff";bg=`${color}22`;}
-                      else{label="LOCAL YELLOW";color="#FFC800";bg="rgba(255,200,0,0.10)";}
+                      if(activePeriod){const st=periodStyle[activePeriod.type];label=st?.label||activePeriod.type;color=st?.fill||"var(--fg)";bg=`${color}22`;}
+                      else{label="LOCAL YELLOW";color="var(--yellow)";bg="rgba(255,200,0,0.10)";}
                       return(
                         <div style={{padding:"6px 12px",background:bg,border:`1px solid ${color}55`,borderRadius:6,marginBottom:14,fontSize:11,fontWeight:700,letterSpacing:1,color,textTransform:"uppercase",display:"flex",alignItems:"center",gap:8}}>
                           <div style={{width:8,height:8,background:color,borderRadius:"50%",animation:"pulse 1.2s ease-in-out infinite"}}/>{label} active
@@ -2413,7 +2500,7 @@ const ReplayPanel=memo(function ReplayPanel({cur,race,tracks,allDrivers,telMeeti
                     {/* Main: track + leaderboard */}
                     <div style={{display:"grid",gridTemplateColumns:"1fr 280px",gap:18,alignItems:"start"}} className="replay-grid">
                       {/* Track with driver dots */}
-                      <div data-replay-track style={{position:"relative",background:"rgba(0,0,0,0.25)",border:"1px solid rgba(255,255,255,0.04)",borderRadius:10,padding:14}}>
+                      <div data-replay-track style={{position:"relative",background:"var(--w03)",border:"1px solid var(--w04)",borderRadius:2,padding:14}}>
                         {sampler&&tracks?.[trackKey]?(()=>{
                           const t=tracks[trackKey];
                           // Compute pixel positions per driver
@@ -2425,22 +2512,22 @@ const ReplayPanel=memo(function ReplayPanel({cur,race,tracks,allDrivers,telMeeti
                             <svg viewBox={t.viewBox} preserveAspectRatio="xMidYMid meet" style={{width:"100%",height:440,display:"block",overflow:"visible",touchAction:"pan-y"}}>
                               {/* Sector underlay — S1/S2/S3 thirds in faint hues beneath the track line */}
                               {sectors&&(()=>{
-                                const segs=[{d:sectors.s1,c:"#d946ef"},{d:sectors.s2,c:"#27F4D2"},{d:sectors.s3,c:"#FF8000"}];
+                                const segs=[{d:sectors.s1,c:"var(--purple)"},{d:sectors.s2,c:"var(--green)"},{d:sectors.s3,c:"#FF8000"}];
                                 const m=sectors.s1.match(/^M([0-9.]+),([0-9.]+)/);
                                 const starts=[m?[parseFloat(m[1]),parseFloat(m[2])]:null,sectors.boundaries[0],sectors.boundaries[1]];
                                 return(
                                   <g pointerEvents="none">
                                     {segs.map((s,i)=><path key={i} d={s.d} fill="none" stroke={s.c} strokeOpacity={0.25} strokeWidth={3.2} strokeLinecap="round" strokeLinejoin="round"/>)}
                                     {starts.map((p,i)=>p&&(
-                                      <text key={"sl"+i} x={p[0]+1.5} y={p[1]-1.5} fontSize="3.6" fontWeight="700" fill={segs[i].c} fillOpacity={0.6} fontFamily="'Outfit',sans-serif">S{i+1}</text>
+                                      <text key={"sl"+i} x={p[0]+1.5} y={p[1]-1.5} fontSize="3.6" fontWeight="700" fill={segs[i].c} fillOpacity={0.6} fontFamily="var(--font-ui)">S{i+1}</text>
                                     ))}
                                   </g>
                                 );
                               })()}
-                              <path d={t.path} fill="none" stroke="rgba(255,255,255,0.14)" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"/>
+                              <path d={t.path} fill="none" stroke="var(--w14)" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"/>
                               {/* Dots */}
                               {dotPositions.map(s=>{
-                                const tc=s.driver.teamColour||"#fff";
+                                const tc=inkify(s.driver.teamColour)||"var(--fg)";
                                 const isLeader=ranked[0]?.driver?.number===s.driver.number;
                                 const isHovered=replayDotHover?.driverNumber===s.driver.number;
                                 return(
@@ -2449,7 +2536,7 @@ const ReplayPanel=memo(function ReplayPanel({cur,race,tracks,allDrivers,telMeeti
                                     onPointerLeave={()=>setReplayDotHover(null)}>
                                     {/* Larger transparent hit area for easier hovering */}
                                     <circle cx={s.pt[0]} cy={s.pt[1]} r={3.5} fill="transparent"/>
-                                    <circle cx={s.pt[0]} cy={s.pt[1]} r={(isLeader?1.9:1.5)*(isHovered?1.4:1)} fill={tc} stroke="#0a0a0f" strokeWidth={0.5} opacity={s.finished?0.4:1}/>
+                                    <circle cx={s.pt[0]} cy={s.pt[1]} r={(isLeader?1.9:1.5)*(isHovered?1.4:1)} fill={tc} stroke="var(--bench)" strokeWidth={0.5} opacity={s.finished?0.4:1}/>
                                     {(isLeader||isHovered)&&<circle cx={s.pt[0]} cy={s.pt[1]} r={isHovered?3.6:2.8} fill="none" stroke={tc} strokeWidth={isHovered?0.7:0.4} opacity={isHovered?0.9:0.7}/>}
                                   </g>
                                 );
@@ -2457,7 +2544,7 @@ const ReplayPanel=memo(function ReplayPanel({cur,race,tracks,allDrivers,telMeeti
                             </svg>
                           );
                         })():(
-                          <div style={{textAlign:"center",padding:80,color:"rgba(255,255,255,0.3)",fontSize:12}}>Track outline not available</div>
+                          <div style={{textAlign:"center",padding:80,color:"var(--w30)",fontSize:12}}>Track outline not available</div>
                         )}
                         {/* Dot hover tooltip */}
                         {replayDotHover&&(()=>{
@@ -2466,49 +2553,49 @@ const ReplayPanel=memo(function ReplayPanel({cur,race,tracks,allDrivers,telMeeti
                           const d=s.driver;
                           const stint=stintForDriver(d.number,s.lapInProgress||Math.floor(s.progress)+1);
                           const compound=(stint?.compound||"").toUpperCase();
-                          const ccol=COMPOUND_COLORS[compound]||"#888";
+                          const ccol=COMPOUND_COLORS[compound]||"var(--ink-4)";
                           const cdark=compound==="HARD";
                           const rank=ranked.findIndex(r=>r.driver.number===d.number)+1;
                           return(
-                            <div style={{position:"absolute",left:replayDotHover.x,top:replayDotHover.y-58,transform:"translateX(-50%)",background:"rgba(14,14,22,0.97)",border:`1px solid ${d.teamColour||"#fff"}55`,borderRadius:8,padding:"8px 12px",pointerEvents:"none",boxShadow:"0 8px 24px rgba(0,0,0,0.55)",zIndex:20,minWidth:140}}>
+                            <div style={{position:"absolute",left:replayDotHover.x,top:replayDotHover.y-58,transform:"translateX(-50%)",background:"var(--panel-2)",border:`1px solid ${inkify(d.teamColour)||"var(--fg)"}55`,borderRadius:2,padding:"8px 12px",pointerEvents:"none",boxShadow:"0 6px 18px -4px rgba(0,0,0,0.35)",zIndex:20,minWidth:140}}>
                               <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
-                                <div style={{fontSize:10,fontWeight:800,color:"rgba(255,255,255,0.4)",fontVariantNumeric:"tabular-nums",minWidth:18}}>P{rank}</div>
-                                <div style={{width:3,height:14,background:d.teamColour||"#fff",borderRadius:1}}/>
+                                <div style={{fontSize:10,fontWeight:800,color:"var(--w40)",fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)",minWidth:18}}>P{rank}</div>
+                                <div style={{width:3,height:14,background:inkify(d.teamColour)||"var(--fg)",borderRadius:1}}/>
                                 <div style={{fontSize:13,fontWeight:700,letterSpacing:0.3}}>{d.acronym}</div>
-                                {compound&&<div style={{marginLeft:"auto",display:"inline-flex",alignItems:"center",justifyContent:"center",width:18,height:18,borderRadius:3,background:ccol,fontSize:9,fontWeight:800,color:cdark?"#111":"#fff"}}>{compound[0]}</div>}
+                                {compound&&<div style={{marginLeft:"auto",display:"inline-flex",alignItems:"center",justifyContent:"center",width:18,height:18,borderRadius:3,background:ccol,fontSize:9,fontWeight:800,color:cdark?"var(--bench)":"var(--fg)"}}>{compound[0]}</div>}
                               </div>
-                              <div style={{fontSize:11,color:"rgba(255,255,255,0.6)",marginBottom:3,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{d.name||d.acronym}</div>
-                              <div style={{fontSize:10,color:d.teamColour||"rgba(255,255,255,0.5)",fontWeight:600}}>{normTeam(d.team||"")}</div>
-                              <div style={{fontSize:10,color:"rgba(255,255,255,0.45)",marginTop:4,fontVariantNumeric:"tabular-nums"}}>{s.finished?"Finished":`Lap ${(s.lapInProgress||Math.floor(s.progress)+1)} · ${Math.round(s.fracOfLap*100)}% around`}</div>
+                              <div style={{fontSize:11,color:"var(--w60)",marginBottom:3,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{d.name||d.acronym}</div>
+                              <div style={{fontSize:10,color:inkify(d.teamColour)||"var(--w50)",fontWeight:600}}>{normTeam(d.team||"")}</div>
+                              <div style={{fontSize:10,color:"var(--w45)",marginTop:4,fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)"}}>{s.finished?"Finished":`Lap ${(s.lapInProgress||Math.floor(s.progress)+1)} · ${Math.round(s.fracOfLap*100)}% around`}</div>
                             </div>
                           );
                         })()}
-                        <div style={{position:"absolute",bottom:8,right:12,fontSize:10,color:"rgba(255,255,255,0.3)",fontStyle:"italic"}}>Dots interpolated from cumulative lap times</div>
+                        <div style={{position:"absolute",bottom:8,right:12,fontSize:10,color:"var(--w30)",fontStyle:"italic"}}>Dots interpolated from cumulative lap times</div>
                       </div>
                       {/* Leaderboard — fixed height matching track, scrollable if needed */}
                       <div style={{display:"flex",flexDirection:"column",gap:2,height:468,overflowY:"auto",paddingRight:4}}>
-                        <div style={{display:"grid",gridTemplateColumns:"20px 26px 1fr 22px 50px",gap:5,padding:"2px 7px",fontSize:9,textTransform:"uppercase",letterSpacing:0.8,color:"rgba(255,255,255,0.3)",fontWeight:600,position:"sticky",top:0,background:"rgba(10,10,15,0.95)",zIndex:1}}>
+                        <div style={{display:"grid",gridTemplateColumns:"20px 26px 1fr 22px 50px",gap:5,padding:"2px 7px",fontSize:9,textTransform:"uppercase",letterSpacing:0.8,color:"var(--w30)",fontWeight:600,position:"sticky",top:0,background:"var(--bench)",zIndex:1}}>
                           <div>P</div><div/><div>Driver</div><div style={{textAlign:"center"}}>T</div><div style={{textAlign:"right"}}>Gap</div>
                         </div>
                         {ranked.map((s,idx)=>{
                           const d=s.driver;
-                          const tc=d.teamColour||"#fff";
+                          const tc=inkify(d.teamColour)||"var(--fg)";
                           const stint=stintForDriver(d.number,s.lapInProgress||Math.floor(s.progress)+1);
                           const compound=(stint?.compound||"").toUpperCase();
-                          const ccol=COMPOUND_COLORS[compound]||"rgba(255,255,255,0.2)";
+                          const ccol=COMPOUND_COLORS[compound]||"var(--w20)";
                           const cdark=compound==="HARD";
                           return(
-                            <div key={d.number} style={{display:"grid",gridTemplateColumns:"20px 26px 1fr 22px 50px",gap:5,padding:"4px 7px",alignItems:"center",background:idx<3?`${tc}14`:"rgba(255,255,255,0.02)",border:idx<3?`1px solid ${tc}30`:"1px solid rgba(255,255,255,0.04)",borderRadius:5,opacity:s.finished?0.55:1,transition:"opacity 0.2s"}}>
-                              <div style={{fontSize:11,fontWeight:800,color:idx<3?tc:"rgba(255,255,255,0.4)",fontVariantNumeric:"tabular-nums"}}>{idx+1}</div>
+                            <div key={d.number} style={{display:"grid",gridTemplateColumns:"20px 26px 1fr 22px 50px",gap:5,padding:"4px 7px",alignItems:"center",background:idx<3?`${tc}14`:"var(--w02)",border:idx<3?`1px solid ${tc}30`:"1px solid var(--w04)",borderRadius:5,opacity:s.finished?0.55:1,transition:"opacity 0.2s"}}>
+                              <div style={{fontSize:11,fontWeight:800,color:idx<3?tc:"var(--w40)",fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)"}}>{idx+1}</div>
                               <div style={{width:3,height:16,background:tc,borderRadius:1.5}}/>
                               <div style={{minWidth:0}}>
                                 <div style={{fontSize:11,fontWeight:700,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",lineHeight:1.1}}>{d.acronym}</div>
-                                <div style={{fontSize:8,color:"rgba(255,255,255,0.4)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",lineHeight:1.1,marginTop:1}}>L{Math.floor(s.progress)+(s.finished?0:1)}{s.finished?" · FIN":""}</div>
+                                <div style={{fontSize:8,color:"var(--w40)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",lineHeight:1.1,marginTop:1}}>L{Math.floor(s.progress)+(s.finished?0:1)}{s.finished?" · FIN":""}</div>
                               </div>
                               <div style={{textAlign:"center"}}>
-                                {compound&&<div style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:16,height:16,borderRadius:3,background:ccol,fontSize:9,fontWeight:800,color:cdark?"#111":"#fff"}}>{compound[0]}</div>}
+                                {compound&&<div style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:16,height:16,borderRadius:3,background:ccol,fontSize:9,fontWeight:800,color:cdark?"var(--bench)":"var(--fg)"}}>{compound[0]}</div>}
                               </div>
-                              <div style={{textAlign:"right",fontSize:10,fontWeight:600,fontVariantNumeric:"tabular-nums",color:idx===0?"#27F4D2":"rgba(255,255,255,0.6)"}}>{fmtGapToLeader(s)}</div>
+                              <div style={{textAlign:"right",fontSize:10,fontWeight:600,fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)",color:idx===0?"var(--green)":"var(--w60)"}}>{fmtGapToLeader(s)}</div>
                             </div>
                           );
                         })}
@@ -2523,30 +2610,30 @@ const ReplayPanel=memo(function ReplayPanel({cur,race,tracks,allDrivers,telMeeti
                       const yOf=g=>padT+((g-minGap)/Math.max(0.001,maxGap-minGap))*plotH; // smaller gap = higher
                       const phLap=Math.max(1,Math.min(gTL,leaderLap));
                       return(
-                        <div style={{marginTop:14,background:"rgba(0,0,0,0.25)",border:"1px solid rgba(255,255,255,0.04)",borderRadius:10,padding:"12px 14px"}}>
-                          <div style={{fontSize:10,textTransform:"uppercase",letterSpacing:1.2,color:"rgba(255,255,255,0.4)",fontWeight:600,marginBottom:8}}>Gap to winner (s) by lap · top 6 finishers · capped at 60s</div>
+                        <div style={{marginTop:14,background:"var(--w03)",border:"1px solid var(--w04)",borderRadius:2,padding:"12px 14px"}}>
+                          <div style={{fontSize:10,textTransform:"uppercase",letterSpacing:1.2,color:"var(--w40)",fontWeight:600,marginBottom:8}}>Gap to winner (s) by lap · top 6 finishers · capped at 60s</div>
                           <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{width:"100%",height:120,display:"block"}}>
                             {[minGap,(minGap+maxGap)/2,maxGap].map((g,i)=>(
                               <g key={i}>
-                                <line x1={padL} x2={W-padR} y1={yOf(g)} y2={yOf(g)} stroke="rgba(255,255,255,0.06)"/>
-                                <text x={padL-6} y={yOf(g)+3} textAnchor="end" fill="rgba(255,255,255,0.4)" fontSize="9" fontFamily="'Outfit',sans-serif">{Math.round(g)}</text>
+                                <line x1={padL} x2={W-padR} y1={yOf(g)} y2={yOf(g)} stroke="var(--w06)"/>
+                                <text x={padL-6} y={yOf(g)+3} textAnchor="end" fill="var(--w40)" fontSize="9" fontFamily="var(--font-ui)">{Math.round(g)}</text>
                               </g>
                             ))}
                             {Array.from({length:5},(_,i)=>Math.round(1+(i/4)*(gTL-1))).map((l,i)=>(
-                              <text key={i} x={xOf(l)} y={H-padB+14} textAnchor="middle" fill="rgba(255,255,255,0.45)" fontSize="9" fontFamily="'Outfit',sans-serif">L{l}</text>
+                              <text key={i} x={xOf(l)} y={H-padB+14} textAnchor="middle" fill="var(--w45)" fontSize="9" fontFamily="var(--font-ui)">L{l}</text>
                             ))}
                             {series.map(s=>{
                               const drv=allDrivers.find(d=>d.number===s.number);
-                              const tc=drv?.teamColour||"#fff";
+                              const tc=drv?.teamColour||"var(--fg)";
                               return <path key={s.number} d={s.pts.map((p,i)=>`${i===0?"M":"L"}${xOf(p.l)},${yOf(p.gap)}`).join(" ")} stroke={tc} strokeWidth={1.6} fill="none" strokeLinecap="round" strokeLinejoin="round" opacity={0.9}/>;
                             })}
-                            <line x1={xOf(phLap)} x2={xOf(phLap)} y1={padT} y2={padT+plotH} stroke="rgba(255,255,255,0.35)" strokeWidth={1} strokeDasharray="3 3"/>
+                            <line x1={xOf(phLap)} x2={xOf(phLap)} y1={padT} y2={padT+plotH} stroke="var(--w35)" strokeWidth={1} strokeDasharray="3 3"/>
                           </svg>
-                          <div style={{display:"flex",gap:12,marginTop:6,flexWrap:"wrap",fontSize:10,color:"rgba(255,255,255,0.55)"}}>
+                          <div style={{display:"flex",gap:12,marginTop:6,flexWrap:"wrap",fontSize:10,color:"var(--w55)"}}>
                             {series.map(s=>{
                               const drv=allDrivers.find(d=>d.number===s.number);
                               if(!drv)return null;
-                              return <span key={s.number} style={{display:"flex",alignItems:"center",gap:4}}><span style={{width:10,height:2,background:drv.teamColour||"#fff",display:"inline-block"}}/>{drv.acronym}</span>;
+                              return <span key={s.number} style={{display:"flex",alignItems:"center",gap:4}}><span style={{width:10,height:2,background:inkify(drv.teamColour)||"var(--fg)",display:"inline-block"}}/>{drv.acronym}</span>;
                             })}
                           </div>
                         </div>
@@ -2807,8 +2894,8 @@ const LapComparePanel=memo(function LapComparePanel({openf1,telMeetingKey,allDri
   return (()=>{
                 if(usable.length<2)return null;
                 if(!drA||!drB||drA.acronym===drB.acronym)return null;
-                const tcA=drA.teamColour||"#27F4D2";
-                const tcB=drB.teamColour||"#E80020";
+                const tcA=inkify(drA.teamColour)||"var(--green)";
+                const tcB=inkify(drB.teamColour)||"var(--red)";
                 // Build lap-time series for each
                 const lapsA=(drA.lapTimes||[]).filter(l=>l.ds&&!l.pit).sort((a,b)=>a.l-b.l);
                 const lapsB=(drB.lapTimes||[]).filter(l=>l.ds&&!l.pit).sort((a,b)=>a.l-b.l);
@@ -2850,33 +2937,33 @@ const LapComparePanel=memo(function LapComparePanel({openf1,telMeetingKey,allDri
                 lapPlayDurationRef.current=playDuration; // playback clock auto-pauses here
                 const playT=Math.max(0,Math.min(playDuration,lapComparePlayTime));
                 return(
-                  <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:18}}>
+                  <div style={{background:"var(--w02)",border:"1px solid var(--w06)",borderRadius:2,padding:18}}>
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:4,flexWrap:"wrap",gap:8}}>
                       <div>
                         <div style={{fontSize:15,fontWeight:700}}>Lap Compare</div>
-                        <div style={{fontSize:11,color:"rgba(255,255,255,0.4)",marginTop:2}}>Pick two drivers and click any lap marker · live telemetry loads on demand</div>
+                        <div style={{fontSize:11,color:"var(--w40)",marginTop:2}}>Pick two drivers and click any lap marker · live telemetry loads on demand</div>
                       </div>
                     </div>
                     {/* Driver pickers */}
                     <div style={{display:"flex",gap:14,marginTop:12,marginBottom:14,flexWrap:"wrap"}}>
                       <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
-                        <span style={{fontSize:10,color:"rgba(255,255,255,0.4)",textTransform:"uppercase",letterSpacing:1}}>A</span>
-                        {usable.map(d=>{const on=d.acronym===acrA;const dc=d.teamColour||"#fff";return(
-                          <button key={"lcA-"+d.acronym} onClick={()=>{setLapCompareA(d.acronym);setLapCompareLap(null);}} style={{padding:"3px 8px",borderRadius:4,border:`1px solid ${on?dc:"rgba(255,255,255,0.08)"}`,background:on?`${dc}1a`:"rgba(255,255,255,0.02)",color:on?"#fff":"rgba(255,255,255,0.55)",cursor:"pointer",fontSize:10,fontWeight:on?700:500,fontFamily:"'Outfit',sans-serif",letterSpacing:0.4}}>{d.acronym}</button>
+                        <span style={{fontSize:10,color:"var(--w40)",textTransform:"uppercase",letterSpacing:1}}>A</span>
+                        {usable.map(d=>{const on=d.acronym===acrA;const dc=inkify(d.teamColour)||"var(--fg)";return(
+                          <button key={"lcA-"+d.acronym} onClick={()=>{setLapCompareA(d.acronym);setLapCompareLap(null);}} style={{padding:"3px 8px",borderRadius:4,border:`1px solid ${on?dc:"var(--w08)"}`,background:on?`${dc}1a`:"var(--w02)",color:on?"var(--fg)":"var(--w55)",cursor:"pointer",fontSize:10,fontWeight:on?700:500,fontFamily:"var(--font-ui)",letterSpacing:0.4}}>{d.acronym}</button>
                         );})}
                       </div>
                       <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
-                        <span style={{fontSize:10,color:"rgba(255,255,255,0.4)",textTransform:"uppercase",letterSpacing:1}}>B</span>
-                        {usable.map(d=>{const on=d.acronym===acrB;const dc=d.teamColour||"#fff";return(
-                          <button key={"lcB-"+d.acronym} onClick={()=>{setLapCompareB(d.acronym);setLapCompareLap(null);}} style={{padding:"3px 8px",borderRadius:4,border:`1px solid ${on?dc:"rgba(255,255,255,0.08)"}`,background:on?`${dc}1a`:"rgba(255,255,255,0.02)",color:on?"#fff":"rgba(255,255,255,0.55)",cursor:"pointer",fontSize:10,fontWeight:on?700:500,fontFamily:"'Outfit',sans-serif",letterSpacing:0.4}}>{d.acronym}</button>
+                        <span style={{fontSize:10,color:"var(--w40)",textTransform:"uppercase",letterSpacing:1}}>B</span>
+                        {usable.map(d=>{const on=d.acronym===acrB;const dc=inkify(d.teamColour)||"var(--fg)";return(
+                          <button key={"lcB-"+d.acronym} onClick={()=>{setLapCompareB(d.acronym);setLapCompareLap(null);}} style={{padding:"3px 8px",borderRadius:4,border:`1px solid ${on?dc:"var(--w08)"}`,background:on?`${dc}1a`:"var(--w02)",color:on?"var(--fg)":"var(--w55)",cursor:"pointer",fontSize:10,fontWeight:on?700:500,fontFamily:"var(--font-ui)",letterSpacing:0.4}}>{d.acronym}</button>
                         );})}
                       </div>
                     </div>
                     {/* Lap dropdown selector */}
                     <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10,flexWrap:"wrap"}}>
-                      <span style={{fontSize:10,textTransform:"uppercase",letterSpacing:1,color:"rgba(255,255,255,0.4)",fontWeight:600}}>Lap</span>
-                      <select value={lapCompareLap||""} onChange={(e)=>{const v=parseInt(e.target.value);if(!isNaN(v))onPickLap(v);}} style={{appearance:"none",WebkitAppearance:"none",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.10)",borderRadius:6,padding:"6px 28px 6px 12px",color:"#fff",fontSize:12,fontWeight:500,fontFamily:"'Outfit',sans-serif",cursor:"pointer",outline:"none",minWidth:200}}>
-                        {!lapCompareLap&&<option value="" disabled style={{background:"#14141f"}}>Select a lap…</option>}
+                      <span style={{fontSize:10,textTransform:"uppercase",letterSpacing:1,color:"var(--w40)",fontWeight:600}}>Lap</span>
+                      <select value={lapCompareLap||""} onChange={(e)=>{const v=parseInt(e.target.value);if(!isNaN(v))onPickLap(v);}} style={{appearance:"none",WebkitAppearance:"none",background:"var(--w04)",border:"1px solid var(--w10)",borderRadius:6,padding:"6px 28px 6px 12px",color:"var(--fg)",fontSize:12,fontWeight:500,fontFamily:"var(--font-ui)",cursor:"pointer",outline:"none",minWidth:200}}>
+                        {!lapCompareLap&&<option value="" disabled style={{background:"var(--sheet)"}}>Select a lap…</option>}
                         {(()=>{
                           // Union of usable laps across both drivers
                           const lapSet=new Set();
@@ -2891,50 +2978,50 @@ const LapComparePanel=memo(function LapComparePanel({openf1,telMeetingKey,allDri
                             const star=isFastestA||isFastestB?" ★":"";
                             const taStr=ta?fmtLapTime(ta):"—";
                             const tbStr=tb?fmtLapTime(tb):"—";
-                            return<option key={lap} value={lap} style={{background:"#14141f",color:"#fff"}}>{`Lap ${lap}${star} — ${drA.acronym} ${taStr} · ${drB.acronym} ${tbStr}`}</option>;
+                            return<option key={lap} value={lap} style={{background:"var(--sheet)",color:"var(--fg)"}}>{`Lap ${lap}${star} — ${drA.acronym} ${taStr} · ${drB.acronym} ${tbStr}`}</option>;
                           });
                         })()}
                       </select>
                       {lapCompareLap&&(dataA?.error||dataB?.error)&&(
-                        <button onClick={onRetry} style={{padding:"5px 12px",borderRadius:6,border:"1px solid rgba(232,0,32,0.4)",background:"rgba(232,0,32,0.15)",color:"#fff",cursor:"pointer",fontSize:11,fontWeight:600,fontFamily:"'Outfit',sans-serif"}}>↻ Retry</button>
+                        <button onClick={onRetry} style={{padding:"5px 12px",borderRadius:6,border:"1px solid rgba(232,0,32,0.4)",background:"rgba(232,0,32,0.15)",color:"var(--fg)",cursor:"pointer",fontSize:11,fontWeight:600,fontFamily:"var(--font-ui)"}}>↻ Retry</button>
                       )}
                     </div>
                     {/* Lap selector chart */}
-                    <div style={{fontSize:10,textTransform:"uppercase",letterSpacing:1,color:"rgba(255,255,255,0.4)",fontWeight:600,marginBottom:6}}>Or click any marker on the chart</div>
+                    <div style={{fontSize:10,textTransform:"uppercase",letterSpacing:1,color:"var(--w40)",fontWeight:600,marginBottom:6}}>Or click any marker on the chart</div>
                     <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{width:"100%",height:140,display:"block"}}>
                       {yTicks.map((v,i)=>(
                         <g key={i}>
-                          <line x1={padL} x2={W-padR} y1={yOf(v)} y2={yOf(v)} stroke="rgba(255,255,255,0.06)"/>
-                          <text x={padL-8} y={yOf(v)+4} textAnchor="end" fill="rgba(255,255,255,0.4)" fontSize="9" fontFamily="'Outfit',sans-serif">{fmtLapTime(v)}</text>
+                          <line x1={padL} x2={W-padR} y1={yOf(v)} y2={yOf(v)} stroke="var(--w06)"/>
+                          <text x={padL-8} y={yOf(v)+4} textAnchor="end" fill="var(--w40)" fontSize="9" fontFamily="var(--font-ui)">{fmtLapTime(v)}</text>
                         </g>
                       ))}
-                      {xTicks.map((l,i)=>(<text key={i} x={xOf(l)} y={H-padB+16} textAnchor="middle" fill="rgba(255,255,255,0.45)" fontSize="9" fontFamily="'Outfit',sans-serif">L{l}</text>))}
+                      {xTicks.map((l,i)=>(<text key={i} x={xOf(l)} y={H-padB+16} textAnchor="middle" fill="var(--w45)" fontSize="9" fontFamily="var(--font-ui)">L{l}</text>))}
                       {/* Lines */}
                       <path d={lapsA.map((p,i)=>`${i===0?"M":"L"}${xOf(p.l)},${yOf(p.t)}`).join(" ")} stroke={tcA} strokeWidth={1.8} fill="none" strokeLinecap="round" strokeLinejoin="round" opacity={0.9}/>
                       <path d={lapsB.map((p,i)=>`${i===0?"M":"L"}${xOf(p.l)},${yOf(p.t)}`).join(" ")} stroke={tcB} strokeWidth={1.8} fill="none" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="4 3" opacity={0.9}/>
                       {/* Dots — clickable */}
-                      {lapsA.map(p=><circle key={"a"+p.l} cx={xOf(p.l)} cy={yOf(p.t)} r={p===fastestA?4:2.5} fill={tcA} stroke={lapCompareLap===p.l?"#fff":(p===fastestA?"#27F4D2":"#0a0a0f")} strokeWidth={lapCompareLap===p.l?2:(p===fastestA?1.5:0.5)} style={{cursor:"pointer"}} onClick={()=>onPickLap(p.l)}/>)}
-                      {lapsB.map(p=><circle key={"b"+p.l} cx={xOf(p.l)} cy={yOf(p.t)} r={p===fastestB?4:2.5} fill={tcB} stroke={lapCompareLap===p.l?"#fff":(p===fastestB?"#27F4D2":"#0a0a0f")} strokeWidth={lapCompareLap===p.l?2:(p===fastestB?1.5:0.5)} style={{cursor:"pointer"}} onClick={()=>onPickLap(p.l)}/>)}
+                      {lapsA.map(p=><circle key={"a"+p.l} cx={xOf(p.l)} cy={yOf(p.t)} r={p===fastestA?4:2.5} fill={tcA} stroke={lapCompareLap===p.l?"var(--fg)":(p===fastestA?"var(--green)":"var(--bench)")} strokeWidth={lapCompareLap===p.l?2:(p===fastestA?1.5:0.5)} style={{cursor:"pointer"}} onClick={()=>onPickLap(p.l)}/>)}
+                      {lapsB.map(p=><circle key={"b"+p.l} cx={xOf(p.l)} cy={yOf(p.t)} r={p===fastestB?4:2.5} fill={tcB} stroke={lapCompareLap===p.l?"var(--fg)":(p===fastestB?"var(--green)":"var(--bench)")} strokeWidth={lapCompareLap===p.l?2:(p===fastestB?1.5:0.5)} style={{cursor:"pointer"}} onClick={()=>onPickLap(p.l)}/>)}
                     </svg>
                     {/* Legend */}
                     <div style={{display:"flex",gap:14,marginTop:8,flexWrap:"wrap",fontSize:11}}>
-                      <div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:14,height:2,background:tcA}}/><span style={{fontWeight:600}}>{drA.acronym}</span><span style={{color:"rgba(255,255,255,0.4)",fontVariantNumeric:"tabular-nums"}}>{fmtLapTime(fastestA.t)} L{fastestA.l}</span></div>
-                      <div style={{display:"flex",alignItems:"center",gap:6}}><svg width={14} height={2}><line x1={0} y1={1} x2={14} y2={1} stroke={tcB} strokeWidth={2} strokeDasharray="3 2"/></svg><span style={{fontWeight:600}}>{drB.acronym}</span><span style={{color:"rgba(255,255,255,0.4)",fontVariantNumeric:"tabular-nums"}}>{fmtLapTime(fastestB.t)} L{fastestB.l}</span></div>
-                      <div style={{display:"flex",alignItems:"center",gap:6,color:"rgba(255,255,255,0.5)"}}><div style={{width:8,height:8,borderRadius:"50%",border:"1.5px solid #27F4D2"}}/><span>fastest lap</span></div>
+                      <div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:14,height:2,background:tcA}}/><span style={{fontWeight:600}}>{drA.acronym}</span><span style={{color:"var(--w40)",fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)"}}>{fmtLapTime(fastestA.t)} L{fastestA.l}</span></div>
+                      <div style={{display:"flex",alignItems:"center",gap:6}}><svg width={14} height={2}><line x1={0} y1={1} x2={14} y2={1} stroke={tcB} strokeWidth={2} strokeDasharray="3 2"/></svg><span style={{fontWeight:600}}>{drB.acronym}</span><span style={{color:"var(--w40)",fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)"}}>{fmtLapTime(fastestB.t)} L{fastestB.l}</span></div>
+                      <div style={{display:"flex",alignItems:"center",gap:6,color:"var(--w50)"}}><div style={{width:8,height:8,borderRadius:"50%",border:"1.5px solid var(--green)"}}/><span>fastest lap</span></div>
                     </div>
                     {/* Live telemetry viewer once a lap is picked */}
                     {lapCompareLap&&(
-                      <div style={{marginTop:18,padding:14,background:"rgba(0,0,0,0.25)",border:"1px solid rgba(255,255,255,0.04)",borderRadius:10}}>
+                      <div style={{marginTop:18,padding:14,background:"var(--w03)",border:"1px solid var(--w04)",borderRadius:2}}>
                         <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:10,flexWrap:"wrap",gap:8}}>
-                          <div style={{fontSize:13,fontWeight:700}}>Lap {lapCompareLap} telemetry · {drA.acronym} <span style={{fontVariantNumeric:"tabular-nums",color:tcA,marginLeft:4}}>{fmtLapTime(lapATime)}</span> vs {drB.acronym} <span style={{fontVariantNumeric:"tabular-nums",color:tcB,marginLeft:4}}>{fmtLapTime(lapBTime)}</span></div>
-                          <div style={{fontSize:11,color:"rgba(255,255,255,0.4)"}}>
+                          <div style={{fontSize:13,fontWeight:700}}>Lap {lapCompareLap} telemetry · {drA.acronym} <span style={{fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)",color:tcA,marginLeft:4}}>{fmtLapTime(lapATime)}</span> vs {drB.acronym} <span style={{fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)",color:tcB,marginLeft:4}}>{fmtLapTime(lapBTime)}</span></div>
+                          <div style={{fontSize:11,color:"var(--w40)"}}>
                             {dataA?.loading||dataB?.loading?"Loading from OpenF1…":dataA?.error||dataB?.error?`Error: ${dataA?.error||dataB?.error}`:bothLoaded?`${samplesA.length}/${samplesB.length} samples loaded`:"Waiting…"}
                           </div>
                         </div>
                         {bothLoaded?(()=>{
                           // Combined bbox of both drivers' (x,y) coords
                           const allPts=[...samplesA,...samplesB];
-                          if(allPts.length<3)return<div style={{padding:24,textAlign:"center",fontSize:12,color:"rgba(255,255,255,0.4)"}}>Insufficient data</div>;
+                          if(allPts.length<3)return<div style={{padding:24,textAlign:"center",fontSize:12,color:"var(--w40)"}}>Insufficient data</div>;
                           const xs=allPts.map(p=>p.x),ys=allPts.map(p=>p.y);
                           const minX=Math.min(...xs),maxX=Math.max(...xs);
                           const minY=Math.min(...ys),maxY=Math.max(...ys);
@@ -2994,15 +3081,15 @@ const LapComparePanel=memo(function LapComparePanel({openf1,telMeetingKey,allDri
                             <>
                               {/* Playback controls */}
                               <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10,flexWrap:"wrap"}}>
-                                <button onClick={()=>{if(playT>=playDuration-0.05)setLapComparePlayTime(0);setLapComparePlaying(p=>!p);}} style={{width:32,height:32,borderRadius:"50%",border:"1px solid rgba(255,255,255,0.15)",background:lapComparePlaying?"rgba(232,0,32,0.18)":"rgba(255,255,255,0.06)",color:"#fff",cursor:"pointer",fontSize:12,fontFamily:"'Outfit',sans-serif",display:"flex",alignItems:"center",justifyContent:"center"}}>{lapComparePlaying?"⏸":"▶"}</button>
-                                <button onClick={()=>{setLapComparePlaying(false);setLapComparePlayTime(0);}} style={{width:28,height:28,borderRadius:5,border:"1px solid rgba(255,255,255,0.08)",background:"rgba(255,255,255,0.03)",color:"rgba(255,255,255,0.55)",cursor:"pointer",fontSize:11,fontFamily:"'Outfit',sans-serif"}}>⏮</button>
-                                <div style={{fontSize:11,color:"rgba(255,255,255,0.7)",fontVariantNumeric:"tabular-nums",minWidth:90}}>{playT.toFixed(2)}s / {playDuration.toFixed(2)}s</div>
+                                <button onClick={()=>{if(playT>=playDuration-0.05)setLapComparePlayTime(0);setLapComparePlaying(p=>!p);}} style={{width:32,height:32,borderRadius:"50%",border:"1px solid var(--w15)",background:lapComparePlaying?"rgba(232,0,32,0.18)":"var(--w06)",color:"var(--fg)",cursor:"pointer",fontSize:12,fontFamily:"var(--font-ui)",display:"flex",alignItems:"center",justifyContent:"center"}}>{lapComparePlaying?"⏸":"▶"}</button>
+                                <button onClick={()=>{setLapComparePlaying(false);setLapComparePlayTime(0);}} style={{width:28,height:28,borderRadius:5,border:"1px solid var(--w08)",background:"var(--w03)",color:"var(--w55)",cursor:"pointer",fontSize:11,fontFamily:"var(--font-ui)"}}>⏮</button>
+                                <div style={{fontSize:11,color:"var(--w70)",fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)",minWidth:90}}>{playT.toFixed(2)}s / {playDuration.toFixed(2)}s</div>
                                 <input type="range" min={0} max={playDuration} step={0.05} value={playT} onChange={(e)=>{setLapComparePlaying(false);setLapComparePlayTime(parseFloat(e.target.value));}} style={{flex:1,minWidth:200,height:24,margin:0,appearance:"none",WebkitAppearance:"none",cursor:"pointer",background:"transparent"}}/>
                                 {/* Zoom controls */}
-                                <div style={{display:"flex",gap:2,border:"1px solid rgba(255,255,255,0.08)",borderRadius:6,padding:2,background:"rgba(255,255,255,0.02)"}}>
-                                  <button onClick={()=>{const z1=Math.max(1,lapZoom*0.8);setLapZoom(z1);setLapPan(p=>clampPan(p,z1));}} style={{width:24,height:24,borderRadius:4,border:"none",background:"transparent",color:"rgba(255,255,255,0.6)",cursor:"pointer",fontSize:12,fontFamily:"'Outfit',sans-serif"}}>−</button>
-                                  <button onClick={()=>{setLapZoom(1.6);setLapPan({x:0,y:0});}} title="Reset zoom" style={{padding:"3px 8px",borderRadius:4,border:"none",background:"transparent",color:"rgba(255,255,255,0.55)",cursor:"pointer",fontSize:10,fontFamily:"'Outfit',sans-serif"}}>{(lapZoom*100|0)}%</button>
-                                  <button onClick={()=>setLapZoom(z=>Math.min(6,z*1.25))} style={{width:24,height:24,borderRadius:4,border:"none",background:"transparent",color:"rgba(255,255,255,0.6)",cursor:"pointer",fontSize:12,fontFamily:"'Outfit',sans-serif"}}>+</button>
+                                <div style={{display:"flex",gap:2,border:"1px solid var(--w08)",borderRadius:6,padding:2,background:"var(--w02)"}}>
+                                  <button onClick={()=>{const z1=Math.max(1,lapZoom*0.8);setLapZoom(z1);setLapPan(p=>clampPan(p,z1));}} style={{width:24,height:24,borderRadius:4,border:"none",background:"transparent",color:"var(--w60)",cursor:"pointer",fontSize:12,fontFamily:"var(--font-ui)"}}>−</button>
+                                  <button onClick={()=>{setLapZoom(1.6);setLapPan({x:0,y:0});}} title="Reset zoom" style={{padding:"3px 8px",borderRadius:4,border:"none",background:"transparent",color:"var(--w55)",cursor:"pointer",fontSize:10,fontFamily:"var(--font-ui)"}}>{(lapZoom*100|0)}%</button>
+                                  <button onClick={()=>setLapZoom(z=>Math.min(6,z*1.25))} style={{width:24,height:24,borderRadius:4,border:"none",background:"transparent",color:"var(--w60)",cursor:"pointer",fontSize:12,fontFamily:"var(--font-ui)"}}>+</button>
                                 </div>
                               </div>
                               {/* Track view (live x/y) */}
@@ -3016,49 +3103,49 @@ const LapComparePanel=memo(function LapComparePanel({openf1,telMeetingKey,allDri
                                   {/* Track outline segmented by whoever is faster at each point — memoized runs (stroke widths use fitted dims so they stay consistent across zoom) */}
                                   {(lapTrackRuns||[]).map((r,i)=><path key={i} d={r.d} stroke={r.aFaster?tcA:tcB} strokeOpacity={0.85} strokeWidth={Math.max(fittedW,fittedH)*0.008/Math.sqrt(lapZoom)} fill="none" strokeLinecap="round" strokeLinejoin="round"/>)}
                                   {/* Start marker */}
-                                  <circle cx={projX(samplesA[0].x,samplesA[0].y)} cy={projY(samplesA[0].x,samplesA[0].y)} r={Math.max(fittedW,fittedH)*0.008/Math.sqrt(lapZoom)} fill="rgba(255,255,255,0.4)"/>
+                                  <circle cx={projX(samplesA[0].x,samplesA[0].y)} cy={projY(samplesA[0].x,samplesA[0].y)} r={Math.max(fittedW,fittedH)*0.008/Math.sqrt(lapZoom)} fill="var(--w40)"/>
                                   {/* Dots at current playT */}
-                                  {ptA&&<g><circle cx={projX(ptA.x,ptA.y)} cy={projY(ptA.x,ptA.y)} r={Math.max(fittedW,fittedH)*0.018/Math.sqrt(lapZoom)} fill={tcA} stroke="#0a0a0f" strokeWidth={Math.max(fittedW,fittedH)*0.005/Math.sqrt(lapZoom)}/></g>}
-                                  {ptB&&<g><circle cx={projX(ptB.x,ptB.y)} cy={projY(ptB.x,ptB.y)} r={Math.max(fittedW,fittedH)*0.018/Math.sqrt(lapZoom)} fill={tcB} stroke="#0a0a0f" strokeWidth={Math.max(fittedW,fittedH)*0.005/Math.sqrt(lapZoom)}/></g>}
+                                  {ptA&&<g><circle cx={projX(ptA.x,ptA.y)} cy={projY(ptA.x,ptA.y)} r={Math.max(fittedW,fittedH)*0.018/Math.sqrt(lapZoom)} fill={tcA} stroke="var(--bench)" strokeWidth={Math.max(fittedW,fittedH)*0.005/Math.sqrt(lapZoom)}/></g>}
+                                  {ptB&&<g><circle cx={projX(ptB.x,ptB.y)} cy={projY(ptB.x,ptB.y)} r={Math.max(fittedW,fittedH)*0.018/Math.sqrt(lapZoom)} fill={tcB} stroke="var(--bench)" strokeWidth={Math.max(fittedW,fittedH)*0.005/Math.sqrt(lapZoom)}/></g>}
                                 </svg>
                                 {/* Side panel — current readouts */}
                                 <div style={{display:"flex",flexDirection:"column",gap:8}}>
-                                  <div style={{padding:"10px 12px",background:`${tcA}10`,border:`1px solid ${tcA}40`,borderRadius:8}}>
+                                  <div style={{padding:"10px 12px",background:`${tcA}10`,border:`1px solid ${tcA}40`,borderRadius:2}}>
                                     <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
                                       <div style={{width:3,height:14,background:tcA,borderRadius:1.5}}/>
                                       <div style={{fontSize:13,fontWeight:700}}>{drA.acronym}</div>
                                     </div>
-                                    <div style={{fontSize:10,color:"rgba(255,255,255,0.45)",marginBottom:2}}>Speed</div>
-                                    <div style={{fontSize:18,fontWeight:800,fontVariantNumeric:"tabular-nums",color:tcA}}>{ptA?Math.round(ptA.speed):0}<span style={{fontSize:10,color:"rgba(255,255,255,0.5)",marginLeft:3,fontWeight:500}}>km/h</span></div>
+                                    <div style={{fontSize:10,color:"var(--w45)",marginBottom:2}}>Speed</div>
+                                    <div style={{fontSize:18,fontWeight:800,fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)",color:tcA}}>{ptA?Math.round(ptA.speed):0}<span style={{fontSize:10,color:"var(--w50)",marginLeft:3,fontWeight:500}}>km/h</span></div>
                                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginTop:6}}>
-                                      <div style={{fontSize:10,color:"rgba(255,255,255,0.45)"}}>Gear</div>
-                                      <div style={{fontSize:14,fontWeight:700,fontVariantNumeric:"tabular-nums"}}>{ptA?.g==null?"—":ptA.g===0?"N":ptA.g}</div>
+                                      <div style={{fontSize:10,color:"var(--w45)"}}>Gear</div>
+                                      <div style={{fontSize:14,fontWeight:700,fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)"}}>{ptA?.g==null?"—":ptA.g===0?"N":ptA.g}</div>
                                     </div>
                                   </div>
-                                  <div style={{padding:"10px 12px",background:`${tcB}10`,border:`1px solid ${tcB}40`,borderRadius:8}}>
+                                  <div style={{padding:"10px 12px",background:`${tcB}10`,border:`1px solid ${tcB}40`,borderRadius:2}}>
                                     <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
                                       <div style={{width:3,height:14,background:tcB,borderRadius:1.5}}/>
                                       <div style={{fontSize:13,fontWeight:700}}>{drB.acronym}</div>
                                     </div>
-                                    <div style={{fontSize:10,color:"rgba(255,255,255,0.45)",marginBottom:2}}>Speed</div>
-                                    <div style={{fontSize:18,fontWeight:800,fontVariantNumeric:"tabular-nums",color:tcB}}>{ptB?Math.round(ptB.speed):0}<span style={{fontSize:10,color:"rgba(255,255,255,0.5)",marginLeft:3,fontWeight:500}}>km/h</span></div>
+                                    <div style={{fontSize:10,color:"var(--w45)",marginBottom:2}}>Speed</div>
+                                    <div style={{fontSize:18,fontWeight:800,fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)",color:tcB}}>{ptB?Math.round(ptB.speed):0}<span style={{fontSize:10,color:"var(--w50)",marginLeft:3,fontWeight:500}}>km/h</span></div>
                                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginTop:6}}>
-                                      <div style={{fontSize:10,color:"rgba(255,255,255,0.45)"}}>Gear</div>
-                                      <div style={{fontSize:14,fontWeight:700,fontVariantNumeric:"tabular-nums"}}>{ptB?.g==null?"—":ptB.g===0?"N":ptB.g}</div>
+                                      <div style={{fontSize:10,color:"var(--w45)"}}>Gear</div>
+                                      <div style={{fontSize:14,fontWeight:700,fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)"}}>{ptB?.g==null?"—":ptB.g===0?"N":ptB.g}</div>
                                     </div>
                                   </div>
-                                  <div style={{padding:"10px 12px",background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:8}}>
-                                    <div style={{fontSize:10,color:"rgba(255,255,255,0.45)",marginBottom:2,textTransform:"uppercase",letterSpacing:1}}>Speed Δ (A−B)</div>
-                                    <div style={{fontSize:18,fontWeight:800,fontVariantNumeric:"tabular-nums",color:ptA&&ptB?(ptA.speed-ptB.speed>0?"#27F4D2":"#FF6B6B"):"#fff"}}>{ptA&&ptB?(ptA.speed-ptB.speed>=0?"+":"")+Math.round(ptA.speed-ptB.speed):"—"}<span style={{fontSize:10,color:"rgba(255,255,255,0.5)",marginLeft:3,fontWeight:500}}>km/h</span></div>
+                                  <div style={{padding:"10px 12px",background:"var(--w03)",border:"1px solid var(--w06)",borderRadius:2}}>
+                                    <div style={{fontSize:10,color:"var(--w45)",marginBottom:2,textTransform:"uppercase",letterSpacing:1}}>Speed Δ (A−B)</div>
+                                    <div style={{fontSize:18,fontWeight:800,fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)",color:ptA&&ptB?(ptA.speed-ptB.speed>0?"var(--green)":"var(--red)"):"var(--fg)"}}>{ptA&&ptB?(ptA.speed-ptB.speed>=0?"+":"")+Math.round(ptA.speed-ptB.speed):"—"}<span style={{fontSize:10,color:"var(--w50)",marginLeft:3,fontWeight:500}}>km/h</span></div>
                                   </div>
-                                  <div style={{padding:"10px 12px",background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:8}}>
-                                    <div style={{fontSize:10,color:"rgba(255,255,255,0.45)",marginBottom:2,textTransform:"uppercase",letterSpacing:1}}>Gap {drA.acronym}−{drB.acronym}</div>
-                                    <div style={{fontSize:18,fontWeight:800,fontVariantNumeric:"tabular-nums",color:deltaNow==null?"#fff":deltaNow<=0?tcA:tcB}}>{deltaNow==null?"—":(deltaNow>=0?"+":"")+deltaNow.toFixed(3)}<span style={{fontSize:10,color:"rgba(255,255,255,0.5)",marginLeft:3,fontWeight:500}}>s</span></div>
-                                    <div style={{fontSize:9,color:"rgba(255,255,255,0.35)",marginTop:2}}>{deltaNow==null?"":deltaNow<=0?`${drA.acronym} ahead`:`${drB.acronym} ahead`}</div>
+                                  <div style={{padding:"10px 12px",background:"var(--w03)",border:"1px solid var(--w06)",borderRadius:2}}>
+                                    <div style={{fontSize:10,color:"var(--w45)",marginBottom:2,textTransform:"uppercase",letterSpacing:1}}>Gap {drA.acronym}−{drB.acronym}</div>
+                                    <div style={{fontSize:18,fontWeight:800,fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)",color:deltaNow==null?"var(--fg)":deltaNow<=0?tcA:tcB}}>{deltaNow==null?"—":(deltaNow>=0?"+":"")+deltaNow.toFixed(3)}<span style={{fontSize:10,color:"var(--w50)",marginLeft:3,fontWeight:500}}>s</span></div>
+                                    <div style={{fontSize:9,color:"var(--w35)",marginTop:2}}>{deltaNow==null?"":deltaNow<=0?`${drA.acronym} ahead`:`${drB.acronym} ahead`}</div>
                                   </div>
                                 </div>
                                 {/* Faster-driver legend — third grid child lands under the track svg */}
-                                <div style={{display:"flex",gap:14,fontSize:10,color:"rgba(255,255,255,0.55)",alignItems:"center",marginTop:2}}>
+                                <div style={{display:"flex",gap:14,fontSize:10,color:"var(--w55)",alignItems:"center",marginTop:2}}>
                                   <span style={{display:"flex",alignItems:"center",gap:5}}><span style={{width:8,height:8,borderRadius:"50%",background:tcA,display:"inline-block"}}/>{drA.acronym} faster</span>
                                   <span style={{display:"flex",alignItems:"center",gap:5}}><span style={{width:8,height:8,borderRadius:"50%",background:tcB,display:"inline-block"}}/>{drB.acronym} faster</span>
                                 </div>
@@ -3070,21 +3157,21 @@ const LapComparePanel=memo(function LapComparePanel({openf1,telMeetingKey,allDri
                                 const xPh=g.dPadL+playFrac*g.pw;
                                 return(
                                   <div style={{marginTop:14}}>
-                                    <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.2,color:"rgba(255,255,255,0.5)",fontWeight:600,marginBottom:8}}>Gap {drA.acronym}−{drB.acronym} (s) · <span style={{color:tcA}}>below 0 = {drA.acronym} ahead</span></div>
+                                    <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.2,color:"var(--w50)",fontWeight:600,marginBottom:8}}>Gap {drA.acronym}−{drB.acronym} (s) · <span style={{color:tcA}}>below 0 = {drA.acronym} ahead</span></div>
                                     <svg viewBox={`0 0 ${g.dW} ${g.dH}`} preserveAspectRatio="none" style={{width:"100%",height:120,display:"block"}}>
                                       <defs>
                                         <clipPath id="lapGapAbove"><rect x={g.dPadL} y={g.dPadT} width={g.pw} height={g.ph/2}/></clipPath>
                                         <clipPath id="lapGapBelow"><rect x={g.dPadL} y={y0} width={g.pw} height={g.ph/2}/></clipPath>
                                       </defs>
                                       {[yMax,0,-yMax].map((v,i)=>{const y=y0-(v/yMax)*(g.ph/2);return(<g key={i}>
-                                        <line x1={g.dPadL} x2={g.dW-g.dPadR} y1={y} y2={y} stroke={v===0?"rgba(255,255,255,0.22)":"rgba(255,255,255,0.06)"}/>
-                                        <text x={g.dPadL-8} y={y+3} textAnchor="end" fill="rgba(255,255,255,0.4)" fontSize="9" fontFamily="'Outfit',sans-serif">{(v>0?"+":"")+v.toFixed(2)}s</text>
+                                        <line x1={g.dPadL} x2={g.dW-g.dPadR} y1={y} y2={y} stroke={v===0?"var(--w22)":"var(--w06)"}/>
+                                        <text x={g.dPadL-8} y={y+3} textAnchor="end" fill="var(--w40)" fontSize="9" fontFamily="var(--font-ui)">{(v>0?"+":"")+v.toFixed(2)}s</text>
                                       </g>);})}
-                                      {[0,0.25,0.5,0.75,1].map((v,i)=>(<text key={i} x={g.dPadL+v*g.pw} y={g.dH-g.dPadB+15} textAnchor="middle" fill="rgba(255,255,255,0.45)" fontSize="9" fontFamily="'Outfit',sans-serif">{Math.round(v*100)}%</text>))}
+                                      {[0,0.25,0.5,0.75,1].map((v,i)=>(<text key={i} x={g.dPadL+v*g.pw} y={g.dH-g.dPadB+15} textAnchor="middle" fill="var(--w45)" fontSize="9" fontFamily="var(--font-ui)">{Math.round(v*100)}%</text>))}
                                       <path d={area} fill={tcB} fillOpacity={0.13} clipPath="url(#lapGapAbove)"/>
                                       <path d={area} fill={tcA} fillOpacity={0.13} clipPath="url(#lapGapBelow)"/>
-                                      <path d={line} stroke="rgba(255,255,255,0.85)" strokeWidth={1.6} fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-                                      <line x1={xPh} x2={xPh} y1={g.dPadT} y2={g.dPadT+g.ph} stroke="rgba(255,255,255,0.4)" strokeWidth={1} strokeDasharray="3 3"/>
+                                      <path d={line} stroke="var(--w85)" strokeWidth={1.6} fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                                      <line x1={xPh} x2={xPh} y1={g.dPadT} y2={g.dPadT+g.ph} stroke="var(--w40)" strokeWidth={1} strokeDasharray="3 3"/>
                                     </svg>
                                   </div>
                                 );
@@ -3099,17 +3186,17 @@ const LapComparePanel=memo(function LapComparePanel({openf1,telMeetingKey,allDri
                                 const xTicksD=[0,0.25,0.5,0.75,1];
                                 return(
                                   <div style={{marginTop:14}}>
-                                    <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.2,color:"rgba(255,255,255,0.5)",fontWeight:600,marginBottom:8}}>Speed Trace</div>
+                                    <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.2,color:"var(--w50)",fontWeight:600,marginBottom:8}}>Speed Trace</div>
                                     <svg viewBox={`0 0 ${cW} ${cH}`} preserveAspectRatio="none" style={{width:"100%",height:180,display:"block"}}>
                                       {yTicksS.map((v,i)=>(<g key={i}>
-                                        <line x1={cPadL} x2={cW-cPadR} y1={yOfS(v)} y2={yOfS(v)} stroke="rgba(255,255,255,0.06)"/>
-                                        <text x={cPadL-8} y={yOfS(v)+4} textAnchor="end" fill="rgba(255,255,255,0.4)" fontSize="9" fontFamily="'Outfit',sans-serif">{v} km/h</text>
+                                        <line x1={cPadL} x2={cW-cPadR} y1={yOfS(v)} y2={yOfS(v)} stroke="var(--w06)"/>
+                                        <text x={cPadL-8} y={yOfS(v)+4} textAnchor="end" fill="var(--w40)" fontSize="9" fontFamily="var(--font-ui)">{v} km/h</text>
                                       </g>))}
-                                      {xTicksD.map((v,i)=>(<text key={i} x={xOfD(v)} y={cH-cPadB+15} textAnchor="middle" fill="rgba(255,255,255,0.45)" fontSize="9" fontFamily="'Outfit',sans-serif">{Math.round(v*100)}%</text>))}
+                                      {xTicksD.map((v,i)=>(<text key={i} x={xOfD(v)} y={cH-cPadB+15} textAnchor="middle" fill="var(--w45)" fontSize="9" fontFamily="var(--font-ui)">{Math.round(v*100)}%</text>))}
                                       <path d={samplesAdist.map((p,i)=>`${i===0?"M":"L"}${xOfD(p.d)},${yOfS(p.s)}`).join(" ")} stroke={tcA} strokeWidth={2} fill="none" strokeLinecap="round" strokeLinejoin="round" opacity={0.92}/>
                                       <path d={samplesBdist.map((p,i)=>`${i===0?"M":"L"}${xOfD(p.d)},${yOfS(p.s)}`).join(" ")} stroke={tcB} strokeWidth={2} fill="none" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="4 3" opacity={0.92}/>
                                       {/* Vertical line at the shared playhead distance fraction */}
-                                      <line x1={xOfD(playFrac)} x2={xOfD(playFrac)} y1={cPadT} y2={cPadT+cPlotH} stroke="rgba(255,255,255,0.4)" strokeWidth={1} strokeDasharray="3 3"/>
+                                      <line x1={xOfD(playFrac)} x2={xOfD(playFrac)} y1={cPadT} y2={cPadT+cPlotH} stroke="var(--w40)" strokeWidth={1} strokeDasharray="3 3"/>
                                     </svg>
                                     {/* Throttle/brake strips — same x-axis (% of own lap distance), memoized paths */}
                                     {lapStripPaths&&(()=>{
@@ -3117,21 +3204,21 @@ const LapComparePanel=memo(function LapComparePanel({openf1,telMeetingKey,allDri
                                       const xPh=g.sPadL+playFrac*g.pw;
                                       return(<>
                                         <svg viewBox={`0 0 ${g.sW} ${g.sH}`} preserveAspectRatio="none" style={{width:"100%",height:g.sH,display:"block",marginTop:8}}>
-                                          <line x1={g.sPadL} x2={g.sW-g.sPadR} y1={g.sPadT+g.ph} y2={g.sPadT+g.ph} stroke="rgba(255,255,255,0.08)"/>
-                                          <text x={g.sPadL+4} y={g.sPadT+8} fill="rgba(255,255,255,0.4)" fontSize="9" letterSpacing="1.2" fontFamily="'Outfit',sans-serif">THROTTLE</text>
+                                          <line x1={g.sPadL} x2={g.sW-g.sPadR} y1={g.sPadT+g.ph} y2={g.sPadT+g.ph} stroke="var(--w08)"/>
+                                          <text x={g.sPadL+4} y={g.sPadT+8} fill="var(--w40)" fontSize="9" letterSpacing="1.2" fontFamily="var(--font-ui)">THROTTLE</text>
                                           <path d={lapStripPaths.thAreaA} fill={tcA} fillOpacity={0.10}/>
                                           <path d={lapStripPaths.thA} stroke={tcA} strokeWidth={1.4} fill="none" strokeLinecap="round" strokeLinejoin="round" opacity={0.92}/>
                                           <path d={lapStripPaths.thB} stroke={tcB} strokeWidth={1.4} fill="none" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="4 3" opacity={0.55}/>
-                                          <line x1={xPh} x2={xPh} y1={g.sPadT} y2={g.sPadT+g.ph} stroke="rgba(255,255,255,0.4)" strokeWidth={1} strokeDasharray="3 3"/>
+                                          <line x1={xPh} x2={xPh} y1={g.sPadT} y2={g.sPadT+g.ph} stroke="var(--w40)" strokeWidth={1} strokeDasharray="3 3"/>
                                         </svg>
                                         <svg viewBox={`0 0 ${g.sW} ${g.sH}`} preserveAspectRatio="none" style={{width:"100%",height:g.sH,display:"block",marginTop:6}}>
-                                          <line x1={g.sPadL} x2={g.sW-g.sPadR} y1={g.sPadT+g.ph} y2={g.sPadT+g.ph} stroke="rgba(255,255,255,0.08)"/>
-                                          <text x={g.sPadL+4} y={g.sPadT+8} fill="rgba(255,255,255,0.4)" fontSize="9" letterSpacing="1.2" fontFamily="'Outfit',sans-serif">BRAKE</text>
+                                          <line x1={g.sPadL} x2={g.sW-g.sPadR} y1={g.sPadT+g.ph} y2={g.sPadT+g.ph} stroke="var(--w08)"/>
+                                          <text x={g.sPadL+4} y={g.sPadT+8} fill="var(--w40)" fontSize="9" letterSpacing="1.2" fontFamily="var(--font-ui)">BRAKE</text>
                                           <path d={lapStripPaths.brAreaA} fill={tcA} fillOpacity={0.28}/>
                                           <path d={lapStripPaths.brAreaB} fill={tcB} fillOpacity={0.28}/>
                                           <path d={lapStripPaths.brA} stroke={tcA} strokeWidth={1} fill="none" opacity={0.8}/>
                                           <path d={lapStripPaths.brB} stroke={tcB} strokeWidth={1} fill="none" strokeDasharray="4 3" opacity={0.55}/>
-                                          <line x1={xPh} x2={xPh} y1={g.sPadT} y2={g.sPadT+g.ph} stroke="rgba(255,255,255,0.4)" strokeWidth={1} strokeDasharray="3 3"/>
+                                          <line x1={xPh} x2={xPh} y1={g.sPadT} y2={g.sPadT+g.ph} stroke="var(--w40)" strokeWidth={1} strokeDasharray="3 3"/>
                                         </svg>
                                       </>);
                                     })()}
@@ -3141,10 +3228,10 @@ const LapComparePanel=memo(function LapComparePanel({openf1,telMeetingKey,allDri
                             </>
                           );
                         })():(
-                          <div style={{padding:40,textAlign:"center",fontSize:12,color:"rgba(255,255,255,0.5)"}}>
+                          <div style={{padding:40,textAlign:"center",fontSize:12,color:"var(--w50)"}}>
                             {dataA?.error||dataB?.error?(
                               <>
-                                <div style={{fontSize:14,fontWeight:700,color:"#FF6B6B",marginBottom:6}}>Could not load telemetry</div>
+                                <div style={{fontSize:14,fontWeight:700,color:"var(--red)",marginBottom:6}}>Could not load telemetry</div>
                                 <div>{dataA?.error||dataB?.error}</div>
                               </>
                             ):(
@@ -3177,7 +3264,7 @@ const LapTimesChart=memo(function LapTimesChart({maxLap,yMin,yMax,race,visibleDr
                 const fmtLapTime=(s)=>{if(!s)return"—";const m=Math.floor(s/60);const r=(s%60).toFixed(3);return `${m}:${r.padStart(6,"0")}`;};
                 const periods=race.raceControlPeriods||[];
                 const yellowLaps=race.yellowFlagLaps||[];
-                const periodStyle={SC:{fill:"rgba(255,218,0,0.10)",border:"rgba(255,218,0,0.45)",label:"SC",color:"#FFDA00"},VSC:{fill:"rgba(255,152,0,0.08)",border:"rgba(255,152,0,0.40)",label:"VSC",color:"#FF9800"},RED:{fill:"rgba(232,0,32,0.14)",border:"rgba(232,0,32,0.55)",label:"RED",color:"#E80020"}};
+                const periodStyle={SC:{fill:"rgba(255,218,0,0.10)",border:"rgba(255,218,0,0.45)",label:"SC",color:"var(--yellow)"},VSC:{fill:"rgba(255,152,0,0.08)",border:"rgba(255,152,0,0.40)",label:"VSC",color:"var(--amber)"},RED:{fill:"rgba(232,0,32,0.14)",border:"rgba(232,0,32,0.55)",label:"RED",color:"var(--red)"}};
                 const onMove=(e)=>{
                   const rect=e.currentTarget.getBoundingClientRect();
                   const xView=((e.clientX-rect.left)/rect.width)*W;
@@ -3195,15 +3282,15 @@ const LapTimesChart=memo(function LapTimesChart({maxLap,yMin,yMax,race,visibleDr
                 const hoverYView=telLapHover?.yView??null;
                 const hoverTimeAtY=telLapHover?.timeAtY??null;
                 return(
-                  <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20,position:"relative"}}>
+                  <div style={{background:"var(--w02)",border:"1px solid var(--w06)",borderRadius:2,padding:20,position:"relative"}}>
                     <div style={{fontSize:15,fontWeight:700,marginBottom:4}}>Lap Times</div>
-                    <div style={{fontSize:12,color:"rgba(255,255,255,0.35)",marginBottom:8}}>Lap-by-lap pace · low Y axis clipped to 5th-95th percentile · hover for crosshair readout · □ = pit stop</div>
+                    <div style={{fontSize:12,color:"var(--w35)",marginBottom:8}}>Lap-by-lap pace · low Y axis clipped to 5th-95th percentile · hover for crosshair readout · □ = pit stop</div>
                     {/* Race-control legend */}
-                    <div style={{display:"flex",gap:14,flexWrap:"wrap",marginBottom:14,fontSize:10,color:"rgba(255,255,255,0.5)"}}>
+                    <div style={{display:"flex",gap:14,flexWrap:"wrap",marginBottom:14,fontSize:10,color:"var(--w50)"}}>
                       <div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:14,height:8,background:"rgba(255,218,0,0.45)",borderRadius:2}}/><span>Safety Car</span></div>
                       <div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:14,height:8,background:"rgba(255,152,0,0.45)",borderRadius:2}}/><span>Virtual SC</span></div>
                       <div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:14,height:8,background:"rgba(232,0,32,0.55)",borderRadius:2}}/><span>Red Flag</span></div>
-                      <div style={{display:"flex",alignItems:"center",gap:6}}><svg width={14} height={8}><line x1={7} y1={0} x2={7} y2={8} stroke="rgba(255,200,0,0.7)" strokeWidth={1.5} strokeDasharray="2 2"/><circle cx={7} cy={2} r={2} fill="#FFC800"/></svg><span>Local yellow flag</span></div>
+                      <div style={{display:"flex",alignItems:"center",gap:6}}><svg width={14} height={8}><line x1={7} y1={0} x2={7} y2={8} stroke="rgba(255,200,0,0.7)" strokeWidth={1.5} strokeDasharray="2 2"/><circle cx={7} cy={2} r={2} fill="var(--yellow)"/></svg><span>Local yellow flag</span></div>
                     </div>
                     <div style={{position:"relative"}}>
                       <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{width:"100%",height:280,display:"block",touchAction:"pan-y"}} onPointerMove={onMove} onPointerLeave={()=>setTelLapHover(null)}>
@@ -3216,7 +3303,7 @@ const LapTimesChart=memo(function LapTimesChart({maxLap,yMin,yMax,race,visibleDr
                               <rect x={x1} y={padT} width={Math.max(2,x2-x1)} height={plotH} fill={st.fill}/>
                               <line x1={x1} x2={x1} y1={padT} y2={padT+plotH} stroke={st.border} strokeWidth={1} strokeDasharray="2 2"/>
                               <line x1={x2} x2={x2} y1={padT} y2={padT+plotH} stroke={st.border} strokeWidth={1} strokeDasharray="2 2"/>
-                              <text x={(x1+x2)/2} y={padT+10} textAnchor="middle" fill={st.color} fontSize="9" fontWeight={700} fontFamily="'Outfit',sans-serif" letterSpacing={1}>{st.label}</text>
+                              <text x={(x1+x2)/2} y={padT+10} textAnchor="middle" fill={st.color} fontSize="9" fontWeight={700} fontFamily="var(--font-ui)" letterSpacing={1}>{st.label}</text>
                             </g>
                           );
                         })}
@@ -3224,41 +3311,41 @@ const LapTimesChart=memo(function LapTimesChart({maxLap,yMin,yMax,race,visibleDr
                         {yellowLaps.filter(l=>l>=2).map((l,i)=>(
                           <g key={"yf"+i}>
                             <line x1={xOf(l)} x2={xOf(l)} y1={padT+12} y2={padT+plotH} stroke="rgba(255,200,0,0.45)" strokeWidth={1} strokeDasharray="2 3"/>
-                            <circle cx={xOf(l)} cy={padT+6} r={2.5} fill="#FFC800"/>
+                            <circle cx={xOf(l)} cy={padT+6} r={2.5} fill="var(--yellow)"/>
                           </g>
                         ))}
                         {yTicks.map((v,i)=>(
                           <g key={i}>
-                            <line x1={padL} x2={W-padR} y1={yOf(v)} y2={yOf(v)} stroke="rgba(255,255,255,0.06)"/>
-                            <text x={padL-8} y={yOf(v)+4} textAnchor="end" fill="rgba(255,255,255,0.4)" fontSize="10" fontFamily="'Outfit',sans-serif">{fmtSec(v)}</text>
+                            <line x1={padL} x2={W-padR} y1={yOf(v)} y2={yOf(v)} stroke="var(--w06)"/>
+                            <text x={padL-8} y={yOf(v)+4} textAnchor="end" fill="var(--w40)" fontSize="10" fontFamily="var(--font-ui)">{fmtSec(v)}</text>
                           </g>
                         ))}
                         {xTicks.map((l,i)=>(
-                          <text key={i} x={xOf(l)} y={H-padB+18} textAnchor="middle" fill={hoverLap===l?"#fff":"rgba(255,255,255,0.45)"} fontWeight={hoverLap===l?600:400} fontSize="10" fontFamily="'Outfit',sans-serif">L{l}</text>
+                          <text key={i} x={xOf(l)} y={H-padB+18} textAnchor="middle" fill={hoverLap===l?"var(--fg)":"var(--w45)"} fontWeight={hoverLap===l?600:400} fontSize="10" fontFamily="var(--font-ui)">L{l}</text>
                         ))}
                         {hoverLap&&(
-                          <line x1={xOf(hoverLap)} x2={xOf(hoverLap)} y1={padT} y2={padT+plotH} stroke="rgba(255,255,255,0.25)" strokeWidth={1} strokeDasharray="3 3" pointerEvents="none"/>
+                          <line x1={xOf(hoverLap)} x2={xOf(hoverLap)} y1={padT} y2={padT+plotH} stroke="var(--w25)" strokeWidth={1} strokeDasharray="3 3" pointerEvents="none"/>
                         )}
                         {hoverYView!==null&&hoverTimeAtY!==null&&(
                           <g pointerEvents="none">
-                            <line x1={padL} x2={W-padR} y1={hoverYView} y2={hoverYView} stroke="rgba(255,255,255,0.22)" strokeWidth={1} strokeDasharray="3 3"/>
-                            <rect x={padL-46} y={hoverYView-9} width={42} height={18} rx={3} fill="rgba(14,14,22,0.95)" stroke="rgba(255,255,255,0.15)" strokeWidth={0.6}/>
-                            <text x={padL-25} y={hoverYView+4} textAnchor="middle" fill="#27F4D2" fontSize="10" fontFamily="'Outfit',sans-serif" fontWeight={700}>{fmtLapTime(hoverTimeAtY)}</text>
+                            <line x1={padL} x2={W-padR} y1={hoverYView} y2={hoverYView} stroke="var(--w22)" strokeWidth={1} strokeDasharray="3 3"/>
+                            <rect x={padL-46} y={hoverYView-9} width={42} height={18} rx={3} fill="var(--panel-2)" stroke="var(--rule)" strokeWidth={0.6}/>
+                            <text x={padL-25} y={hoverYView+4} textAnchor="middle" fill="var(--green)" fontSize="10" fontFamily="var(--font-ui)" fontWeight={700}>{fmtLapTime(hoverTimeAtY)}</text>
                           </g>
                         )}
                         {visibleDrivers.map(d=>{
                           const lt=(d.lapTimes||[]).filter(l=>l.l>1);
                           if(lt.length<2)return null;
-                          const color=d.teamColour||"#fff";
+                          const color=inkify(d.teamColour)||"var(--fg)";
                           const path=lt.map((p,i)=>`${i===0?"M":"L"}${xOf(p.l)},${yOf(p.t)}`).join(" ");
                           return(
                             <g key={d.acronym} pointerEvents="none">
                               <path d={path} stroke={color} strokeWidth={1.6} fill="none" strokeLinecap="round" strokeLinejoin="round" opacity={0.85}/>
                               {/* Pit-out laps — small hollow square at the data point */}
                               {lt.filter(p=>p.pit).map(p=>(
-                                <rect key={"pit"+p.l} x={xOf(p.l)-3} y={yOf(p.t)-3} width={6} height={6} fill="#0a0a0f" stroke={color} strokeWidth={1.3} opacity={0.9}/>
+                                <rect key={"pit"+p.l} x={xOf(p.l)-3} y={yOf(p.t)-3} width={6} height={6} fill="var(--bench)" stroke={color} strokeWidth={1.3} opacity={0.9}/>
                               ))}
-                              {hoverLap&&(()=>{const p=lt.find(x=>x.l===hoverLap);return p?<circle cx={xOf(p.l)} cy={yOf(p.t)} r={4} fill={color} stroke="#0a0a0f" strokeWidth={1.5}/>:null;})()}
+                              {hoverLap&&(()=>{const p=lt.find(x=>x.l===hoverLap);return p?<circle cx={xOf(p.l)} cy={yOf(p.t)} r={4} fill={color} stroke="var(--bench)" strokeWidth={1.5}/>:null;})()}
                             </g>
                           );
                         })}
@@ -3267,7 +3354,7 @@ const LapTimesChart=memo(function LapTimesChart({maxLap,yMin,yMax,race,visibleDr
                         const rows=visibleDrivers
                           .map(d=>{
                             const p=(d.lapTimes||[]).find(x=>x.l===hoverLap);
-                            return p?{acronym:d.acronym,team:d.team,teamColour:d.teamColour,time:p.t,pit:p.pit}:null;
+                            return p?{acronym:d.acronym,team:d.team,teamColour:inkify(d.teamColour),time:p.t,pit:p.pit}:null;
                           })
                           .filter(Boolean)
                           .sort((a,b)=>a.time-b.time);
@@ -3275,18 +3362,18 @@ const LapTimesChart=memo(function LapTimesChart({maxLap,yMin,yMax,race,visibleDr
                         const leftPct=(xOf(hoverLap)/W)*100;
                         const placeRight=leftPct<55;
                         return(
-                          <div style={{position:"absolute",top:6,[placeRight?"left":"right"]:`${placeRight?leftPct+1.5:100-leftPct+1.5}%`,background:"rgba(14,14,22,0.96)",border:"1px solid rgba(255,255,255,0.10)",borderRadius:8,padding:"10px 12px",pointerEvents:"none",minWidth:200,boxShadow:"0 8px 24px rgba(0,0,0,0.5)"}}>
-                            <div style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:"rgba(255,255,255,0.4)",fontWeight:600,marginBottom:4}}>Lap {hoverLap}</div>
+                          <div style={{position:"absolute",top:6,[placeRight?"left":"right"]:`${placeRight?leftPct+1.5:100-leftPct+1.5}%`,background:"var(--panel-2)",border:"1px solid var(--rule)",borderRadius:2,padding:"10px 12px",pointerEvents:"none",minWidth:200,boxShadow:"0 6px 18px -4px rgba(0,0,0,0.35)"}}>
+                            <div style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:"var(--w40)",fontWeight:600,marginBottom:4}}>Lap {hoverLap}</div>
                             {yellowLaps.includes(hoverLap)&&(
-                              <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6,padding:"3px 7px",background:"rgba(255,200,0,0.10)",border:"1px solid rgba(255,200,0,0.35)",borderRadius:4,fontSize:9,fontWeight:700,color:"#FFC800",letterSpacing:0.5}}>
-                                <div style={{width:6,height:6,background:"#FFC800",borderRadius:"50%"}}/>YELLOW FLAG
+                              <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6,padding:"3px 7px",background:"rgba(255,200,0,0.10)",border:"1px solid rgba(255,200,0,0.35)",borderRadius:4,fontSize:9,fontWeight:700,color:"var(--yellow)",letterSpacing:0.5}}>
+                                <div style={{width:6,height:6,background:"var(--yellow)",borderRadius:"50%"}}/>YELLOW FLAG
                               </div>
                             )}
                             {rows.map(r=>(
                               <div key={r.acronym} style={{display:"flex",alignItems:"center",gap:8,marginBottom:4,fontSize:11}}>
-                                <div style={{width:3,height:11,background:r.teamColour||"#fff",borderRadius:1}}/>
+                                <div style={{width:3,height:11,background:inkify(r.teamColour)||"var(--fg)",borderRadius:1}}/>
                                 <div style={{flex:1,fontWeight:600}}>{r.acronym}</div>
-                                <div style={{fontVariantNumeric:"tabular-nums",fontWeight:700,color:r.pit?"#FFD700":"#fff"}}>{fmtLapTime(r.time)}{r.pit?" 🅿️":""}</div>
+                                <div style={{fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)",fontWeight:700,color:r.pit?"var(--gold)":"var(--fg)"}}>{fmtLapTime(r.time)}{r.pit?" · pit":""}</div>
                               </div>
                             ))}
                           </div>
@@ -3326,19 +3413,19 @@ const TireStrategyPanel=memo(function TireStrategyPanel({race,maxLap,allDrivers,
                   }
                 }
                 return(
-                  <div data-stint-card style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20,position:"relative"}}>
+                  <div data-stint-card style={{background:"var(--w02)",border:"1px solid var(--w06)",borderRadius:2,padding:20,position:"relative"}}>
                     <div style={{fontSize:15,fontWeight:700,marginBottom:4}}>Tire Strategy</div>
-                    <div style={{fontSize:12,color:"rgba(255,255,255,0.35)",marginBottom:16}}>Stints by compound — hover any segment for pace stats</div>
+                    <div style={{fontSize:12,color:"var(--w35)",marginBottom:16}}>Stints by compound — hover any segment for pace stats</div>
                     <div style={{display:"flex",flexDirection:"column",gap:6,position:"relative"}}>
                       {visibleDrivers.map(d=>{
                         const myStints=allStints.filter(s=>s.driverNumber===d.number).sort((a,b)=>a.stintNumber-b.stintNumber);
                         return(
                           <div key={d.acronym} style={{display:"flex",alignItems:"center",gap:12}}>
                             <div style={{width:60,fontSize:11,fontWeight:700,letterSpacing:0.5,display:"flex",alignItems:"center",gap:6,flexShrink:0}}>
-                              <div style={{width:3,height:14,background:d.teamColour||"#fff",borderRadius:1}}/>
+                              <div style={{width:3,height:14,background:inkify(d.teamColour)||"var(--fg)",borderRadius:1}}/>
                               {d.acronym}
                             </div>
-                            <div style={{flex:1,display:"flex",height:22,background:"rgba(255,255,255,0.03)",borderRadius:4,overflow:"hidden",position:"relative"}}>
+                            <div style={{flex:1,display:"flex",height:22,background:"var(--w03)",borderRadius:4,overflow:"hidden",position:"relative"}}>
                               {myStints.map((s,i)=>{
                                 const start=Math.max(1,s.lapStart||1);
                                 const end=Math.min(maxLap,s.lapEnd||maxLap);
@@ -3352,7 +3439,7 @@ const TireStrategyPanel=memo(function TireStrategyPanel({race,maxLap,allDrivers,
                                   <div key={i}
                                     onPointerEnter={(e)=>{const r=e.currentTarget.getBoundingClientRect();const card=e.currentTarget.closest('[data-stint-card]');if(!card)return;const cr=card.getBoundingClientRect();setTelStintHover({driverNumber:d.number,stintNumber:s.stintNumber,x:(r.left-cr.left)+r.width/2,y:(r.bottom-cr.top)});}}
                                     onPointerLeave={()=>setTelStintHover(null)}
-                                    style={{width:`${pct}%`,background:col,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:800,color:dark?"#111":"#fff",letterSpacing:0.5,borderRight:i<myStints.length-1?"2px solid rgba(0,0,0,0.4)":"none",cursor:"default",outline:isHovered?"2px solid rgba(255,255,255,0.55)":"none",outlineOffset:isHovered?-2:0,transition:"outline-color 0.12s"}}>
+                                    style={{width:`${pct}%`,background:col,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:800,color:dark?"var(--bench)":"var(--fg)",letterSpacing:0.5,borderRight:i<myStints.length-1?"2px solid rgba(0,0,0,0.4)":"none",cursor:"default",outline:isHovered?"2px solid var(--w55)":"none",outlineOffset:isHovered?-2:0,transition:"outline-color 0.12s"}}>
                                     {pct>4?c[0]:""}
                                   </div>
                                 );
@@ -3362,7 +3449,7 @@ const TireStrategyPanel=memo(function TireStrategyPanel({race,maxLap,allDrivers,
                         );
                       })}
                     </div>
-                    <div style={{display:"flex",gap:14,marginTop:14,flexWrap:"wrap",fontSize:10,color:"rgba(255,255,255,0.5)"}}>
+                    <div style={{display:"flex",gap:14,marginTop:14,flexWrap:"wrap",fontSize:10,color:"var(--w50)"}}>
                       {Object.entries(COMPOUND_COLORS).filter(([k])=>k!=="UNKNOWN").map(([k,v])=>(
                         <div key={k} style={{display:"flex",alignItems:"center",gap:6}}>
                           <div style={{width:14,height:8,background:v,borderRadius:2}}/>
@@ -3377,36 +3464,36 @@ const TireStrategyPanel=memo(function TireStrategyPanel({race,maxLap,allDrivers,
                       const dark=c==="HARD";
                       const delta=(stats.avg&&overallAvg)?stats.avg-overallAvg:null;
                       return(
-                        <div style={{position:"absolute",left:hovered.x,top:hovered.y+6,transform:"translateX(-50%)",background:"rgba(14,14,22,0.97)",border:`1px solid ${col}40`,borderRadius:8,padding:"12px 14px",pointerEvents:"none",minWidth:220,boxShadow:"0 8px 24px rgba(0,0,0,0.55)",zIndex:10}}>
+                        <div style={{position:"absolute",left:hovered.x,top:hovered.y+6,transform:"translateX(-50%)",background:"var(--panel-2)",border:`1px solid ${col}40`,borderRadius:2,padding:"12px 14px",pointerEvents:"none",minWidth:220,boxShadow:"0 6px 18px -4px rgba(0,0,0,0.35)",zIndex:10}}>
                           <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
-                            <div style={{fontSize:9,fontWeight:800,letterSpacing:1.2,padding:"3px 8px",borderRadius:4,background:col,color:dark?"#111":"#fff"}}>{c}</div>
-                            <div style={{fontSize:11,color:"rgba(255,255,255,0.7)",fontWeight:600}}>{driver.acronym} · Stint {stint.stintNumber}</div>
+                            <div style={{fontSize:9,fontWeight:800,letterSpacing:1.2,padding:"3px 8px",borderRadius:4,background:col,color:dark?"var(--bench)":"var(--fg)"}}>{c}</div>
+                            <div style={{fontSize:11,color:"var(--w70)",fontWeight:600}}>{driver.acronym} · Stint {stint.stintNumber}</div>
                           </div>
                           <div style={{display:"grid",gridTemplateColumns:"auto 1fr",gap:"5px 14px",fontSize:11}}>
-                            <div style={{color:"rgba(255,255,255,0.4)"}}>Laps</div>
-                            <div style={{fontWeight:600,fontVariantNumeric:"tabular-nums"}}>L{stats.start} – L{stats.end} <span style={{color:"rgba(255,255,255,0.4)",fontWeight:400}}>({stats.lapsRun})</span></div>
+                            <div style={{color:"var(--w40)"}}>Laps</div>
+                            <div style={{fontWeight:600,fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)"}}>L{stats.start} – L{stats.end} <span style={{color:"var(--w40)",fontWeight:400}}>({stats.lapsRun})</span></div>
                             {stint.tyreAge!=null&&(
                               <>
-                                <div style={{color:"rgba(255,255,255,0.4)"}}>Tire age</div>
+                                <div style={{color:"var(--w40)"}}>Tire age</div>
                                 <div style={{fontWeight:600}}>{stint.tyreAge===0?"Fresh":`${stint.tyreAge} laps old`}</div>
                               </>
                             )}
                             {stats.best!=null&&(
                               <>
-                                <div style={{color:"rgba(255,255,255,0.4)"}}>Best lap</div>
-                                <div style={{fontWeight:700,fontVariantNumeric:"tabular-nums",color:"#27F4D2"}}>{fmtLapTime(stats.best)}</div>
+                                <div style={{color:"var(--w40)"}}>Best lap</div>
+                                <div style={{fontWeight:700,fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)",color:"var(--green)"}}>{fmtLapTime(stats.best)}</div>
                               </>
                             )}
                             {stats.avg!=null&&(
                               <>
-                                <div style={{color:"rgba(255,255,255,0.4)"}}>Avg pace</div>
-                                <div style={{fontWeight:600,fontVariantNumeric:"tabular-nums"}}>{fmtLapTime(stats.avg)}</div>
+                                <div style={{color:"var(--w40)"}}>Avg pace</div>
+                                <div style={{fontWeight:600,fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)"}}>{fmtLapTime(stats.avg)}</div>
                               </>
                             )}
                             {delta!=null&&(
                               <>
-                                <div style={{color:"rgba(255,255,255,0.4)"}}>vs race avg</div>
-                                <div style={{fontWeight:700,fontVariantNumeric:"tabular-nums",color:delta<0?"#27F4D2":"#FF6B6B"}}>{delta>=0?"+":""}{delta.toFixed(3)}s</div>
+                                <div style={{color:"var(--w40)"}}>vs race avg</div>
+                                <div style={{fontWeight:700,fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)",color:delta<0?"var(--green)":"var(--red)"}}>{delta>=0?"+":""}{delta.toFixed(3)}s</div>
                               </>
                             )}
                           </div>
@@ -3490,20 +3577,20 @@ const TireManagementPanel=memo(function TireManagementPanel({race,allDrivers,max
                 const hoveredEntry=tireHover?analyzed.find(a=>a.driver.number+"-"+a.stint.stintNumber===tireHover.key):null;
 
                 return(
-                  <div data-tire-card style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20,position:"relative"}}>
+                  <div data-tire-card style={{background:"var(--w02)",border:"1px solid var(--w06)",borderRadius:2,padding:20,position:"relative"}}>
                     <div style={{fontSize:15,fontWeight:700,marginBottom:4}}>Tire Management</div>
-                    <div style={{fontSize:12,color:"rgba(255,255,255,0.35)",marginBottom:20}}>Pace consistency &amp; compound benchmarks · low slope = better tire management</div>
+                    <div style={{fontSize:12,color:"var(--w35)",marginBottom:20}}>Pace consistency &amp; compound benchmarks · low slope = better tire management</div>
 
                     {/* DEGRADATION CHART */}
                     <div style={{marginBottom:24}}>
-                      <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.2,color:"rgba(255,255,255,0.5)",marginBottom:10,fontWeight:600}}>Degradation per stint</div>
+                      <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.2,color:"var(--w50)",marginBottom:10,fontWeight:600}}>Degradation per stint</div>
                       <div className="tire-bars">
                       <div className="tire-bars-inner" style={{display:"flex",alignItems:"flex-end",gap:3,height:140,padding:"0 2px"}}>
                         {driverRows.map(({driver,stints})=>(
                           <div key={driver.number} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,flex:"1 1 0",minWidth:0}}>
                             <div style={{flex:1,display:"flex",alignItems:"flex-end",justifyContent:"center",gap:1.5,height:100,width:"100%"}}>
                               {stints.sort((a,b)=>a.stint.stintNumber-b.stint.stintNumber).map(a=>{
-                                const col=COMPOUND_COLORS[a.compound]||"#888";
+                                const col=COMPOUND_COLORS[a.compound]||"var(--ink-4)";
                                 const dark=a.compound==="HARD";
                                 const h=Math.max(2,Math.min(100,(Math.abs(a.slope)/maxSlope)*100));
                                 const key=a.driver.number+"-"+a.stint.stintNumber;
@@ -3512,36 +3599,36 @@ const TireManagementPanel=memo(function TireManagementPanel({race,allDrivers,max
                                   <div key={a.stint.stintNumber}
                                     onPointerEnter={(e)=>{const r=e.currentTarget.getBoundingClientRect();const card=e.currentTarget.closest('[data-tire-card]').getBoundingClientRect();setTireHover({key,x:(r.left-card.left)+r.width/2,y:(r.top-card.top)});}}
                                     onPointerLeave={()=>setTireHover(null)}
-                                    style={{flex:"1 1 0",maxWidth:9,minWidth:4,height:h,background:`linear-gradient(180deg, ${col} 0%, ${col}99 100%)`,borderRadius:"2px 2px 0 0",cursor:"default",outline:isHovered?"1.5px solid rgba(255,255,255,0.7)":"none",outlineOffset:isHovered?-1:0,position:"relative",border:dark?"1px solid rgba(0,0,0,0.4)":"none"}}/>
+                                    style={{flex:"1 1 0",maxWidth:9,minWidth:4,height:h,background:col,borderRadius:0,cursor:"default",outline:isHovered?"1.5px solid var(--w70)":"none",outlineOffset:isHovered?-1:0,position:"relative",border:dark?"1px solid rgba(0,0,0,0.4)":"none"}}/>
                                 );
                               })}
                             </div>
                             <div style={{display:"flex",alignItems:"center",gap:2,minWidth:0}}>
-                              <div style={{width:2,height:9,background:driver.teamColour||"#fff",borderRadius:1,flexShrink:0}}/>
-                              <div style={{fontSize:9,fontWeight:700,letterSpacing:0.3,color:"rgba(255,255,255,0.75)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{driver.acronym}</div>
+                              <div style={{width:2,height:9,background:inkify(driver.teamColour)||"var(--fg)",borderRadius:1,flexShrink:0}}/>
+                              <div style={{fontSize:9,fontWeight:700,letterSpacing:0.3,color:"var(--w75)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{driver.acronym}</div>
                             </div>
                           </div>
                         ))}
                       </div>
                       </div>
-                      <div style={{fontSize:10,color:"rgba(255,255,255,0.3)",marginTop:6,fontStyle:"italic"}}>Bar height = absolute lap-time drift per lap (lower = more consistent). Drivers sorted by best-managed stint.</div>
+                      <div style={{fontSize:10,color:"var(--w30)",marginTop:6,fontStyle:"italic"}}>Bar height = absolute lap-time drift per lap (lower = more consistent). Drivers sorted by best-managed stint.</div>
                     </div>
 
                     {/* COMPOUND PACE BENCHMARK */}
                     {compounds.length>0&&(
                       <div>
                         <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:10,flexWrap:"wrap",gap:8}}>
-                          <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.2,color:"rgba(255,255,255,0.5)",fontWeight:600}}>Stint Pace vs Benchmark</div>
-                          <div style={{fontSize:11,color:"rgba(255,255,255,0.4)",fontVariantNumeric:"tabular-nums"}}>Benchmark {fmtLapTime(benchmarks[activeCompound])}</div>
+                          <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.2,color:"var(--w50)",fontWeight:600}}>Stint Pace vs Benchmark</div>
+                          <div style={{fontSize:11,color:"var(--w40)",fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)"}}>Benchmark {fmtLapTime(benchmarks[activeCompound])}</div>
                         </div>
                         <div style={{display:"flex",gap:6,marginBottom:14,flexWrap:"wrap"}}>
                           {compounds.map(c=>{
-                            const col=COMPOUND_COLORS[c]||"#888";
+                            const col=COMPOUND_COLORS[c]||"var(--ink-4)";
                             const on=activeCompound===c;
                             const dark=c==="HARD";
                             return(
-                              <button key={c} onClick={()=>setTireCompound(c)} style={{display:"flex",alignItems:"center",gap:6,padding:"5px 10px",borderRadius:6,border:`1px solid ${on?col:"rgba(255,255,255,0.08)"}`,background:on?`${col}22`:"rgba(255,255,255,0.02)",color:on?"#fff":"rgba(255,255,255,0.55)",cursor:"pointer",fontSize:11,fontWeight:on?700:500,fontFamily:"'Outfit',sans-serif"}}>
-                                <div style={{width:14,height:14,borderRadius:3,background:col,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:800,color:dark?"#111":"#fff"}}>{c[0]}</div>
+                              <button key={c} onClick={()=>setTireCompound(c)} style={{display:"flex",alignItems:"center",gap:6,padding:"5px 10px",borderRadius:6,border:`1px solid ${on?col:"var(--w08)"}`,background:on?`${col}22`:"var(--w02)",color:on?"var(--fg)":"var(--w55)",cursor:"pointer",fontSize:11,fontWeight:on?700:500,fontFamily:"var(--font-ui)"}}>
+                                <div style={{width:14,height:14,borderRadius:3,background:col,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:800,color:dark?"var(--bench)":"var(--fg)"}}>{c[0]}</div>
                                 <span style={{letterSpacing:0.5}}>{c[0]+c.slice(1).toLowerCase()}</span>
                               </button>
                             );
@@ -3552,28 +3639,28 @@ const TireManagementPanel=memo(function TireManagementPanel({race,allDrivers,max
                           {benchmarkStints.map(a=>{
                             const gap=a.avg-benchmarks[activeCompound];
                             const h=Math.max(2,Math.min(140,(gap/maxGap)*140));
-                            const tc=a.driver.teamColour||"#888";
+                            const tc=inkify(a.driver.teamColour)||"var(--ink-4)";
                             const isBest=gap<0.001;
                             const key=a.driver.number+"-"+a.stint.stintNumber;
                             const isHovered=tireHover?.key===key;
                             return(
                               <div key={key} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,flex:"1 1 0",minWidth:0}}>
-                                <div style={{fontSize:9,fontWeight:700,color:isBest?"#27F4D2":"rgba(255,255,255,0.5)",fontVariantNumeric:"tabular-nums",whiteSpace:"nowrap"}}>{isBest?"FAST":`+${gap.toFixed(2)}`}</div>
+                                <div style={{fontSize:9,fontWeight:700,color:isBest?"var(--green)":"var(--w50)",fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)",whiteSpace:"nowrap"}}>{isBest?"FAST":`+${gap.toFixed(2)}`}</div>
                                 <div
                                   onPointerEnter={(e)=>{const r=e.currentTarget.getBoundingClientRect();const card=e.currentTarget.closest('[data-tire-card]').getBoundingClientRect();setTireHover({key,x:(r.left-card.left)+r.width/2,y:(r.top-card.top)});}}
                                   onPointerLeave={()=>setTireHover(null)}
-                                  style={{width:"100%",maxWidth:22,height:h,background:`linear-gradient(180deg, ${tc} 0%, ${tc}99 100%)`,borderRadius:"3px 3px 0 0",cursor:"default",outline:isHovered?"1.5px solid rgba(255,255,255,0.7)":"none",outlineOffset:isHovered?-1:0}}
+                                  style={{width:"100%",maxWidth:22,height:h,background:tc,borderRadius:0,cursor:"default",outline:isHovered?"1.5px solid var(--w70)":"none",outlineOffset:isHovered?-1:0}}
                                 />
                                 <div style={{textAlign:"center",minWidth:0,width:"100%"}}>
-                                  <div style={{fontSize:9,fontWeight:700,letterSpacing:0.3,color:isBest?"#27F4D2":"rgba(255,255,255,0.75)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{a.driver.acronym}</div>
-                                  <div style={{fontSize:8,color:"rgba(255,255,255,0.35)",fontVariantNumeric:"tabular-nums"}}>S{a.stint.stintNumber}</div>
+                                  <div style={{fontSize:9,fontWeight:700,letterSpacing:0.3,color:isBest?"var(--green)":"var(--w75)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{a.driver.acronym}</div>
+                                  <div style={{fontSize:8,color:"var(--w35)",fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)"}}>S{a.stint.stintNumber}</div>
                                 </div>
                               </div>
                             );
                           })}
                         </div>
                         </div>
-                        <div style={{fontSize:10,color:"rgba(255,255,255,0.3)",marginTop:6,fontStyle:"italic"}}>Gap to the fastest stint average on this compound. Hover any bar for details.</div>
+                        <div style={{fontSize:10,color:"var(--w30)",marginTop:6,fontStyle:"italic"}}>Gap to the fastest stint average on this compound. Hover any bar for details.</div>
                       </div>
                     )}
 
@@ -3600,20 +3687,20 @@ const TireManagementPanel=memo(function TireManagementPanel({race,allDrivers,max
                       return(
                         <div style={{marginTop:28}}>
                           <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:10,flexWrap:"wrap",gap:8}}>
-                            <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.2,color:"rgba(255,255,255,0.5)",fontWeight:600}}>Compound-best heatmap</div>
-                            <div style={{fontSize:11,color:"rgba(255,255,255,0.4)"}}>Best lap per driver per compound · darker = closer to fastest</div>
+                            <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.2,color:"var(--w50)",fontWeight:600}}>Compound-best heatmap</div>
+                            <div style={{fontSize:11,color:"var(--w40)"}}>Best lap per driver per compound · darker = closer to fastest</div>
                           </div>
                           <div style={{overflowX:"auto"}}>
                             <div style={{display:"grid",gridTemplateColumns:`120px repeat(${compounds.length}, minmax(110px, 1fr))`,gap:4,minWidth:120+compounds.length*110}}>
                               {/* Header row */}
-                              <div style={{fontSize:10,textTransform:"uppercase",letterSpacing:0.8,color:"rgba(255,255,255,0.35)",fontWeight:600,padding:"6px 8px"}}>Driver</div>
+                              <div style={{fontSize:10,textTransform:"uppercase",letterSpacing:0.8,color:"var(--w35)",fontWeight:600,padding:"6px 8px"}}>Driver</div>
                               {compounds.map(c=>{
-                                const col=COMPOUND_COLORS[c]||"#888";
+                                const col=COMPOUND_COLORS[c]||"var(--ink-4)";
                                 const dark=c==="HARD";
                                 return(
                                   <div key={c} style={{display:"flex",alignItems:"center",gap:6,padding:"6px 8px"}}>
-                                    <div style={{width:14,height:14,borderRadius:3,background:col,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:800,color:dark?"#111":"#fff"}}>{c[0]}</div>
-                                    <span style={{fontSize:10,textTransform:"uppercase",letterSpacing:0.8,color:"rgba(255,255,255,0.55)",fontWeight:600}}>{c[0]+c.slice(1).toLowerCase()}</span>
+                                    <div style={{width:14,height:14,borderRadius:3,background:col,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:800,color:dark?"var(--bench)":"var(--fg)"}}>{c[0]}</div>
+                                    <span style={{fontSize:10,textTransform:"uppercase",letterSpacing:0.8,color:"var(--w55)",fontWeight:600}}>{c[0]+c.slice(1).toLowerCase()}</span>
                                   </div>
                                 );
                               })}
@@ -3621,30 +3708,30 @@ const TireManagementPanel=memo(function TireManagementPanel({race,allDrivers,max
                               {rows.map(({driver,bests})=>(
                                 <Fragment key={driver.number}>
                                   <div style={{display:"flex",alignItems:"center",gap:8,padding:"6px 8px",fontSize:11,fontWeight:600,minWidth:0}}>
-                                    <div style={{width:3,height:14,background:driver.teamColour||"#fff",borderRadius:1,flexShrink:0}}/>
+                                    <div style={{width:3,height:14,background:inkify(driver.teamColour)||"var(--fg)",borderRadius:1,flexShrink:0}}/>
                                     <div style={{minWidth:0}}>
                                       <div style={{whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{driver.acronym}</div>
-                                      <div style={{fontSize:9,color:"rgba(255,255,255,0.4)",fontWeight:400,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{normTeam(driver.team||"")}</div>
+                                      <div style={{fontSize:9,color:"var(--w40)",fontWeight:400,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{normTeam(driver.team||"")}</div>
                                     </div>
                                   </div>
                                   {compounds.map(c=>{
                                     const t=bests[c];
                                     if(t==null)return(
-                                      <div key={c} style={{padding:"6px 8px",fontSize:11,color:"rgba(255,255,255,0.18)",background:"rgba(255,255,255,0.015)",borderRadius:4,textAlign:"center"}}>—</div>
+                                      <div key={c} style={{padding:"6px 8px",fontSize:11,color:"var(--w18)",background:"var(--w015)",borderRadius:4,textAlign:"center"}}>—</div>
                                     );
                                     const range=globalRange[c];
                                     const norm=range&&range.max>range.min?(t-range.min)/(range.max-range.min):0;
                                     const isBest=norm<0.001;
                                     // Color: blend from compound color (fastest) to muted background (slowest)
-                                    const col=COMPOUND_COLORS[c]||"#888";
+                                    const col=COMPOUND_COLORS[c]||"var(--ink-4)";
                                     // Compound base color at min, fade to dark grey at max
                                     const intensity=Math.max(0.08,1-norm); // 1 = fastest, 0.08 = slowest
                                     const bgAlpha=Math.round(intensity*60).toString(16).padStart(2,"0");
                                     const gap=t-range.min;
                                     return(
-                                      <div key={c} className="heatmap-cell" style={{padding:"7px 9px",borderRadius:4,background:`linear-gradient(135deg, ${col}${bgAlpha} 0%, ${col}${Math.round(intensity*30).toString(16).padStart(2,"0")} 100%)`,border:`1px solid ${isBest?col:"rgba(255,255,255,0.04)"}`,position:"relative"}}>
-                                        <div style={{fontSize:11,fontWeight:700,fontVariantNumeric:"tabular-nums",color:isBest?"#fff":"rgba(255,255,255,0.85)"}}>{fmtBest(t)}</div>
-                                        <div style={{fontSize:9,fontVariantNumeric:"tabular-nums",color:isBest?col:"rgba(255,255,255,0.45)",fontWeight:isBest?700:500,marginTop:1,letterSpacing:0.3}}>{isBest?"FASTEST":`+${gap.toFixed(3)}`}</div>
+                                      <div key={c} className="heatmap-cell" style={{padding:"7px 9px",borderRadius:4,background:`${col}${bgAlpha}`,border:`1px solid ${isBest?col:"var(--w04)"}`,position:"relative"}}>
+                                        <div style={{fontSize:11,fontWeight:700,fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)",color:isBest?"var(--fg)":"var(--w85)"}}>{fmtBest(t)}</div>
+                                        <div style={{fontSize:9,fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)",color:isBest?col:"var(--w45)",fontWeight:isBest?700:500,marginTop:1,letterSpacing:0.3}}>{isBest?"FASTEST":`+${gap.toFixed(3)}`}</div>
                                       </div>
                                     );
                                   })}
@@ -3652,7 +3739,7 @@ const TireManagementPanel=memo(function TireManagementPanel({race,allDrivers,max
                               ))}
                             </div>
                           </div>
-                          <div style={{fontSize:10,color:"rgba(255,255,255,0.3)",marginTop:8,fontStyle:"italic"}}>Cell color intensity scales with how close to that compound's fastest lap. Drivers sorted by overall best lap.</div>
+                          <div style={{fontSize:10,color:"var(--w30)",marginTop:8,fontStyle:"italic"}}>Cell color intensity scales with how close to that compound's fastest lap. Drivers sorted by overall best lap.</div>
                         </div>
                       );
                     })()}
@@ -3720,24 +3807,24 @@ const TireManagementPanel=memo(function TireManagementPanel({race,allDrivers,max
                       return(
                         <div style={{marginTop:28}}>
                           <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:10,flexWrap:"wrap",gap:8}}>
-                            <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.2,color:"rgba(255,255,255,0.5)",fontWeight:600}}>Stint Overlay</div>
-                            <div style={{fontSize:11,color:"rgba(255,255,255,0.4)"}}>{selectedKeys.size}/4 selected</div>
+                            <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.2,color:"var(--w50)",fontWeight:600}}>Stint Overlay</div>
+                            <div style={{fontSize:11,color:"var(--w40)"}}>{selectedKeys.size}/4 selected</div>
                           </div>
                           {/* Selected stints — always visible */}
                           {selectedAnalyzed.length>0&&(
-                            <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:10,padding:"8px 10px",background:"rgba(255,255,255,0.025)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:8}}>
-                              <span style={{fontSize:9,textTransform:"uppercase",letterSpacing:1,color:"rgba(255,255,255,0.35)",fontWeight:600,alignSelf:"center",marginRight:4}}>Selected</span>
+                            <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:10,padding:"8px 10px",background:"var(--w025)",border:"1px solid var(--w06)",borderRadius:2}}>
+                              <span style={{fontSize:9,textTransform:"uppercase",letterSpacing:1,color:"var(--w35)",fontWeight:600,alignSelf:"center",marginRight:4}}>Selected</span>
                               {selectedAnalyzed.map(a=>{
                                 const key=a.driver.number+"-"+a.stint.stintNumber;
-                                const col=COMPOUND_COLORS[a.compound]||"#888";
+                                const col=COMPOUND_COLORS[a.compound]||"var(--ink-4)";
                                 const dark=a.compound==="HARD";
-                                const tc=a.driver.teamColour||"#fff";
+                                const tc=inkify(a.driver.teamColour)||"var(--fg)";
                                 return(
-                                  <button key={key} onClick={()=>togglePick(key)} title="Click to remove" style={{display:"flex",alignItems:"center",gap:5,padding:"3px 7px 3px 6px",borderRadius:5,border:`1px solid ${tc}`,background:`${tc}1a`,color:"#fff",cursor:"pointer",fontSize:10,fontWeight:700,fontFamily:"'Outfit',sans-serif"}}>
-                                    <div style={{width:11,height:11,borderRadius:2,background:col,display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,fontWeight:800,color:dark?"#111":"#fff"}}>{a.compound[0]}</div>
+                                  <button key={key} onClick={()=>togglePick(key)} title="Click to remove" style={{display:"flex",alignItems:"center",gap:5,padding:"3px 7px 3px 6px",borderRadius:5,border:`1px solid ${tc}`,background:`${tc}1a`,color:"var(--ink)",cursor:"pointer",fontSize:10,fontWeight:700,fontFamily:"var(--font-ui)"}}>
+                                    <div style={{width:11,height:11,borderRadius:2,background:col,display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,fontWeight:800,color:dark?"var(--bench)":"var(--fg)"}}>{a.compound[0]}</div>
                                     <span style={{letterSpacing:0.4}}>{a.driver.acronym}</span>
-                                    <span style={{fontSize:9,color:"rgba(255,255,255,0.55)",fontWeight:400}}>S{a.stint.stintNumber}</span>
-                                    <span style={{marginLeft:2,fontSize:11,color:"rgba(255,255,255,0.55)",lineHeight:1}}>×</span>
+                                    <span style={{fontSize:9,color:"var(--w55)",fontWeight:400}}>S{a.stint.stintNumber}</span>
+                                    <span style={{marginLeft:2,fontSize:11,color:"var(--w55)",lineHeight:1}}>×</span>
                                   </button>
                                 );
                               })}
@@ -3745,18 +3832,18 @@ const TireManagementPanel=memo(function TireManagementPanel({race,allDrivers,max
                           )}
                           {/* Compound filter */}
                           <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6,flexWrap:"wrap"}}>
-                            <span style={{fontSize:9,textTransform:"uppercase",letterSpacing:1,color:"rgba(255,255,255,0.3)",fontWeight:600,minWidth:54}}>Compound</span>
+                            <span style={{fontSize:9,textTransform:"uppercase",letterSpacing:1,color:"var(--w30)",fontWeight:600,minWidth:54}}>Compound</span>
                             <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
-                              <button onClick={()=>setOverlayCompoundFilter("ALL")} style={{padding:"3px 9px",borderRadius:5,border:`1px solid ${activeFilter==="ALL"?"#fff":"rgba(255,255,255,0.08)"}`,background:activeFilter==="ALL"?"rgba(255,255,255,0.08)":"rgba(255,255,255,0.02)",color:activeFilter==="ALL"?"#fff":"rgba(255,255,255,0.55)",cursor:"pointer",fontSize:10,fontWeight:activeFilter==="ALL"?700:500,fontFamily:"'Outfit',sans-serif"}}>All <span style={{color:"rgba(255,255,255,0.4)",fontWeight:400,marginLeft:2}}>{analyzed.length}</span></button>
+                              <button onClick={()=>setOverlayCompoundFilter("ALL")} style={{padding:"3px 9px",borderRadius:5,border:`1px solid ${activeFilter==="ALL"?"var(--fg)":"var(--w08)"}`,background:activeFilter==="ALL"?"var(--w08)":"var(--w02)",color:activeFilter==="ALL"?"var(--fg)":"var(--w55)",cursor:"pointer",fontSize:10,fontWeight:activeFilter==="ALL"?700:500,fontFamily:"var(--font-ui)"}}>All <span style={{color:"var(--w40)",fontWeight:400,marginLeft:2}}>{analyzed.length}</span></button>
                               {availCompounds.map(c=>{
-                                const col=COMPOUND_COLORS[c]||"#888";
+                                const col=COMPOUND_COLORS[c]||"var(--ink-4)";
                                 const dark=c==="HARD";
                                 const on=activeFilter===c;
                                 return(
-                                  <button key={c} onClick={()=>setOverlayCompoundFilter(c)} style={{display:"flex",alignItems:"center",gap:5,padding:"3px 9px",borderRadius:5,border:`1px solid ${on?col:"rgba(255,255,255,0.08)"}`,background:on?`${col}22`:"rgba(255,255,255,0.02)",color:on?"#fff":"rgba(255,255,255,0.55)",cursor:"pointer",fontSize:10,fontWeight:on?700:500,fontFamily:"'Outfit',sans-serif"}}>
-                                    <div style={{width:11,height:11,borderRadius:2,background:col,display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,fontWeight:800,color:dark?"#111":"#fff"}}>{c[0]}</div>
+                                  <button key={c} onClick={()=>setOverlayCompoundFilter(c)} style={{display:"flex",alignItems:"center",gap:5,padding:"3px 9px",borderRadius:5,border:`1px solid ${on?col:"var(--w08)"}`,background:on?`${col}22`:"var(--w02)",color:on?"var(--fg)":"var(--w55)",cursor:"pointer",fontSize:10,fontWeight:on?700:500,fontFamily:"var(--font-ui)"}}>
+                                    <div style={{width:11,height:11,borderRadius:2,background:col,display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,fontWeight:800,color:dark?"var(--bench)":"var(--fg)"}}>{c[0]}</div>
                                     <span>{c[0]+c.slice(1).toLowerCase()}</span>
-                                    <span style={{color:"rgba(255,255,255,0.4)",fontWeight:400}}>{compoundCounts[c]}</span>
+                                    <span style={{color:"var(--w40)",fontWeight:400}}>{compoundCounts[c]}</span>
                                   </button>
                                 );
                               })}
@@ -3764,17 +3851,17 @@ const TireManagementPanel=memo(function TireManagementPanel({race,allDrivers,max
                           </div>
                           {/* Driver filter */}
                           <div style={{display:"flex",alignItems:"flex-start",gap:6,marginBottom:8,flexWrap:"wrap"}}>
-                            <span style={{fontSize:9,textTransform:"uppercase",letterSpacing:1,color:"rgba(255,255,255,0.3)",fontWeight:600,minWidth:54,paddingTop:4}}>Driver</span>
+                            <span style={{fontSize:9,textTransform:"uppercase",letterSpacing:1,color:"var(--w30)",fontWeight:600,minWidth:54,paddingTop:4}}>Driver</span>
                             <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
-                              <button onClick={()=>setOverlayDriverFilter("ALL")} style={{padding:"3px 9px",borderRadius:5,border:`1px solid ${activeDriverFilter==="ALL"?"#fff":"rgba(255,255,255,0.08)"}`,background:activeDriverFilter==="ALL"?"rgba(255,255,255,0.08)":"rgba(255,255,255,0.02)",color:activeDriverFilter==="ALL"?"#fff":"rgba(255,255,255,0.55)",cursor:"pointer",fontSize:10,fontWeight:activeDriverFilter==="ALL"?700:500,fontFamily:"'Outfit',sans-serif"}}>All <span style={{color:"rgba(255,255,255,0.4)",fontWeight:400,marginLeft:2}}>{driverFilterOptions.length}</span></button>
+                              <button onClick={()=>setOverlayDriverFilter("ALL")} style={{padding:"3px 9px",borderRadius:5,border:`1px solid ${activeDriverFilter==="ALL"?"var(--fg)":"var(--w08)"}`,background:activeDriverFilter==="ALL"?"var(--w08)":"var(--w02)",color:activeDriverFilter==="ALL"?"var(--fg)":"var(--w55)",cursor:"pointer",fontSize:10,fontWeight:activeDriverFilter==="ALL"?700:500,fontFamily:"var(--font-ui)"}}>All <span style={{color:"var(--w40)",fontWeight:400,marginLeft:2}}>{driverFilterOptions.length}</span></button>
                               {driverFilterOptions.map(d=>{
                                 const on=activeDriverFilter===d.number;
-                                const tc=d.teamColour||"#fff";
+                                const tc=inkify(d.teamColour)||"var(--fg)";
                                 return(
-                                  <button key={d.number} onClick={()=>setOverlayDriverFilter(d.number)} style={{display:"flex",alignItems:"center",gap:4,padding:"3px 8px",borderRadius:5,border:`1px solid ${on?tc:"rgba(255,255,255,0.08)"}`,background:on?`${tc}22`:"rgba(255,255,255,0.02)",color:on?"#fff":"rgba(255,255,255,0.55)",cursor:"pointer",fontSize:10,fontWeight:on?700:500,fontFamily:"'Outfit',sans-serif"}}>
+                                  <button key={d.number} onClick={()=>setOverlayDriverFilter(d.number)} style={{display:"flex",alignItems:"center",gap:4,padding:"3px 8px",borderRadius:5,border:`1px solid ${on?tc:"var(--w08)"}`,background:on?`${tc}22`:"var(--w02)",color:on?"var(--fg)":"var(--w55)",cursor:"pointer",fontSize:10,fontWeight:on?700:500,fontFamily:"var(--font-ui)"}}>
                                     <div style={{width:2,height:10,background:tc,borderRadius:1}}/>
                                     <span style={{letterSpacing:0.4}}>{d.acronym}</span>
-                                    <span style={{color:"rgba(255,255,255,0.4)",fontWeight:400}}>{driverStintCounts[d.number]}</span>
+                                    <span style={{color:"var(--w40)",fontWeight:400}}>{driverStintCounts[d.number]}</span>
                                   </button>
                                 );
                               })}
@@ -3784,15 +3871,15 @@ const TireManagementPanel=memo(function TireManagementPanel({race,allDrivers,max
                           <div style={{display:"flex",gap:5,flexWrap:"wrap",marginBottom:14,maxHeight:84,overflowY:"auto",padding:"2px 1px"}}>
                             {filteredStints.filter(a=>!selectedKeys.has(a.driver.number+"-"+a.stint.stintNumber)).map(a=>{
                               const key=a.driver.number+"-"+a.stint.stintNumber;
-                              const col=COMPOUND_COLORS[a.compound]||"#888";
+                              const col=COMPOUND_COLORS[a.compound]||"var(--ink-4)";
                               const dark=a.compound==="HARD";
-                              const tc=a.driver.teamColour||"#fff";
+                              const tc=inkify(a.driver.teamColour)||"var(--fg)";
                               const atMax=selectedKeys.size>=4;
                               return(
-                                <button key={key} disabled={atMax} onClick={()=>togglePick(key)} style={{display:"flex",alignItems:"center",gap:5,padding:"3px 7px",borderRadius:5,border:"1px solid rgba(255,255,255,0.08)",background:"rgba(255,255,255,0.02)",color:"rgba(255,255,255,0.55)",cursor:atMax?"not-allowed":"pointer",fontSize:10,fontWeight:500,fontFamily:"'Outfit',sans-serif",opacity:atMax?0.4:1}}>
-                                  <div style={{width:11,height:11,borderRadius:2,background:col,display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,fontWeight:800,color:dark?"#111":"#fff"}}>{a.compound[0]}</div>
+                                <button key={key} disabled={atMax} onClick={()=>togglePick(key)} style={{display:"flex",alignItems:"center",gap:5,padding:"3px 7px",borderRadius:5,border:"1px solid var(--w08)",background:"var(--w02)",color:"var(--w55)",cursor:atMax?"not-allowed":"pointer",fontSize:10,fontWeight:500,fontFamily:"var(--font-ui)",opacity:atMax?0.4:1}}>
+                                  <div style={{width:11,height:11,borderRadius:2,background:col,display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,fontWeight:800,color:dark?"var(--bench)":"var(--fg)"}}>{a.compound[0]}</div>
                                   <span style={{letterSpacing:0.4,color:tc,fontWeight:600}}>{a.driver.acronym}</span>
-                                  <span style={{fontSize:9,color:"rgba(255,255,255,0.4)",fontWeight:400}}>S{a.stint.stintNumber}</span>
+                                  <span style={{fontSize:9,color:"var(--w40)",fontWeight:400}}>S{a.stint.stintNumber}</span>
                                 </button>
                               );
                             })}
@@ -3801,72 +3888,72 @@ const TireManagementPanel=memo(function TireManagementPanel({race,allDrivers,max
                             <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{width:"100%",height:240,display:"block",touchAction:"pan-y"}} onPointerMove={onMove} onPointerLeave={()=>setOverlayHover(null)}>
                               {yTicks.map((v,i)=>(
                                 <g key={i}>
-                                  <line x1={padL} x2={W-padR} y1={yOf(v)} y2={yOf(v)} stroke="rgba(255,255,255,0.06)"/>
-                                  <text x={padL-8} y={yOf(v)+4} textAnchor="end" fill="rgba(255,255,255,0.4)" fontSize="10" fontFamily="'Outfit',sans-serif">{(()=>{const m=Math.floor(v/60);const r=(v%60).toFixed(1);return `${m}:${r.padStart(4,"0")}`;})()}</text>
+                                  <line x1={padL} x2={W-padR} y1={yOf(v)} y2={yOf(v)} stroke="var(--w06)"/>
+                                  <text x={padL-8} y={yOf(v)+4} textAnchor="end" fill="var(--w40)" fontSize="10" fontFamily="var(--font-ui)">{(()=>{const m=Math.floor(v/60);const r=(v%60).toFixed(1);return `${m}:${r.padStart(4,"0")}`;})()}</text>
                                 </g>
                               ))}
-                              {xTicks.map((l,i)=>(<text key={i} x={xOf(l)} y={H-padB+18} textAnchor="middle" fill={hLi===l?"#fff":"rgba(255,255,255,0.45)"} fontWeight={hLi===l?600:400} fontSize="10" fontFamily="'Outfit',sans-serif">+{l}</text>))}
-                              {hLi!==null&&(<line x1={xOf(hLi)} x2={xOf(hLi)} y1={padT} y2={padT+plotH} stroke="rgba(255,255,255,0.25)" strokeWidth={1} strokeDasharray="3 3" pointerEvents="none"/>)}
+                              {xTicks.map((l,i)=>(<text key={i} x={xOf(l)} y={H-padB+18} textAnchor="middle" fill={hLi===l?"var(--fg)":"var(--w45)"} fontWeight={hLi===l?600:400} fontSize="10" fontFamily="var(--font-ui)">+{l}</text>))}
+                              {hLi!==null&&(<line x1={xOf(hLi)} x2={xOf(hLi)} y1={padT} y2={padT+plotH} stroke="var(--w25)" strokeWidth={1} strokeDasharray="3 3" pointerEvents="none"/>)}
                               {series.map(s=>{
                                 if(s.points.length<2)return null;
-                                const tc=s.driver.teamColour||"#fff";
+                                const tc=inkify(s.driver.teamColour)||"var(--fg)";
                                 const path=s.points.map((p,i)=>`${i===0?"M":"L"}${xOf(p.li)},${yOf(p.t)}`).join(" ");
                                 return(
                                   <g key={s.key} pointerEvents="none">
                                     <path d={path} stroke={tc} strokeWidth={2} fill="none" strokeLinecap="round" strokeLinejoin="round" opacity={0.9}/>
                                     {s.points.map((p,i)=>(<circle key={i} cx={xOf(p.li)} cy={yOf(p.t)} r={2.5} fill={tc} opacity={0.7}/>))}
-                                    {hLi!==null&&(()=>{const p=s.points.find(x=>x.li===hLi);return p?<circle cx={xOf(p.li)} cy={yOf(p.t)} r={4.5} fill={tc} stroke="#0a0a0f" strokeWidth={1.5}/>:null;})()}
+                                    {hLi!==null&&(()=>{const p=s.points.find(x=>x.li===hLi);return p?<circle cx={xOf(p.li)} cy={yOf(p.t)} r={4.5} fill={tc} stroke="var(--bench)" strokeWidth={1.5}/>:null;})()}
                                   </g>
                                 );
                               })}
                             </svg>
                             {hLi!==null&&(()=>{
                               const rows=series
-                                .map(s=>{const p=s.points.find(x=>x.li===hLi);return p?{key:s.key,acronym:s.driver.acronym,teamColour:s.driver.teamColour,compound:s.compound,stintNumber:s.stint.stintNumber,t:p.t}:null;})
+                                .map(s=>{const p=s.points.find(x=>x.li===hLi);return p?{key:s.key,acronym:s.driver.acronym,teamColour:inkify(s.driver.teamColour),compound:s.compound,stintNumber:s.stint.stintNumber,t:p.t}:null;})
                                 .filter(Boolean)
                                 .sort((a,b)=>a.t-b.t);
                               if(rows.length===0)return null;
                               const leftPct=(xOf(hLi)/W)*100;
                               const placeRight=leftPct<55;
                               return(
-                                <div style={{position:"absolute",top:6,[placeRight?"left":"right"]:`${placeRight?leftPct+1.5:100-leftPct+1.5}%`,background:"rgba(14,14,22,0.96)",border:"1px solid rgba(255,255,255,0.10)",borderRadius:8,padding:"10px 12px",pointerEvents:"none",minWidth:200,boxShadow:"0 8px 24px rgba(0,0,0,0.5)"}}>
-                                  <div style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:"rgba(255,255,255,0.4)",fontWeight:600,marginBottom:8,fontVariantNumeric:"tabular-nums"}}>Stint lap +{hLi}</div>
+                                <div style={{position:"absolute",top:6,[placeRight?"left":"right"]:`${placeRight?leftPct+1.5:100-leftPct+1.5}%`,background:"var(--panel-2)",border:"1px solid var(--rule)",borderRadius:2,padding:"10px 12px",pointerEvents:"none",minWidth:200,boxShadow:"0 6px 18px -4px rgba(0,0,0,0.35)"}}>
+                                  <div style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:"var(--w40)",fontWeight:600,marginBottom:8,fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)"}}>Stint lap +{hLi}</div>
                                   {rows.map(r=>(
                                     <div key={r.key} style={{display:"flex",alignItems:"center",gap:8,marginBottom:4,fontSize:11}}>
-                                      <div style={{width:10,height:10,borderRadius:2,background:COMPOUND_COLORS[r.compound]||"#888"}}/>
-                                      <div style={{width:3,height:11,background:r.teamColour||"#fff",borderRadius:1}}/>
-                                      <div style={{flex:1,fontWeight:600}}>{r.acronym} <span style={{color:"rgba(255,255,255,0.4)",fontWeight:400}}>S{r.stintNumber}</span></div>
-                                      <div style={{fontVariantNumeric:"tabular-nums",fontWeight:700}}>{fmtLapTime(r.t)}</div>
+                                      <div style={{width:10,height:10,borderRadius:2,background:COMPOUND_COLORS[r.compound]||"var(--ink-4)"}}/>
+                                      <div style={{width:3,height:11,background:inkify(r.teamColour)||"var(--fg)",borderRadius:1}}/>
+                                      <div style={{flex:1,fontWeight:600}}>{r.acronym} <span style={{color:"var(--w40)",fontWeight:400}}>S{r.stintNumber}</span></div>
+                                      <div style={{fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)",fontWeight:700}}>{fmtLapTime(r.t)}</div>
                                     </div>
                                   ))}
                                 </div>
                               );
                             })()}
                           </div>
-                          <div style={{fontSize:10,color:"rgba(255,255,255,0.3)",marginTop:6,fontStyle:"italic"}}>X axis = lap number within each stint. Steeper rising lines = faster degradation.</div>
+                          <div style={{fontSize:10,color:"var(--w30)",marginTop:6,fontStyle:"italic"}}>X axis = lap number within each stint. Steeper rising lines = faster degradation.</div>
                         </div>
                       );
                     })()}
 
                     {/* Shared hover tooltip */}
                     {hoveredEntry&&(
-                      <div style={{position:"absolute",left:tireHover.x,top:tireHover.y-90,transform:"translateX(-50%)",background:"rgba(14,14,22,0.97)",border:`1px solid ${COMPOUND_COLORS[hoveredEntry.compound]||"#888"}40`,borderRadius:8,padding:"10px 12px",pointerEvents:"none",minWidth:220,boxShadow:"0 8px 24px rgba(0,0,0,0.5)",zIndex:10}}>
+                      <div style={{position:"absolute",left:tireHover.x,top:tireHover.y-90,transform:"translateX(-50%)",background:"var(--panel-2)",border:`1px solid ${COMPOUND_COLORS[hoveredEntry.compound]||"var(--ink-4)"}40`,borderRadius:2,padding:"10px 12px",pointerEvents:"none",minWidth:220,boxShadow:"0 6px 18px -4px rgba(0,0,0,0.35)",zIndex:10}}>
                         <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
-                          <div style={{fontSize:9,fontWeight:800,letterSpacing:1.2,padding:"3px 8px",borderRadius:4,background:COMPOUND_COLORS[hoveredEntry.compound],color:hoveredEntry.compound==="HARD"?"#111":"#fff"}}>{hoveredEntry.compound}</div>
-                          <div style={{fontSize:11,color:"rgba(255,255,255,0.7)",fontWeight:600}}>{hoveredEntry.driver.acronym} · Stint {hoveredEntry.stint.stintNumber}</div>
+                          <div style={{fontSize:9,fontWeight:800,letterSpacing:1.2,padding:"3px 8px",borderRadius:4,background:COMPOUND_COLORS[hoveredEntry.compound],color:hoveredEntry.compound==="HARD"?"var(--bench)":"var(--fg)"}}>{hoveredEntry.compound}</div>
+                          <div style={{fontSize:11,color:"var(--w70)",fontWeight:600}}>{hoveredEntry.driver.acronym} · Stint {hoveredEntry.stint.stintNumber}</div>
                         </div>
                         <div style={{display:"grid",gridTemplateColumns:"auto 1fr",gap:"5px 14px",fontSize:11}}>
-                          <div style={{color:"rgba(255,255,255,0.4)"}}>Laps</div>
-                          <div style={{fontWeight:600,fontVariantNumeric:"tabular-nums"}}>L{hoveredEntry.lapStart} – L{hoveredEntry.lapEnd} <span style={{color:"rgba(255,255,255,0.4)",fontWeight:400}}>({hoveredEntry.validLaps} clean)</span></div>
-                          <div style={{color:"rgba(255,255,255,0.4)"}}>Avg pace</div>
-                          <div style={{fontWeight:700,fontVariantNumeric:"tabular-nums"}}>{fmtLapTime(hoveredEntry.avg)}</div>
-                          <div style={{color:"rgba(255,255,255,0.4)"}}>Best lap</div>
-                          <div style={{fontWeight:700,fontVariantNumeric:"tabular-nums",color:"#27F4D2"}}>{fmtLapTime(hoveredEntry.best)}</div>
-                          <div style={{color:"rgba(255,255,255,0.4)"}}>Degradation</div>
-                          <div style={{fontWeight:700,fontVariantNumeric:"tabular-nums",color:hoveredEntry.slope>0.05?"#FF6B6B":hoveredEntry.slope<-0.02?"#27F4D2":"#fff"}}>{hoveredEntry.slope>=0?"+":""}{(hoveredEntry.slope*1000).toFixed(0)}ms / lap</div>
+                          <div style={{color:"var(--w40)"}}>Laps</div>
+                          <div style={{fontWeight:600,fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)"}}>L{hoveredEntry.lapStart} – L{hoveredEntry.lapEnd} <span style={{color:"var(--w40)",fontWeight:400}}>({hoveredEntry.validLaps} clean)</span></div>
+                          <div style={{color:"var(--w40)"}}>Avg pace</div>
+                          <div style={{fontWeight:700,fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)"}}>{fmtLapTime(hoveredEntry.avg)}</div>
+                          <div style={{color:"var(--w40)"}}>Best lap</div>
+                          <div style={{fontWeight:700,fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)",color:"var(--green)"}}>{fmtLapTime(hoveredEntry.best)}</div>
+                          <div style={{color:"var(--w40)"}}>Degradation</div>
+                          <div style={{fontWeight:700,fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)",color:hoveredEntry.slope>0.05?"var(--red)":hoveredEntry.slope<-0.02?"var(--green)":"var(--fg)"}}>{hoveredEntry.slope>=0?"+":""}{(hoveredEntry.slope*1000).toFixed(0)}ms / lap</div>
                           {benchmarks[hoveredEntry.compound]&&(<>
-                            <div style={{color:"rgba(255,255,255,0.4)"}}>vs benchmark</div>
-                            <div style={{fontWeight:700,fontVariantNumeric:"tabular-nums",color:(hoveredEntry.avg-benchmarks[hoveredEntry.compound])<0.05?"#27F4D2":"#FFD700"}}>+{(hoveredEntry.avg-benchmarks[hoveredEntry.compound]).toFixed(3)}s</div>
+                            <div style={{color:"var(--w40)"}}>vs benchmark</div>
+                            <div style={{fontWeight:700,fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)",color:(hoveredEntry.avg-benchmarks[hoveredEntry.compound])<0.05?"var(--green)":"var(--gold)"}}>+{(hoveredEntry.avg-benchmarks[hoveredEntry.compound]).toFixed(3)}s</div>
                           </>)}
                         </div>
                       </div>
@@ -3889,7 +3976,7 @@ const PositionChartPanel=memo(function PositionChartPanel({maxLap,visibleDrivers
                 const yTicks=[1,5,10,15,20];
                 const hasAny=visibleDrivers.some(d=>(d.positions||[]).length>0);
                 if(!hasAny)return(
-                  <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20,fontSize:12,color:"rgba(255,255,255,0.4)"}}>Position data not available for this race.</div>
+                  <div style={{background:"var(--w02)",border:"1px solid var(--w06)",borderRadius:2,padding:20,fontSize:12,color:"var(--w40)"}}>Position data not available for this race.</div>
                 );
                 const onMove=(e)=>{
                   const rect=e.currentTarget.getBoundingClientRect();
@@ -3900,11 +3987,11 @@ const PositionChartPanel=memo(function PositionChartPanel({maxLap,visibleDrivers
                 };
                 const hoverLap=telPosHover?.lap||null;
                 const periods=race.raceControlPeriods||[];
-                const periodStyle={SC:{fill:"rgba(255,218,0,0.10)",border:"rgba(255,218,0,0.45)",label:"SC",color:"#FFDA00"},VSC:{fill:"rgba(255,152,0,0.08)",border:"rgba(255,152,0,0.40)",label:"VSC",color:"#FF9800"},RED:{fill:"rgba(232,0,32,0.14)",border:"rgba(232,0,32,0.55)",label:"RED",color:"#E80020"}};
+                const periodStyle={SC:{fill:"rgba(255,218,0,0.10)",border:"rgba(255,218,0,0.45)",label:"SC",color:"var(--yellow)"},VSC:{fill:"rgba(255,152,0,0.08)",border:"rgba(255,152,0,0.40)",label:"VSC",color:"var(--amber)"},RED:{fill:"rgba(232,0,32,0.14)",border:"rgba(232,0,32,0.55)",label:"RED",color:"var(--red)"}};
                 return(
-                  <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20}}>
+                  <div style={{background:"var(--w02)",border:"1px solid var(--w06)",borderRadius:2,padding:20}}>
                     <div style={{fontSize:15,fontWeight:700,marginBottom:4}}>Position by Lap</div>
-                    <div style={{fontSize:12,color:"rgba(255,255,255,0.35)",marginBottom:16}}>Lines cross at overtakes — flat clusters = safety car, sharp drops = pit stops</div>
+                    <div style={{fontSize:12,color:"var(--w35)",marginBottom:16}}>Lines cross at overtakes — flat clusters = safety car, sharp drops = pit stops</div>
                     <div style={{position:"relative"}}>
                       <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{width:"100%",height:280,display:"block",touchAction:"pan-y"}} onPointerMove={onMove} onPointerLeave={()=>setTelPosHover(null)}>
                         {periods.map((p,i)=>{
@@ -3915,31 +4002,31 @@ const PositionChartPanel=memo(function PositionChartPanel({maxLap,visibleDrivers
                               <rect x={x1} y={padT} width={Math.max(2,x2-x1)} height={plotH} fill={st.fill}/>
                               <line x1={x1} x2={x1} y1={padT} y2={padT+plotH} stroke={st.border} strokeWidth={1} strokeDasharray="2 2"/>
                               <line x1={x2} x2={x2} y1={padT} y2={padT+plotH} stroke={st.border} strokeWidth={1} strokeDasharray="2 2"/>
-                              <text x={(x1+x2)/2} y={padT+10} textAnchor="middle" fill={st.color} fontSize="9" fontWeight={700} fontFamily="'Outfit',sans-serif" letterSpacing={1}>{st.label}</text>
+                              <text x={(x1+x2)/2} y={padT+10} textAnchor="middle" fill={st.color} fontSize="9" fontWeight={700} fontFamily="var(--font-ui)" letterSpacing={1}>{st.label}</text>
                             </g>
                           );
                         })}
                         {yTicks.map(p=>(
                           <g key={p}>
-                            <line x1={padL} x2={W-padR} y1={yOf(p)} y2={yOf(p)} stroke="rgba(255,255,255,0.05)"/>
-                            <text x={padL-8} y={yOf(p)+4} textAnchor="end" fill="rgba(255,255,255,0.4)" fontSize="10" fontFamily="'Outfit',sans-serif">P{p}</text>
+                            <line x1={padL} x2={W-padR} y1={yOf(p)} y2={yOf(p)} stroke="var(--w05)"/>
+                            <text x={padL-8} y={yOf(p)+4} textAnchor="end" fill="var(--w40)" fontSize="10" fontFamily="var(--font-ui)">P{p}</text>
                           </g>
                         ))}
                         {xTicks.map((l,i)=>(
-                          <text key={i} x={xOf(l)} y={H-padB+18} textAnchor="middle" fill={hoverLap===l?"#fff":"rgba(255,255,255,0.45)"} fontWeight={hoverLap===l?600:400} fontSize="10" fontFamily="'Outfit',sans-serif">L{l}</text>
+                          <text key={i} x={xOf(l)} y={H-padB+18} textAnchor="middle" fill={hoverLap===l?"var(--fg)":"var(--w45)"} fontWeight={hoverLap===l?600:400} fontSize="10" fontFamily="var(--font-ui)">L{l}</text>
                         ))}
                         {hoverLap&&(
-                          <line x1={xOf(hoverLap)} x2={xOf(hoverLap)} y1={padT} y2={padT+plotH} stroke="rgba(255,255,255,0.25)" strokeWidth={1} strokeDasharray="3 3" pointerEvents="none"/>
+                          <line x1={xOf(hoverLap)} x2={xOf(hoverLap)} y1={padT} y2={padT+plotH} stroke="var(--w25)" strokeWidth={1} strokeDasharray="3 3" pointerEvents="none"/>
                         )}
                         {visibleDrivers.map(d=>{
                           const pts=d.positions||[];
                           if(pts.length<2)return null;
-                          const color=d.teamColour||"#fff";
+                          const color=inkify(d.teamColour)||"var(--fg)";
                           const path=pts.map((p,i)=>`${i===0?"M":"L"}${xOf(p.l)},${yOf(p.p)}`).join(" ");
                           return(
                             <g key={d.acronym} pointerEvents="none">
                               <path d={path} stroke={color} strokeWidth={2} fill="none" strokeLinecap="round" strokeLinejoin="round" opacity={0.85}/>
-                              {hoverLap&&(()=>{const p=pts.find(x=>x.l===hoverLap);return p?<circle cx={xOf(p.l)} cy={yOf(p.p)} r={4} fill={color} stroke="#0a0a0f" strokeWidth={1.5}/>:null;})()}
+                              {hoverLap&&(()=>{const p=pts.find(x=>x.l===hoverLap);return p?<circle cx={xOf(p.l)} cy={yOf(p.p)} r={4} fill={color} stroke="var(--bench)" strokeWidth={1.5}/>:null;})()}
                             </g>
                           );
                         })}
@@ -3948,7 +4035,7 @@ const PositionChartPanel=memo(function PositionChartPanel({maxLap,visibleDrivers
                         const rows=visibleDrivers
                           .map(d=>{
                             const p=(d.positions||[]).find(x=>x.l===hoverLap);
-                            return p?{acronym:d.acronym,teamColour:d.teamColour,pos:p.p}:null;
+                            return p?{acronym:d.acronym,teamColour:inkify(d.teamColour),pos:p.p}:null;
                           })
                           .filter(Boolean)
                           .sort((a,b)=>a.pos-b.pos);
@@ -3956,12 +4043,12 @@ const PositionChartPanel=memo(function PositionChartPanel({maxLap,visibleDrivers
                         const leftPct=(xOf(hoverLap)/W)*100;
                         const placeRight=leftPct<55;
                         return(
-                          <div style={{position:"absolute",top:6,[placeRight?"left":"right"]:`${placeRight?leftPct+1.5:100-leftPct+1.5}%`,background:"rgba(14,14,22,0.96)",border:"1px solid rgba(255,255,255,0.10)",borderRadius:8,padding:"10px 12px",pointerEvents:"none",minWidth:180,boxShadow:"0 8px 24px rgba(0,0,0,0.5)"}}>
-                            <div style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:"rgba(255,255,255,0.4)",fontWeight:600,marginBottom:8}}>Lap {hoverLap}</div>
+                          <div style={{position:"absolute",top:6,[placeRight?"left":"right"]:`${placeRight?leftPct+1.5:100-leftPct+1.5}%`,background:"var(--panel-2)",border:"1px solid var(--rule)",borderRadius:2,padding:"10px 12px",pointerEvents:"none",minWidth:180,boxShadow:"0 6px 18px -4px rgba(0,0,0,0.35)"}}>
+                            <div style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:"var(--w40)",fontWeight:600,marginBottom:8}}>Lap {hoverLap}</div>
                             {rows.map(r=>(
                               <div key={r.acronym} style={{display:"flex",alignItems:"center",gap:8,marginBottom:4,fontSize:11}}>
-                                <div style={{width:18,color:"rgba(255,255,255,0.45)",fontWeight:600,fontVariantNumeric:"tabular-nums"}}>P{r.pos}</div>
-                                <div style={{width:3,height:11,background:r.teamColour||"#fff",borderRadius:1}}/>
+                                <div style={{width:18,color:"var(--w45)",fontWeight:600,fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)"}}>P{r.pos}</div>
+                                <div style={{width:3,height:11,background:inkify(r.teamColour)||"var(--fg)",borderRadius:1}}/>
                                 <div style={{flex:1,fontWeight:600}}>{r.acronym}</div>
                               </div>
                             ))}
@@ -4025,8 +4112,8 @@ const DeltaChartPanel=memo(function DeltaChartPanel({allDrivers,maxLap,race}){
                 const zeroY=yOf(0);
                 const yTicks=[yLo,(yLo+yHi)/2,0,yHi].filter((v,i,a)=>a.indexOf(v)===i);
                 const xTicks=Array.from({length:6},(_,i)=>Math.round(1+(i/5)*(maxLap-1)));
-                const tcA=drA.teamColour||"#fff";
-                const tcB=drB.teamColour||"#fff";
+                const tcA=inkify(drA.teamColour)||"var(--fg)";
+                const tcB=inkify(drB.teamColour)||"var(--fg)";
                 const onMove=(e)=>{
                   const rect=e.currentTarget.getBoundingClientRect();
                   const xView=((e.clientX-rect.left)/rect.width)*W;
@@ -4036,25 +4123,25 @@ const DeltaChartPanel=memo(function DeltaChartPanel({allDrivers,maxLap,race}){
                 };
                 const hoverLap=deltaHover?.lap||null;
                 const periods=race.raceControlPeriods||[];
-                const periodStyle={SC:{fill:"rgba(255,218,0,0.10)",border:"rgba(255,218,0,0.45)",label:"SC",color:"#FFDA00"},VSC:{fill:"rgba(255,152,0,0.08)",border:"rgba(255,152,0,0.40)",label:"VSC",color:"#FF9800"},RED:{fill:"rgba(232,0,32,0.14)",border:"rgba(232,0,32,0.55)",label:"RED",color:"#E80020"}};
+                const periodStyle={SC:{fill:"rgba(255,218,0,0.10)",border:"rgba(255,218,0,0.45)",label:"SC",color:"var(--yellow)"},VSC:{fill:"rgba(255,152,0,0.08)",border:"rgba(255,152,0,0.40)",label:"VSC",color:"var(--amber)"},RED:{fill:"rgba(232,0,32,0.14)",border:"rgba(232,0,32,0.55)",label:"RED",color:"var(--red)"}};
                 return(
-                  <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20,position:"relative"}}>
+                  <div style={{background:"var(--w02)",border:"1px solid var(--w06)",borderRadius:2,padding:20,position:"relative"}}>
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:4,flexWrap:"wrap",gap:8}}>
                       <div style={{fontSize:15,fontWeight:700}}>Race Gap · {drA.acronym} vs {drB.acronym}</div>
-                      <div style={{fontSize:11,color:"rgba(255,255,255,0.4)",fontVariantNumeric:"tabular-nums"}}>End-of-race gap {(deltas[deltas.length-1].delta).toFixed(3)}s</div>
+                      <div style={{fontSize:11,color:"var(--w40)",fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)"}}>End-of-race gap {(deltas[deltas.length-1].delta).toFixed(3)}s</div>
                     </div>
-                    <div style={{fontSize:12,color:"rgba(255,255,255,0.35)",marginBottom:14}}>Cumulative race-time delta per lap · positive = <span style={{color:tcA}}>{drA.acronym}</span> slower than <span style={{color:tcB}}>{drB.acronym}</span>, negative = ahead</div>
+                    <div style={{fontSize:12,color:"var(--w35)",marginBottom:14}}>Cumulative race-time delta per lap · positive = <span style={{color:tcA}}>{drA.acronym}</span> slower than <span style={{color:tcB}}>{drB.acronym}</span>, negative = ahead</div>
                     <div style={{display:"flex",gap:14,marginBottom:14,flexWrap:"wrap"}}>
                       <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
-                        <span style={{fontSize:10,color:"rgba(255,255,255,0.4)",textTransform:"uppercase",letterSpacing:1}}>A</span>
-                        {usable.map(d=>{const on=d.acronym===acrA;const dc=d.teamColour||"#fff";return(
-                          <button key={"a-"+d.acronym} onClick={()=>setDeltaA(d.acronym)} style={{padding:"3px 8px",borderRadius:4,border:`1px solid ${on?dc:"rgba(255,255,255,0.08)"}`,background:on?`${dc}1a`:"rgba(255,255,255,0.02)",color:on?"#fff":"rgba(255,255,255,0.55)",cursor:"pointer",fontSize:10,fontWeight:on?700:500,fontFamily:"'Outfit',sans-serif",letterSpacing:0.4}}>{d.acronym}</button>
+                        <span style={{fontSize:10,color:"var(--w40)",textTransform:"uppercase",letterSpacing:1}}>A</span>
+                        {usable.map(d=>{const on=d.acronym===acrA;const dc=inkify(d.teamColour)||"var(--fg)";return(
+                          <button key={"a-"+d.acronym} onClick={()=>setDeltaA(d.acronym)} style={{padding:"3px 8px",borderRadius:4,border:`1px solid ${on?dc:"var(--w08)"}`,background:on?`${dc}1a`:"var(--w02)",color:on?"var(--fg)":"var(--w55)",cursor:"pointer",fontSize:10,fontWeight:on?700:500,fontFamily:"var(--font-ui)",letterSpacing:0.4}}>{d.acronym}</button>
                         );})}
                       </div>
                       <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
-                        <span style={{fontSize:10,color:"rgba(255,255,255,0.4)",textTransform:"uppercase",letterSpacing:1}}>B</span>
-                        {usable.map(d=>{const on=d.acronym===acrB;const dc=d.teamColour||"#fff";return(
-                          <button key={"b-"+d.acronym} onClick={()=>setDeltaB(d.acronym)} style={{padding:"3px 8px",borderRadius:4,border:`1px solid ${on?dc:"rgba(255,255,255,0.08)"}`,background:on?`${dc}1a`:"rgba(255,255,255,0.02)",color:on?"#fff":"rgba(255,255,255,0.55)",cursor:"pointer",fontSize:10,fontWeight:on?700:500,fontFamily:"'Outfit',sans-serif",letterSpacing:0.4}}>{d.acronym}</button>
+                        <span style={{fontSize:10,color:"var(--w40)",textTransform:"uppercase",letterSpacing:1}}>B</span>
+                        {usable.map(d=>{const on=d.acronym===acrB;const dc=inkify(d.teamColour)||"var(--fg)";return(
+                          <button key={"b-"+d.acronym} onClick={()=>setDeltaB(d.acronym)} style={{padding:"3px 8px",borderRadius:4,border:`1px solid ${on?dc:"var(--w08)"}`,background:on?`${dc}1a`:"var(--w02)",color:on?"var(--fg)":"var(--w55)",cursor:"pointer",fontSize:10,fontWeight:on?700:500,fontFamily:"var(--font-ui)",letterSpacing:0.4}}>{d.acronym}</button>
                         );})}
                       </div>
                     </div>
@@ -4063,12 +4150,12 @@ const DeltaChartPanel=memo(function DeltaChartPanel({allDrivers,maxLap,race}){
                         {periods.map((p,i)=>{const st=periodStyle[p.type];if(!st||!p.lapStart||!p.lapEnd)return null;const x1=xOf(p.lapStart);const x2=xOf(Math.max(p.lapStart,p.lapEnd));return(<rect key={i} x={x1} y={padT} width={Math.max(2,x2-x1)} height={plotH} fill={st.fill}/>);})}
                         {yTicks.map((v,i)=>(
                           <g key={i}>
-                            <line x1={padL} x2={W-padR} y1={yOf(v)} y2={yOf(v)} stroke={v===0?"rgba(255,255,255,0.35)":"rgba(255,255,255,0.06)"} strokeWidth={v===0?1.2:1} strokeDasharray={v===0?"":""}/>
-                            <text x={padL-8} y={yOf(v)+4} textAnchor="end" fill={v===0?"rgba(255,255,255,0.65)":"rgba(255,255,255,0.4)"} fontSize="10" fontFamily="'Outfit',sans-serif" fontWeight={v===0?600:400}>{(v>=0?"+":"")+v.toFixed(1)}s</text>
+                            <line x1={padL} x2={W-padR} y1={yOf(v)} y2={yOf(v)} stroke={v===0?"var(--w35)":"var(--w06)"} strokeWidth={v===0?1.2:1} strokeDasharray={v===0?"":""}/>
+                            <text x={padL-8} y={yOf(v)+4} textAnchor="end" fill={v===0?"var(--w65)":"var(--w40)"} fontSize="10" fontFamily="var(--font-ui)" fontWeight={v===0?600:400}>{(v>=0?"+":"")+v.toFixed(1)}s</text>
                           </g>
                         ))}
-                        {xTicks.map((l,i)=>(<text key={i} x={xOf(l)} y={H-padB+18} textAnchor="middle" fill={hoverLap===l?"#fff":"rgba(255,255,255,0.45)"} fontWeight={hoverLap===l?600:400} fontSize="10" fontFamily="'Outfit',sans-serif">L{l}</text>))}
-                        {hoverLap&&(<line x1={xOf(hoverLap)} x2={xOf(hoverLap)} y1={padT} y2={padT+plotH} stroke="rgba(255,255,255,0.25)" strokeWidth={1} strokeDasharray="3 3" pointerEvents="none"/>)}
+                        {xTicks.map((l,i)=>(<text key={i} x={xOf(l)} y={H-padB+18} textAnchor="middle" fill={hoverLap===l?"var(--fg)":"var(--w45)"} fontWeight={hoverLap===l?600:400} fontSize="10" fontFamily="var(--font-ui)">L{l}</text>))}
+                        {hoverLap&&(<line x1={xOf(hoverLap)} x2={xOf(hoverLap)} y1={padT} y2={padT+plotH} stroke="var(--w25)" strokeWidth={1} strokeDasharray="3 3" pointerEvents="none"/>)}
                         {/* Filled area between line and zero */}
                         {(()=>{
                           const seg=deltas;
@@ -4079,8 +4166,8 @@ const DeltaChartPanel=memo(function DeltaChartPanel({allDrivers,maxLap,race}){
                           return(<g pointerEvents="none"><path d={belowFill} fill={tcA} fillOpacity={0.12}/><path d={aboveFill} fill={tcB} fillOpacity={0.12}/></g>);
                         })()}
                         {/* Delta line */}
-                        <path d={deltas.map((p,i)=>`${i===0?"M":"L"}${xOf(p.l)},${yOf(p.delta)}`).join(" ")} stroke="rgba(255,255,255,0.85)" strokeWidth={2} fill="none" strokeLinecap="round" strokeLinejoin="round" pointerEvents="none"/>
-                        {hoverLap&&(()=>{const p=deltas.find(x=>x.l===hoverLap);return p?<circle cx={xOf(p.l)} cy={yOf(p.delta)} r={4} fill="#fff" stroke="#0a0a0f" strokeWidth={1.5} pointerEvents="none"/>:null;})()}
+                        <path d={deltas.map((p,i)=>`${i===0?"M":"L"}${xOf(p.l)},${yOf(p.delta)}`).join(" ")} stroke="var(--w85)" strokeWidth={2} fill="none" strokeLinecap="round" strokeLinejoin="round" pointerEvents="none"/>
+                        {hoverLap&&(()=>{const p=deltas.find(x=>x.l===hoverLap);return p?<circle cx={xOf(p.l)} cy={yOf(p.delta)} r={4} fill="var(--fg)" stroke="var(--bench)" strokeWidth={1.5} pointerEvents="none"/>:null;})()}
                       </svg>
                       {hoverLap&&(()=>{
                         const p=deltas.find(x=>x.l===hoverLap);
@@ -4091,14 +4178,14 @@ const DeltaChartPanel=memo(function DeltaChartPanel({allDrivers,maxLap,race}){
                         const aheadCol=p.delta<0?tcA:tcB;
                         const absGap=Math.abs(p.delta);
                         return(
-                          <div style={{position:"absolute",top:6,[placeRight?"left":"right"]:`${placeRight?leftPct+1.5:100-leftPct+1.5}%`,background:"rgba(14,14,22,0.96)",border:"1px solid rgba(255,255,255,0.10)",borderRadius:8,padding:"10px 12px",pointerEvents:"none",minWidth:180,boxShadow:"0 8px 24px rgba(0,0,0,0.5)"}}>
-                            <div style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:"rgba(255,255,255,0.4)",fontWeight:600,marginBottom:8}}>Lap {hoverLap}</div>
+                          <div style={{position:"absolute",top:6,[placeRight?"left":"right"]:`${placeRight?leftPct+1.5:100-leftPct+1.5}%`,background:"var(--panel-2)",border:"1px solid var(--rule)",borderRadius:2,padding:"10px 12px",pointerEvents:"none",minWidth:180,boxShadow:"0 6px 18px -4px rgba(0,0,0,0.35)"}}>
+                            <div style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:"var(--w40)",fontWeight:600,marginBottom:8}}>Lap {hoverLap}</div>
                             <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6,fontSize:11}}>
                               <div style={{width:3,height:11,background:aheadCol,borderRadius:1}}/>
                               <div style={{flex:1,fontWeight:700}}>{ahead.acronym}</div>
-                              <div style={{fontSize:10,color:"rgba(255,255,255,0.5)"}}>ahead</div>
+                              <div style={{fontSize:10,color:"var(--w50)"}}>ahead</div>
                             </div>
-                            <div style={{fontSize:18,fontWeight:800,fontVariantNumeric:"tabular-nums",color:aheadCol,letterSpacing:-0.5}}>{absGap.toFixed(3)}s</div>
+                            <div style={{fontSize:18,fontWeight:800,fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)",color:aheadCol,letterSpacing:-0.5}}>{absGap.toFixed(3)}s</div>
                           </div>
                         );
                       })()}
@@ -4161,21 +4248,21 @@ const SpeedTracePanel=memo(function SpeedTracePanel({allDrivers}){
                   return best;
                 };
                 return(
-                  <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:20}}>
+                  <div style={{background:"var(--w02)",border:"1px solid var(--w06)",borderRadius:2,padding:20}}>
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:4,flexWrap:"wrap",gap:8}}>
                       <div style={{fontSize:15,fontWeight:700}}>Speed Trace · Fastest race lap</div>
-                      <div style={{fontSize:11,color:"rgba(255,255,255,0.4)"}}>Top 6 drivers · pick up to 4 to compare</div>
+                      <div style={{fontSize:11,color:"var(--w40)"}}>Top 6 drivers · pick up to 4 to compare</div>
                     </div>
-                    <div style={{fontSize:12,color:"rgba(255,255,255,0.35)",marginBottom:14}}>Speed (km/h) vs % of lap distance · each driver's fastest race lap · dips = braking zones, peaks = straights</div>
+                    <div style={{fontSize:12,color:"var(--w35)",marginBottom:14}}>Speed (km/h) vs % of lap distance · each driver's fastest race lap · dips = braking zones, peaks = straights</div>
                     <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:14}}>
                       {traceable.map(d=>{
                         const on=selected.has(d.acronym);
-                        const tc=d.teamColour||"#fff";
+                        const tc=inkify(d.teamColour)||"var(--fg)";
                         return(
-                          <button key={d.acronym} onClick={()=>toggle(d.acronym)} style={{display:"flex",alignItems:"center",gap:6,padding:"5px 10px",borderRadius:6,border:`1px solid ${on?tc:"rgba(255,255,255,0.08)"}`,background:on?`${tc}1a`:"rgba(255,255,255,0.02)",color:on?"#fff":"rgba(255,255,255,0.55)",cursor:"pointer",fontSize:11,fontWeight:on?700:500,fontFamily:"'Outfit',sans-serif"}}>
+                          <button key={d.acronym} onClick={()=>toggle(d.acronym)} style={{display:"flex",alignItems:"center",gap:6,padding:"5px 10px",borderRadius:6,border:`1px solid ${on?tc:"var(--w08)"}`,background:on?`${tc}1a`:"var(--w02)",color:on?"var(--fg)":"var(--w55)",cursor:"pointer",fontSize:11,fontWeight:on?700:500,fontFamily:"var(--font-ui)"}}>
                             <div style={{width:3,height:11,background:tc,borderRadius:1,opacity:on?1:0.5}}/>
                             <span style={{letterSpacing:0.5}}>{d.acronym}</span>
-                            <span style={{fontSize:9,color:"rgba(255,255,255,0.4)",fontWeight:400,fontVariantNumeric:"tabular-nums"}}>{d.fastLapTrace.lapTime.toFixed(3)}s</span>
+                            <span style={{fontSize:9,color:"var(--w40)",fontWeight:400,fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)"}}>{d.fastLapTrace.lapTime.toFixed(3)}s</span>
                           </button>
                         );
                       })}
@@ -4184,44 +4271,44 @@ const SpeedTracePanel=memo(function SpeedTracePanel({allDrivers}){
                       <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{width:"100%",height:280,display:"block",touchAction:"pan-y"}} onPointerMove={onMove} onPointerLeave={()=>setTelTraceHover(null)}>
                         {yTicks.map(v=>(
                           <g key={v}>
-                            <line x1={padL} x2={W-padR} y1={yOf(v)} y2={yOf(v)} stroke="rgba(255,255,255,0.06)"/>
-                            <text x={padL-8} y={yOf(v)+4} textAnchor="end" fill="rgba(255,255,255,0.4)" fontSize="10" fontFamily="'Outfit',sans-serif">{v} km/h</text>
+                            <line x1={padL} x2={W-padR} y1={yOf(v)} y2={yOf(v)} stroke="var(--w06)"/>
+                            <text x={padL-8} y={yOf(v)+4} textAnchor="end" fill="var(--w40)" fontSize="10" fontFamily="var(--font-ui)">{v} km/h</text>
                           </g>
                         ))}
                         {xTicks.map((v,i)=>(
-                          <text key={i} x={xOf(v)} y={H-padB+18} textAnchor="middle" fill="rgba(255,255,255,0.45)" fontSize="10" fontFamily="'Outfit',sans-serif">{Math.round(v*100)}%</text>
+                          <text key={i} x={xOf(v)} y={H-padB+18} textAnchor="middle" fill="var(--w45)" fontSize="10" fontFamily="var(--font-ui)">{Math.round(v*100)}%</text>
                         ))}
                         {hoverPct!==null&&(
-                          <line x1={xOf(hoverPct)} x2={xOf(hoverPct)} y1={padT} y2={padT+plotH} stroke="rgba(255,255,255,0.25)" strokeWidth={1} strokeDasharray="3 3" pointerEvents="none"/>
+                          <line x1={xOf(hoverPct)} x2={xOf(hoverPct)} y1={padT} y2={padT+plotH} stroke="var(--w25)" strokeWidth={1} strokeDasharray="3 3" pointerEvents="none"/>
                         )}
                         {normalized.map(n=>{
                           if(n.points.length<2)return null;
-                          const color=n.driver.teamColour||"#fff";
+                          const color=inkify(n.driver.teamColour)||"var(--fg)";
                           const path=n.points.map((p,i)=>`${i===0?"M":"L"}${xOf(p.pct)},${yOf(p.s)}`).join(" ");
                           return(
                             <g key={n.driver.acronym} pointerEvents="none">
                               <path d={path} stroke={color} strokeWidth={2} fill="none" strokeLinecap="round" strokeLinejoin="round" opacity={0.9}/>
-                              {hoverPct!==null&&(()=>{const p=findNearest(n.points,hoverPct);return p?<circle cx={xOf(p.pct)} cy={yOf(p.s)} r={4} fill={color} stroke="#0a0a0f" strokeWidth={1.5}/>:null;})()}
+                              {hoverPct!==null&&(()=>{const p=findNearest(n.points,hoverPct);return p?<circle cx={xOf(p.pct)} cy={yOf(p.s)} r={4} fill={color} stroke="var(--bench)" strokeWidth={1.5}/>:null;})()}
                             </g>
                           );
                         })}
                       </svg>
                       {hoverPct!==null&&(()=>{
                         const rows=normalized
-                          .map(n=>{const p=findNearest(n.points,hoverPct);return p?{acronym:n.driver.acronym,teamColour:n.driver.teamColour,speed:p.s}:null;})
+                          .map(n=>{const p=findNearest(n.points,hoverPct);return p?{acronym:n.driver.acronym,teamColour:inkify(n.driver.teamColour),speed:p.s}:null;})
                           .filter(Boolean)
                           .sort((a,b)=>b.speed-a.speed);
                         if(rows.length===0)return null;
                         const leftPct=(xOf(hoverPct)/W)*100;
                         const placeRight=leftPct<55;
                         return(
-                          <div style={{position:"absolute",top:6,[placeRight?"left":"right"]:`${placeRight?leftPct+1.5:100-leftPct+1.5}%`,background:"rgba(14,14,22,0.96)",border:"1px solid rgba(255,255,255,0.10)",borderRadius:8,padding:"10px 12px",pointerEvents:"none",minWidth:180,boxShadow:"0 8px 24px rgba(0,0,0,0.5)"}}>
-                            <div style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:"rgba(255,255,255,0.4)",fontWeight:600,marginBottom:8,fontVariantNumeric:"tabular-nums"}}>{Math.round(hoverPct*100)}% of lap</div>
+                          <div style={{position:"absolute",top:6,[placeRight?"left":"right"]:`${placeRight?leftPct+1.5:100-leftPct+1.5}%`,background:"var(--panel-2)",border:"1px solid var(--rule)",borderRadius:2,padding:"10px 12px",pointerEvents:"none",minWidth:180,boxShadow:"0 6px 18px -4px rgba(0,0,0,0.35)"}}>
+                            <div style={{fontSize:9,textTransform:"uppercase",letterSpacing:1.5,color:"var(--w40)",fontWeight:600,marginBottom:8,fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)"}}>{Math.round(hoverPct*100)}% of lap</div>
                             {rows.map(r=>(
                               <div key={r.acronym} style={{display:"flex",alignItems:"center",gap:8,marginBottom:4,fontSize:11}}>
-                                <div style={{width:3,height:11,background:r.teamColour||"#fff",borderRadius:1}}/>
+                                <div style={{width:3,height:11,background:inkify(r.teamColour)||"var(--fg)",borderRadius:1}}/>
                                 <div style={{flex:1,fontWeight:600}}>{r.acronym}</div>
-                                <div style={{fontVariantNumeric:"tabular-nums",fontWeight:700}}>{r.speed} km/h</div>
+                                <div style={{fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)",fontWeight:700}}>{r.speed} km/h</div>
                               </div>
                             ))}
                           </div>

@@ -1,0 +1,130 @@
+{
+  "title": "Choose the visual world",
+  "question": "The roll assigned The Timekeeper's Lap Chart. Keep it, take an alternate, or re-roll.",
+  "options": [
+    {
+      "id": "assigned",
+      "label": "The Timekeeper's Lap Chart",
+      "kicker": "THE ROLL",
+      "lineage": "1950s–70s circuit timekeepers' lap charts and stopwatch benches",
+      "thesis": "The season kept the way a timekeeper kept it: ruled sheets, tabular ink, one column per lap, team colours as the ink each car is written in.",
+      "palette": ["#1B1F24", "#DDE4EA", "#9DB3CF", "#14181D", "#D62828"],
+      "materials": ["ruled timing sheet on a dark bench", "fountain-pen ink", "stopwatch bezel and red sweep hand"],
+      "viewport": "A pale ruled sheet on a dark bench fills the first viewport. Its header stamp: round, circuit, date, freshness. The body is the real lap chart of the last Grand Prix: one column per lap, one row per position, car numbers inked in team colour, the leader's line traced in red. A stopwatch scrubber under the sheet drags the whole chart lap by lap; standings sit as a billing block beside it, leader largest.",
+      "risk": "Paper turns to kitsch the moment textures, stains or torn edges appear; the world is grid, ink and rules only. Typewriter numerals must hold at 12px or the density fails.",
+      "raised": [
+        { "from": "challenger-ascii", "raise": "One strict monospaced grid governs every timing figure: all numerals tabular, all columns aligned across every sheet." },
+        { "from": "challenger-cyclorama", "raise": "One scrubbable timeline binds the lap chart, the replay and the gap chart to the same lap cursor, deep-linkable by lap." },
+        { "from": "challenger-lineup", "raise": "Standings carry hierarchy by size alone: the leader's name is set largest, the tail packed dense, no bars needed to read who matters." },
+        { "from": "challenger-darkroom", "raise": "Every weekend is a fixed station rail, FP1 → FP2 → FP3 → Q → Sprint → Race, and the sheet you are on is always stamped with its station." },
+        { "from": "challenger-sneaker", "raise": "Every card is ruled by the same header grid: title, round, station, date stamp, in the same positions on every sheet." }
+      ]
+    },
+    {
+      "id": "model-pick",
+      "label": "The Timing Tower",
+      "kicker": "IMPECCABLE’S PICK",
+      "lineage": "FIA live-timing screens and the broadcast timing tower",
+      "thesis": "The dashboard as the pit wall's own timing screen: a full-height tower of 22 drivers, sector colours doing the talking.",
+      "palette": ["#0B0B0E", "#F2F2F2", "#B052F0", "#2ECC71", "#F5D000"],
+      "materials": ["matte black screen", "sector purple / green / yellow", "team stripe tags"],
+      "viewport": "A full-height timing tower on the left: position, team stripe, three-letter tag, gap, three sector mini-bars per driver, all in tabular mono. The right two-thirds holds the selected driver's sheet: lap chart, stints, speed trace.",
+      "risk": "This is where most F1 dashboards land, including the current one; familiar and effective, but a reviewer may have seen it before."
+    },
+    {
+      "id": "challenger-elbow",
+      "label": "Elbow Panel Console",
+      "verdict": "competitive",
+      "lineage": "pill-cornered starship wall panels",
+      "thesis": "Every tab is a colour bank inside one sweeping elbow frame; every control is a flat pill, every number a code cluster.",
+      "palette": ["#000000", "#C9A0DC", "#FFB380", "#FFCC66", "#9999FF"],
+      "materials": ["flat pastel pills on pure black", "elbow frames as the layout grid"],
+      "viewport": "A lilac elbow sweeps down the left and along the top; the Overview bank sits inside it as ranked pill segments: leader, last winner, next race, each a pill with its numeric cluster.",
+      "case": "Fuses cleanly as an interface grammar with instant state changes and clear tab banks; loses on identification, this is a sci-fi bridge, not a paddock.",
+      "risk": "Reads as pastiche of a specific television franchise the moment the elbows are recognisable.",
+      "hero": "https://impeccable.style/worlds/cards/pop-culture-shelf-elbow-panel-console-hero.webp"
+    },
+    {
+      "id": "challenger-ascii",
+      "label": "ASCII Live Scene",
+      "verdict": "declined",
+      "lineage": "typewriter-glyph scene rendering",
+      "thesis": "Track maps and traces rendered as phosphor glyph density.",
+      "palette": ["#0A0F0A", "#33FF66"],
+      "materials": ["single-ink phosphor", "monospace cell grid"],
+      "viewport": "The replay as a glyph field, cars as at-signs.",
+      "case": "Fuses poorly: glyph density cannot carry 22 team colours or sector times, and fans do not identify with terminal art.",
+      "kept": "One strict monospace grid as the entire composition.",
+      "risk": "Novelty over data.",
+      "hero": "https://impeccable.style/worlds/cards/medium-native-ascii-live-scene-render-hero.webp"
+    },
+    {
+      "id": "challenger-cyclorama",
+      "label": "Cyclorama Dawn",
+      "verdict": "declined",
+      "lineage": "theatre lighting cycloramas",
+      "thesis": "Race weekend as light phases on an infinite horizon.",
+      "palette": ["#05060A", "#1E3A8A", "#F4A6B0", "#FFFFFF"],
+      "materials": ["depthless cyc black", "cobalt horizon band"],
+      "viewport": "Horizon bands stacked from night to day, one per session.",
+      "case": "Fuses poorly: gradient bands fight team colours, and horizon phases say nothing a fan recognises.",
+      "kept": "A scrubbable cue timeline binding every view to one time cursor.",
+      "risk": "Mood without data.",
+      "hero": "https://impeccable.style/worlds/cards/stagecraft-theater-lighting-cyclorama-dawn-hero.webp"
+    },
+    {
+      "id": "challenger-lineup",
+      "label": "Festival Lineup Sheet",
+      "verdict": "declined",
+      "lineage": "music festival lineup posters",
+      "thesis": "Standings as billing: size alone says who matters.",
+      "palette": ["#D62828", "#F5EFE6"],
+      "materials": ["one saturated ground", "one condensed face at eight sizes"],
+      "viewport": "Antonelli spans the width; the tail justified at the foot.",
+      "case": "Carries the standings beautifully and nothing else; telemetry, sectors and replays have no place on a type-only sheet.",
+      "kept": "Hierarchy by size alone; no bars where names suffice.",
+      "risk": "Cannot hold a chart.",
+      "hero": "https://impeccable.style/worlds/cards/posters-covers-sleeves-festival-lineup-poster-hero.webp"
+    },
+    {
+      "id": "challenger-darkroom",
+      "label": "Darkroom Safelight",
+      "verdict": "declined",
+      "lineage": "photographic darkrooms",
+      "thesis": "Results emerging slowly under amber light.",
+      "palette": ["#3A1F00", "#F59E0B", "#C8C8C8", "#FFFFFF"],
+      "materials": ["amber safelight wash", "wet-print silver"],
+      "viewport": "Each station a tray; the race develops in the last one.",
+      "case": "Fuses poorly: an amber wash erases team identity, and fans want results instantly, not slowly.",
+      "kept": "Work moves through fixed stations in order.",
+      "risk": "Everything looks the same colour.",
+      "hero": "https://impeccable.style/worlds/cards/signals-instruments-darkroom-safelight-bay-hero.webp"
+    },
+    {
+      "id": "challenger-sneaker",
+      "label": "Sneaker Archive Wall",
+      "verdict": "declined",
+      "lineage": "stacked sneaker boxes with end labels",
+      "thesis": "Every round a box on the wall; pull one to open it.",
+      "palette": ["#C2410C", "#111111", "#FFFFFF"],
+      "materials": ["orange box board", "tissue white"],
+      "viewport": "A wall of 23 box ends, one per round.",
+      "case": "Fuses poorly: a box per round hides the season's continuity that standings and lap charts depend on.",
+      "kept": "One label grid ruling every card in the same positions.",
+      "risk": "Wrong subculture.",
+      "hero": "https://impeccable.style/worlds/cards/textiles-weave-drape-fashion-sneaker-box-stacks-hero.webp"
+    }
+  ],
+  "reroll": { "registers": ["safer", "bolder"] },
+  "buildPath": { "value": "code", "toggle": false },
+  "canon": true,
+  "canonCard": {
+    "label": "The category standard",
+    "thesis": "The broadcast-graphics dashboard every F1 site ships: dark ground, red accent, cards and bars, executed impeccably.",
+    "palette": ["#0A0A0F", "#FFFFFF", "#E80020", "#27F4D2"],
+    "materials": ["near-black cards", "glowing accents"],
+    "viewport": "Hero leader card, podium row, stat tiles, two standings columns.",
+    "risk": "Indistinguishable from the incumbent and from every other F1 dashboard by design."
+  },
+  "steer": true
+}

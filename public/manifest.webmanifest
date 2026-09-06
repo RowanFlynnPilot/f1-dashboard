@@ -5,8 +5,8 @@
   "start_url": "/f1-dashboard/",
   "scope": "/f1-dashboard/",
   "display": "standalone",
-  "background_color": "#0a0a0f",
-  "theme_color": "#0a0a0f",
+  "background_color": "#1B1F24",
+  "theme_color": "#1B1F24",
   "icons": [
     { "src": "favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
   ]

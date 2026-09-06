@@ -119,26 +119,31 @@ YouTube blocks GitHub Actions IPs, so transcripts cannot be fetched in CI. The f
 | Quotes | 💬 | Post-session driver quotes grouped by round, session pill filters |
 | Schedule | 📅 | Full calendar with sprint flags, localized date/time, client-side completion status |
 
-## Design System
+## Design System — "The Timekeeper's Lap Chart"
 
-### Team Colors (`TC` object)
+The visual world (chosen Sept 2026 via the Impeccable skill; recorded in `DESIGN.md`, product truth in `PRODUCT.md`, the direction contract in `.impeccable/surfaces/src-app-jsx.md`): ruled timing sheets on a dark bench. Every figure in tabular ink; each car written in its team colour. No glow, no gradients, no textures — grid, ink and rules only. Tokens live in `src/styles.css` (`:root`).
+
+### Tokens
+- Bench (page ground): `--bench #1B1F24` · sheet (paper): `--sheet #DDE4EA`, `--panel #E7EDF2` · printed rules: `--rule #9DB3CF`, `--rule-soft`, `--rule-faint`
+- Ink: `--ink #14181D`, `--ink-2..5` for secondary text · record red `--red #D62828` (fastest / leader / active only) · `--green #1B7F4B` positive deltas · `--amber`, `--yellow` (flags), `--purple`
+- Translucent ink ramp `--w015 … --w90`: App.jsx's old `rgba(255,255,255,α)` literals were remapped to these so the whole hierarchy survived the flip to paper. Keep using them for subtle fills/borders.
+- Fonts (loaded in `index.html`): `--font-head` Barlow Condensed (headings, labels, tabs), `--font-ui` Barlow (body), `--font-data` Courier Prime (every numeral and data cell; `fontVariantNumeric:"tabular-nums"` sites also set it).
+
+### Team colours (`TC`)
+`TC_RAW` holds the broadcast liveries; `TC` is `inkify()`'d — lightness is clamped so pale liveries (Mercedes teal, Williams blue, Haas silver) read at text sizes on the sheet while keeping their hue. OpenF1 `teamColour` values are passed through `inkify()` at every use. Team colour is ink, never a fill behind text.
 ```javascript
-Mercedes: "#27F4D2"    Ferrari: "#E80020"     McLaren: "#FF8000"
-Red Bull: "#3671C6"    Racing Bulls: "#6692FF" Alpine: "#FF87BC"
-Aston Martin: "#229971" Haas: "#B6BABD"       Williams: "#64C4FF"
-Audi: "#FF0000"        Cadillac: "#D4AF37"  (brand near-black is invisible on the dark theme — gold accent instead)
+Mercedes "#27F4D2" → ink ~#178f7b   Ferrari "#E80020"   McLaren "#FF8000"   Red Bull "#3671C6"
+Racing Bulls "#6692FF"   Alpine "#FF87BC"   Aston Martin "#229971"   Haas "#B6BABD"
+Williams "#64C4FF"   Audi "#FF0000"   Cadillac "#D4AF37"
 ```
 
-### Fonts
-- Headlines/UI: `'Outfit', sans-serif`
-- Data/monospace: System fallback
-
-### Theme
-- Background: `#0a0a0f` (near-black)
-- Cards: `rgba(255,255,255,0.02-0.03)` with `rgba(255,255,255,0.06)` borders
-- F1 red accent: `#E80020`
-- Positive/delta: `#27F4D2` (teal)
-- Negative: `#E80020` (red)
+### Shell and components
+- `.bench` page → `header.hdr` (title + Courier stamp: round, next race, freshness) → index tabs (`.tab-bar .tb`, active tab joins the sheet) → one `main .sheet` per tab with a `.sheet-band` provenance strip (sources + fetched time).
+- Headings: `h2.sheet-h` (condensed caps) + `p.sheet-sub` (Courier). Sections separate with `.rule-h`, not cards.
+- Overview first viewport: `LapChart` (SVG, one column per lap, positions as rows, winner in red, pit circles, yellow/SC bands), `LapReadout`, `LapScrubber` (stopwatch; play advances laps), standings `.billing` (size = rank), `.podium`, `.figures`.
+- The lap cursor is shared: the scrubber writes `#lap=N`; the Telemetry replay opens on that lap.
+- Motion: `.fu` fade-up on first visit of a tab only (`visitedTabs` + `.no-anim`), `.ink-draw` stroke draw-on for chart lines; `prefers-reduced-motion` collapses both.
+- Refuse: emoji as icons, glows, gradient text, nested cards, `transition: width` on bars.
 
 ### Team Name Normalization
 The `normTeam()` function maps API team names to the short forms used by `TC` and `TEAM_LOGOS`:

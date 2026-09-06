@@ -1,0 +1,167 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-06T00:00:00Z",
+  "title": "Design System: F1 2026 Season Sheets",
+  "extensions": {
+    "colorMeta": {
+      "bench": { "role": "neutral", "displayName": "Bench", "canonical": "#1B1F24", "tonalRamp": ["#0E1114", "#1B1F24", "#242A31", "#2E353D", "#3A424C", "#5C6772", "#93A1AF", "#E6ECF1"] },
+      "sheet": { "role": "neutral", "displayName": "Sheet Paper", "canonical": "#DDE4EA", "tonalRamp": ["#1B1F24", "#39424C", "#5C6772", "#86919C", "#A9B3BC", "#D2DBE3", "#DDE4EA", "#EEF3F7"] },
+      "panel": { "role": "neutral", "displayName": "Panel Paper", "canonical": "#E7EDF2", "tonalRamp": ["#242A31", "#39424C", "#5C6772", "#86919C", "#A9B3BC", "#DDE4EA", "#E7EDF2", "#EEF3F7"] },
+      "rule": { "role": "neutral", "displayName": "Printed Rule Blue", "canonical": "#9DB3CF", "tonalRamp": ["#1C2632", "#33475E", "#4B6584", "#6E8AAB", "#9DB3CF", "#B8C8DC", "#D2DDEA", "#EAF0F6"] },
+      "ink": { "role": "neutral", "displayName": "Ink", "canonical": "#14181D", "tonalRamp": ["#14181D", "#39424C", "#5C6772", "#86919C", "#A9B3BC", "#C4CCD3", "#DDE4EA", "#EEF3F7"] },
+      "record-red": { "role": "primary", "displayName": "Record Red", "canonical": "#D62828", "tonalRamp": ["#3A0A0A", "#6E1414", "#A01E1E", "#D62828", "#E25A5A", "#EC8A8A", "#F5BDBD", "#FBE7E7"] },
+      "green": { "role": "tertiary", "displayName": "Personal-Best Green", "canonical": "#1B7F4B", "tonalRamp": ["#08301B", "#0F532F", "#1B7F4B", "#2C9E62", "#4FB982", "#84D0A8", "#BCE6CE", "#E6F6EE"] },
+      "purple": { "role": "tertiary", "displayName": "Overall-Best Purple", "canonical": "#6A2FC9", "tonalRamp": ["#22103F", "#3D1C78", "#5426A3", "#6A2FC9", "#8A5AD9", "#AC89E5", "#D0BCF1", "#EEE7FA"] },
+      "amber": { "role": "tertiary", "displayName": "Aging Amber", "canonical": "#B7791F", "tonalRamp": ["#3D2809", "#6B4712", "#94621A", "#B7791F", "#CD9540", "#DDB577", "#EDD4AF", "#F9F0E0"] },
+      "yellow": { "role": "tertiary", "displayName": "Local Yellow", "canonical": "#C9A400", "tonalRamp": ["#403400", "#6E5A00", "#9C8000", "#C9A400", "#DDBF2E", "#E9D26A", "#F3E5A6", "#FBF6DE"] },
+      "gold": { "role": "tertiary", "displayName": "Cadillac Gold", "canonical": "#9A7B1F", "tonalRamp": ["#332809", "#5A4712", "#7D6318", "#9A7B1F", "#B69640", "#CDB474", "#E3D2AA", "#F5EEDC"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Championship leader name in the standings billing (t1); tiers step 44/28/20/16/13.5px." },
+      "headline": { "displayName": "Headline", "purpose": "Page title on the bench; 26px on mobile." },
+      "title": { "displayName": "Title", "purpose": "Every sheet section heading (.sheet-h), with a Courier 12px subline." },
+      "body": { "displayName": "Body", "purpose": "Prose, quotes, notes and table cells in Barlow." },
+      "data": { "displayName": "Data", "purpose": "Every numeral, time, gap, points figure, provenance stamp and tick label; tabular-nums." },
+      "label": { "displayName": "Label", "purpose": "Ledger keys, table heads, tab labels; condensed uppercase with 0.08em tracking." }
+    },
+    "shadows": [
+      { "name": "sheet-on-bench", "value": "0 18px 40px -22px rgba(0,0,0,.7), 0 2px 0 rgba(0,0,0,.25)", "purpose": "The one lifted surface: the sheet lying on the bench." },
+      { "name": "tooltip", "value": "0 6px 18px -4px rgba(0,0,0,0.35)", "purpose": "Chart hover tooltips on panel-2." },
+      { "name": "stopwatch-cap", "value": "0 1px 2px rgba(0,0,0,.35)", "purpose": "The red cap on the scrubber hand." }
+    ],
+    "motion": [
+      { "name": "ease-out", "value": "cubic-bezier(0.16,1,0.3,1)", "purpose": "Easing for fade-up and ink draw-on." },
+      { "name": "fade-up", "value": "fadeUp .5s ease-out both; children .45s staggered 40-320ms", "purpose": "First visit to a tab only; .no-anim suppresses on return." },
+      { "name": "ink-draw", "value": "stroke-dashoffset 1.6s ease-out", "purpose": "Chart lines draw on like ink on first visit." },
+      { "name": "state", "value": "150-200ms", "purpose": "Background, colour, border and opacity transitions on chips, rows, tabs, selects." },
+      { "name": "reduced-motion", "value": "0.01ms for all animation and transition; strokes pre-drawn", "purpose": "prefers-reduced-motion: reduce collapses everything." }
+    ],
+    "breakpoints": [
+      { "name": "hero-stack", "value": "1024px" },
+      { "name": "tablet", "value": "768px" },
+      { "name": "lapchart-compact", "value": "640px" },
+      { "name": "phone", "value": "480px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Index Tab",
+      "kind": "nav",
+      "refersTo": "tab",
+      "description": "Tab on the sheet's top edge; the active tab takes the paper colour and joins the sheet.",
+      "html": "<div class=\"ds-tabbar\"><button class=\"ds-tb ds-tb-a\" role=\"tab\" aria-selected=\"true\">Overview</button><button class=\"ds-tb\" role=\"tab\">Standings</button><button class=\"ds-tb\" role=\"tab\">Race Results</button></div><div class=\"ds-sheet-edge\"></div>",
+      "css": ".ds-tabbar{display:flex;gap:3px;align-items:flex-end;background:var(--bench,#1B1F24);padding:12px 12px 0}.ds-tb{cursor:pointer;padding:9px 16px 8px;border:1px solid var(--bench-3,#2E353D);border-bottom:none;background:var(--bench-2,#242A31);color:#93A1AF;font-family:'Barlow Condensed','Barlow',system-ui,sans-serif;font-size:14px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;flex:1;text-align:center;border-radius:2px 2px 0 0;transition:background .18s,color .18s,transform .18s;transform:translateY(2px)}.ds-tb:hover{color:#E6ECF1;background:var(--bench-3,#2E353D)}.ds-tb:focus-visible{outline:2px solid var(--red,#D62828);outline-offset:-3px}.ds-tb-a,.ds-tb-a:hover{background:var(--sheet,#DDE4EA);color:var(--ink,#14181D);border-color:var(--sheet,#DDE4EA);transform:translateY(0);padding-top:11px}.ds-sheet-edge{height:14px;background:var(--sheet,#DDE4EA);margin:0 12px;border-radius:0 2px 0 0}"
+    },
+    {
+      "name": "Sheet with Provenance Band",
+      "kind": "card",
+      "refersTo": "sheet",
+      "description": "The paper sheet every tab is written on, opening with its stamped sources band and a section title.",
+      "html": "<div class=\"ds-sheet\"><div class=\"ds-band\"><span><b>OVERVIEW</b> · sheet 01 of 09</span><span>sources · Jolpica F1 · OpenF1 · fetched Sep 4, 2026</span></div><h2 class=\"ds-sheet-h\">Lap chart · Dutch Grand Prix</h2><p class=\"ds-sheet-sub\">Round 12 · Circuit Park Zandvoort · 72 laps</p><div class=\"ds-rule-h\"></div><p class=\"ds-body\">Red line: the winner. Circles: pit stops.</p></div>",
+      "css": ".ds-sheet{background:var(--sheet,#DDE4EA);color:var(--ink,#14181D);border-radius:0 2px 2px 2px;box-shadow:0 18px 40px -22px rgba(0,0,0,.7),0 2px 0 rgba(0,0,0,.25);padding:26px 28px 30px;font-family:'Barlow',system-ui,sans-serif;font-size:14px;line-height:1.45}.ds-band{margin:-26px -28px 22px;padding:12px 28px;background:var(--sheet-2,#D2DBE3);border-bottom:1px solid var(--rule,#9DB3CF);display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;font-family:'Courier Prime','Courier New',monospace;font-size:12px;color:var(--ink-3,#5C6772)}.ds-band b{color:var(--ink,#14181D);font-weight:700}.ds-sheet-h{font-family:'Barlow Condensed','Barlow',system-ui,sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.02em;font-size:22px;line-height:1;margin:0 0 4px}.ds-sheet-sub{font-family:'Courier Prime','Courier New',monospace;font-size:12px;color:var(--ink-3,#5C6772);margin:0}.ds-rule-h{border-top:1px solid var(--rule,#9DB3CF);margin:22px 0 18px}.ds-body{margin:0}"
+    },
+    {
+      "name": "Standings Billing",
+      "kind": "custom",
+      "refersTo": "sheet",
+      "description": "Ruled standings list with size-only hierarchy: leader 44px, tail 13.5px, team dash before each name, Courier points.",
+      "html": "<ul class=\"ds-billing\"><li class=\"ds-t1\"><span class=\"ds-rk\">1</span><span class=\"ds-nm\"><em style=\"background:#1fb9a0\"></em>Antonelli<small>Mercedes</small></span><span class=\"ds-pt\">242<small>+23</small></span></li><li class=\"ds-t2\"><span class=\"ds-rk\">2</span><span class=\"ds-nm\"><em style=\"background:#1fb9a0\"></em>Russell<small>Mercedes</small></span><span class=\"ds-pt\">183<small>+23</small></span></li><li class=\"ds-t3\"><span class=\"ds-rk\">3</span><span class=\"ds-nm\"><em style=\"background:#E80020\"></em>Hamilton<small>Ferrari</small></span><span class=\"ds-pt\">183<small>+14</small></span></li><li class=\"ds-t5\"><span class=\"ds-rk\">4</span><span class=\"ds-nm\"><em style=\"background:#FF8000\"></em>Norris<small>McLaren</small></span><span class=\"ds-pt\">159<small>+31</small></span></li></ul>",
+      "css": ".ds-billing{list-style:none;margin:0;padding:0;background:var(--sheet,#DDE4EA);color:var(--ink,#14181D)}.ds-billing li{display:grid;grid-template-columns:28px 1fr auto;align-items:baseline;gap:10px;border-bottom:1px solid var(--rule-faint,rgba(157,179,207,0.3));padding:5px 0}.ds-rk{font-family:'Courier Prime','Courier New',monospace;font-size:11px;color:var(--ink-4,#86919C)}.ds-nm{font-family:'Barlow Condensed','Barlow',system-ui,sans-serif;font-weight:700;text-transform:uppercase;line-height:1;letter-spacing:.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;min-width:0}.ds-nm em{display:inline-block;width:14px;height:3px;margin-right:8px;transform:translateY(-3px)}.ds-nm small{font-family:'Barlow',system-ui,sans-serif;font-size:11px;font-weight:500;color:var(--ink-4,#86919C);text-transform:none;letter-spacing:0;margin-left:8px}.ds-pt{font-family:'Courier Prime','Courier New',monospace;font-weight:700}.ds-pt small{font-weight:400;color:var(--green,#1B7F4B);margin-left:6px;font-size:11px}.ds-t1 .ds-nm{font-size:44px}.ds-t1 .ds-pt{font-size:26px}.ds-t1{padding:2px 0 8px;border-bottom-color:var(--rule,#9DB3CF)}.ds-t2 .ds-nm{font-size:28px}.ds-t2 .ds-pt{font-size:18px}.ds-t3 .ds-nm{font-size:20px}.ds-t3 .ds-pt{font-size:15px}.ds-t5 .ds-nm{font-size:13.5px}.ds-t5 .ds-pt{font-size:12px}.ds-t5{padding:3px 0}.ds-t1 .ds-rk,.ds-t2 .ds-rk{font-size:13px;color:var(--red,#D62828);font-weight:700}"
+    },
+    {
+      "name": "Ledger Line",
+      "kind": "custom",
+      "refersTo": "sheet",
+      "description": "One ruled line of KEY value pairs separated by faint verticals.",
+      "html": "<div class=\"ds-ledger\"><span><i>Avg pit</i><b>18.021s</b></span><span><i>Fastest pit</i><b>12.092s</b><small>Colapinto</small></span><span><i>Rounds</i><b>12<em>/23</em></b></span><span><i>Winners</i><b>5<em>/12</em></b></span></div>",
+      "css": ".ds-ledger{display:flex;flex-wrap:wrap;gap:6px 0;border-top:1px solid var(--rule,#9DB3CF);border-bottom:1px solid var(--rule,#9DB3CF);padding:9px 0;font-family:'Courier Prime','Courier New',monospace;font-size:13px;line-height:1.3;background:var(--sheet,#DDE4EA);color:var(--ink,#14181D)}.ds-ledger>span{display:inline-flex;align-items:baseline;gap:7px;padding:0 12px 0 0;margin-right:12px;border-right:1px solid var(--rule-faint,rgba(157,179,207,0.3));white-space:nowrap}.ds-ledger>span:last-child{border-right:none;margin-right:0;padding-right:0}.ds-ledger i{font-style:normal;font-family:'Barlow Condensed','Barlow',system-ui,sans-serif;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3,#5C6772)}.ds-ledger b{font-weight:700}.ds-ledger em{font-style:normal;font-weight:400;color:var(--ink-4,#86919C)}.ds-ledger small{font-size:11px;color:var(--ink-4,#86919C);font-family:'Barlow',system-ui,sans-serif}"
+    },
+    {
+      "name": "Stopwatch Scrubber",
+      "kind": "input",
+      "refersTo": "scrub-button",
+      "description": "Play button plus a ticked rail with a red hand; drives the lap cursor shared by chart and replay.",
+      "html": "<div class=\"ds-scrub\"><button class=\"ds-scrub-btn\" aria-label=\"Play laps\"><svg viewBox=\"0 0 12 12\"><path d=\"M2 1l9 5-9 5z\"/></svg></button><div class=\"ds-track\"><div class=\"ds-rail\"></div><div class=\"ds-tick ds-major\" style=\"left:0\"></div><div class=\"ds-tick\" style=\"left:25%\"></div><div class=\"ds-tick ds-major\" style=\"left:50%\"></div><div class=\"ds-tick\" style=\"left:75%\"></div><div class=\"ds-tick ds-major\" style=\"left:100%\"></div><div class=\"ds-tick-lbl\" style=\"left:0\">1</div><div class=\"ds-tick-lbl\" style=\"left:50%\">36</div><div class=\"ds-tick-lbl ds-last\" style=\"left:100%\">72</div><div class=\"ds-hand\" style=\"left:31%\"></div></div><div class=\"ds-lapno\">LAP 23 <small>/ 72</small></div></div>",
+      "css": ".ds-scrub{display:flex;align-items:center;gap:14px;background:var(--sheet,#DDE4EA);padding:8px 0}.ds-scrub-btn{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--ink,#14181D);background:var(--sheet,#DDE4EA);color:var(--ink,#14181D);cursor:pointer;display:grid;place-items:center;padding:0;transition:background .15s,color .15s}.ds-scrub-btn:hover{background:var(--ink,#14181D);color:var(--sheet,#DDE4EA)}.ds-scrub-btn:focus-visible{outline:2px solid var(--red,#D62828);outline-offset:2px}.ds-scrub-btn svg{width:12px;height:12px;fill:currentColor}.ds-track{position:relative;flex:1;height:34px}.ds-rail{position:absolute;left:0;right:0;top:16px;height:2px;background:var(--ink-4,#86919C)}.ds-tick{position:absolute;top:12px;width:1px;height:10px;background:var(--ink-4,#86919C)}.ds-tick.ds-major{top:9px;height:16px;background:var(--ink-2,#39424C)}.ds-tick-lbl{position:absolute;top:26px;transform:translateX(-50%);font-family:'Courier Prime','Courier New',monospace;font-size:9px;color:var(--ink-4,#86919C)}.ds-tick-lbl.ds-last{transform:translateX(-100%)}.ds-hand{position:absolute;top:2px;width:2px;height:30px;background:var(--red,#D62828);transform:translateX(-50%)}.ds-hand::before{content:\"\";position:absolute;top:-3px;left:50%;width:10px;height:10px;background:var(--red,#D62828);border-radius:50%;transform:translateX(-50%);box-shadow:0 1px 2px rgba(0,0,0,.35)}.ds-lapno{font-family:'Courier Prime','Courier New',monospace;font-size:14px;font-weight:700;min-width:96px;text-align:right;color:var(--ink,#14181D)}.ds-lapno small{font-weight:400;color:var(--ink-3,#5C6772)}"
+    },
+    {
+      "name": "Filter Chip",
+      "kind": "chip",
+      "refersTo": "chip-filter",
+      "description": "Session / round / metric filter; selected state takes the red pen.",
+      "html": "<div class=\"ds-chips\"><button class=\"ds-chip ds-chip-on\">Race</button><button class=\"ds-chip\">Qualifying</button><button class=\"ds-chip\">Sprint</button></div>",
+      "css": ".ds-chips{display:flex;gap:6px;background:var(--sheet,#DDE4EA);padding:8px}.ds-chip{padding:6px 14px;border-radius:2px;border:1px solid rgba(20,24,29,0.16);background:rgba(20,24,29,0.035);color:rgba(20,24,29,0.74);cursor:pointer;font-size:12px;font-weight:600;font-family:'Barlow',system-ui,sans-serif;transition:all .2s}.ds-chip:hover{border-color:var(--ink-4,#86919C);color:var(--ink,#14181D)}.ds-chip:focus-visible{outline:2px solid var(--red,#D62828);outline-offset:2px}.ds-chip-on{border-color:var(--red,#D62828);background:rgba(214,40,40,0.10);color:var(--ink,#14181D)}"
+    },
+    {
+      "name": "Driver Chip",
+      "kind": "chip",
+      "refersTo": "chip-filter",
+      "description": "Driver selector; selected takes the ink-clamped team colour as border and a ten-percent tint as fill.",
+      "html": "<div class=\"ds-chips\"><button class=\"ds-dchip ds-dchip-on\" style=\"--tc:#1fb9a0\">ANT</button><button class=\"ds-dchip\">RUS</button><button class=\"ds-dchip\">HAM</button><button class=\"ds-dchip\" disabled>NOR</button></div>",
+      "css": ".ds-chips{display:flex;gap:6px;background:var(--sheet,#DDE4EA);padding:8px}.ds-dchip{display:flex;align-items:center;gap:6px;padding:5px 10px;border-radius:2px;border:1px solid rgba(20,24,29,0.16);background:rgba(20,24,29,0.035);color:rgba(20,24,29,0.78);cursor:pointer;font-size:11px;font-weight:500;font-family:'Barlow',system-ui,sans-serif;transition:all .15s}.ds-dchip:hover{border-color:var(--ink-4,#86919C)}.ds-dchip:focus-visible{outline:2px solid var(--red,#D62828);outline-offset:2px}.ds-dchip-on{border-color:var(--tc);background:color-mix(in srgb,var(--tc) 10%,transparent);color:var(--ink,#14181D);font-weight:700}.ds-dchip:disabled{opacity:.35;cursor:not-allowed}"
+    },
+    {
+      "name": "Select",
+      "kind": "input",
+      "refersTo": "select",
+      "description": "Race / meeting / session picker; border goes red on hover and focus.",
+      "html": "<div class=\"ds-sel-wrap\"><select class=\"ds-select\"><option>Dutch Grand Prix · R12</option><option>Hungarian Grand Prix · R11</option></select><svg class=\"ds-sel-arrow\" viewBox=\"0 0 12 12\"><path d=\"M2 4l4 4 4-4\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"/></svg></div>",
+      "css": ".ds-sel-wrap{position:relative;display:inline-block;background:var(--sheet,#DDE4EA);padding:8px}.ds-select{appearance:none;-webkit-appearance:none;background:rgba(20,24,29,0.07);border:1px solid rgba(20,24,29,0.2);border-radius:2px;padding:8px 36px 8px 12px;color:var(--ink,#14181D);font-size:12px;font-weight:500;font-family:'Barlow',system-ui,sans-serif;cursor:pointer;outline:none;min-width:200px;transition:border-color .2s}.ds-select:hover,.ds-select:focus{border-color:var(--red,#D62828)}.ds-sel-arrow{position:absolute;right:20px;top:50%;width:12px;height:12px;transform:translateY(-50%);pointer-events:none;color:var(--ink-3,#5C6772)}"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Expand / show-all action in translucent ink with a hairline.",
+      "html": "<button class=\"ds-btn\">Show all rounds</button>",
+      "css": ".ds-btn{cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:rgba(20,24,29,0.07);border-radius:2px;border:1px solid rgba(20,24,29,0.16);color:rgba(20,24,29,0.82);font-size:12px;font-weight:500;font-family:'Barlow',system-ui,sans-serif;transition:all .2s}.ds-btn:hover{border-color:var(--ink,#14181D);color:var(--ink,#14181D)}.ds-btn:focus-visible{outline:2px solid var(--red,#D62828);outline-offset:2px}"
+    },
+    {
+      "name": "Podium Strip",
+      "kind": "card",
+      "refersTo": "sheet",
+      "description": "Three ruled cells: Courier position, condensed name, team, Courier gap.",
+      "html": "<div class=\"ds-podium\"><div><span class=\"ds-pos\">1</span><span class=\"ds-who\"><b style=\"color:#d96d00\">Lando Norris</b><span>McLaren</span><span class=\"ds-gap\">WINNER</span></span></div><div><span class=\"ds-pos\">2</span><span class=\"ds-who\"><b style=\"color:#1fb9a0\">Kimi Antonelli</b><span>Mercedes</span><span class=\"ds-gap\">+11.536</span></span></div><div><span class=\"ds-pos\">3</span><span class=\"ds-who\"><b style=\"color:#1fb9a0\">George Russell</b><span>Mercedes</span><span class=\"ds-gap\">+15.906</span></span></div></div>",
+      "css": ".ds-podium{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--rule,#9DB3CF);border-bottom:1px solid var(--rule,#9DB3CF);background:var(--sheet,#DDE4EA);color:var(--ink,#14181D)}.ds-podium>div{padding:12px 14px 12px 0;display:flex;align-items:center;gap:12px;border-right:1px solid var(--rule-faint,rgba(157,179,207,0.3))}.ds-podium>div:last-child{border-right:none}.ds-podium>div+div{padding-left:14px}.ds-pos{font-family:'Courier Prime','Courier New',monospace;font-size:26px;font-weight:700;width:30px}.ds-who{min-width:0;flex:1}.ds-who b{display:block;font-family:'Barlow Condensed','Barlow',system-ui,sans-serif;font-size:18px;font-weight:700;text-transform:uppercase;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ds-who span{display:block;font-size:11px;color:var(--ink-3,#5C6772);margin-top:3px;font-family:'Barlow',system-ui,sans-serif}.ds-who .ds-gap{font-family:'Courier Prime','Courier New',monospace;color:var(--ink-2,#39424C)}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Timekeeper's Lap Chart",
+    "overview": "The dashboard is a stack of ruled timing sheets laid on a dark bench. The bench is the only dark surface; everything the visitor reads sits on pale blue-grey paper ruled in a printed blue, written in near-black ink, with every numeral set in a typewriter monospace so columns of figures line up as they would on a hand-kept lap chart. Index tabs sit on the sheet's top edge and the active tab is physically joined to the paper. Each sheet opens with a stamped provenance band (sources, fetch time) because the pipeline behind the numbers is part of what is on display.\n\nHierarchy is done by size and rule weight, not by boxes or colour: the standings billing runs from a 44px leader down to a 13.5px tail; sections are separated by a single ruled line; panels are the same paper one shade lighter. Colour is reserved for meaning. Record red belongs to the leader trace, the stopwatch hand, active filters and focus rings; the eleven team colours are ink (strokes, text, bars, dots) after a lightness clamp so they read on paper, and appear as fills only as ten-percent tints behind a selected chip. The only motion is a fade-up on a tab's first visit, an ink draw-on for chart lines, and 150–200ms state transitions.\n\nIt deliberately refuses the broadcast-graphics dashboard: no dark cards, no glow, no gradient fills, no textures, no nested cards, no stat-tile grid. It also dropped the previous Outfit / near-black theme entirely; the translucent white-alpha vocabulary that theme used survives only as names (--w015…--w90) that now resolve to translucent ink on paper.",
+    "keyCharacteristics": [
+      "One dark bench, pale sheets, printed rules, ink: four materials and nothing else.",
+      "Courier Prime for every numeral and data cell, tabular-nums everywhere.",
+      "Barlow Condensed uppercase for headings, labels, tabs and driver names; Barlow for prose.",
+      "Team colour is ink, never a fill; record red is rationed to the record and the cursor.",
+      "Size-only hierarchy and single ruled lines instead of containers.",
+      "2px radii on sheets and panels; circles only for the stopwatch button and headshots.",
+      "Motion is first-visit only; reduced-motion collapses everything."
+    ],
+    "rules": [
+      { "name": "The Ink, Not Fill Rule", "body": "A team colour may be a stroke, a glyph, a bar, a dot or text. It may fill an area only at ten-percent alpha behind a selected chip. Never a solid block, never a gradient.", "section": "colors" },
+      { "name": "The Red Pen Rule", "body": "Record red marks the record (leader, winner, fastest) and the current instant (cursor, hand, active filter, focus). If a screen shows red on more than the record and the cursor, something is misfiled.", "section": "colors" },
+      { "name": "The Clamp Before Use Rule", "body": "Every colour that arrives from data (TC_RAW, OpenF1 teamColour) goes through inkify() before it touches paper. Raw liveries are never rendered.", "section": "colors" },
+      { "name": "The Courier Numeral Rule", "body": "If it is a number, it is Courier Prime with tabular figures. No exceptions for large figures; the 26px points total is Courier too.", "section": "typography" },
+      { "name": "The Condensed Capitals Rule", "body": "Headings, driver and team names, tab labels and column heads are Barlow Condensed uppercase. Body Barlow is for sentences, never for a heading.", "section": "typography" },
+      { "name": "The One Sheet Rule", "body": "Exactly one surface is lifted: the sheet. Panels inside it are flat and tonal; a panel inside a panel is a defect.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do put every number in Courier Prime with tabular-nums, including large points totals and lap counters.",
+      "Do run any data-sourced colour through inkify() before rendering it on paper; use it as stroke, text, bar or dot.",
+      "Do separate sections with a single 1px rule line and size hierarchy, not with boxes.",
+      "Do open every sheet with a sheet-band naming its sources and fetch time.",
+      "Do keep radii at 2px on sheets, panels, buttons and selects; circles only for the stopwatch button, headshots and the freshness dot.",
+      "Do reserve record-red for the record (leader, winner, fastest) and the instant (cursor, hand, active filter, focus).",
+      "Do gate entrance animation on first visit and collapse all motion under prefers-reduced-motion."
+    ],
+    "donts": [
+      "Don't fill any area with a team colour beyond a ten-percent tint behind a selected chip.",
+      "Don't add glows, blurs, textures or gradient fills; the tab-bar scroll fade is the only gradient permitted.",
+      "Don't nest a panel inside a panel or put a card on a card; the sheet is the only lifted surface.",
+      "Don't set headings, names or labels in Barlow, system-ui or any face other than Barlow Condensed.",
+      "Don't reintroduce the dark-card theme: no #0a0a0f grounds, no white-alpha surfaces, no Outfit.",
+      "Don't use raw broadcast liveries or the old teal (#27F4D2) as a semantic positive colour; positive deltas are green.",
+      "Don't use emoji or Unicode glyphs as icons; icons are inline SVG (the scrubber play glyph is the model)."
+    ]
+  }
+}
