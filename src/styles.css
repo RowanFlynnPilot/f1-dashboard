@@ -12,7 +12,7 @@
   /* printed rules */
   --rule:#9DB3CF; --rule-soft:rgba(157,179,207,0.55); --rule-faint:rgba(157,179,207,0.3);
   /* ink */
-  --ink:#14181D; --ink-2:#39424C; --ink-3:#5C6772; --ink-4:#86919C; --ink-5:#A9B3BC;
+  --ink:#14181D; --ink-2:#39424C; --ink-3:#5C6772; --ink-4:#737C86; --ink-5:#A9B3BC;
   --fg:var(--ink);
   /* record ink + semantic */
   --red:#D62828; --red-soft:rgba(214,40,40,0.10); --red-rule:rgba(214,40,40,0.35);
@@ -117,7 +117,7 @@ input[type=range]{accent-color:var(--red)}
 .lapchart{position:relative;user-select:none}
 .lapchart svg{display:block;width:100%;height:auto;overflow:visible}
 .lapchart .lc-num{font-family:var(--font-data);font-size:12px;font-weight:700}
-.lapchart .lc-lap{font-family:var(--font-data);font-size:10.5px;fill:var(--ink-4)}
+.lapchart .lc-lap{font-family:var(--font-data);font-size:10.5px;fill:var(--ink-3)}
 .lapchart .lc-cursor{stroke:var(--red);stroke-width:1.25}
 .lapchart path{transition:opacity .18s}
 .lapchart.has-focus path:not(.focus):not(.leader){opacity:.28}
@@ -137,7 +137,7 @@ input[type=range]{accent-color:var(--red)}
 .scrub .track .rail{position:absolute;left:0;right:0;top:16px;height:2px;background:var(--ink-4)}
 .scrub .track .tick{position:absolute;top:12px;width:1px;height:10px;background:var(--ink-4)}
 .scrub .track .tick.major{top:9px;height:16px;background:var(--ink-2)}
-.scrub .track .tick-lbl{position:absolute;top:26px;transform:translateX(-50%);font-family:var(--font-data);font-size:9px;color:var(--ink-4)}
+.scrub .track .tick-lbl{position:absolute;top:26px;transform:translateX(-50%);font-family:var(--font-data);font-size:9px;color:var(--ink-3)}
 .scrub .track .tick-lbl.last{transform:translateX(-100%)}
 .scrub .track input[type=range]{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer}
 .scrub .track .hand{position:absolute;top:2px;width:2px;height:30px;background:var(--red);transform:translateX(-50%);pointer-events:none}
@@ -166,8 +166,8 @@ input[type=range]{accent-color:var(--red)}
 .ledger>span:last-child{border-right:none;margin-right:0;padding-right:0}
 .ledger i{font-style:normal;font-family:var(--font-head);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
 .ledger b{font-weight:700;color:var(--ink)}
-.ledger b em,.ledger em{font-style:normal;font-weight:400;color:var(--ink-4)}
-.ledger small{font-size:11px;color:var(--ink-4);font-family:var(--font-ui)}
+.ledger b em,.ledger em{font-style:normal;font-weight:400;color:var(--ink-3)}
+.ledger small{font-size:11px;color:var(--ink-3);font-family:var(--font-ui)}
 /* ruled entries (driver reactions) */
 .entries{display:flex;flex-direction:column}
 .entry{display:flex;gap:14px;align-items:flex-start;padding:14px 0;border-top:1px solid var(--rule-faint)}

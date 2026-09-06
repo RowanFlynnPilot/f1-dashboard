@@ -47,17 +47,37 @@ const TEAM_LOGOS = {
 // Team colours as ink on paper. Broadcast liveries are tuned for black screens;
 // inkify() clamps lightness so pale ones (Mercedes teal, Williams blue, Haas
 // silver) still read at text sizes on the sheet while keeping their hue.
+// Team liveries are tuned for black broadcast screens; on the pale sheet they
+// must read as ink. inkify() darkens a colour (preserving hue via a uniform
+// sRGB scale) until it clears ~3.1:1 against the sheet — the data-graphic
+// contrast bar — so every team code and line stays legible. The old clamp
+// targeted white, which left pale liveries (Williams, McLaren, Mercedes) at
+// ~2.3-3.1:1 on the actual #DDE4EA sheet. Colours already dark enough are
+// returned unchanged. Cached: it runs per driver on every lap-chart repaint.
+const SHEET_LUM=0.768;            // relative luminance of --sheet #DDE4EA
+const INK_CONTRAST=3.1;           // target ratio for team ink on the sheet
+const _srgbLin=(v)=>{v/=255;return v<=0.03928?v/12.92:Math.pow((v+0.055)/1.055,2.4);};
+const _relLum=(r,g,b)=>0.2126*_srgbLin(r)+0.7152*_srgbLin(g)+0.0722*_srgbLin(b);
+const _inkCache=new Map();
 function inkify(hex){
   if(!hex||typeof hex!=="string")return hex;
+  if(_inkCache.has(hex))return _inkCache.get(hex);
   let h=hex.trim().replace("#","");
   if(h.length===3)h=h.split("").map(c=>c+c).join("");
-  if(h.length!==6||/[^0-9a-f]/i.test(h))return hex;
-  const r=parseInt(h.slice(0,2),16)/255,g=parseInt(h.slice(2,4),16)/255,b=parseInt(h.slice(4,6),16)/255;
-  const L=0.2126*r+0.7152*g+0.0722*b;
-  if(L<=0.30)return "#"+h.toLowerCase();
-  const k=Math.sqrt(0.30/L)*0.92;
-  const to=(v)=>Math.round(Math.max(0,Math.min(255,v*k*255))).toString(16).padStart(2,"0");
-  return "#"+to(r)+to(g)+to(b);
+  if(h.length!==6||/[^0-9a-f]/i.test(h)){_inkCache.set(hex,hex);return hex;}
+  const r=parseInt(h.slice(0,2),16),g=parseInt(h.slice(2,4),16),b=parseInt(h.slice(4,6),16);
+  const need=(SHEET_LUM+0.05)/INK_CONTRAST-0.05; // max foreground luminance for the target ratio
+  let out;
+  if(_relLum(r,g,b)<=need){out="#"+h.toLowerCase();}
+  else{
+    // binary-search the largest uniform sRGB scale whose luminance still clears the bar
+    let lo=0,hi=1;
+    for(let i=0;i<24;i++){const m=(lo+hi)/2;if(_relLum(r*m,g*m,b*m)>need)hi=m;else lo=m;}
+    const to=(v)=>Math.round(Math.max(0,Math.min(255,v*lo))).toString(16).padStart(2,"0");
+    out="#"+to(r)+to(g)+to(b);
+  }
+  _inkCache.set(hex,out);
+  return out;
 }
 const TC_RAW = { Mercedes: "#27F4D2", Ferrari: "#E80020", McLaren: "#FF8000", "Red Bull": "#3671C6", "Racing Bulls": "#6692FF", Alpine: "#FF87BC", "Aston Martin": "#229971", Haas: "#B6BABD", Williams: "#64C4FF", Audi: "#FF0000", Cadillac: "#D4AF37" };
 const TC = Object.fromEntries(Object.entries(TC_RAW).map(([k,v])=>[k,inkify(v)]));
@@ -1958,7 +1978,7 @@ export default function F1Dashboard(){
 
                     {/* Battle Bar */}
                     <div style={{display:"flex",height:8,borderRadius:2,overflow:"hidden",background:"var(--w04)"}}>
-                      <div style={{width:`${d1Pct}%`,background:d1Leads?tc:"var(--w15)",borderRadius:"4px 0 0 4px"}}/>
+                      <div style={{width:`${d1Pct}%`,background:d1Leads?tc:"var(--w15)",borderRadius:"2px 0 0 2px"}}/>
                       <div style={{width:2,background:"var(--bench)",flexShrink:0}}/>
                       <div style={{width:`${d2Pct}%`,background:d2Leads?tc:"var(--w15)",borderRadius:"0 4px 4px 0"}}/>
                     </div>

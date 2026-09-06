@@ -18,7 +18,7 @@ colors:
   ink: "#14181D"
   ink-2: "#39424C"
   ink-3: "#5C6772"
-  ink-4: "#86919C"
+  ink-4: "#737C86"
   ink-5: "#A9B3BC"
   record-red: "#D62828"
   red-soft: "rgba(214,40,40,0.10)"
@@ -180,7 +180,7 @@ A three-layer material palette (bench, sheet, ink) with one record accent and a 
 - **Record Red** (`record-red`): the timekeeper's red pen. Winner's trace on the lap chart, stopwatch hand and lap cursor, top-two ranks in the billing, active filter chips (as `red-soft` fill with a red border), focus rings, text selection, range-input accent. It marks the record and the current instant; nothing decorative.
 
 ### Secondary
-- **Team liveries** (`team-*`): the eleven broadcast colours (`TC_RAW`) pass through `inkify()`, a relative-luminance clamp (target L ≤ 0.30, factor `sqrt(0.30/L) * 0.92`) that darkens bright liveries (Mercedes teal, Haas silver, Williams blue) until they hold as ink on paper; dark ones pass unchanged. The clamped value (`TC`) is what draws lap-chart traces, car numbers, driver names, constructor bars, replay dots and chip borders. OpenF1 `teamColour` values are wrapped in `inkify()` at the point of use. A ten-percent tint (`TB` map, or `${tc}1a`) is the only fill a team colour may make, behind a selected driver chip.
+- **Team liveries** (`team-*`): the eleven broadcast colours (`TC_RAW`) pass through `inkify()`, which darkens a livery by uniformly scaling its sRGB channels (preserving hue) until it clears ~3.1:1 against the sheet — the data-graphic contrast bar — so pale liveries (Williams blue, McLaren papaya, Mercedes teal) read as ink on paper; dark ones (Ferrari, Audi) pass unchanged. The target is the sheet's own luminance, not white, and results are cached. The clamped value (`TC`) is what draws lap-chart traces, car numbers, driver names, constructor bars, replay dots and chip borders. OpenF1 `teamColour` values are wrapped in `inkify()` at the point of use. A ten-percent tint (`TB` map, or `${tc}1a`) is the only fill a team colour may make, behind a selected driver chip.
 
 ### Tertiary
 - **Sector semantics**: `purple` overall best, `green` personal best, `yellow` local yellow / sector-yellow; `green` also carries positive point deltas and the "fresh" freshness dot, `amber` the aging one, `red` the stale one. `gold` is the Cadillac ink surrogate and podium accent.
