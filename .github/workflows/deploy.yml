@@ -2,9 +2,10 @@ name: Fetch F1 Data & Deploy
 
 on:
   schedule:
-    - cron: '0 20 * * 6'   # Saturday 20:00 UTC — qualifying / sprint results + OpenF1 practice & quali sessions
-    - cron: '0 23 * * 0'   # Sunday 23:00 UTC — catches most race results
-    - cron: '0 6 * * 1'    # Monday 06:00 UTC — retry for late races (Miami/Austin/Mexico end ~22:00 UTC Sunday, after the first cron)
+    # Off the hour: GitHub delays top-of-hour crons the most under load.
+    - cron: '17 20 * * 6'   # Saturday 20:17 UTC — qualifying / sprint results, OpenF1 practice & quali, Saturday races (Baku, Las Vegas)
+    - cron: '17 23 * * 0'   # Sunday 23:17 UTC — catches most race results
+    - cron: '17 6 * * 1'    # Monday 06:17 UTC — retry for late races (Miami/Austin/Mexico end ~22:00 UTC Sunday)
   push:
     branches: ['main']
   workflow_dispatch:         # Manual trigger
@@ -29,6 +30,10 @@ jobs:
       HAS_ANTHROPIC_KEY: ${{ secrets.ANTHROPIC_API_KEY != '' }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          # Latest main, not the triggering SHA: a run that queued behind another
+          # then starts from that run's data commit (its OpenF1 cache and baseline).
+          ref: main
       - uses: actions/setup-node@v7
         with:
           node-version: '22'
@@ -37,15 +42,25 @@ jobs:
         run: npm ci
       - name: Run unit tests
         run: npm test
+
+      # Each source fails soft. The fetch scripts only write their output at the
+      # end, so a failed source leaves its committed files in place, the
+      # validator still gates the build, the other sources still ship, and the
+      # last step turns the run red so the failure gets noticed.
       - name: Fetch F1 data from Jolpica API
+        id: jolpica
+        continue-on-error: true
         run: node scripts/fetch-f1-data.mjs
       - name: Fetch sector & speed data from OpenF1 API
+        id: openf1
+        continue-on-error: true
         run: node scripts/fetch-openf1-data.mjs
       - uses: actions/setup-python@v7
         if: env.HAS_ANTHROPIC_KEY == 'true'
         with:
           python-version: '3.12'
       - name: Fetch driver quotes from YouTube
+        id: quotes
         if: env.HAS_ANTHROPIC_KEY == 'true'
         continue-on-error: true
         run: |
@@ -53,6 +68,7 @@ jobs:
           python scripts/fetch-driver-quotes.py
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
       - name: Validate fetched data
         run: node scripts/validate-data.mjs
       - run: npm run build
@@ -62,6 +78,7 @@ jobs:
           path: './dist'
       - id: deployment
         uses: actions/deploy-pages@v5
+
       # Persist the fetched data in git. One step, three jobs:
       #  1. the OpenF1 incremental cache survives between runs — CI checks out
       #     fresh, so before this every run refetched every meeting since the
@@ -70,12 +87,25 @@ jobs:
       #  3. the commit counts as repo activity, so GitHub never again disables
       #     the crons for 60-day inactivity (which froze the site in Aug 2026)
       # GITHUB_TOKEN pushes never trigger workflows, so this cannot loop.
+      # scripts/commit-data.sh re-applies this run's outputs on top of the latest
+      # main, so neither new video IDs nor a queued run can make it skip.
       - name: Commit fetched data back to main
+        id: commit
+        # Run a copy: the script resets the checkout it lives in
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add public/data.json public/openf1 public/driver-quotes.json
-          if git diff --cached --quiet; then echo "No data changes to commit"; exit 0; fi
-          git commit -m "data: refresh $(date -u +'%Y-%m-%d %H:%M UTC') [skip ci]"
-          git pull --rebase origin main || { echo "::warning::rebase onto main failed — skipping data commit"; exit 0; }
-          git push origin HEAD:main || echo "::warning::could not push data commit (deploy already succeeded)"
+          cp scripts/commit-data.sh "$RUNNER_TEMP/commit-data.sh"
+          bash "$RUNNER_TEMP/commit-data.sh"
+
+      - name: Run summary
+        if: always()
+        run: node scripts/run-summary.mjs
+        env:
+          JOLPICA_OUTCOME: ${{ steps.jolpica.outcome }}
+          OPENF1_OUTCOME: ${{ steps.openf1.outcome }}
+          QUOTES_OUTCOME: ${{ steps.quotes.outcome }}
+          COMMIT_OUTCOME: ${{ steps.commit.outcome }}
+      - name: Fail the run if a source failed
+        if: steps.jolpica.outcome == 'failure' || steps.openf1.outcome == 'failure' || steps.quotes.outcome == 'failure'
+        run: |
+          echo "::error::A data source failed (Jolpica: ${{ steps.jolpica.outcome }}, OpenF1: ${{ steps.openf1.outcome }}, quotes: ${{ steps.quotes.outcome }}). The site deployed with the last good data for that source — check the step log."
+          exit 1

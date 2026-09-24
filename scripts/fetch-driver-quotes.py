@@ -30,6 +30,7 @@ import os
 import re
 import sys
 import time
+import unicodedata
 import xml.etree.ElementTree as ET
 
 # Fix Windows console encoding for emoji output
@@ -80,7 +81,30 @@ SESSION_TYPES = [name for name, _ in SESSION_PATTERNS]
 # API. Only add entries that are unambiguous within the season.
 YOUTUBE_RACE_ALIASES: dict[str, str] = {
     "Barcelona-Catalunya Grand Prix": "Barcelona Grand Prix",   # 2026 R7 ("Spanish GP" is Madrid, R14)
+    # 2026 R16 runs at Sepang under Bahrain's name — OpenF1 and F1's own titles
+    # may use either form. The April Bahrain round was taken off the calendar.
+    "Bahrain Grand Prix": "Bahrain Grand Prix in Malaysia",
+    "Malaysian Grand Prix": "Bahrain Grand Prix in Malaysia",
+    # F1 titles the Interlagos round "São Paulo Grand Prix"; Jolpica calls it Brazilian.
+    "São Paulo Grand Prix": "Brazilian Grand Prix",
 }
+
+# Transcripts longer than this are cut before extraction (the longest so far is
+# ~14.5k chars; Sonnet's context is far larger, so this only guards runaway input)
+MAX_TRANSCRIPT_CHARS = 60000
+
+
+def norm_race(name: str) -> str:
+    """Case- and accent-insensitive race-name key ("São Paulo" == "Sao Paulo")."""
+    return unicodedata.normalize("NFKD", name).encode("ascii", "ignore").decode().casefold().strip()
+
+
+ALIASES_NORM = {norm_race(k): v for k, v in YOUTUBE_RACE_ALIASES.items()}
+
+
+def canonical_race(title_race: str) -> str:
+    """Map a race name from a YouTube title to the Jolpica raceName it refers to."""
+    return ALIASES_NORM.get(norm_race(title_race), title_race.strip())
 
 EXTRACTION_PROMPT = """You are analyzing a transcript from an official Formula 1 YouTube video where drivers give their reactions after a {session_type} session at the {race_name}.
 
@@ -250,7 +274,7 @@ def discover_new_videos(season_videos: dict) -> int:
             with open(DATA_JSON_PATH, encoding="utf-8") as f:
                 data = json.load(f)
             for race in data.get("schedule", []):
-                race_to_round[race["name"]] = race["round"]
+                race_to_round[norm_race(race["name"])] = (race["round"], race["name"])
         except Exception:
             pass
 
@@ -280,8 +304,8 @@ def discover_new_videos(season_videos: dict) -> int:
         for session_type, pattern in SESSION_PATTERNS:
             m = pattern.match(title)
             if m and int(m.group(1)) == SEASON:
-                race_name = YOUTUBE_RACE_ALIASES.get(m.group(2).strip(), m.group(2).strip())
-                round_num = race_to_round.get(race_name)
+                race_name = canonical_race(m.group(2))
+                round_num, race_name = race_to_round.get(norm_race(race_name), (None, race_name))
                 if round_num:
                     rkey = str(round_num)
                     if rkey not in season_videos:
@@ -304,7 +328,8 @@ def discover_new_videos(season_videos: dict) -> int:
             all_ids = json.load(f)
         all_ids[str(SEASON)] = season_videos
         with open(VIDEO_IDS_PATH, "w", encoding="utf-8") as f:
-            json.dump(all_ids, f, indent=2)
+            json.dump(all_ids, f, indent=2, ensure_ascii=False)
+            f.write("\n")  # same layout as scripts/merge-video-ids.mjs
         print(f"  📝 Updated video-ids.json with {found} new video(s)")
     else:
         print("  ℹ️  No new reaction videos found")
@@ -360,8 +385,8 @@ def extract_quotes(transcript: str, race_name: str, session_type: str,
 
     client = anthropic.Anthropic(api_key=api_key)
 
-    if len(transcript) > 15000:
-        print(f"      ⚠️  Transcript truncated {len(transcript)} → 15000 chars — "
+    if len(transcript) > MAX_TRANSCRIPT_CHARS:
+        print(f"      ⚠️  Transcript truncated {len(transcript)} → {MAX_TRANSCRIPT_CHARS} chars — "
               "quotes from drivers interviewed late in the video may be missed")
 
     prompt = EXTRACTION_PROMPT.format(
@@ -369,9 +394,10 @@ def extract_quotes(transcript: str, race_name: str, session_type: str,
         session_type=session_type,
         race_name=race_name,
         roster=roster_block,
-        transcript=transcript[:15000],
+        transcript=transcript[:MAX_TRANSCRIPT_CHARS],
     )
 
+    response_text = ""
     try:
         # anthropic SDK 1.x removed `temperature=` from messages.create() (CI
         # installs the latest SDK — the keyword raised TypeError and silently
@@ -379,12 +405,24 @@ def extract_quotes(transcript: str, race_name: str, session_type: str,
         # it goes through extra_body: extraction wants determinism.
         message = client.messages.create(
             model="claude-sonnet-4-6",
-            max_tokens=4096,
+            max_tokens=16000,
             output_config={"format": {"type": "json_schema", "schema": QUOTES_SCHEMA}},
             messages=[{"role": "user", "content": prompt}],
             extra_body={"temperature": 0},
         )
-        response_text = message.content[0].text.strip()
+        # A response cut off at max_tokens is incomplete JSON, and a refusal has no
+        # quotes at all — report both explicitly instead of as a parse error.
+        if message.stop_reason == "max_tokens":
+            print("      ⚠️  Response hit max_tokens — output truncated, session left out")
+            return None
+        if message.stop_reason == "refusal":
+            print("      ⚠️  Claude declined this transcript (stop_reason=refusal)")
+            return None
+        text_blocks = [b.text for b in message.content if getattr(b, "type", "") == "text"]
+        if not text_blocks:
+            print(f"      ⚠️  No text in response (stop_reason={message.stop_reason})")
+            return None
+        response_text = text_blocks[0].strip()
         print(f"      📨 Claude response length: {len(response_text)} chars")
 
         # Strip markdown code fences if Claude wrapped the JSON in them
@@ -416,7 +454,9 @@ def process_video(video_id: str, race_name: str, session_type: str,
         print(f"      ⬇️  Not cached, fetching from YouTube...")
         transcript = fetch_transcript_from_youtube(video_id)
     if not transcript:
-        return {"videoId": video_id, "quotes": []}
+        # No transcript is not the same as "no quotes": the caller must leave the
+        # session out, or an empty round ships and hides the Overview reactions.
+        return {"videoId": video_id, "quotes": [], "missing": True}
 
     if fetch_only:
         return {"videoId": video_id, "quotes": []}
@@ -429,7 +469,53 @@ def process_video(video_id: str, race_name: str, session_type: str,
         print(f"      ❌ Extraction failed — session left out so the next run retries it")
         return {"videoId": video_id, "quotes": [], "failed": True}
     print(f"      ✅ Extracted {len(quotes)} quotes")
-    return {"videoId": video_id, "quotes": quotes}
+    # extractedAt marks the session done even when Claude found nothing usable,
+    # so an empty-but-successful session isn't re-sent (and re-billed) every run
+    return {"videoId": video_id, "quotes": quotes,
+            "extractedAt": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
+
+
+def session_done(session: dict | None) -> bool:
+    """A session counts as extracted if it has quotes or an extractedAt stamp."""
+    return bool(session and (session.get("quotes") or session.get("extractedAt")))
+
+
+def verify_video(video_id: str, race_name: str, session_type: str) -> bool:
+    """Check through YouTube oEmbed that an ID is an official F1 reaction video for
+    this race and session, before caching its transcript under that round.
+
+    Returns False only on a definite mismatch (wrong channel, wrong race or
+    session, removed video); network trouble lets the fetch go ahead.
+    """
+    try:
+        r = requests.get("https://www.youtube.com/oembed",
+                         params={"url": f"https://www.youtube.com/watch?v={video_id}", "format": "json"},
+                         timeout=10)
+    except Exception as e:
+        print(f"      ⚠️  oEmbed check skipped ({type(e).__name__})")
+        return True
+    if r.status_code in (400, 401, 403, 404):
+        print(f"      ❌ {video_id} is private, removed or not a video (oEmbed HTTP {r.status_code})")
+        return False
+    if not r.ok:
+        print(f"      ⚠️  oEmbed check skipped (HTTP {r.status_code})")
+        return True
+    info = r.json()
+    author = (info.get("author_name") or "").strip()
+    title = (info.get("title") or "").strip()
+    if author.upper() != "FORMULA 1":
+        print(f"      ❌ {video_id} belongs to '{author}', not the FORMULA 1 channel")
+        return False
+    for kind, pattern in SESSION_PATTERNS:
+        m = pattern.match(title)
+        if not m:
+            continue
+        if kind != session_type or norm_race(canonical_race(m.group(2))) != norm_race(race_name):
+            print(f"      ❌ {video_id} is '{title}' — not {session_type} at the {race_name}")
+            return False
+        return True
+    print(f"      ⚠️  '{title}' doesn't look like a Drivers React video — fetching anyway")
+    return True
 
 
 def load_existing_quotes() -> dict:
@@ -498,6 +584,7 @@ def main():
     cached_count = 0
     missing_count = 0
     failed_sessions = 0
+    missing_sessions = 0
 
     for round_num, videos in sorted(season_videos.items(), key=lambda x: int(x[0])):
         round_int = int(round_num)
@@ -517,10 +604,7 @@ def main():
         if not args.fetch_transcripts and round_int in existing_rounds and not args.race and not args.force:
             existing_round = existing_rounds[round_int]
             existing_sessions = existing_round.get("sessions", {})
-            all_done = all(
-                existing_sessions.get(s, {}).get("quotes")
-                for s in configured_sessions
-            )
+            all_done = all(session_done(existing_sessions.get(s)) for s in configured_sessions)
             if configured_sessions and all_done:
                 print(f"  ⏭️  Already have quotes for all configured sessions, skipping (use --race to re-fetch)")
                 rounds_data.append(existing_round)
@@ -539,6 +623,9 @@ def main():
                 if transcript_path(vid).exists():
                     print(f"    📂 {session_type}: {vid} (already cached)")
                     cached_count += 1
+                elif not verify_video(vid, race_name, session_type):
+                    print(f"      ⏭️  Not caching — fix this ID in video-ids.json")
+                    missing_count += 1
                 else:
                     result = process_video(vid, race_name, session_type, fetch_only=True)
                     if transcript_path(vid).exists():
@@ -548,10 +635,10 @@ def main():
                 continue
 
             # Preserve existing per-session quotes unless --force or --race targets this round
-            existing_quotes = existing_session_data.get(session_type, {}).get("quotes")
-            if existing_quotes and not args.force and not args.race:
-                print(f"    📂 {session_type}: preserving {len(existing_quotes)} existing quote(s)")
-                sessions[session_type] = existing_session_data[session_type]
+            existing_session = existing_session_data.get(session_type)
+            if session_done(existing_session) and not args.force and not args.race:
+                print(f"    📂 {session_type}: preserving {len(existing_session.get('quotes', []))} existing quote(s)")
+                sessions[session_type] = existing_session
                 continue
 
             # Warn loudly if a transcript will need to be fetched here — CI usually
@@ -567,6 +654,10 @@ def main():
                 vid, race_name, session_type,
                 roster_block=roster_block, roster_map=roster_map,
             )
+            if result.get("missing"):
+                missing_sessions += 1
+                print(f"      ⏳ No transcript yet — session left out until one is cached")
+                continue
             if result.get("failed"):
                 failed_sessions += 1
             else:
@@ -610,6 +701,11 @@ def main():
         for s in r.get("sessions", {}).values()
     )
     print(f"\n✅ Wrote {len(output['rounds'])} rounds, {total_quotes} total quotes to {OUTPUT_PATH}\n")
+
+    if missing_sessions:
+        # Expected in CI until transcripts are fetched locally — not a failure
+        print(f"⏳ {missing_sessions} session(s) have no cached transcript yet. Run "
+              f"'python scripts/fetch-driver-quotes.py --fetch-transcripts' locally and push.")
 
     if failed_sessions:
         # Non-zero exit makes the CI step show red (it's continue-on-error, so the

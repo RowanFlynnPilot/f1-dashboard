@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef, Fragment, Component, memo } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef, Fragment, Component, memo } from "react";
 
 const SEASON = 2026;
 
@@ -771,8 +771,10 @@ const LapChart=memo(function LapChart({session,lap,setLap}){
   const W=1000,ML=compact?58:40,MR=compact?86:56,MT=compact?30:16,MB=compact?14:8,rowH=compact?46:23;
   const fs=compact?24:12,fsLap=compact?21:10.5,sw=compact?2.6:1.4,swW=compact?4:2.2,pr=compact?5:2.6;
   const H=MT+MB+n*rowH;
-  const x=(l)=>ML+((l-1)/Math.max(1,total-1))*(W-ML-MR);
-  const y=(p)=>MT+(p-0.5)*rowH;
+  // x/y change with the phone layout — the memo below must rebuild the lines when
+  // `compact` flips after mount, or phones draw desktop-spaced lines under phone rows.
+  const x=useCallback((l)=>ML+((l-1)/Math.max(1,total-1))*(W-ML-MR),[ML,MR,total]);
+  const y=useCallback((p)=>MT+(p-0.5)*rowH,[MT,rowH]);
   const {paths,winner,finals,starts}=useMemo(()=>{
     let winner=null;const finals=[],starts=[];
     const paths=drivers.map(d=>{
@@ -787,7 +789,7 @@ const LapChart=memo(function LapChart({session,lap,setLap}){
       return {d,dstr,pits,len:pts.length};
     }).filter(Boolean);
     return {paths,winner,finals,starts};
-  },[drivers,total]);
+  },[drivers,total,x,y]);
   const yellow=new Set(session.yellowFlagLaps||[]);
   const periods=session.raceControlPeriods||[];
   const cur=Math.max(1,Math.min(total,lap));
@@ -1225,10 +1227,11 @@ export default function F1Dashboard(){
             </div>
             {/* Driver Reactions */}
             {quotes&&quotes.rounds&&quotes.rounds.length>0&&(()=>{
-              const lastRound=quotes.rounds[quotes.rounds.length-1];
-              const raceQuotes=lastRound.sessions?.race?.quotes||[];
-              const showQuotes=raceQuotes.slice(0,3);
-              if(showQuotes.length===0)return null;
+              // Latest round with race quotes — a round can exist with only qualifying
+              // quotes (Saturday) or none yet, and the block must not vanish then.
+              const lastRound=[...quotes.rounds].reverse().find(r=>(r.sessions?.race?.quotes||[]).length>0);
+              if(!lastRound)return null;
+              const showQuotes=lastRound.sessions.race.quotes.slice(0,3);
               // Quotes need a manual transcript step (YouTube blocks CI) — say so when they lag the results
               const latestGP=races.filter(r=>!r.sprint).slice(-1)[0];
               const quoteLag=!!latestGP&&lastRound.round<latestGP.r;
@@ -2100,7 +2103,7 @@ export default function F1Dashboard(){
               const quoteDrivers=Object.entries(driverCounts).sort((a,b)=>b[1]-a[1]);
               const activeDriver=quoteDriver&&driverCounts[quoteDriver]?quoteDriver:null;
               const latestGP=races.filter(r=>!r.sprint).slice(-1)[0];
-              const lastQuoteRound=quotes.rounds[quotes.rounds.length-1];
+              const lastQuoteRound=[...quotes.rounds].reverse().find(r=>(r.sessions?.race?.quotes||[]).length>0)||quotes.rounds[quotes.rounds.length-1];
               const quoteLag=latestGP&&lastQuoteRound.round<latestGP.r?latestGP.r-lastQuoteRound.round:0;
               return(
               <>

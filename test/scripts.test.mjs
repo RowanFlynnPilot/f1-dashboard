@@ -4,6 +4,19 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { parsePitSeconds, raceEnded, weekendActive, getCountryCode } from "../scripts/fetch-f1-data.mjs";
 import { processRaceControlPeriods, buildSpeedTrace, computeSessionBests, processLapData } from "../scripts/fetch-openf1-data.mjs";
+import { mergeIds } from "../scripts/merge-video-ids.mjs";
+
+test("mergeIds unions CI-discovered video IDs with main, and main wins on conflicts", () => {
+  const main = { 2026: { 12: { raceName: "Dutch Grand Prix", race: "a" }, 13: { raceName: "Italian Grand Prix", race: "hand-fixed" } } };
+  const run = { 2026: { 13: { raceName: "Italian Grand Prix", race: "ci", qualifying: "q" }, 15: { raceName: "Azerbaijan Grand Prix", race: "z" } } };
+  const merged = mergeIds(main, run);
+  assert.equal(merged[2026][13].race, "hand-fixed", "an ID already on main is never replaced");
+  assert.equal(merged[2026][13].qualifying, "q", "CI's new session is added");
+  assert.equal(merged[2026][15].race, "z", "CI's new round is added");
+  assert.equal(merged[2026][12].race, "a");
+  assert.deepEqual(Object.keys(merged[2026]), ["12", "13", "15"]);
+  assert.deepEqual(mergeIds({}, run), run, "empty main takes the run's map");
+});
 
 test("parsePitSeconds handles plain seconds and mm:ss red-flag stops", () => {
   assert.equal(parsePitSeconds("22.345"), 22.345);
