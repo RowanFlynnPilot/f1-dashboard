@@ -59,7 +59,9 @@ OVERRIDES_PATH = SCRIPT_DIR / "quote-overrides.json"
 TRANSCRIPTS_DIR = SCRIPT_DIR / "transcripts"
 DATA_JSON_PATH = PROJECT_DIR / "public" / "data.json"
 OUTPUT_PATH = PROJECT_DIR / "public" / "driver-quotes.json"
-SEASON = 2026
+# One season setting for every script (scripts/season.json); SEASON=2027 in the
+# environment overrides it for a dry run of the next season.
+SEASON = int(os.environ.get("SEASON") or json.loads((SCRIPT_DIR / "season.json").read_text(encoding="utf-8"))["season"])
 
 # Official F1 YouTube channel
 F1_CHANNEL_ID = "UCB_qr75-ydFVKSF9Dmo6izg"
@@ -166,12 +168,17 @@ def transcript_path(video_id: str) -> Path:
     return TRANSCRIPTS_DIR / f"{video_id}.txt"
 
 
-def load_roster() -> tuple[str, dict[str, str]]:
-    """Load the current-season driver roster from data.json.
+def load_roster(round_num: int | None = None) -> tuple[str, dict[str, str]]:
+    """Load the driver roster from data.json — for one round when given.
 
     Returns (formatted_roster_block, {driver_name_lower: team}) for prompt
-    injection and post-filtering. Falls back to an empty roster (no filtering)
-    if data.json is missing — extraction still runs but loses the safety net.
+    injection and post-filtering. With a round that has a classification, the
+    roster is exactly who raced it, with the team they raced for: a mid-season
+    seat change (2026: Lawson to Red Bull from round 12) must neither relabel
+    earlier quotes nor list a driver who sat that round out. Otherwise it is the
+    full standings with current teams. Falls back to an empty roster (no
+    filtering) if data.json is missing — extraction still runs but loses the
+    safety net.
     """
     if not DATA_JSON_PATH.exists():
         print(f"  ⚠️  {DATA_JSON_PATH} not found — roster filter disabled")
@@ -184,12 +191,20 @@ def load_roster() -> tuple[str, dict[str, str]]:
     if not drivers:
         return "(roster unavailable)", {}
 
+    entries = [(d.get("name", ""), d.get("team", "")) for d in drivers]
+    if round_num is not None:
+        by_id = {d.get("driverId"): d.get("name", "") for d in drivers}
+        race = next((r for r in data.get("races", []) if r.get("round") == round_num), None)
+        rows = [(by_id.get(r.get("did")), r.get("team")) for r in (race or {}).get("results", [])]
+        if rows and all(name for name, _ in rows):
+            entries = rows
+
     # Group by team for a readable prompt block
     by_team: dict[str, list[str]] = {}
     roster_map: dict[str, str] = {}
-    for d in drivers:
-        name = d.get("name", "").strip()
-        team = d.get("team", "").strip()
+    for name, team in entries:
+        name = (name or "").strip()
+        team = (team or "").strip()
         if not name or not team:
             continue
         by_team.setdefault(team, []).append(name)
@@ -596,6 +611,8 @@ def main():
             continue
 
         print(f"🏁 Round {round_num}: {race_name}")
+        if not args.fetch_transcripts:
+            roster_block, roster_map = load_roster(round_int)
 
         # Sessions that have video IDs configured for this round
         configured_sessions = [s for s in SESSION_TYPES if videos.get(s)]

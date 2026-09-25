@@ -5,89 +5,162 @@
  * committed — converting the silent-data-loss failure mode into a hard failure
  * (a failed build keeps the previous good deploy live).
  *
- * Baseline = the committed copy at HEAD (what the last push shipped).
+ * Baseline = the committed copy at HEAD (the data the last run shipped).
+ *
+ * Two kinds of check:
+ *   - structure: always enforced (unreadable files, truncated classifications,
+ *     a season under way with no standings)
+ *   - shrink: data that got smaller than the baseline. Skipped when the season
+ *     changed (a new season legitimately starts empty) and downgraded to
+ *     warnings with ALLOW_SHRINK=1 (the workflow's allow_shrink input) for a
+ *     legitimate loss such as a round taken off the calendar.
  */
-import fs from "fs";
-import { execSync } from "child_process";
+import fs from "node:fs";
+import { execSync } from "node:child_process";
+import { pathToFileURL } from "node:url";
 
-let failures = 0;
-const fail = (msg) => { console.error(`  ❌ ${msg}`); failures++; };
-const ok = (msg) => console.log(`  ✅ ${msg}`);
+// A classification shorter than this is a truncated API response, not a race
+const MIN_CLASSIFIED = 15;
 
-const readJSON = (p) => JSON.parse(fs.readFileSync(p, "utf8"));
-const readBaseline = (p) => {
+export function validate(cur, base, { allowShrink = false } = {}) {
+  const report = { failures: [], warnings: [], oks: [] };
+  const fail = m => report.failures.push(m);
+  const warn = m => report.warnings.push(m);
+  const ok = m => report.oks.push(m);
+  const shrink = m => (allowShrink ? warn(`${m} (allowed by ALLOW_SHRINK)`) : fail(m));
+
+  const { data, index, meetings = {}, quotes } = cur;
+
+  // ── data.json ──────────────────────────────────────────────────────────────
+  if (!data) {
+    fail("public/data.json unreadable");
+  } else {
+    if (!Number.isInteger(data.season)) fail(`bad season: ${data.season}`);
+    if (!Number.isFinite(new Date(data.fetchedAt).getTime())) fail(`bad fetchedAt: ${data.fetchedAt}`);
+    const sched = data.schedule || [];
+    if (sched.length >= MIN_CLASSIFIED) ok(`${sched.length} scheduled rounds`);
+    else fail(`only ${sched.length} scheduled rounds (expected ≥ ${MIN_CLASSIFIED})`);
+
+    // Standings exist once the season is under way; before round 1 they may be empty
+    const underWay = (data.races || []).length > 0 || (data.completedRounds || 0) > 0;
+    const nDrivers = (data.drivers || []).length, nTeams = (data.constructors || []).length;
+    if (underWay) {
+      if (nDrivers >= 20) ok(`${nDrivers} drivers`); else fail(`only ${nDrivers} drivers in the standings (expected ≥ 20)`);
+      if (nTeams >= 10) ok(`${nTeams} constructors`); else fail(`only ${nTeams} constructors (expected ≥ 10)`);
+    } else {
+      warn(`season ${data.season} hasn't started — standings (${nDrivers} drivers) not checked`);
+    }
+
+    for (const [kind, list] of [["race", data.races], ["sprint", data.sprints], ["qualifying", data.qualifying]]) {
+      for (const s of list || []) {
+        const n = (s.results || []).length;
+        if (n < MIN_CLASSIFIED) fail(`${kind} round ${s.round}: only ${n} classified (truncated response?)`);
+        else if ((s.results || []).some(r => !r.driver || !r.team)) fail(`${kind} round ${s.round}: result rows missing driver/team`);
+      }
+    }
+    ok(`${(data.races || []).length} races, ${(data.sprints || []).length} sprints, ${(data.qualifying || []).length} qualifying sessions`);
+    for (const pr of data.pitStopsByRace || []) {
+      if (!Array.isArray(pr.stops)) fail(`pit stops round ${pr.round}: no stops array`);
+    }
+    // Team breakdowns come from the results — a mismatch means a transform bug or a points penalty
+    for (const c of data.constructors || []) {
+      const sum = (c.drivers || []).reduce((a, d) => a + (d.pts || 0), 0);
+      if (sum !== c.pts) warn(`${c.team}: drivers' points sum to ${sum}, team has ${c.pts}`);
+    }
+
+    const b = base.data;
+    if (!b) {
+      warn("no git baseline for data.json — shrink checks skipped");
+    } else if (b.season !== data.season) {
+      ok(`season changed ${b.season} → ${data.season} — shrink checks skipped`);
+    } else {
+      for (const key of ["races", "sprints", "qualifying"]) {
+        const n = (data[key] || []).length, was = (b[key] || []).length;
+        if (n < was) shrink(`${key} shrank: ${n} < baseline ${was}`);
+      }
+      // A round whose classification lost rows since the last deploy
+      for (const r of data.races || []) {
+        const prev = (b.races || []).find(x => x.round === r.round);
+        if (prev && (r.results || []).length < (prev.results || []).length) shrink(`race round ${r.round}: ${r.results.length} results < baseline ${prev.results.length}`);
+      }
+    }
+  }
+
+  // ── OpenF1 split payload ───────────────────────────────────────────────────
+  if (!index) {
+    fail("public/openf1/index.json unreadable");
+  } else {
+    const list = index.meetings || [];
+    const bList = base.index?.meetings;
+    if (bList && base.index.season === index.season && list.length < bList.length) shrink(`OpenF1 meetings shrank: ${list.length} < baseline ${bList.length}`);
+    else ok(`${list.length} OpenF1 meetings${bList ? ` (baseline ${bList.length})` : ""}`);
+    const nHead = Object.keys(index.driverHeadshots || {}).length;
+    if (list.length > 0 && nHead < 20) fail(`only ${nHead} driver headshots (expected ≥ 20)`);
+    for (const m of list) {
+      const full = meetings[m.meetingKey];
+      if (!full) { fail(`meetings/${m.meetingKey}.json unreadable`); continue; }
+      const withDrivers = (full.sessions || []).filter(s => (s.drivers || []).length > 0).length;
+      if (withDrivers === 0) fail(`${m.meetingName}: no session has drivers`);
+      const prev = bList?.find(x => x.meetingKey === m.meetingKey);
+      if (prev && (m.sessions || []).length < (prev.sessions || []).length) shrink(`${m.meetingName}: ${m.sessions.length} sessions < baseline ${prev.sessions.length}`);
+    }
+  }
+
+  // ── driver-quotes.json (optional file) ─────────────────────────────────────
+  if (quotes === undefined) {
+    ok("no driver-quotes.json");
+  } else if (!quotes) {
+    fail("public/driver-quotes.json unreadable");
+  } else {
+    const rounds = quotes.rounds || [];
+    const total = rounds.reduce((a, r) => a + Object.values(r.sessions || {}).reduce((x, s) => x + (s.quotes || []).length, 0), 0);
+    ok(`driver quotes: ${rounds.length} rounds, ${total} quotes`);
+    const bq = base.quotes;
+    if (bq && bq.season === quotes.season) {
+      const bRounds = (bq.rounds || []).length;
+      if (rounds.length < bRounds) shrink(`quote rounds shrank: ${rounds.length} < baseline ${bRounds}`);
+    }
+  }
+  return report;
+}
+
+// ── CLI ──────────────────────────────────────────────────────────────────────
+function readJSON(p) {
+  try { return JSON.parse(fs.readFileSync(p, "utf8")); } catch { return null; }
+}
+function readBaseline(p) {
   try {
-    return JSON.parse(execSync(`git show HEAD:${p}`, { encoding: "utf8", stdio: ["pipe", "pipe", "pipe"] }));
+    return JSON.parse(execSync(`git show HEAD:${p}`, { encoding: "utf8", stdio: ["pipe", "pipe", "pipe"], maxBuffer: 64 * 1024 * 1024 }));
   } catch {
     return null; // not in git yet, or no git — skip baseline comparisons
   }
-};
-
-console.log("\n🔎 Validating fetched data before build...\n");
-
-// ── data.json ──────────────────────────────────────────────────────────────
-console.log("public/data.json:");
-let data = null;
-try { data = readJSON("public/data.json"); } catch (e) { fail(`unreadable: ${e.message}`); }
-if (data) {
-  if ((data.drivers || []).length >= 20) ok(`${data.drivers.length} drivers`);
-  else fail(`only ${(data.drivers || []).length} drivers (expected ≥ 20)`);
-  if ((data.constructors || []).length >= 10) ok(`${data.constructors.length} constructors`);
-  else fail(`only ${(data.constructors || []).length} constructors (expected ≥ 10)`);
-  if ((data.schedule || []).length >= 20) ok(`${data.schedule.length} scheduled races`);
-  else fail(`only ${(data.schedule || []).length} scheduled races (expected ≥ 20)`);
-  if (Number.isFinite(new Date(data.fetchedAt).getTime())) ok(`fetchedAt ${data.fetchedAt}`);
-  else fail(`bad fetchedAt: ${data.fetchedAt}`);
-
-  const base = readBaseline("public/data.json");
-  if (base) {
-    if ((data.races || []).length >= (base.races || []).length) ok(`races ${data.races.length} ≥ baseline ${base.races.length}`);
-    else fail(`races shrank: ${(data.races || []).length} < baseline ${(base.races || []).length}`);
-    if ((data.qualifying || []).length >= (base.qualifying || []).length) ok(`qualifying rounds ${data.qualifying.length} ≥ baseline ${base.qualifying.length}`);
-    else fail(`qualifying shrank: ${(data.qualifying || []).length} < baseline ${(base.qualifying || []).length}`);
-  } else {
-    console.log("  ⚠️  no git baseline — skipped shrink checks");
-  }
 }
 
-// ── openf1 split payload ───────────────────────────────────────────────────
-console.log("\npublic/openf1/:");
-let index = null;
-try { index = readJSON("public/openf1/index.json"); } catch (e) { fail(`index.json unreadable: ${e.message}`); }
-if (index) {
-  const meetings = index.meetings || [];
-  const baseIdx = readBaseline("public/openf1/index.json");
-  if (baseIdx && meetings.length < (baseIdx.meetings || []).length) {
-    fail(`meetings shrank: ${meetings.length} < baseline ${baseIdx.meetings.length}`);
-  } else {
-    ok(`${meetings.length} meetings in index${baseIdx ? ` (baseline ${baseIdx.meetings.length})` : ""}`);
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  console.log("\n🔎 Validating fetched data before build...\n");
+  const index = readJSON("public/openf1/index.json");
+  const meetings = {};
+  for (const m of index?.meetings || []) meetings[m.meetingKey] = readJSON(`public/openf1/meetings/${m.meetingKey}.json`);
+  const cur = {
+    data: readJSON("public/data.json"),
+    index,
+    meetings,
+    quotes: fs.existsSync("public/driver-quotes.json") ? readJSON("public/driver-quotes.json") : undefined,
+  };
+  const base = {
+    data: readBaseline("public/data.json"),
+    index: readBaseline("public/openf1/index.json"),
+    quotes: readBaseline("public/driver-quotes.json"),
+  };
+  const allowShrink = process.env.ALLOW_SHRINK === "1" || process.env.ALLOW_SHRINK === "true";
+  const { failures, warnings, oks } = validate(cur, base, { allowShrink });
+  for (const m of oks) console.log(`  ✅ ${m}`);
+  for (const m of warnings) console.log(`  ⚠️  ${m}`);
+  for (const m of failures) console.error(`  ❌ ${m}`);
+  if (failures.length > 0) {
+    console.error(`\n❌ Validation failed with ${failures.length} error(s) — aborting build (previous deploy stays live)`);
+    console.error("   A legitimate shrink (round removed from the calendar)? Re-run the workflow with allow_shrink.\n");
+    process.exit(1);
   }
-  if (Object.keys(index.driverHeadshots || {}).length >= 20) ok(`${Object.keys(index.driverHeadshots).length} driver headshots`);
-  else fail(`only ${Object.keys(index.driverHeadshots || {}).length} driver headshots (expected ≥ 20)`);
-  for (const m of meetings) {
-    try {
-      const full = readJSON(`public/openf1/meetings/${m.meetingKey}.json`);
-      const withDrivers = (full.sessions || []).filter(s => (s.drivers || []).length > 0).length;
-      if (withDrivers > 0) ok(`${m.meetingName}: ${full.sessions.length} sessions (${withDrivers} with drivers)`);
-      else fail(`${m.meetingName}: no session has drivers`);
-    } catch (e) {
-      fail(`meetings/${m.meetingKey}.json unreadable: ${e.message}`);
-    }
-  }
+  console.log(`\n✅ All data validated${warnings.length ? ` (${warnings.length} warning${warnings.length > 1 ? "s" : ""})` : ""}\n`);
 }
-
-// ── driver-quotes.json (optional file — must parse if present) ─────────────
-if (fs.existsSync("public/driver-quotes.json")) {
-  try {
-    const q = readJSON("public/driver-quotes.json");
-    ok(`\ndriver-quotes.json parses (${(q.rounds || []).length} rounds)`);
-  } catch (e) {
-    fail(`driver-quotes.json unreadable: ${e.message}`);
-  }
-}
-
-if (failures > 0) {
-  console.error(`\n❌ Validation failed with ${failures} error(s) — aborting build (previous deploy stays live)\n`);
-  process.exit(1);
-}
-console.log("\n✅ All data validated\n");

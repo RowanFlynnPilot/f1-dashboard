@@ -9,6 +9,15 @@ on:
   push:
     branches: ['main']
   workflow_dispatch:         # Manual trigger
+    inputs:
+      allow_shrink:
+        description: 'Accept data smaller than the last deploy (a round removed from the calendar)'
+        type: boolean
+        default: false
+      refetch_meetings:
+        description: 'OpenF1 meeting keys to refetch despite the cache, comma-separated, or "all"'
+        type: string
+        default: ''
 
 permissions:
   contents: write            # the "commit fetched data back" step pushes to main
@@ -55,6 +64,8 @@ jobs:
         id: openf1
         continue-on-error: true
         run: node scripts/fetch-openf1-data.mjs
+        env:
+          REFETCH_MEETINGS: ${{ inputs.refetch_meetings }}
       - uses: actions/setup-python@v7
         if: env.HAS_ANTHROPIC_KEY == 'true'
         with:
@@ -71,6 +82,8 @@ jobs:
 
       - name: Validate fetched data
         run: node scripts/validate-data.mjs
+        env:
+          ALLOW_SHRINK: ${{ inputs.allow_shrink && '1' || '' }}
       - run: npm run build
       - uses: actions/configure-pages@v6
       - uses: actions/upload-pages-artifact@v5

@@ -85,6 +85,12 @@ const TC_RAW = { Mercedes: "#27F4D2", Ferrari: "#E80020", McLaren: "#FF8000", "R
 const TC = Object.fromEntries(Object.entries(TC_RAW).map(([k,v])=>[k,inkify(v)]));
 const TB = { Mercedes: "rgba(27,127,75,0.10)", Ferrari: "rgba(214,40,40,0.10)", McLaren: "rgba(255,128,0,0.10)", "Red Bull": "rgba(54,113,198,0.10)", "Racing Bulls": "rgba(102,146,255,0.10)", Alpine: "rgba(255,135,188,0.10)", "Aston Martin": "rgba(34,153,113,0.10)", Haas: "rgba(182,186,189,0.10)", Williams: "rgba(100,196,255,0.10)", Audi: "rgba(255,0,0,0.06)", Cadillac: "rgba(212,175,55,0.10)" };
 
+// Translucent version of any colour — hex, rgb() or a CSS variable. Appending a
+// hex alpha ("${c}22") silently produced invalid CSS whenever c was a
+// var(--token), which the paper-theme remap made common (the tyre heatmap's
+// Medium and Hard cells lost their shading). a is 0–255, like a hex alpha pair.
+const alpha=(c,a)=>`color-mix(in srgb, ${c} ${Math.round(a/2.55)}%, transparent)`;
+
 // Normalize OpenF1 team names to match TC/TL keys
 function normTeam(t){if(!t)return"";return t.replace(" F1 Team","").replace("Red Bull Racing","Red Bull").replace("Kick Sauber","Audi").trim();}
 
@@ -170,7 +176,10 @@ function headToHead(DS, CS, rawRaces, allRaces, qualifying) {
 }
 
 function transformData(raw) {
-  if (!raw || !raw.drivers || raw.drivers.length === 0) return null;
+  // Only the calendar is required: before round 1 of a new season there are no
+  // standings yet, and the sheets show a season-opener view rather than an error
+  if (!raw || !Array.isArray(raw.schedule)) return null;
+  raw = { drivers: [], constructors: [], races: [], sprints: [], qualifying: [], ...raw };
 
   // Points delta: what each driver scored in the round the standings follow —
   // that round's race and/or sprint. Keyed off standingsRound because on a
@@ -557,7 +566,9 @@ function useRafClock(playing, speed, time, setTime, setPlaying, durationRef) {
     let raf = null, last = null;
     const tick = (now) => {
       if (last != null) {
-        const next = timeRef.current + ((now - last) / 1000) * speed;
+        // Cap the step: frames pause while the page is hidden, and the whole gap
+        // used to land at once (a minute away at 8× jumped eight minutes)
+        const next = timeRef.current + (Math.min(now - last, 100) / 1000) * speed;
         const dur = durationRef.current;
         if (dur > 0 && next >= dur) { setTime(dur); setPlaying(false); return; }
         setTime(next);
@@ -637,17 +648,26 @@ const withStatus = (sched, now = Date.now()) => {
 
 // One bad data field shouldn't white-screen the whole dashboard — catch render
 // errors per-tab (keyed on the tab, so other tabs stay usable).
+//
+// Tab bodies render through <TabBody> so their errors are thrown inside this
+// boundary: written as inline expressions in App's own render, they escaped it
+// and blanked the entire site. Reset clears the tab's selections (race,
+// meeting, session) — a bad selection would otherwise throw again on re-entry.
+function TabBody({render}){return render();}
 class TabErrorBoundary extends Component {
   constructor(props) { super(props); this.state = { error: null }; }
   static getDerivedStateFromError(error) { return { error }; }
+  componentDidCatch(error) { console.error("Tab render failed:", error); }
+  reset = () => { this.props.onReset?.(); this.setState({ error: null }); };
   render() {
     if (this.state.error) {
       return (
-        <div className="fu" style={{ textAlign: "center", padding: 60, color: "var(--w50)" }}>
+        <div className="fu" role="alert" style={{ textAlign: "center", padding: 60, color: "var(--ink-3)" }}>
           <div className="num" style={{ fontSize: 34, fontWeight: 700, marginBottom: 12, color: "var(--red)" }}>!</div>
           <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 6, color: "var(--fg)" }}>This tab hit an error</div>
-          <div style={{ fontSize: 12, color: "var(--w35)", fontFamily: "monospace" }}>{String(this.state.error?.message || this.state.error)}</div>
+          <div className="num" style={{ fontSize: 12, color: "var(--ink-3)" }}>{String(this.state.error?.message || this.state.error)}</div>
           <div style={{ fontSize: 12, marginTop: 10 }}>The other tabs still work — this is likely a data quirk from the latest fetch.</div>
+          <button onClick={this.reset} className="head" style={{ marginTop: 16, padding: "8px 16px", borderRadius: 2, border: "1px solid var(--rule)", background: "var(--panel)", color: "var(--fg)", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>Reset this tab</button>
         </div>
       );
     }
@@ -689,7 +709,7 @@ function DH({name,size=32,headshots}){const[tryLevel,setTryLevel]=useState(0);
   if(!u){
     const acr=of1?.acronym||name.split(" ").map(n=>n[0]).join("").slice(0,3);
     const tc=of1?.teamColour||TC[of1?.team]||"var(--w20)";
-    return (<div style={{width:size,height:size,borderRadius:"50%",background:`${tc}22`,border:`2px solid ${tc}66`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:size*0.32,fontWeight:800,color:tc,flexShrink:0,letterSpacing:0.5}}>{acr}</div>);
+    return (<div style={{width:size,height:size,borderRadius:"50%",background:`${alpha(tc,0x22)}`,border:`2px solid ${alpha(tc,0x66)}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:size*0.32,fontWeight:800,color:tc,flexShrink:0,letterSpacing:0.5}}>{acr}</div>);
   }
   return (<img src={u} alt={name} onError={()=>setTryLevel(prev=>prev+1)} style={{width:size,height:size,borderRadius:"50%",objectFit:"cover",objectPosition:"top center",flexShrink:0,background:"var(--w05)"}}/>);}
 function TL({team,size=20}){const[e,sE]=useState(false);const u=TEAM_LOGOS[team];if(!u||e)return null;const isData=u.startsWith("data:");return (<img src={u} alt={team} {...(isData?{}:{referrerPolicy:"no-referrer",crossOrigin:"anonymous"})} onError={()=>sE(true)} style={{width:size,height:size,objectFit:"contain",flexShrink:0,...(team==="Cadillac"?{filter:"invert(1) brightness(1.15)"}:{})}}/>);}
@@ -736,6 +756,31 @@ function buildTrackSampler(track){
 
 // Join live /car_data and /location samples for a single lap window into a
 // time-aligned series [{t, x, y, d, speed, th, br, g}, ...] used by Lap Compare.
+// Browser-side OpenF1 requests for Lap Compare. The free tier allows about three
+// requests a second, so calls are spaced 400 ms apart and a 429 waits out
+// Retry-After (or backs off) before retrying instead of surfacing a raw error.
+let openf1LastCall=0;
+async function openf1Fetch(url,signal){
+  for(let attempt=0;;attempt++){
+    const gap=openf1LastCall+400-Date.now();
+    if(gap>0)await new Promise(r=>setTimeout(r,gap));
+    openf1LastCall=Date.now();
+    const res=await fetch(url,{signal});
+    if(res.status!==429||attempt>=3)return res;
+    const ra=parseInt(res.headers.get("retry-after")||"0",10);
+    await new Promise(r=>setTimeout(r,Math.max(ra*1000,1500*2**attempt)));
+  }
+}
+
+// The build-time default lap (fetch-openf1-data.mjs): compact [ms offset, …] rows
+// expanded back into the car_data / location shapes processLapTelemetry reads.
+function expandLapCompare(raw){
+  const t0=raw.t0||0;
+  const car=(raw.car||[]).map(([dt,speed,throttle,brake,n_gear])=>({date:new Date(t0+dt).toISOString(),speed,throttle,brake,n_gear}));
+  const loc=(raw.loc||[]).map(([dt,x,y])=>({date:new Date(t0+dt).toISOString(),x,y}));
+  return processLapTelemetry(car,loc);
+}
+
 function processLapTelemetry(carData, location){
   if(!carData||!location||location.length<3)return [];
   const carSorted=[...carData].filter(c=>c.date).sort((a,b)=>new Date(a.date)-new Date(b.date));
@@ -817,6 +862,19 @@ function splitTrackIntoSectors(track){
   };
 }
 
+// Loading / failed / empty panel for the lazily loaded sheets. Visitors never
+// see developer instructions — a failure offers Retry.
+function SheetStatus({title,detail,onRetry,children}){
+  return(
+    <div className="fu" role={onRetry?"alert":"status"} style={{textAlign:"center",padding:"48px 16px",color:"var(--ink-3)"}}>
+      <svg width="40" height="40" viewBox="0 0 40 40" aria-hidden="true" style={{display:"block",margin:"0 auto 12px"}}><circle cx="20" cy="22" r="14" fill="none" stroke="var(--ink-3)" strokeWidth="2"/><path d="M20 12v10l6 4" fill="none" stroke="var(--ink-3)" strokeWidth="2" strokeLinecap="round"/><path d="M16 5h8M20 5v3" stroke="var(--ink-3)" strokeWidth="2" strokeLinecap="round"/></svg>
+      <div style={{fontSize:16,fontWeight:600,marginBottom:4,color:"var(--fg)"}}>{title}</div>
+      {detail&&<div style={{fontSize:13}}>{detail}</div>}
+      {onRetry&&<button onClick={onRetry} className="head" style={{marginTop:14,padding:"7px 16px",borderRadius:2,border:"1px solid var(--rule)",background:"var(--panel)",color:"var(--fg)",fontSize:13,fontWeight:700,cursor:"pointer"}}>Retry</button>}
+      {children}
+    </div>
+  );
+}
 function SC({label,value,sub,accent,icon}){return (<div style={{background:"var(--w03)",border:"1px solid var(--w06)",borderRadius:2,padding:"14px 16px",flex:1,minWidth:130}}><div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:"var(--w40)",marginBottom:8,fontFamily:"var(--font-ui)"}}>{label}</div><div style={{display:"flex",alignItems:"center",gap:8}}>{icon}{" "}<span style={{fontSize:22,fontWeight:700,color:accent||"var(--fg)",lineHeight:1,fontFamily:"var(--font-ui)"}}>{value}</span></div>{sub&&<div style={{fontSize:11,color:"var(--w50)",marginTop:6,fontFamily:"var(--font-ui)"}}>{sub}</div>}</div>);}
 
 function SB({status}){const m={done:{bg:"rgba(27,127,75,0.12)",c:"var(--green)",t:"COMPLETED"},next:{bg:"rgba(214,40,40,0.15)",c:"var(--red)",t:"NEXT RACE"},postponed:{bg:"rgba(183,121,31,0.12)",c:"var(--amber)",t:"POSTPONED"},upcoming:{bg:"var(--w05)",c:"var(--w40)",t:"UPCOMING"}};const s=m[status]||m.upcoming;return (<span style={{fontSize:10,fontWeight:700,letterSpacing:1,padding:"3px 8px",borderRadius:2,background:s.bg,color:s.c}}>{s.t}</span>);}
@@ -942,6 +1000,10 @@ const TABS=[{id:"Overview",label:"Overview"},{id:"Standings",label:"Standings"},
 
 // F1 tire compound color map (broadcast graphics convention)
 const COMPOUND_COLORS={SOFT:"#FF3344",MEDIUM:"var(--yellow)",HARD:"var(--ink)",INTERMEDIATE:"#43B02A",WET:"#0067AD",UNKNOWN:"var(--ink-4)"};
+// Letter colour that reads on each compound chip. The dark-theme pairing drew
+// the HARD letter in bench ink on an ink chip (~1.1:1) after the paper remap.
+const COMPOUND_INK={HARD:"var(--sheet)",WET:"var(--sheet)",UNKNOWN:"var(--sheet)"};
+const compoundInk=c=>COMPOUND_INK[c]||"var(--ink)";
 
 // Race Results OpenF1 enrichment table — module-scope so it can own the show-all
 // toggle (its call site is an IIFE inside a .map(), which can't hold hooks).
@@ -994,6 +1056,8 @@ export default function F1Dashboard(){
   const[tab,setTab]=useState("Overview");
   const[expandedRace,setExpandedRace]=useState(null);
   const[data,setData]=useState(null);
+  // The tab title follows the season in data.json (index.html's is the fallback)
+  useEffect(()=>{if(data?.season)document.title=`F1 ${data.season} Dashboard`;},[data]);
   // Minute clock: race statuses, countdowns and the freshness stamp follow real
   // time while the page stays open, and catch up when a hidden tab returns
   const[clock,setClock]=useState(()=>Date.now());
@@ -1012,7 +1076,10 @@ export default function F1Dashboard(){
   // original shape so consumers are unchanged.
   const[openf1Index,setOpenf1Index]=useState(null);
   const[openf1Meetings,setOpenf1Meetings]=useState({}); // meetingKey -> full meeting payload
-  const meetingFetchTried=useRef(new Set()); // one attempt per key per page load
+  const meetingFetchTried=useRef(new Set()); // one attempt per key per page load (Retry clears it)
+  const[openf1Status,setOpenf1Status]=useState("loading"); // loading | ready | empty | failed
+  const[meetingFailed,setMeetingFailed]=useState({}); // meetingKey → true once a load failed
+  const retryMeeting=useCallback(key=>{meetingFetchTried.current.delete(key);setMeetingFailed(prev=>{const n={...prev};delete n[key];return n;});},[]);
   const[selMeeting,setSelMeeting]=useState(null);
   const[selSession,setSelSession]=useState(null);
   const[selRace,setSelRace]=useState("all");
@@ -1053,6 +1120,31 @@ export default function F1Dashboard(){
   const tabSeen=visitedTabs.current.has(tab);
   useEffect(()=>{const id=setTimeout(()=>visitedTabs.current.add(tab),1200);return()=>clearTimeout(id);},[tab]);
 
+  // OpenF1 index (light) — retryable, so a failed load offers Retry instead of
+  // leaving the sheets on "Loading…" for good
+  const loadOpenf1Index=useCallback(()=>{
+    setOpenf1Status("loading");
+    // Falls back to the legacy single-file payload for
+    // checkouts whose public/ data predates the split layout.
+    fetch(import.meta.env.BASE_URL + "openf1/index.json")
+      .then(r=>r.ok?r.json():null).catch(()=>null)
+      .then(idx=>idx||fetch(import.meta.env.BASE_URL + "openf1-data.json").then(r=>r.ok?r.json():null).catch(()=>null))
+      .then(of1=>{
+        if(!of1){setOpenf1Status("failed");return;}
+        if(!of1.meetings||of1.meetings.length===0){setOpenf1Status("empty");return;}
+        setOpenf1Index(of1);
+        setOpenf1Status("ready");
+        // Legacy payload ships full meetings inline — seed the cache so nothing refetches
+        const preloaded={};
+        for(const m of of1.meetings){if(m.sessions?.some(s=>s.drivers))preloaded[m.meetingKey]=m;}
+        if(Object.keys(preloaded).length>0)setOpenf1Meetings(prev=>({...preloaded,...prev}));
+        setSelMeeting(of1.meetings[of1.meetings.length-1].meetingKey);
+        const lastMtg=of1.meetings[of1.meetings.length-1];
+        const raceSess=lastMtg.sessions.find(s=>s.sessionName==="Race")||lastMtg.sessions[lastMtg.sessions.length-1];
+        if(raceSess)setSelSession(raceSess.sessionKey);
+      });
+  },[]);
+
   useEffect(()=>{
     // data.json alone gates first paint — the dashboard used to stay on the
     // loading screen until the multi-MB telemetry payload finished downloading.
@@ -1069,23 +1161,7 @@ export default function F1Dashboard(){
         setLoading(false);
       })
       .catch(e=>{console.error("Failed to load data:",e);setError(e.message);setLoading(false);});
-    // OpenF1 index (light). Falls back to the legacy single-file payload for
-    // checkouts whose public/ data predates the split layout.
-    fetch(import.meta.env.BASE_URL + "openf1/index.json")
-      .then(r=>r.ok?r.json():null).catch(()=>null)
-      .then(idx=>idx||fetch(import.meta.env.BASE_URL + "openf1-data.json").then(r=>r.ok?r.json():null).catch(()=>null))
-      .then(of1=>{
-        if(!of1||!of1.meetings||of1.meetings.length===0)return;
-        setOpenf1Index(of1);
-        // Legacy payload ships full meetings inline — seed the cache so nothing refetches
-        const preloaded={};
-        for(const m of of1.meetings){if(m.sessions?.some(s=>s.drivers))preloaded[m.meetingKey]=m;}
-        if(Object.keys(preloaded).length>0)setOpenf1Meetings(prev=>({...preloaded,...prev}));
-        setSelMeeting(of1.meetings[of1.meetings.length-1].meetingKey);
-        const lastMtg=of1.meetings[of1.meetings.length-1];
-        const raceSess=lastMtg.sessions.find(s=>s.sessionName==="Race")||lastMtg.sessions[lastMtg.sessions.length-1];
-        if(raceSess)setSelSession(raceSess.sessionKey);
-      });
+    loadOpenf1Index();
     fetch(import.meta.env.BASE_URL + "driver-quotes.json").then(r=>r.ok?r.json():null).catch(()=>null).then(dq=>{if(dq&&dq.rounds)setQuotes(dq);});
     fetch(import.meta.env.BASE_URL + "tracks.json").then(r=>r.ok?r.json():null).catch(()=>null).then(tk=>{if(tk)setTracks(tk);});
   },[]);
@@ -1124,19 +1200,23 @@ export default function F1Dashboard(){
       tried.add(key); // one attempt per page load — a failed meeting fetch must not retry-loop
       fetch(`${import.meta.env.BASE_URL}openf1/meetings/${key}.json`)
         .then(r=>r.ok?r.json():null).catch(()=>null)
-        .then(m=>{if(m)setOpenf1Meetings(prev=>prev[key]?prev:{...prev,[key]:m});});
+        .then(m=>{
+          if(m)setOpenf1Meetings(prev=>prev[key]?prev:{...prev,[key]:m});
+          else setMeetingFailed(prev=>({...prev,[key]:true}));
+        });
     }
-  },[openf1Index,openf1Meetings,tab,selMeeting,telMeetingKey,data,selRace]);
+  },[openf1Index,openf1Meetings,tab,selMeeting,telMeetingKey,data,selRace,meetingFailed]);
 
   // Cars that weren't classified, per GP date: the lap chart and replay mark
   // retirements from the official classification, not from where a line ends
   const outByDay=useMemo(()=>Object.fromEntries((data?.races||[]).filter(r=>!r.sprint).map(r=>[r.dt,new Set(r.full.filter(x=>typeof x.p!=="number"&&x.num!=null).map(x=>String(x.num)))])),[data]);
 
   if(loading)return(<div className="bench" style={{display:"flex",alignItems:"center",justifyContent:"center"}}><div style={{textAlign:"center",color:"#E6ECF1"}}><div className="head" style={{fontSize:30,fontWeight:700,marginBottom:6}}>Opening the season sheets</div><div className="num" style={{color:"#93A1AF",fontSize:13}}>reading data.json …</div></div></div>);
-  if(error||!data)return(<div className="bench" style={{display:"flex",alignItems:"center",justifyContent:"center"}}><div style={{textAlign:"center",color:"#E6ECF1"}}><div className="head" style={{fontSize:30,fontWeight:700,color:"#FF5A5A",marginBottom:6}}>The data sheet is missing</div><div className="num" style={{color:"#93A1AF",fontSize:13}}>{error||"No data available. Run: npm run fetch-data"}</div></div></div>);
+  if(error||!data)return(<div className="bench" style={{display:"flex",alignItems:"center",justifyContent:"center"}}><div style={{textAlign:"center",color:"#E6ECF1"}}><div className="head" style={{fontSize:30,fontWeight:700,color:"#FF5A5A",marginBottom:6}}>The season sheets didn't load</div><div style={{color:"#C9D3DC",fontSize:14,marginBottom:6}}>Check your connection, then try again.</div>{error&&<div className="num" style={{color:"#93A1AF",fontSize:12}}>{error}</div>}<button onClick={()=>window.location.reload()} className="head" style={{marginTop:16,padding:"8px 18px",borderRadius:2,border:"1px solid #9DB3CF",background:"transparent",color:"#E6ECF1",fontSize:14,fontWeight:700,cursor:"pointer"}}>Try again</button></div></div>);
 
   const{DS,CS,races,pits,pitsByRace,qualifying,h2h,completedRounds,totalRounds,fetchedAt,pitRaceName,leader,lastWinner,fastestLap,narrative,progression}=data;
   const sched=withStatus(data.sched,clock);
+  const seasonDone=sched.length>0&&sched.every(r=>r.st==="done");
   const season=data.season||SEASON_FALLBACK;
   const avgP=pits.length>0?`${(pits.reduce((a,b)=>a+b.s,0)/pits.length).toFixed(3)}s`:"N/A";
   const fastestPit=pits.length>0?pits[0]:null;
@@ -1166,6 +1246,7 @@ export default function F1Dashboard(){
             return(
           <div className="stamp fu" style={{animationDelay:"0.1s"}} title={new Date(fetchedAt).toLocaleString()}>
             <div><b>ROUND {completedRounds} / {totalRounds}</b> completed</div>
+            {!nextRace&&seasonDone&&DS[0]&&<div>season complete · <b>{DS[0].n.split(" ").pop().toUpperCase()}</b> champion</div>}
             {nextRace&&<div>next · <b>{nextRace.nm.replace(" Grand Prix"," GP").toUpperCase()}</b> · {raceDateFmt(nextRace.dt,nextRace.tt)} · {countdownLabel(nextRace.dt,nextRace.tt)}</div>}
             {(()=>{const pending=sched.filter(r=>r.st==="done"&&!races.some(x=>!x.sprint&&x.r===r.r));return pending.length?<div style={{color:"#F2B8B8"}}>R{pending[0].r} {pending[0].nm.replace(" Grand Prix"," GP")} · results pending next fetch</div>:null;})()}
             <div className="fresh"><i className={cls}/>{label} · Jolpica · OpenF1</div>
@@ -1186,7 +1267,12 @@ export default function F1Dashboard(){
       </div>
 
       <main className="main">
-        <TabErrorBoundary key={tab}>
+        <TabErrorBoundary key={tab} onReset={()=>{
+          // Back to each tab's defaults: latest race, latest meeting, no expanded rows
+          const lastGP=races.filter(r=>!r.sprint).slice(-1)[0];
+          setSelRace(lastGP?lastGP.r:"all");setExpandedRace(null);setSelPitRace(null);
+          setTelMeetingKey(null);setSelMeeting(null);setSelSession(null);setQuoteDriver(null);
+        }}>
         <div className={(tabSeen?"no-anim ":"")+"sheet"}>
         <div className="sheet-band">
           <span><b>{tab.toUpperCase()}</b> · sheet {String(TABS.findIndex(t=>t.id===tab)+1).padStart(2,"0")} of {String(TABS.length).padStart(2,"0")}</span>
@@ -1194,11 +1280,29 @@ export default function F1Dashboard(){
         </div>
 
         {/* ═══ OVERVIEW ═══ */}
-        {tab==="Overview"&&(
+        {tab==="Overview"&&<TabBody render={()=>(
           <div className="fu" style={{display:"flex",flexDirection:"column",gap:20}}>
 
             {(()=>{
               const lastRaceFull=races.filter(r=>!r.sprint).slice(-1)[0];
+              if(!lastRaceFull)return(
+              <div className="hero-grid">
+                <div>
+                  <h2 className="sheet-h" style={{fontSize:30}}>{season} season</h2>
+                  <p className="sheet-sub">{nextRace?`Opens at the ${nextRace.nm} · ${raceDateFmt(nextRace.dt,nextRace.tt)} · ${countdownLabel(nextRace.dt,nextRace.tt)}`:"The calendar hasn't been published yet"}</p>
+                  {nextRace&&tracks&&tracks[nextRace.nm]&&(
+                    <div style={{display:"flex",justifyContent:"center",padding:"18px 0",borderTop:"1px solid var(--rule)",marginTop:14}}>
+                      <TrackMap raceName={nextRace.nm} tracks={tracks} stroke="var(--ink)" strokeWidth={2.2} height={220} width={320}/>
+                    </div>
+                  )}
+                  <p className="sheet-sub" style={{marginTop:10}}>The lap chart, results and standings fill in after round 1.</p>
+                </div>
+                <div>
+                  <h2 className="sheet-h" style={{fontSize:30}}>Standings</h2>
+                  <p className="sheet-sub">Open after round 1.</p>
+                </div>
+              </div>
+              );
               // The race session of the newest meeting that has one (lazy-loaded; falls back to a note while it lands)
               // Matched to the title's round, so a source that lags can't put one race's chart under another's name
               const raceMeeting=openf1?meetingForRace(openf1.meetings,lastRaceFull):null;
@@ -1218,7 +1322,11 @@ export default function F1Dashboard(){
                       <p className="sheet-sub" style={{marginTop:10}}>Red line: the winner. Circles: pit stops. ×: retired. Yellow columns: local yellows. Drag the stopwatch, or press play. <a href="#lap" onClick={e=>{e.preventDefault();setTab("Telemetry");}}>Open this lap in the replay →</a></p>
                     </div>
                   ):(
-                    <div className="num" style={{marginTop:14,padding:"18px 0",borderTop:"1px solid var(--rule)",borderBottom:"1px solid var(--rule)",color:"var(--ink-3)",fontSize:12}}>{openf1&&!raceMeeting?"Lap positions for this round are not in the OpenF1 sheet yet.":"Fetching the lap sheet …"}</div>
+                    (()=>{
+                      const failed=openf1Status==="failed"||(raceMeeting&&meetingFailed[raceMeeting.meetingKey]);
+                      if(failed)return(<div className="num" role="alert" style={{marginTop:14,padding:"18px 0",borderTop:"1px solid var(--rule)",borderBottom:"1px solid var(--rule)",color:"var(--ink-3)",fontSize:12}}>The lap sheet didn't load. <button onClick={()=>raceMeeting?retryMeeting(raceMeeting.meetingKey):loadOpenf1Index()} className="head" style={{marginLeft:8,padding:"3px 10px",borderRadius:2,border:"1px solid var(--rule)",background:"var(--panel)",color:"var(--fg)",fontSize:12,fontWeight:700,cursor:"pointer"}}>Retry</button></div>);
+                      return <div className="num" style={{marginTop:14,padding:"18px 0",borderTop:"1px solid var(--rule)",borderBottom:"1px solid var(--rule)",color:"var(--ink-3)",fontSize:12}}>{openf1&&!raceMeeting?"Lap positions for this round are not in the OpenF1 sheet yet.":"Fetching the lap sheet …"}</div>;
+                    })()
                   )}
                   <div style={{marginTop:22}}>
                   <div className="ledger">
@@ -1278,8 +1386,8 @@ export default function F1Dashboard(){
             })()}
                         <div className="rule-h"/>
             <div className="g2">
-              {/* Constructors */}
-              <div style={{display:"flex",flexDirection:"column"}}>
+              {/* Constructors (none before round 1) */}
+              {CS.length>0?<div style={{display:"flex",flexDirection:"column"}}>
                 <h2 className="sheet-h" style={{fontSize:20}}>Constructors' championship</h2>
                 <p className="sheet-sub" style={{marginBottom:12}}>After round {completedRounds} · bars scaled to the leading driver</p>
                 {CS.map((c,i)=>(
@@ -1304,7 +1412,7 @@ export default function F1Dashboard(){
                     </div>
                   </div>
                 ))}
-              </div>
+              </div>:<div/>}
             {nextRace&&(
             <div>
               <h2 className="sheet-h" style={{fontSize:30}}>Next race · {nextRace.nm}</h2>
@@ -1316,6 +1424,15 @@ export default function F1Dashboard(){
                   </div>
                 )}
                 <a href="#schedule" onClick={e=>{e.preventDefault();setTab("Schedule");}} className="head" style={{display:"inline-block",marginTop:14,fontSize:13,color:"var(--red)",fontWeight:700}}>Full calendar →</a>
+              </div>
+            </div>
+            )}
+            {!nextRace&&seasonDone&&(
+            <div>
+              <h2 className="sheet-h" style={{fontSize:30}}>Season complete</h2>
+              <p className="sheet-sub">{season} · {totalRounds} rounds{DS[0]?` · ${DS[0].n} champion on ${DS[0].pts} pts`:""}{CS[0]?` · ${CS[0].t} take the constructors' title`:""}</p>
+              <div style={{borderTop:"1px solid var(--rule)",marginTop:12,paddingTop:16}}>
+                <a href="#schedule" onClick={e=>{e.preventDefault();setTab("Schedule");}} className="head" style={{display:"inline-block",fontSize:13,color:"var(--red)",fontWeight:700}}>The full season →</a>
               </div>
             </div>
             )}
@@ -1355,10 +1472,10 @@ export default function F1Dashboard(){
               );
             })()}
           </div>
-        )}
+        )}/>}
 
         {/* ═══ STANDINGS ═══ */}
-        {tab==="Standings"&&(
+        {tab==="Standings"&&<TabBody render={()=>(
           <div className="fu" style={{display:"flex",flexDirection:"column",gap:24}}>
             {/* Points Progression Chart */}
             {progression&&progression.labels.length>=3&&(()=>{
@@ -1551,10 +1668,10 @@ export default function F1Dashboard(){
             </div>
             )}
           </div>
-        )}
+        )}/>}
 
         {/* ═══ RACE RESULTS ═══ */}
-        {tab==="Race Results"&&(
+        {tab==="Race Results"&&<TabBody render={()=>(
           <div className="fu" style={{display:"flex",flexDirection:"column",gap:24}}>
             {/* Race Selector Dropdown */}
             <div style={{display:"flex",alignItems:"center",gap:14}}>
@@ -1689,23 +1806,28 @@ export default function F1Dashboard(){
               </div>
             </div>
           </div>
-        )}
+        )}/>}
 
         {/* ═══ SECTOR TIMES ═══ */}
-        {tab==="Sector Times"&&(()=>{
-          if(!openf1||!openf1.meetings||openf1.meetings.length===0)return(
-            <div className="fu" style={{textAlign:"center",padding:60}}>
-              <div style={{fontSize:22,fontWeight:700,color:"var(--w50)",marginBottom:8}}>No OpenF1 Data Available</div>
-              <div style={{fontSize:13,color:"var(--w35)"}}>Run <code style={{background:"var(--w08)",padding:"2px 8px",borderRadius:2}}>npm run fetch-openf1</code> to pull sector times & speed trap data</div>
-            </div>
-          );
-          const curMtg=openf1.meetings.find(m=>m.meetingKey===selMeeting)||openf1.meetings[0];
-          // Full meeting payload still streaming in (lazy-loaded per meeting)
+        {tab==="Sector Times"&&<TabBody render={()=>{
+          if(!openf1)return openf1Status==="failed"
+            ?<SheetStatus title="The sector sheet didn't load" detail="OpenF1 data is fetched separately from the results." onRetry={loadOpenf1Index}/>
+            :openf1Status==="empty"
+              ?<SheetStatus title="No sessions on the sheet yet" detail="Sector times appear once the first practice session of the season has run."/>
+              :<SheetStatus title="Loading sector data…"/>;
+          const curMtg=openf1.meetings.find(m=>m.meetingKey===selMeeting)||openf1.meetings[openf1.meetings.length-1];
+          // Full meeting payload still streaming in (lazy-loaded per meeting). The
+          // picker stays up so a meeting that failed to load never traps the page.
           if(!curMtg.sessions.some(s=>s.drivers))return(
-            <div className="fu" style={{textAlign:"center",padding:60,color:"var(--w40)"}}>
-              <svg width="40" height="40" viewBox="0 0 40 40" aria-hidden="true" style={{display:"block",margin:"0 auto 12px"}}><circle cx="20" cy="22" r="14" fill="none" stroke="var(--ink-3)" strokeWidth="2"/><path d="M20 12v10l6 4" fill="none" stroke="var(--ink-3)" strokeWidth="2" strokeLinecap="round"/><path d="M16 5h8M20 5v3" stroke="var(--ink-3)" strokeWidth="2" strokeLinecap="round"/></svg>
-              <div style={{fontSize:16,fontWeight:600,marginBottom:4}}>Loading sector data…</div>
-              <div style={{fontSize:13}}>{curMtg.meetingName}</div>
+            <div className="fu">
+              <label style={{display:"flex",alignItems:"center",gap:12,fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:"var(--ink-3)"}}>Meeting
+                <select value={String(curMtg.meetingKey)} onChange={e=>{const m=openf1.meetings.find(x=>String(x.meetingKey)===e.target.value);if(m){setSelMeeting(m.meetingKey);setSelSession(null);}}} style={{background:"var(--w04)",border:"1px solid var(--w10)",borderRadius:2,padding:"6px 12px",color:"var(--fg)",fontSize:12,fontFamily:"var(--font-ui)"}}>
+                  {openf1.meetings.map(m=><option key={m.meetingKey} value={String(m.meetingKey)}>{m.meetingName.replace(" Grand Prix","")}</option>)}
+                </select>
+              </label>
+              {meetingFailed[curMtg.meetingKey]
+                ?<SheetStatus title={`${curMtg.meetingName} didn't load`} detail="The meeting file failed to download." onRetry={()=>retryMeeting(curMtg.meetingKey)}/>
+                :<SheetStatus title="Loading sector data…" detail={curMtg.meetingName}/>}
             </div>
           );
           const curSess=curMtg.sessions.find(s=>s.sessionKey===selSession)||(curMtg.sessions.find(s=>s.sessionName==="Race"))||curMtg.sessions[0];
@@ -1847,7 +1969,7 @@ export default function F1Dashboard(){
                         const tc=inkify(d.teamColour)||"var(--fg)";
                         const atMax=!on&&selected.length>=4;
                         return(
-                          <button key={d.acronym} disabled={atMax} onClick={()=>toggle(d.acronym)} style={{display:"flex",alignItems:"center",gap:6,padding:"5px 10px",borderRadius:2,border:`1px solid ${on?tc:"var(--w08)"}`,background:on?`${tc}1a`:"var(--w02)",color:on?"var(--fg)":"var(--w55)",cursor:atMax?"not-allowed":"pointer",fontSize:11,fontWeight:on?700:500,fontFamily:"var(--font-ui)",opacity:atMax?0.35:1,transition:"all .15s"}}>
+                          <button key={d.acronym} disabled={atMax} onClick={()=>toggle(d.acronym)} style={{display:"flex",alignItems:"center",gap:6,padding:"5px 10px",borderRadius:2,border:`1px solid ${on?tc:"var(--w08)"}`,background:on?`${alpha(tc,0x1a)}`:"var(--w02)",color:on?"var(--fg)":"var(--w55)",cursor:atMax?"not-allowed":"pointer",fontSize:11,fontWeight:on?700:500,fontFamily:"var(--font-ui)",opacity:atMax?0.35:1,transition:"all .15s"}}>
                             <div style={{width:3,height:11,background:tc,borderRadius:1,opacity:on?1:0.5}}/>
                             <span style={{letterSpacing:0.5}}>{d.acronym}</span>
                           </button>
@@ -1942,7 +2064,7 @@ export default function F1Dashboard(){
                       const sCol=(isBest)=>isBest?"var(--purple)":"var(--w60)";
                       const spCol=(isBest)=>isBest?"#FF8000":"var(--w50)";
                       return(
-                        <tr key={i} style={{borderBottom:"1px solid var(--w04)",background:i<3?`${inkify(d.teamColour)}08`:"transparent"}}>
+                        <tr key={i} style={{borderBottom:"1px solid var(--w04)",background:i<3?`${alpha(inkify(d.teamColour),0x08)}`:"transparent"}}>
                           <td style={{padding:"8px 10px",fontWeight:700,width:28,color:i<3?"var(--fg)":"var(--w35)",fontSize:12,textAlign:"right"}}>{i+1}</td>
                           <td style={{padding:"8px 4px",width:24}}><div style={{width:3,height:18,borderRadius:2,background:inkify(d.teamColour)||"var(--ink-4)"}}/></td>
                           <td style={{padding:"8px 10px",fontWeight:600,whiteSpace:"nowrap"}}>{d.acronym} <span style={{fontWeight:400,fontSize:11,color:"var(--w20)"}}>|</span> <span style={{fontWeight:400,fontSize:11,color:"var(--w35)"}}>{d.name?.split(" ").pop()}</span></td>
@@ -1990,10 +2112,10 @@ export default function F1Dashboard(){
               </div>
             </div>
           );
-        })()}
+        }}/>}
 
         {/* ═══ HEAD TO HEAD ═══ */}
-        {tab==="Head to Head"&&(
+        {tab==="Head to Head"&&<TabBody render={()=>(
           <div className="fu" style={{display:"flex",flexDirection:"column",gap:24}}>
             {/* Metric Toggle */}
             <div style={{display:"flex",alignItems:"center",gap:14,flexWrap:"wrap"}}>
@@ -2114,10 +2236,10 @@ export default function F1Dashboard(){
               })}
             </div>
           </div>
-        )}
+        )}/>}
 
         {/* ═══ PIT STOPS ═══ */}
-        {tab==="Pit Stops"&&(()=>{
+        {tab==="Pit Stops"&&<TabBody render={()=>{
           const prs=pitsByRace.length>0?pitsByRace:(pits.length>0?[{r:null,nm:pitRaceName,stops:pits}]:[]);
           if(prs.length===0)return(
             <div className="fu" style={{textAlign:"center",padding:60,color:"var(--w40)"}}>
@@ -2196,10 +2318,10 @@ export default function F1Dashboard(){
               </table></div>
             </div>
           </div>);
-        })()}
+        }}/>}
 
         {/* ═══ QUOTES ═══ */}
-        {tab==="Quotes"&&(
+        {tab==="Quotes"&&<TabBody render={()=>(
           <div className="fu" style={{display:"flex",flexDirection:"column",gap:24}}>
             {!quotes||!quotes.rounds||quotes.rounds.length===0?(
               <div style={{textAlign:"center",padding:60,color:"var(--w40)"}}>
@@ -2298,10 +2420,10 @@ export default function F1Dashboard(){
               );
             })()}
           </div>
-        )}
+        )}/>}
 
         {/* ═══ SCHEDULE ═══ */}
-        {tab==="Schedule"&&(
+        {tab==="Schedule"&&<TabBody render={()=>(
           <div className="fu" style={{display:"flex",flexDirection:"column",gap:24}}>
             <div style={{display:"flex",gap:16,flexWrap:"wrap"}}>
               <SC label="Total Races" value={String(totalRounds)} sub="Bahrain moved to Sepang · Saudi Arabia postponed" accent="var(--fg)"/>
@@ -2341,10 +2463,10 @@ export default function F1Dashboard(){
               })}
             </div>
           </div>
-        )}
+        )}/>}
 
         {/* ═══ TELEMETRY ═══ */}
-        {tab==="Telemetry"&&<TelemetryTab openf1={openf1} tracks={tracks} telMeetingKey={telMeetingKey} setTelMeetingKey={setTelMeetingKey} outByDay={outByDay}/>}
+        {tab==="Telemetry"&&<TelemetryTab openf1={openf1} tracks={tracks} telMeetingKey={telMeetingKey} setTelMeetingKey={setTelMeetingKey} outByDay={outByDay} openf1Status={openf1Status} meetingFailed={meetingFailed} retryMeeting={retryMeeting} retryIndex={loadOpenf1Index}/>}
         </div>
         </TabErrorBoundary>
       </main>
@@ -2356,7 +2478,7 @@ export default function F1Dashboard(){
 // playback frames re-render only this subtree, never the whole dashboard.
 // Mounted only while the Telemetry tab is active, so the rAF clocks stop on
 // unmount and the live-fetch effects can drop their tab guards.
-const TelemetryTab=memo(function TelemetryTab({openf1,tracks,telMeetingKey,setTelMeetingKey,outByDay}){
+const TelemetryTab=memo(function TelemetryTab({openf1,tracks,telMeetingKey,setTelMeetingKey,outByDay,openf1Status,meetingFailed,retryMeeting,retryIndex}){
   const[telSelected,setTelSelected]=useState(()=>new Set());
           // ── Shared derivations (memoized — several panels read these). Hooks must
           // run before the early-return guards below, so empty/loading cases are
@@ -2406,19 +2528,23 @@ const TelemetryTab=memo(function TelemetryTab({openf1,tracks,telMeetingKey,setTe
             const p95=allValidTimes[Math.floor(allValidTimes.length*0.95)]||1;
             return{yMin:Math.max(0,p10-1),yMax:p95+3}; // tail above for slow laps
           },[visibleDrivers]);
-          if(raceMeetings.length===0)return(
-            <div className="fu" style={{textAlign:"center",padding:60,color:"var(--w40)"}}>
-              <svg width="40" height="40" viewBox="0 0 40 40" aria-hidden="true" style={{display:"block",margin:"0 auto 12px"}}><circle cx="20" cy="22" r="14" fill="none" stroke="var(--ink-3)" strokeWidth="2"/><path d="M20 12v10l6 4" fill="none" stroke="var(--ink-3)" strokeWidth="2" strokeLinecap="round"/><path d="M16 5h8M20 5v3" stroke="var(--ink-3)" strokeWidth="2" strokeLinecap="round"/></svg>
-              <div style={{fontSize:16,fontWeight:600,marginBottom:4}}>No race telemetry available yet</div>
-              <div style={{fontSize:13}}>Run <code style={{background:"var(--w08)",padding:"2px 8px",borderRadius:2}}>npm run fetch-openf1</code> after a race finishes.</div>
-            </div>
-          );
-          // Full meeting payload still streaming in (lazy-loaded per meeting)
+          if(!openf1)return openf1Status==="failed"
+            ?<SheetStatus title="The telemetry sheet didn't load" detail="OpenF1 data is fetched separately from the results." onRetry={retryIndex}/>
+            :openf1Status==="empty"?<SheetStatus title="No race telemetry yet" detail="The replay and lap charts appear after the season's first race."/>
+            :<SheetStatus title="Loading telemetry data…"/>;
+          if(raceMeetings.length===0)return <SheetStatus title="No race telemetry yet" detail="The replay and lap charts appear after the season's first race."/>;
+          // Full meeting payload still streaming in (lazy-loaded per meeting). The
+          // race picker stays up so a meeting that failed to load never traps the tab.
           if(!race.drivers)return(
-            <div className="fu" style={{textAlign:"center",padding:60,color:"var(--w40)"}}>
-              <svg width="40" height="40" viewBox="0 0 40 40" aria-hidden="true" style={{display:"block",margin:"0 auto 12px"}}><circle cx="20" cy="22" r="14" fill="none" stroke="var(--ink-3)" strokeWidth="2"/><path d="M20 12v10l6 4" fill="none" stroke="var(--ink-3)" strokeWidth="2" strokeLinecap="round"/><path d="M16 5h8M20 5v3" stroke="var(--ink-3)" strokeWidth="2" strokeLinecap="round"/></svg>
-              <div style={{fontSize:16,fontWeight:600,marginBottom:4}}>Loading telemetry data…</div>
-              <div style={{fontSize:13}}>{cur.meeting.meetingName}</div>
+            <div className="fu">
+              <div role="group" aria-label="Race" style={{display:"flex",gap:4,flexWrap:"wrap"}}>
+                {raceMeetings.map(rm=>(
+                  <button key={rm.meeting.meetingKey} onClick={()=>{setTelMeetingKey(rm.meeting.meetingKey);setTelSelected(new Set());}} aria-pressed={activeKey===rm.meeting.meetingKey} style={{cursor:"pointer",padding:"6px 12px",borderRadius:2,border:"1px solid var(--w08)",background:activeKey===rm.meeting.meetingKey?"var(--panel)":"transparent",color:"var(--fg)",fontSize:12,fontWeight:activeKey===rm.meeting.meetingKey?700:500}}>{rm.meeting.meetingName.replace(" Grand Prix","")}</button>
+                ))}
+              </div>
+              {meetingFailed?.[cur.meeting.meetingKey]
+                ?<SheetStatus title={`${cur.meeting.meetingName} didn't load`} detail="The meeting file failed to download." onRetry={()=>retryMeeting(cur.meeting.meetingKey)}/>
+                :<SheetStatus title="Loading telemetry data…" detail={cur.meeting.meetingName}/>}
             </div>
           );
           return(
@@ -2450,7 +2576,7 @@ const TelemetryTab=memo(function TelemetryTab({openf1,tracks,telMeetingKey,setTe
                     const on=selected.has(d.acronym);
                     const tc=inkify(d.teamColour)||"var(--fg)";
                     return(
-                      <button key={d.acronym} onClick={()=>toggleTel(d.acronym)} style={{display:"flex",alignItems:"center",gap:6,padding:"5px 10px",borderRadius:2,border:`1px solid ${on?tc:"var(--w08)"}`,background:on?`${tc}1a`:"var(--w02)",color:on?"var(--fg)":"var(--w50)",cursor:"pointer",fontSize:11,fontWeight:on?700:500,fontFamily:"var(--font-ui)"}}>
+                      <button key={d.acronym} onClick={()=>toggleTel(d.acronym)} style={{display:"flex",alignItems:"center",gap:6,padding:"5px 10px",borderRadius:2,border:`1px solid ${on?tc:"var(--w08)"}`,background:on?`${alpha(tc,0x1a)}`:"var(--w02)",color:on?"var(--fg)":"var(--w50)",cursor:"pointer",fontSize:11,fontWeight:on?700:500,fontFamily:"var(--font-ui)"}}>
                         <div style={{width:3,height:11,background:tc,borderRadius:1,opacity:on?1:0.5}}/>
                         <span style={{letterSpacing:0.5}}>{d.acronym}</span>
                       </button>
@@ -2632,10 +2758,10 @@ const ReplayPanel=memo(function ReplayPanel({cur,race,tracks,allDrivers,telMeeti
                     {/* Race control banner */}
                     {(activePeriod||yellowActive)&&(()=>{
                       let label,color,bg;
-                      if(activePeriod){const st=periodStyle[activePeriod.type];label=st?.label||activePeriod.type;color=st?.fill||"var(--fg)";bg=`${color}22`;}
+                      if(activePeriod){const st=periodStyle[activePeriod.type];label=st?.label||activePeriod.type;color=st?.fill||"var(--fg)";bg=`${alpha(color,0x22)}`;}
                       else{label="LOCAL YELLOW";color="var(--yellow)";bg="rgba(255,200,0,0.10)";}
                       return(
-                        <div style={{padding:"6px 12px",background:bg,border:`1px solid ${color}55`,borderRadius:2,marginBottom:14,fontSize:11,fontWeight:700,letterSpacing:1,color,textTransform:"uppercase",display:"flex",alignItems:"center",gap:8}}>
+                        <div style={{padding:"6px 12px",background:bg,border:`1px solid ${alpha(color,0x55)}`,borderRadius:2,marginBottom:14,fontSize:11,fontWeight:700,letterSpacing:1,color,textTransform:"uppercase",display:"flex",alignItems:"center",gap:8}}>
                           <div style={{width:8,height:8,background:color,borderRadius:"50%",animation:"pulse 1.2s ease-in-out infinite"}}/>{label} active
                         </div>
                       );
@@ -2705,7 +2831,7 @@ const ReplayPanel=memo(function ReplayPanel({cur,race,tracks,allDrivers,telMeeti
                                 <div style={{fontSize:10,fontWeight:800,color:"var(--w40)",fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)",minWidth:18}}>P{rank}</div>
                                 <div style={{width:3,height:14,background:inkify(d.teamColour)||"var(--fg)",borderRadius:1}}/>
                                 <div style={{fontSize:13,fontWeight:700,letterSpacing:0.3}}>{d.acronym}</div>
-                                {compound&&<div style={{marginLeft:"auto",display:"inline-flex",alignItems:"center",justifyContent:"center",width:18,height:18,borderRadius:2,background:ccol,fontSize:9,fontWeight:800,color:cdark?"var(--bench)":"var(--fg)"}}>{compound[0]}</div>}
+                                {compound&&<div style={{marginLeft:"auto",display:"inline-flex",alignItems:"center",justifyContent:"center",width:18,height:18,borderRadius:2,background:ccol,fontSize:9,fontWeight:800,color:compoundInk(compound)}}>{compound[0]}</div>}
                               </div>
                               <div style={{fontSize:11,color:"var(--w60)",marginBottom:3,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{d.name||d.acronym}</div>
                               <div style={{fontSize:10,color:inkify(d.teamColour)||"var(--w50)",fontWeight:600}}>{normTeam(d.team||"")}</div>
@@ -2717,7 +2843,7 @@ const ReplayPanel=memo(function ReplayPanel({cur,race,tracks,allDrivers,telMeeti
                       </div>
                       {/* Leaderboard — fixed height matching track, scrollable if needed */}
                       <div style={{display:"flex",flexDirection:"column",gap:2,height:468,overflowY:"auto",paddingRight:4}}>
-                        <div style={{display:"grid",gridTemplateColumns:"20px 26px 1fr 22px 50px",gap:5,padding:"2px 7px",fontSize:9,textTransform:"uppercase",letterSpacing:0.8,color:"var(--w30)",fontWeight:600,position:"sticky",top:0,background:"var(--bench)",zIndex:1}}>
+                        <div style={{display:"grid",gridTemplateColumns:"20px 26px 1fr 22px 50px",gap:5,padding:"2px 7px",fontSize:9,textTransform:"uppercase",letterSpacing:0.8,color:"var(--ink-3)",fontWeight:600,position:"sticky",top:0,background:"var(--sheet)",zIndex:1}}>
                           <div>P</div><div/><div>Driver</div><div style={{textAlign:"center"}}>T</div><div style={{textAlign:"right"}}>Gap</div>
                         </div>
                         {ranked.map((s,idx)=>{
@@ -2728,7 +2854,7 @@ const ReplayPanel=memo(function ReplayPanel({cur,race,tracks,allDrivers,telMeeti
                           const ccol=COMPOUND_COLORS[compound]||"var(--w20)";
                           const cdark=compound==="HARD";
                           return(
-                            <div key={d.number} style={{display:"grid",gridTemplateColumns:"20px 26px 1fr 22px 50px",gap:5,padding:"4px 7px",alignItems:"center",background:idx<3?`${tc}14`:"var(--w02)",border:idx<3?`1px solid ${tc}30`:"1px solid var(--w04)",borderRadius:2,opacity:s.finished?0.55:1,transition:"opacity 0.2s"}}>
+                            <div key={d.number} style={{display:"grid",gridTemplateColumns:"20px 26px 1fr 22px 50px",gap:5,padding:"4px 7px",alignItems:"center",background:idx<3?`${alpha(tc,0x14)}`:"var(--w02)",border:idx<3?`1px solid ${alpha(tc,0x30)}`:"1px solid var(--w04)",borderRadius:2,opacity:s.finished?0.55:1,transition:"opacity 0.2s"}}>
                               <div style={{fontSize:11,fontWeight:800,color:idx<3?tc:"var(--w40)",fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)"}}>{idx+1}</div>
                               <div style={{width:3,height:16,background:tc,borderRadius:1.5}}/>
                               <div style={{minWidth:0}}>
@@ -2736,7 +2862,7 @@ const ReplayPanel=memo(function ReplayPanel({cur,race,tracks,allDrivers,telMeeti
                                 <div style={{fontSize:8,color:"var(--w40)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",lineHeight:1.1,marginTop:1}}>L{Math.floor(s.progress)+(s.finished?0:1)}{s.finished?(outNums?.has(String(d.number))?" · OUT":" · FIN"):""}</div>
                               </div>
                               <div style={{textAlign:"center"}}>
-                                {compound&&<div style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:16,height:16,borderRadius:2,background:ccol,fontSize:9,fontWeight:800,color:cdark?"var(--bench)":"var(--fg)"}}>{compound[0]}</div>}
+                                {compound&&<div style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:16,height:16,borderRadius:2,background:ccol,fontSize:9,fontWeight:800,color:compoundInk(compound)}}>{compound[0]}</div>}
                               </div>
                               <div style={{textAlign:"right",fontSize:10,fontWeight:600,fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)",color:idx===0?"var(--green)":"var(--w60)"}}>{fmtGapToLeader(s)}</div>
                             </div>
@@ -2807,7 +2933,7 @@ const LapComparePanel=memo(function LapComparePanel({openf1,telMeetingKey,allDri
   const lapViewGeoRef=useRef(null); // {fittedW,fittedH} published by the track-view render
   const lapZoomRef=useRef(lapZoom);lapZoomRef.current=lapZoom; // fresh mirrors for the wheel handler
   const lapPanRef=useRef(lapPan);lapPanRef.current=lapPan;
-  const lapFetchInflight=useRef(new Set()); // cache keys with a live OpenF1 request
+  const lapFetchRun=useRef(0); // id of the latest fetch run, so a cancelled run can't clear a newer one's marker
   const lapCompareDataRef=useRef(lapCompareData);
   lapCompareDataRef.current=lapCompareData; // fresh mirror so the fetch effect can read the cache without depending on it
 
@@ -2833,27 +2959,47 @@ const LapComparePanel=memo(function LapComparePanel({openf1,telMeetingKey,allDri
     if(fastestA?.l)setLapCompareLap(fastestA.l);
   },[openf1,telMeetingKey,lapCompareA,lapCompareB,lapCompareLap]);
 
-  // Fetch lap telemetry for both drivers from OpenF1. This component only mounts
-  // while the Telemetry tab is open — visitors who never open it never hit the live API.
+  // Fetch lap telemetry for both drivers. The default view (top two finishers on
+  // the winner's fastest lap) ships precomputed in the meeting file, so opening
+  // the tab makes no live calls; other laps come from OpenF1 through
+  // openf1Fetch, which spaces requests and waits out 429s. This component only
+  // mounts while the Telemetry tab is open — most visitors never hit the live API.
+  //
+  // The effect keys off the session and whether its meeting file has loaded, not
+  // the whole openf1 object: re-running whenever any other meeting landed
+  // aborted driver A's request mid-flight and stranded the panel on "Waiting…".
+  const lapCur=openf1?lapCompareTarget(openf1,telMeetingKey):null;
+  const lapSessionKey=lapCur?.race?.sessionKey;
+  const lapCurLoaded=!!lapCur?.race?.drivers;
+  const openf1Ref=useRef(openf1);
+  openf1Ref.current=openf1;
   useEffect(()=>{
-    if(!openf1||!lapCompareLap)return;
-    const cur=lapCompareTarget(openf1,telMeetingKey);
+    const of1=openf1Ref.current;
+    if(!of1||!lapCompareLap||!lapCurLoaded)return;
+    const cur=lapCompareTarget(of1,telMeetingKey);
     if(!cur)return;
     const{drA,drB}=pickLapCompareDrivers(cur,lapCompareA,lapCompareB);
     if(!drA||!drB)return;
     const sessionKey=cur.race.sessionKey;
     const lap=lapCompareLap;
-    const inflight=lapFetchInflight.current;
+    const pre=cur.race.lapCompareDefault;
+    const runId=++lapFetchRun.current;
     let cancelled=false;
     const controllers=[];
     const fetchDriver=async(drv)=>{
       const key=`${sessionKey}-${drv.number}-${lap}`;
-      if(cancelled||inflight.has(key))return;
+      if(cancelled)return;
       const cached=lapCompareDataRef.current[key];
       if(cached&&(cached.samples||cached.error))return; // settled — only Retry clears it
       const ltEntry=(drv.lapTimes||[]).find(l=>l.l===lap);
       if(!ltEntry?.ds){setLapCompareData(prev=>({...prev,[key]:{loading:false,error:"No timestamp for this lap"}}));return;}
-      // sessionStorage first — laps are immutable once the session is over, so a
+      // Precomputed at build time for the default pair and lap
+      const raw=pre&&pre.lap===lap?pre.drivers?.[drv.number]:null;
+      if(raw){
+        const samples=expandLapCompare(raw);
+        if(samples.length>=3){setLapCompareData(prev=>({...prev,[key]:{samples,loading:false}}));return;}
+      }
+      // sessionStorage next — laps are immutable once the session is over, so a
       // revisit (or tab round-trip) should never re-hit the OpenF1 API.
       try{
         const stored=sessionStorage.getItem(`lapTel2:${key}`);
@@ -2862,22 +3008,23 @@ const LapComparePanel=memo(function LapComparePanel({openf1,telMeetingKey,allDri
           if(Array.isArray(samples)&&samples.length>=3){setLapCompareData(prev=>({...prev,[key]:{samples,loading:false}}));return;}
         }
       }catch{/* parse/quota issues — fall through to the network */}
-      inflight.add(key);
-      setLapCompareData(prev=>({...prev,[key]:{loading:true}}));
+      // Tagged with this run, so a cancelled run can only clear its own marker
+      setLapCompareData(prev=>({...prev,[key]:{loading:true,run:runId}}));
       const controller=new AbortController();
       controllers.push(controller);
-      const timeoutId=setTimeout(()=>controller.abort(),12000); // per-driver budget — B no longer pays for a slow A
+      const timeoutId=setTimeout(()=>controller.abort(),25000); // per driver, including rate-limit waits
       try{
         const startMs=new Date(ltEntry.ds).getTime();
         const endMs=startMs+ltEntry.t*1000+500;
         const startIso=new Date(startMs).toISOString();
         const endIso=new Date(endMs).toISOString();
         const base=`https://api.openf1.org/v1`;
-        const carRes=await fetch(`${base}/car_data?session_key=${sessionKey}&driver_number=${drv.number}&date>=${startIso}&date<=${endIso}`,{signal:controller.signal});
-        if(!carRes.ok)throw new Error(carRes.status===404?"OpenF1 has no car telemetry for this session yet — recent races can lag a few days":`car_data HTTP ${carRes.status}`);
+        const fail=(res,what)=>new Error(res.status===404?`OpenF1 has no ${what} for this session yet — recent races can lag a few days`:res.status===429?"OpenF1 is rate-limiting live telemetry right now. Wait a few seconds, then Retry.":`OpenF1 ${what} request failed (HTTP ${res.status})`);
+        const carRes=await openf1Fetch(`${base}/car_data?session_key=${sessionKey}&driver_number=${drv.number}&date>=${startIso}&date<=${endIso}`,controller.signal);
+        if(!carRes.ok)throw fail(carRes,"car telemetry");
         const carData=await carRes.json();
-        const locRes=await fetch(`${base}/location?session_key=${sessionKey}&driver_number=${drv.number}&date>=${startIso}&date<=${endIso}`,{signal:controller.signal});
-        if(!locRes.ok)throw new Error(locRes.status===404?"OpenF1 has no location data for this session yet — recent races can lag a few days":`location HTTP ${locRes.status}`);
+        const locRes=await openf1Fetch(`${base}/location?session_key=${sessionKey}&driver_number=${drv.number}&date>=${startIso}&date<=${endIso}`,controller.signal);
+        if(!locRes.ok)throw fail(locRes,"location data");
         const location=await locRes.json();
         if(!carData||carData.length===0||!location||location.length<3)throw new Error("No samples returned (lap may predate live data)");
         const samples=processLapTelemetry(carData,location);
@@ -2886,24 +3033,23 @@ const LapComparePanel=memo(function LapComparePanel({openf1,telMeetingKey,allDri
         setLapCompareData(prev=>({...prev,[key]:{samples,loading:false}}));
       }catch(err){
         if(err.name==="AbortError"&&cancelled){
-          // Lap/driver changed mid-fetch — clear the pending entry so the next
-          // effect run can fetch this key fresh instead of seeing it "loading".
-          setLapCompareData(prev=>{if(!prev[key]?.loading)return prev;const n={...prev};delete n[key];return n;});
+          // Lap/driver changed mid-fetch — clear this run's pending marker (a newer
+          // run may already own the key) so the next run fetches it fresh.
+          setLapCompareData(prev=>{if(!prev[key]?.loading||prev[key].run!==runId)return prev;const n={...prev};delete n[key];return n;});
         }else if(err.name==="AbortError"){
-          setLapCompareData(prev=>({...prev,[key]:{loading:false,error:"Timed out after 12s — OpenF1 may be slow, click Retry"}}));
+          setLapCompareData(prev=>({...prev,[key]:{loading:false,error:"Timed out — OpenF1 may be slow. Retry in a moment."}}));
         }else{
           setLapCompareData(prev=>({...prev,[key]:{loading:false,error:err.message||"fetch failed"}}));
         }
       }finally{
         clearTimeout(timeoutId);
-        inflight.delete(key);
       }
     };
-    // Sequential — 4 parallel requests can trip OpenF1's free-tier rate limit
+    // Sequential, and openf1Fetch spaces the calls — four back-to-back requests
+    // tripped OpenF1's free-tier rate limit on first open
     (async()=>{await fetchDriver(drA);if(!cancelled)await fetchDriver(drB);})();
     return()=>{cancelled=true;controllers.forEach(c=>c.abort());};
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  },[openf1,telMeetingKey,lapCompareA,lapCompareB,lapCompareLap,lapCompareRetry]);
+  },[lapSessionKey,lapCurLoaded,telMeetingKey,lapCompareA,lapCompareB,lapCompareLap,lapCompareRetry]);
 
   // ── Selection + loaded samples, hoisted out of the render IIFE so the heavy
   // per-lap series below can live in useMemo (hooks can't sit behind its early returns)
@@ -3092,13 +3238,13 @@ const LapComparePanel=memo(function LapComparePanel({openf1,telMeetingKey,allDri
                       <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
                         <span style={{fontSize:10,color:"var(--w40)",textTransform:"uppercase",letterSpacing:1}}>A</span>
                         {usable.map(d=>{const on=d.acronym===acrA;const dc=inkify(d.teamColour)||"var(--fg)";return(
-                          <button key={"lcA-"+d.acronym} onClick={()=>{setLapCompareA(d.acronym);setLapCompareLap(null);}} style={{padding:"3px 8px",borderRadius:2,border:`1px solid ${on?dc:"var(--w08)"}`,background:on?`${dc}1a`:"var(--w02)",color:on?"var(--fg)":"var(--w55)",cursor:"pointer",fontSize:10,fontWeight:on?700:500,fontFamily:"var(--font-ui)",letterSpacing:0.4}}>{d.acronym}</button>
+                          <button key={"lcA-"+d.acronym} onClick={()=>{setLapCompareA(d.acronym);setLapCompareLap(null);}} style={{padding:"3px 8px",borderRadius:2,border:`1px solid ${on?dc:"var(--w08)"}`,background:on?`${alpha(dc,0x1a)}`:"var(--w02)",color:on?"var(--fg)":"var(--w55)",cursor:"pointer",fontSize:10,fontWeight:on?700:500,fontFamily:"var(--font-ui)",letterSpacing:0.4}}>{d.acronym}</button>
                         );})}
                       </div>
                       <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
                         <span style={{fontSize:10,color:"var(--w40)",textTransform:"uppercase",letterSpacing:1}}>B</span>
                         {usable.map(d=>{const on=d.acronym===acrB;const dc=inkify(d.teamColour)||"var(--fg)";return(
-                          <button key={"lcB-"+d.acronym} onClick={()=>{setLapCompareB(d.acronym);setLapCompareLap(null);}} style={{padding:"3px 8px",borderRadius:2,border:`1px solid ${on?dc:"var(--w08)"}`,background:on?`${dc}1a`:"var(--w02)",color:on?"var(--fg)":"var(--w55)",cursor:"pointer",fontSize:10,fontWeight:on?700:500,fontFamily:"var(--font-ui)",letterSpacing:0.4}}>{d.acronym}</button>
+                          <button key={"lcB-"+d.acronym} onClick={()=>{setLapCompareB(d.acronym);setLapCompareLap(null);}} style={{padding:"3px 8px",borderRadius:2,border:`1px solid ${on?dc:"var(--w08)"}`,background:on?`${alpha(dc,0x1a)}`:"var(--w02)",color:on?"var(--fg)":"var(--w55)",cursor:"pointer",fontSize:10,fontWeight:on?700:500,fontFamily:"var(--font-ui)",letterSpacing:0.4}}>{d.acronym}</button>
                         );})}
                       </div>
                     </div>
@@ -3253,7 +3399,7 @@ const LapComparePanel=memo(function LapComparePanel({openf1,telMeetingKey,allDri
                                 </svg>
                                 {/* Side panel — current readouts */}
                                 <div style={{display:"flex",flexDirection:"column",gap:8}}>
-                                  <div style={{padding:"10px 12px",background:`${tcA}10`,border:`1px solid ${tcA}40`,borderRadius:2}}>
+                                  <div style={{padding:"10px 12px",background:`${alpha(tcA,0x10)}`,border:`1px solid ${alpha(tcA,0x40)}`,borderRadius:2}}>
                                     <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
                                       <div style={{width:3,height:14,background:tcA,borderRadius:1.5}}/>
                                       <div style={{fontSize:13,fontWeight:700}}>{drA.acronym}</div>
@@ -3265,7 +3411,7 @@ const LapComparePanel=memo(function LapComparePanel({openf1,telMeetingKey,allDri
                                       <div style={{fontSize:14,fontWeight:700,fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)"}}>{ptA?.g==null?"—":ptA.g===0?"N":ptA.g}</div>
                                     </div>
                                   </div>
-                                  <div style={{padding:"10px 12px",background:`${tcB}10`,border:`1px solid ${tcB}40`,borderRadius:2}}>
+                                  <div style={{padding:"10px 12px",background:`${alpha(tcB,0x10)}`,border:`1px solid ${alpha(tcB,0x40)}`,borderRadius:2}}>
                                     <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:6}}>
                                       <div style={{width:3,height:14,background:tcB,borderRadius:1.5}}/>
                                       <div style={{fontSize:13,fontWeight:700}}>{drB.acronym}</div>
@@ -3582,7 +3728,7 @@ const TireStrategyPanel=memo(function TireStrategyPanel({race,maxLap,allDrivers,
                                   <div key={i}
                                     onPointerEnter={(e)=>{const r=e.currentTarget.getBoundingClientRect();const card=e.currentTarget.closest('[data-stint-card]');if(!card)return;const cr=card.getBoundingClientRect();setTelStintHover({driverNumber:d.number,stintNumber:s.stintNumber,x:(r.left-cr.left)+r.width/2,y:(r.bottom-cr.top)});}}
                                     onPointerLeave={()=>setTelStintHover(null)}
-                                    style={{width:`${pct}%`,background:col,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:800,color:dark?"var(--bench)":"var(--fg)",letterSpacing:0.5,borderRight:i<myStints.length-1?"2px solid rgba(0,0,0,0.4)":"none",cursor:"default",outline:isHovered?"2px solid var(--w55)":"none",outlineOffset:isHovered?-2:0,transition:"outline-color 0.12s"}}>
+                                    style={{width:`${pct}%`,background:col,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:800,color:compoundInk(c),letterSpacing:0.5,borderRight:i<myStints.length-1?"2px solid rgba(0,0,0,0.4)":"none",cursor:"default",outline:isHovered?"2px solid var(--w55)":"none",outlineOffset:isHovered?-2:0,transition:"outline-color 0.12s"}}>
                                     {pct>4?c[0]:""}
                                   </div>
                                 );
@@ -3607,9 +3753,9 @@ const TireStrategyPanel=memo(function TireStrategyPanel({race,maxLap,allDrivers,
                       const dark=c==="HARD";
                       const delta=(stats.avg&&overallAvg)?stats.avg-overallAvg:null;
                       return(
-                        <div style={{position:"absolute",left:hovered.x,top:hovered.y+6,transform:"translateX(-50%)",background:"var(--panel-2)",border:`1px solid ${col}40`,borderRadius:2,padding:"12px 14px",pointerEvents:"none",minWidth:220,boxShadow:"0 6px 18px -4px rgba(0,0,0,0.35)",zIndex:10}}>
+                        <div style={{position:"absolute",left:hovered.x,top:hovered.y+6,transform:"translateX(-50%)",background:"var(--panel-2)",border:`1px solid ${alpha(col,0x40)}`,borderRadius:2,padding:"12px 14px",pointerEvents:"none",minWidth:220,boxShadow:"0 6px 18px -4px rgba(0,0,0,0.35)",zIndex:10}}>
                           <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
-                            <div style={{fontSize:9,fontWeight:800,letterSpacing:1.2,padding:"3px 8px",borderRadius:2,background:col,color:dark?"var(--bench)":"var(--fg)"}}>{c}</div>
+                            <div style={{fontSize:9,fontWeight:800,letterSpacing:1.2,padding:"3px 8px",borderRadius:2,background:col,color:compoundInk(c)}}>{c}</div>
                             <div style={{fontSize:11,color:"var(--w70)",fontWeight:600}}>{driver.acronym} · Stint {stint.stintNumber}</div>
                           </div>
                           <div style={{display:"grid",gridTemplateColumns:"auto 1fr",gap:"5px 14px",fontSize:11}}>
@@ -3770,8 +3916,8 @@ const TireManagementPanel=memo(function TireManagementPanel({race,allDrivers,max
                             const on=activeCompound===c;
                             const dark=c==="HARD";
                             return(
-                              <button key={c} onClick={()=>setTireCompound(c)} style={{display:"flex",alignItems:"center",gap:6,padding:"5px 10px",borderRadius:2,border:`1px solid ${on?col:"var(--w08)"}`,background:on?`${col}22`:"var(--w02)",color:on?"var(--fg)":"var(--w55)",cursor:"pointer",fontSize:11,fontWeight:on?700:500,fontFamily:"var(--font-ui)"}}>
-                                <div style={{width:14,height:14,borderRadius:2,background:col,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:800,color:dark?"var(--bench)":"var(--fg)"}}>{c[0]}</div>
+                              <button key={c} onClick={()=>setTireCompound(c)} style={{display:"flex",alignItems:"center",gap:6,padding:"5px 10px",borderRadius:2,border:`1px solid ${on?col:"var(--w08)"}`,background:on?`${alpha(col,0x22)}`:"var(--w02)",color:on?"var(--fg)":"var(--w55)",cursor:"pointer",fontSize:11,fontWeight:on?700:500,fontFamily:"var(--font-ui)"}}>
+                                <div style={{width:14,height:14,borderRadius:2,background:col,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:800,color:compoundInk(c)}}>{c[0]}</div>
                                 <span style={{letterSpacing:0.5}}>{c[0]+c.slice(1).toLowerCase()}</span>
                               </button>
                             );
@@ -3842,7 +3988,7 @@ const TireManagementPanel=memo(function TireManagementPanel({race,allDrivers,max
                                 const dark=c==="HARD";
                                 return(
                                   <div key={c} style={{display:"flex",alignItems:"center",gap:6,padding:"6px 8px"}}>
-                                    <div style={{width:14,height:14,borderRadius:2,background:col,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:800,color:dark?"var(--bench)":"var(--fg)"}}>{c[0]}</div>
+                                    <div style={{width:14,height:14,borderRadius:2,background:col,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:800,color:compoundInk(c)}}>{c[0]}</div>
                                     <span style={{fontSize:10,textTransform:"uppercase",letterSpacing:0.8,color:"var(--w55)",fontWeight:600}}>{c[0]+c.slice(1).toLowerCase()}</span>
                                   </div>
                                 );
@@ -3872,7 +4018,7 @@ const TireManagementPanel=memo(function TireManagementPanel({race,allDrivers,max
                                     const bgAlpha=Math.round(intensity*60).toString(16).padStart(2,"0");
                                     const gap=t-range.min;
                                     return(
-                                      <div key={c} className="heatmap-cell" style={{padding:"7px 9px",borderRadius:2,background:`${col}${bgAlpha}`,border:`1px solid ${isBest?col:"var(--w04)"}`,position:"relative"}}>
+                                      <div key={c} className="heatmap-cell" style={{padding:"7px 9px",borderRadius:2,background:alpha(col,parseInt(bgAlpha,16)),border:`1px solid ${isBest?col:"var(--w04)"}`,position:"relative"}}>
                                         <div style={{fontSize:11,fontWeight:700,fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)",color:isBest?"var(--fg)":"var(--w85)"}}>{fmtBest(t)}</div>
                                         <div style={{fontSize:9,fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)",color:isBest?col:"var(--w45)",fontWeight:isBest?700:500,marginTop:1,letterSpacing:0.3}}>{isBest?"FASTEST":`+${gap.toFixed(3)}`}</div>
                                       </div>
@@ -3963,8 +4109,8 @@ const TireManagementPanel=memo(function TireManagementPanel({race,allDrivers,max
                                 const dark=a.compound==="HARD";
                                 const tc=inkify(a.driver.teamColour)||"var(--fg)";
                                 return(
-                                  <button key={key} onClick={()=>togglePick(key)} title="Click to remove" style={{display:"flex",alignItems:"center",gap:5,padding:"3px 7px 3px 6px",borderRadius:2,border:`1px solid ${tc}`,background:`${tc}1a`,color:"var(--ink)",cursor:"pointer",fontSize:10,fontWeight:700,fontFamily:"var(--font-ui)"}}>
-                                    <div style={{width:11,height:11,borderRadius:2,background:col,display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,fontWeight:800,color:dark?"var(--bench)":"var(--fg)"}}>{a.compound[0]}</div>
+                                  <button key={key} onClick={()=>togglePick(key)} title="Click to remove" style={{display:"flex",alignItems:"center",gap:5,padding:"3px 7px 3px 6px",borderRadius:2,border:`1px solid ${tc}`,background:`${alpha(tc,0x1a)}`,color:"var(--ink)",cursor:"pointer",fontSize:10,fontWeight:700,fontFamily:"var(--font-ui)"}}>
+                                    <div style={{width:11,height:11,borderRadius:2,background:col,display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,fontWeight:800,color:compoundInk(a.compound)}}>{a.compound[0]}</div>
                                     <span style={{letterSpacing:0.4}}>{a.driver.acronym}</span>
                                     <span style={{fontSize:9,color:"var(--w55)",fontWeight:400}}>S{a.stint.stintNumber}</span>
                                     <span style={{marginLeft:2,fontSize:11,color:"var(--w55)",lineHeight:1}}>×</span>
@@ -3983,8 +4129,8 @@ const TireManagementPanel=memo(function TireManagementPanel({race,allDrivers,max
                                 const dark=c==="HARD";
                                 const on=activeFilter===c;
                                 return(
-                                  <button key={c} onClick={()=>setOverlayCompoundFilter(c)} style={{display:"flex",alignItems:"center",gap:5,padding:"3px 9px",borderRadius:2,border:`1px solid ${on?col:"var(--w08)"}`,background:on?`${col}22`:"var(--w02)",color:on?"var(--fg)":"var(--w55)",cursor:"pointer",fontSize:10,fontWeight:on?700:500,fontFamily:"var(--font-ui)"}}>
-                                    <div style={{width:11,height:11,borderRadius:2,background:col,display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,fontWeight:800,color:dark?"var(--bench)":"var(--fg)"}}>{c[0]}</div>
+                                  <button key={c} onClick={()=>setOverlayCompoundFilter(c)} style={{display:"flex",alignItems:"center",gap:5,padding:"3px 9px",borderRadius:2,border:`1px solid ${on?col:"var(--w08)"}`,background:on?`${alpha(col,0x22)}`:"var(--w02)",color:on?"var(--fg)":"var(--w55)",cursor:"pointer",fontSize:10,fontWeight:on?700:500,fontFamily:"var(--font-ui)"}}>
+                                    <div style={{width:11,height:11,borderRadius:2,background:col,display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,fontWeight:800,color:compoundInk(c)}}>{c[0]}</div>
                                     <span>{c[0]+c.slice(1).toLowerCase()}</span>
                                     <span style={{color:"var(--w40)",fontWeight:400}}>{compoundCounts[c]}</span>
                                   </button>
@@ -4001,7 +4147,7 @@ const TireManagementPanel=memo(function TireManagementPanel({race,allDrivers,max
                                 const on=activeDriverFilter===d.number;
                                 const tc=inkify(d.teamColour)||"var(--fg)";
                                 return(
-                                  <button key={d.number} onClick={()=>setOverlayDriverFilter(d.number)} style={{display:"flex",alignItems:"center",gap:4,padding:"3px 8px",borderRadius:2,border:`1px solid ${on?tc:"var(--w08)"}`,background:on?`${tc}22`:"var(--w02)",color:on?"var(--fg)":"var(--w55)",cursor:"pointer",fontSize:10,fontWeight:on?700:500,fontFamily:"var(--font-ui)"}}>
+                                  <button key={d.number} onClick={()=>setOverlayDriverFilter(d.number)} style={{display:"flex",alignItems:"center",gap:4,padding:"3px 8px",borderRadius:2,border:`1px solid ${on?tc:"var(--w08)"}`,background:on?`${alpha(tc,0x22)}`:"var(--w02)",color:on?"var(--fg)":"var(--w55)",cursor:"pointer",fontSize:10,fontWeight:on?700:500,fontFamily:"var(--font-ui)"}}>
                                     <div style={{width:2,height:10,background:tc,borderRadius:1}}/>
                                     <span style={{letterSpacing:0.4}}>{d.acronym}</span>
                                     <span style={{color:"var(--w40)",fontWeight:400}}>{driverStintCounts[d.number]}</span>
@@ -4020,7 +4166,7 @@ const TireManagementPanel=memo(function TireManagementPanel({race,allDrivers,max
                               const atMax=selectedKeys.size>=4;
                               return(
                                 <button key={key} disabled={atMax} onClick={()=>togglePick(key)} style={{display:"flex",alignItems:"center",gap:5,padding:"3px 7px",borderRadius:2,border:"1px solid var(--w08)",background:"var(--w02)",color:"var(--w55)",cursor:atMax?"not-allowed":"pointer",fontSize:10,fontWeight:500,fontFamily:"var(--font-ui)",opacity:atMax?0.4:1}}>
-                                  <div style={{width:11,height:11,borderRadius:2,background:col,display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,fontWeight:800,color:dark?"var(--bench)":"var(--fg)"}}>{a.compound[0]}</div>
+                                  <div style={{width:11,height:11,borderRadius:2,background:col,display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,fontWeight:800,color:compoundInk(a.compound)}}>{a.compound[0]}</div>
                                   <span style={{letterSpacing:0.4,color:tc,fontWeight:600}}>{a.driver.acronym}</span>
                                   <span style={{fontSize:9,color:"var(--w40)",fontWeight:400}}>S{a.stint.stintNumber}</span>
                                 </button>
@@ -4082,7 +4228,7 @@ const TireManagementPanel=memo(function TireManagementPanel({race,allDrivers,max
                     {hoveredEntry&&(
                       <div style={{position:"absolute",left:tireHover.x,top:tireHover.y-90,transform:"translateX(-50%)",background:"var(--panel-2)",border:`1px solid ${COMPOUND_COLORS[hoveredEntry.compound]||"var(--ink-4)"}40`,borderRadius:2,padding:"10px 12px",pointerEvents:"none",minWidth:220,boxShadow:"0 6px 18px -4px rgba(0,0,0,0.35)",zIndex:10}}>
                         <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
-                          <div style={{fontSize:9,fontWeight:800,letterSpacing:1.2,padding:"3px 8px",borderRadius:2,background:COMPOUND_COLORS[hoveredEntry.compound],color:hoveredEntry.compound==="HARD"?"var(--bench)":"var(--fg)"}}>{hoveredEntry.compound}</div>
+                          <div style={{fontSize:9,fontWeight:800,letterSpacing:1.2,padding:"3px 8px",borderRadius:2,background:COMPOUND_COLORS[hoveredEntry.compound],color:compoundInk(hoveredEntry.compound)}}>{hoveredEntry.compound}</div>
                           <div style={{fontSize:11,color:"var(--w70)",fontWeight:600}}>{hoveredEntry.driver.acronym} · Stint {hoveredEntry.stint.stintNumber}</div>
                         </div>
                         <div style={{display:"grid",gridTemplateColumns:"auto 1fr",gap:"5px 14px",fontSize:11}}>
@@ -4278,13 +4424,13 @@ const DeltaChartPanel=memo(function DeltaChartPanel({allDrivers,maxLap,race}){
                       <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
                         <span style={{fontSize:10,color:"var(--w40)",textTransform:"uppercase",letterSpacing:1}}>A</span>
                         {usable.map(d=>{const on=d.acronym===acrA;const dc=inkify(d.teamColour)||"var(--fg)";return(
-                          <button key={"a-"+d.acronym} onClick={()=>setDeltaA(d.acronym)} style={{padding:"3px 8px",borderRadius:2,border:`1px solid ${on?dc:"var(--w08)"}`,background:on?`${dc}1a`:"var(--w02)",color:on?"var(--fg)":"var(--w55)",cursor:"pointer",fontSize:10,fontWeight:on?700:500,fontFamily:"var(--font-ui)",letterSpacing:0.4}}>{d.acronym}</button>
+                          <button key={"a-"+d.acronym} onClick={()=>setDeltaA(d.acronym)} style={{padding:"3px 8px",borderRadius:2,border:`1px solid ${on?dc:"var(--w08)"}`,background:on?`${alpha(dc,0x1a)}`:"var(--w02)",color:on?"var(--fg)":"var(--w55)",cursor:"pointer",fontSize:10,fontWeight:on?700:500,fontFamily:"var(--font-ui)",letterSpacing:0.4}}>{d.acronym}</button>
                         );})}
                       </div>
                       <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
                         <span style={{fontSize:10,color:"var(--w40)",textTransform:"uppercase",letterSpacing:1}}>B</span>
                         {usable.map(d=>{const on=d.acronym===acrB;const dc=inkify(d.teamColour)||"var(--fg)";return(
-                          <button key={"b-"+d.acronym} onClick={()=>setDeltaB(d.acronym)} style={{padding:"3px 8px",borderRadius:2,border:`1px solid ${on?dc:"var(--w08)"}`,background:on?`${dc}1a`:"var(--w02)",color:on?"var(--fg)":"var(--w55)",cursor:"pointer",fontSize:10,fontWeight:on?700:500,fontFamily:"var(--font-ui)",letterSpacing:0.4}}>{d.acronym}</button>
+                          <button key={"b-"+d.acronym} onClick={()=>setDeltaB(d.acronym)} style={{padding:"3px 8px",borderRadius:2,border:`1px solid ${on?dc:"var(--w08)"}`,background:on?`${alpha(dc,0x1a)}`:"var(--w02)",color:on?"var(--fg)":"var(--w55)",cursor:"pointer",fontSize:10,fontWeight:on?700:500,fontFamily:"var(--font-ui)",letterSpacing:0.4}}>{d.acronym}</button>
                         );})}
                       </div>
                     </div>
@@ -4402,7 +4548,7 @@ const SpeedTracePanel=memo(function SpeedTracePanel({allDrivers}){
                         const on=selected.has(d.acronym);
                         const tc=inkify(d.teamColour)||"var(--fg)";
                         return(
-                          <button key={d.acronym} onClick={()=>toggle(d.acronym)} style={{display:"flex",alignItems:"center",gap:6,padding:"5px 10px",borderRadius:2,border:`1px solid ${on?tc:"var(--w08)"}`,background:on?`${tc}1a`:"var(--w02)",color:on?"var(--fg)":"var(--w55)",cursor:"pointer",fontSize:11,fontWeight:on?700:500,fontFamily:"var(--font-ui)"}}>
+                          <button key={d.acronym} onClick={()=>toggle(d.acronym)} style={{display:"flex",alignItems:"center",gap:6,padding:"5px 10px",borderRadius:2,border:`1px solid ${on?tc:"var(--w08)"}`,background:on?`${alpha(tc,0x1a)}`:"var(--w02)",color:on?"var(--fg)":"var(--w55)",cursor:"pointer",fontSize:11,fontWeight:on?700:500,fontFamily:"var(--font-ui)"}}>
                             <div style={{width:3,height:11,background:tc,borderRadius:1,opacity:on?1:0.5}}/>
                             <span style={{letterSpacing:0.5}}>{d.acronym}</span>
                             <span style={{fontSize:9,color:"var(--w40)",fontWeight:400,fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)"}}>{d.fastLapTrace.lapTime.toFixed(3)}s</span>

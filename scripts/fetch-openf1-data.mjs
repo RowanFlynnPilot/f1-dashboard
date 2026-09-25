@@ -12,9 +12,12 @@
  *       Rate limit: 3 req/s, 30 req/min on free tier.
  */
 
+import fs from "node:fs";
 import { pathToFileURL } from "node:url";
 
-const SEASON = 2026;
+// One season setting for every script (scripts/season.json); SEASON=2027 in the
+// environment overrides it for a dry run of the next season.
+const SEASON = Number(process.env.SEASON) || JSON.parse(fs.readFileSync(new URL("./season.json", import.meta.url), "utf8")).season;
 const BASE = "https://api.openf1.org/v1";
 
 // Sessions we care about
@@ -95,37 +98,34 @@ async function getLaps(sessionKey) {
 /**
  * Get stint data (tire compounds, stint lengths) for a session
  */
-async function getStints(sessionKey) {
+// The per-session extras below return [] only for a 404 ("no data"). Any other
+// failure throws, so the session's catch keeps the previously shipped copy —
+// turning a 5xx into [] used to replace a good cached session with an empty one.
+async function optional(url) {
   try {
-    const data = await fetchJSON(`${BASE}/stints?session_key=${sessionKey}`);
-    return data;
-  } catch {
-    return [];
+    return (await fetchJSON(url)) || [];
+  } catch (e) {
+    if (e.status === 404) return [];
+    throw e;
   }
+}
+
+async function getStints(sessionKey) {
+  return optional(`${BASE}/stints?session_key=${sessionKey}`);
 }
 
 /**
  * Get position events for a session. Each event is (date, driver_number, position).
  */
 async function getPositions(sessionKey) {
-  try {
-    const data = await fetchJSON(`${BASE}/position?session_key=${sessionKey}`);
-    return data || [];
-  } catch {
-    return [];
-  }
+  return optional(`${BASE}/position?session_key=${sessionKey}`);
 }
 
 /**
  * Get race-control messages (safety car deployments, red flags, etc.) for a session.
  */
 async function getRaceControl(sessionKey) {
-  try {
-    const data = await fetchJSON(`${BASE}/race_control?session_key=${sessionKey}`);
-    return data || [];
-  } catch {
-    return [];
-  }
+  return optional(`${BASE}/race_control?session_key=${sessionKey}`);
 }
 
 /**
@@ -133,16 +133,14 @@ async function getRaceControl(sessionKey) {
  * for a single driver within a date range. Used to build per-lap speed traces.
  */
 async function getCarData(sessionKey, driverNumber, dateStartIso, dateEndIso) {
-  const url = `${BASE}/car_data?session_key=${sessionKey}&driver_number=${driverNumber}&date>=${dateStartIso}&date<=${dateEndIso}`;
-  try { return await fetchJSON(url); } catch { return []; }
+  return optional(`${BASE}/car_data?session_key=${sessionKey}&driver_number=${driverNumber}&date>=${dateStartIso}&date<=${dateEndIso}`);
 }
 
 /**
  * Get 3D location samples (x/y/z) for a single driver within a date range.
  */
 async function getLocation(sessionKey, driverNumber, dateStartIso, dateEndIso) {
-  const url = `${BASE}/location?session_key=${sessionKey}&driver_number=${driverNumber}&date>=${dateStartIso}&date<=${dateEndIso}`;
-  try { return await fetchJSON(url); } catch { return []; }
+  return optional(`${BASE}/location?session_key=${sessionKey}&driver_number=${driverNumber}&date>=${dateStartIso}&date<=${dateEndIso}`);
 }
 
 /**
@@ -378,10 +376,85 @@ export function computeSessionBests(driverStats) {
   };
 }
 
+// Jolpica round for an OpenF1 meeting, joined by the race date. Names don't
+// join the two APIs — 2026's OpenF1 "Bahrain Grand Prix" is Jolpica's "Bahrain
+// Grand Prix in Malaysia" (Sepang), "São Paulo" is "Brazilian" — and the app's
+// track outlines are keyed by the Jolpica name. Meetings without a Race session
+// fall back to the round dated inside the meeting's weekend.
+export function matchRound(meeting, schedule) {
+  const race = (meeting.sessions || []).find(s => s.sessionName === "Race");
+  const day = (race?.dateStart || "").slice(0, 10);
+  let hit = day ? (schedule || []).find(r => r.date === day) : null;
+  if (!hit && meeting.dateStart) {
+    const start = new Date(meeting.dateStart).getTime();
+    hit = (schedule || []).find(r => {
+      const t = new Date(`${r.date}T12:00:00Z`).getTime();
+      return t >= start - 24 * 3600e3 && t <= start + 4 * 24 * 3600e3;
+    });
+  }
+  return hit ? { round: hit.round, raceName: hit.name } : null;
+}
+
+// A cached meeting is final once its race is fully there — a Race session with
+// lap positions. "Has a Race session" alone froze races whose last refetch had
+// lost the position feed to a transient error.
+export function raceIsFinal(meeting) {
+  return (meeting?.sessions || []).some(s => s.sessionName === "Race" && (s.drivers || []).some(d => (d.positions || []).length > 0));
+}
+
+// Lap Compare's default view, picked exactly as the app does
+// (pickLapCompareDrivers): the top two finishers with usable laps, on the
+// winner's fastest non-pit lap. Precomputed so the Telemetry tab's first open
+// needs no live OpenF1 calls — four back-to-back browser requests tripped the
+// free tier's rate limit.
+export function lapCompareDefaultPick(drivers) {
+  const usable = (drivers || []).filter(d => (d.lapTimes || []).filter(l => l.ds).length >= 3);
+  if (usable.length < 2) return null;
+  const finalPos = d => { const ps = d.positions; return ps && ps.length ? ps[ps.length - 1].p : 99; };
+  const [a, b] = [...usable].sort((x, y) => finalPos(x) - finalPos(y));
+  const fastest = (a.lapTimes || []).filter(l => l.ds && !l.pit).reduce((m, l) => (!m || l.t < m.t ? l : m), null);
+  return fastest ? { drivers: [a, b], lap: fastest.l } : null;
+}
+
+// Compact rows ([ms from t0, …]) holding just what the app's processLapTelemetry reads
+export function compactLapTelemetry(carData, location, t0) {
+  return {
+    t0,
+    car: (carData || []).filter(c => c.date).map(c => [Date.parse(c.date) - t0, c.speed ?? 0, c.throttle ?? 0, c.brake ?? 0, c.n_gear ?? null]),
+    loc: (location || []).filter(l => l.date && l.x != null && l.y != null).map(l => [Date.parse(l.date) - t0, l.x, l.y]),
+  };
+}
+
+async function buildLapCompareDefault(sessionKey, drivers) {
+  const pick = lapCompareDefaultPick(drivers);
+  if (!pick) return null;
+  const out = { lap: pick.lap, drivers: {} };
+  for (const d of pick.drivers) {
+    const lt = d.lapTimes.find(l => l.l === pick.lap);
+    if (!lt?.ds) return null;
+    // Same window the app requests: lap start to end plus half a second
+    const startIso = new Date(lt.ds).toISOString();
+    const endIso = new Date(lt.ds + lt.t * 1000 + 500).toISOString();
+    const car = await getCarData(sessionKey, d.number, startIso, endIso);
+    await sleep(2000);
+    const loc = await getLocation(sessionKey, d.number, startIso, endIso);
+    await sleep(2000);
+    if (car.length === 0 || loc.length < 3) return null;
+    out.drivers[d.number] = compactLapTelemetry(car, loc, lt.ds);
+  }
+  return out;
+}
+
+// Write via a temp file + rename, so an interrupted run never leaves a
+// truncated JSON file for the next run (or the deploy) to trip over
+function writeAtomic(file, text) {
+  fs.writeFileSync(`${file}.tmp`, text);
+  fs.renameSync(`${file}.tmp`, file);
+}
+
 async function main() {
   console.log(`\n🏎️  Fetching OpenF1 sector/speed data for ${SEASON}...\n`);
 
-  const fs = await import("fs");
   const path = await import("path");
   const outDir = path.join(process.cwd(), "public", "openf1");
   const meetingsDir = path.join(outDir, "meetings");
@@ -434,6 +507,18 @@ async function main() {
   // tests, cancelled rounds). Each one used to cost ~12 requests every run.
   const RECHECK_EMPTY_MS = 30 * 24 * 3600 * 1000;
   const prevEmpty = new Map((prevIndex?.emptyMeetings || []).map(m => [m.meetingKey, m]));
+  // Manual override (workflow_dispatch input refetch_meetings): meeting keys to
+  // refetch even though they're final — e.g. after OpenF1 corrects a session.
+  // "all" refetches everything. The cached copy still backs up failed sessions.
+  const refetch = new Set((process.env.REFETCH_MEETINGS || "").split(",").map(x => x.trim()).filter(Boolean));
+  const forced = key => refetch.has("all") || refetch.has(String(key));
+  // Older race meetings get the precomputed Lap Compare default a few per run,
+  // newest first — the Telemetry tab opens on the latest race
+  const lapCompareBackfill = new Set(
+    meetings.filter(m => new Date(m.date_start) <= now).map(m => m.meeting_key).reverse()
+      .filter(k => (readCachedMeeting(k)?.sessions || []).some(s => s.sessionName === "Race" && s.drivers && !s.lapCompareDefault))
+      .slice(0, 3),
+  );
   const emptyMeetings = [];
   const markEmpty = (meeting) => emptyMeetings.push({ meetingKey: meeting.meeting_key, meetingName: meeting.meeting_name, checkedAt: now.toISOString() });
 
@@ -447,19 +532,30 @@ async function main() {
 
     const cached = readCachedMeeting(meeting.meeting_key);
     const isRecent = now - meetingStart < FRESH_WINDOW_MS;
-    if (cached && !isRecent) {
-      // "Final" needs a Race session — a flaky run inside the fresh window must
-      // not freeze a half-fetched weekend forever. Old meetings are accepted as-is.
-      const hasRace = (cached.sessions || []).some(s => s.sessionName === "Race");
-      if (hasRace || now - meetingStart > SETTLED_MS) {
+    const force = forced(meeting.meeting_key);
+    if (force) console.log(`🔁 Refetch requested: ${meeting.meeting_name}`);
+    if (cached && !isRecent && !force) {
+      // "Final" needs the race fully there (positions included) — a flaky run
+      // inside the fresh window must not freeze a half-fetched weekend forever.
+      // Meetings past the settle window are accepted as-is.
+      if (raceIsFinal(cached) || now - meetingStart > SETTLED_MS) {
         console.log(`📦 Cached (final): ${meeting.meeting_name}`);
+        const race = (cached.sessions || []).find(s => s.sessionName === "Race" && s.drivers && !s.lapCompareDefault);
+        if (race && lapCompareBackfill.has(meeting.meeting_key)) {
+          try {
+            const def = await buildLapCompareDefault(race.sessionKey, race.drivers);
+            if (def) { race.lapCompareDefault = def; console.log(`   🛰️  Added the Lap Compare default (lap ${def.lap})`); }
+          } catch (e) {
+            console.log(`   ⚠️  Lap Compare default skipped: ${e.message}`);
+          }
+        }
         allMeetingData.push(cached);
         continue;
       }
-      console.log(`🔁 Cached without a Race session — refetching: ${meeting.meeting_name}`);
+      console.log(`🔁 Cached race incomplete — refetching: ${meeting.meeting_name}`);
     }
     const knownEmpty = prevEmpty.get(meeting.meeting_key);
-    if (!cached && !isRecent && knownEmpty && now - new Date(knownEmpty.checkedAt) < RECHECK_EMPTY_MS) {
+    if (!cached && !isRecent && !force && knownEmpty && now - new Date(knownEmpty.checkedAt) < RECHECK_EMPTY_MS) {
       console.log(`⏭️  Skipping (no lap data on OpenF1, checked ${String(knownEmpty.checkedAt).slice(0, 10)}): ${meeting.meeting_name}`);
       emptyMeetings.push(knownEmpty);
       continue;
@@ -468,17 +564,30 @@ async function main() {
     console.log(`\n🏁 Processing: ${meeting.meeting_name} (${meeting.location})`);
     await sleep(2000);
 
-    // Get sessions for this meeting
-    const sessions = await getSessions(meeting.meeting_key);
+    // Get sessions for this meeting. A failure keeps the cached meeting (if any)
+    // instead of aborting the whole run.
+    let sessions;
+    try {
+      sessions = await getSessions(meeting.meeting_key);
+    } catch (e) {
+      console.log(`   ❌ /sessions failed (${e.message})${cached ? " — keeping the cached copy" : ""}`);
+      if (cached) allMeetingData.push(cached);
+      continue;
+    }
     await sleep(2000);
 
     if (!sessions || sessions.length === 0) {
       console.log("   No sessions found");
-      if (!isRecent) markEmpty(meeting);
+      if (!isRecent && !cached) markEmpty(meeting);
+      if (cached) allMeetingData.push(cached);
       continue;
     }
 
     const meetingSessions = [];
+    // Any failure other than "no data" (404) — the meeting then must not be
+    // marked empty, since its data may well exist
+    let hadErrors = false;
+    const cachedSession = key => (cached?.sessions || []).find(s => s.sessionKey === key);
 
     for (const session of sessions) {
       // Only process session types we care about
@@ -557,9 +666,10 @@ async function main() {
         // For race-likes, build speed-vs-distance traces for the top 6 drivers'
         // fastest laps. Each driver costs 2 API calls (/car_data + /location).
         const speedTraces = {};
+        let partial = false; // an optional extra failed — prefer the cached session if there is one
         if (isRaceLike) {
           const top6 = driverStats.filter(d => d.bestLap && d.bestS1).slice(0, 6);
-          for (const ds of top6) {
+          for (const ds of top6) try {
             const fastLap = ds.laps.find(l => l.lapTime === ds.bestLap && l.dateStart);
             if (!fastLap) continue;
             const startMs = new Date(fastLap.dateStart).getTime();
@@ -578,10 +688,13 @@ async function main() {
             } else {
               console.log(`         ⚠️  empty trace (car_data: ${carData.length}, loc: ${loc.length})`);
             }
+          } catch (e) {
+            partial = true;
+            console.log(`         ⚠️  speed trace failed: ${e.message}`);
           }
         }
 
-        meetingSessions.push({
+        const sessionOut = {
           sessionKey: session.session_key,
           sessionName: session.session_name,
           sessionType: session.session_type,
@@ -645,11 +758,34 @@ async function main() {
           raceControlPeriods,
           // Laps with at least one localized yellow flag (sector wave)
           yellowFlagLaps,
-        });
+        };
 
+        // Race only: Lap Compare's default view, precomputed (see lapCompareDefaultPick)
+        if (session.session_name === "Race") {
+          try {
+            const def = await buildLapCompareDefault(session.session_key, sessionOut.drivers);
+            if (def) sessionOut.lapCompareDefault = def;
+          } catch (e) {
+            partial = true;
+            console.log(`      ⚠️  Lap Compare default failed: ${e.message}`);
+          }
+        }
+
+        const prior = cachedSession(session.session_key);
+        if (partial && prior) {
+          console.log(`      📦 Extras failed — keeping the previously shipped ${session.session_name}`);
+          meetingSessions.push(prior);
+        } else {
+          meetingSessions.push(sessionOut);
+        }
         console.log(`      ✅ ${laps.length} laps, ${driverStats.length} drivers`);
       } catch (err) {
-        console.log(`      ❌ Error: ${err.message}`);
+        if (err.status === 404) {
+          console.log(`      No data for this session yet (404)`);
+        } else {
+          hadErrors = true;
+          console.log(`      ❌ Error: ${err.message}${cachedSession(session.session_key) ? " — the cached copy fills in" : ""}`);
+        }
       }
     }
 
@@ -675,9 +811,21 @@ async function main() {
         year: meeting.year,
         sessions: sessionsOut,
       });
-    } else if (!isRecent) {
+    } else if (!isRecent && !hadErrors) {
+      // Only an explicit "no data" marks a meeting empty for 30 days — errors
+      // would otherwise hide a real race for a month
       markEmpty(meeting);
     }
+  }
+
+  // Stamp each meeting with its Jolpica round and race name (from data.json,
+  // which the Jolpica step writes first) — see matchRound
+  let schedule = [];
+  try { schedule = JSON.parse(fs.readFileSync(path.join(process.cwd(), "public", "data.json"), "utf8")).schedule || []; } catch { /* no Jolpica data — meetings stay unstamped */ }
+  for (const m of allMeetingData) {
+    const hit = matchRound(m, schedule);
+    if (hit) Object.assign(m, hit);
+    else { delete m.round; delete m.raceName; }
   }
 
   // Build output — split layout, all minified (pretty-printing tripled the old
@@ -690,7 +838,7 @@ async function main() {
   for (const m of allMeetingData) {
     const json = JSON.stringify(m);
     meetingBytes += json.length;
-    fs.writeFileSync(path.join(meetingsDir, `${m.meetingKey}.json`), json);
+    writeAtomic(path.join(meetingsDir, `${m.meetingKey}.json`), json);
   }
 
   const index = {
@@ -708,6 +856,8 @@ async function main() {
       circuitName: m.circuitName,
       dateStart: m.dateStart,
       year: m.year,
+      round: m.round ?? null,
+      raceName: m.raceName ?? null,
       sessions: m.sessions.map(s => ({
         sessionKey: s.sessionKey,
         sessionName: s.sessionName,
@@ -720,7 +870,7 @@ async function main() {
     })),
   };
   const indexJson = JSON.stringify(index);
-  fs.writeFileSync(path.join(outDir, "index.json"), indexJson);
+  writeAtomic(path.join(outDir, "index.json"), indexJson);
 
   // Remove meeting files no longer referenced by the index (season rollover etc.)
   const valid = new Set(allMeetingData.map(m => String(m.meetingKey)));
