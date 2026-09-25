@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo, useCallback, useRef, Fragment, Component, memo } from "react";
 
-const SEASON = 2026;
+// The season comes from data.json (scripts/season.json drives the fetch); this is
+// only the fallback before it loads.
+const SEASON_FALLBACK = 2026;
 
 const F1_LOGO = "data:image/png;base64,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";
 
@@ -89,67 +91,141 @@ function normTeam(t){if(!t)return"";return t.replace(" F1 Team","").replace("Red
 // Data is loaded dynamically from data.json (fetched from Jolpica API)
 // Transform functions convert API format to dashboard format
 
+// Classification label of a raw data.json result: null for a classified finish,
+// else "DNF" / "DSQ" / "DNS" / "NC". Current builds carry it as `out` (from
+// Jolpica's positionText); older builds only have the status text.
+function resultOut(res){
+  if(res.out!==undefined)return res.out;
+  const st=(res.status||"").toLowerCase();
+  if(st.includes("did not start"))return"DNS";
+  if(st.includes("disqualified"))return"DSQ";
+  if(isNaN(parseInt(res.pos))||/retired|accident|collision|engine|mechanical/.test(st))return"DNF";
+  return null;
+}
+
+// Teammate battles, one per pair of drivers who shared a garage. Pairs come from
+// who raced or qualified for each team in each round, so a seat change mid-season
+// (2026: Lawson to Red Bull from round 12) yields a battle per pairing, each
+// scored only over the rounds that pair actually shared.
+function headToHead(DS, CS, rawRaces, allRaces, qualifying) {
+  const byDid = new Map(DS.filter(d => d.did).map(d => [d.did, d]));
+  const byLast = new Map(DS.map(d => [d.n.split(" ").pop(), d]));
+  const seats = {}; // team → round → Map(name → DS entry)
+  const seat = (team, round, did, last) => {
+    const d = (did && byDid.get(did)) || byLast.get(last);
+    if (d && team) ((seats[team] ??= {})[round] ??= new Map()).set(d.n, d);
+  };
+  for (const r of rawRaces) for (const res of r.results || []) seat(res.team, r.round, res.did, res.driver);
+  for (const q of qualifying) for (const res of q.results) seat(res.t, q.round, res.did, res.d);
+  const same = (row, d) => (row.did ? row.did === d.did : row.d === d.n.split(" ").pop());
+  const avg = a => (a.length ? +(a.reduce((s, v) => s + v, 0) / a.length).toFixed(1) : null);
+
+  const battles = [];
+  for (const c of CS) {
+    const pairs = {};
+    for (const [round, drivers] of Object.entries(seats[c.t] || {})) {
+      const [a, b] = [...drivers.values()].sort((x, y) => x.p - y.p); // d1 = higher in the standings
+      if (a && b) (pairs[`${a.n}|${b.n}`] ??= { d1: a, d2: b, rounds: [] }).rounds.push(Number(round));
+    }
+    const list = Object.values(pairs).map(p => ({ ...p, rounds: p.rounds.sort((x, y) => x - y) }))
+      .sort((x, y) => y.rounds.at(-1) - x.rounds.at(-1)); // current pairing first
+    for (const { d1, d2, rounds } of list) {
+      const inPair = new Set(rounds);
+      let q1 = 0, q2 = 0;
+      const qualDetails = [];
+      for (const q of qualifying) {
+        if (!inPair.has(q.round)) continue;
+        const r1 = q.results.find(r => r.t === c.t && same(r, d1));
+        const r2 = q.results.find(r => r.t === c.t && same(r, d2));
+        if (!r1 || !r2) continue;
+        if (r1.pos < r2.pos) q1++; else if (r2.pos < r1.pos) q2++;
+        qualDetails.push({ race: q.name.replace(" Grand Prix", ""), d1: r1.pos, d2: r2.pos });
+      }
+      // Finishing order from races; points from races and sprints, for this team only
+      let w1 = 0, w2 = 0, pts1 = 0, pts2 = 0;
+      const f1 = [], f2 = [], raceDetails = [];
+      for (const race of allRaces) {
+        if (!inPair.has(parseInt(race.r))) continue;
+        const r1 = race.full.find(r => r.t === c.t && same(r, d1));
+        const r2 = race.full.find(r => r.t === c.t && same(r, d2));
+        pts1 += r1?.pts || 0;
+        pts2 += r2?.pts || 0;
+        if (race.sprint || !r1 || !r2) continue;
+        const p1 = typeof r1.p === "number" ? r1.p : 99, p2 = typeof r2.p === "number" ? r2.p : 99;
+        if (p1 < p2) w1++; else if (p2 < p1) w2++;
+        if (typeof r1.p === "number") f1.push(r1.p); // average finish counts classified finishes only
+        if (typeof r2.p === "number") f2.push(r2.p);
+        raceDetails.push({ race: race.nm.replace(" Grand Prix", ""), d1: r1.p, d2: r2.p });
+      }
+      battles.push({
+        team: c.t, d1, d2, rounds, teamPairings: list.length,
+        qual: { d1: q1, d2: q2, details: qualDetails },
+        race: { d1: w1, d2: w2, details: raceDetails },
+        avgPos: { d1: avg(f1), d2: avg(f2) },
+        pts: { d1: pts1, d2: pts2 },
+      });
+    }
+  }
+  return battles;
+}
+
 function transformData(raw) {
   if (!raw || !raw.drivers || raw.drivers.length === 0) return null;
 
-  // Driver standings — compute delta from last race
+  // Points delta: what each driver scored in the round the standings follow —
+  // that round's race and/or sprint. Keyed off standingsRound because on a
+  // sprint Saturday the standings already include the sprint while the last
+  // race is the previous round (subtracting that race gave wrong arrows).
+  // No fastest-lap bonus — the FL point was abolished from the 2025 season.
   const F1_PTS = {1:25,2:18,3:15,4:12,5:10,6:8,7:6,8:4,9:2,10:1};
-  const lastRaceResults = raw.races.length > 0 ? raw.races[raw.races.length - 1].results : [];
-  const lastRacePtsMap = {};
-  for (const r of lastRaceResults) {
-    const pos = parseInt(r.pos);
-    // No fastest-lap bonus — the FL point was abolished from the 2025 season
-    lastRacePtsMap[r.driver] = F1_PTS[pos] || 0;
-  }
-  // Also add sprint points if the last event had one
   const SPRINT_PTS = {1:8,2:7,3:6,4:5,5:4,6:3,7:2,8:1};
   const sprintsArr = raw.sprints || [];
-  if (sprintsArr.length > 0) {
-    const lastSprint = sprintsArr[sprintsArr.length - 1];
-    // Only count if sprint is from same round as last race
-    const lastRound = raw.races.length > 0 ? raw.races[raw.races.length - 1].round : 0;
-    if (lastSprint.round === lastRound) {
-      for (const r of (lastSprint.results || [])) {
-        const pos = parseInt(r.pos);
-        const pts = SPRINT_PTS[pos] || 0;
-        lastRacePtsMap[r.driver] = (lastRacePtsMap[r.driver] || 0) + pts;
+  // Older data.json builds lack per-result points — derive them from position
+  const rowPts = (row, sprint) => row.pts ?? (row.out ? 0 : (sprint ? SPRINT_PTS : F1_PTS)[parseInt(row.pos)] || 0);
+  const lastRound = raw.standingsRound || Math.max(0, ...raw.races.map(r => r.round), ...sprintsArr.map(s => s.round));
+  const lastRoundPts = {};      // driverId (or surname on old builds) → points
+  const lastRoundTeamPts = {};  // team → points, by the team each car raced for
+  for (const [sessions, sprint] of [[raw.races, false], [sprintsArr, true]]) {
+    for (const s of sessions) {
+      if (s.round !== lastRound) continue;
+      for (const r of s.results || []) {
+        const pts = rowPts(r, sprint);
+        const key = r.did || r.driver;
+        lastRoundPts[key] = (lastRoundPts[key] || 0) + pts;
+        lastRoundTeamPts[r.team] = (lastRoundTeamPts[r.team] || 0) + pts;
       }
     }
   }
+  const lastPtsOf = (did, name) => lastRoundPts[did] ?? lastRoundPts[name.split(" ").pop()] ?? 0;
+  const haveLastRound = Object.keys(lastRoundPts).length > 0;
 
   const DS = raw.drivers.map(d => {
-    const lastName = d.name.split(" ").pop();
-    const delta = lastRacePtsMap[lastName] || 0;
-    return { p: d.pos, n: d.name, t: d.team, pts: d.pts, wins: d.wins || 0, d: delta > 0 ? `+${delta}` : "—", mv: 0, did: d.driverId || "" };
+    const delta = lastPtsOf(d.driverId, d.name);
+    return { p: d.pos, n: d.name, t: d.team, pts: d.pts, wins: d.wins || 0, d: delta > 0 ? `+${delta}` : "—", mv: 0, did: d.driverId || "", teams: d.teams || [d.team] };
   });
 
   // Compute position movement: compare current standings vs what they'd be without last-round points
-  if (Object.keys(lastRacePtsMap).length > 0) {
-    const prevStandings = DS.map(d => {
-      const lastName = d.n.split(" ").pop();
-      const lastPts = lastRacePtsMap[lastName] || 0;
-      return { n: d.n, pts: d.pts - lastPts };
-    }).sort((a, b) => b.pts - a.pts || DS.findIndex(x=>x.n===a.n) - DS.findIndex(x=>x.n===b.n));
+  if (haveLastRound) {
+    const prevStandings = DS.map(d => ({ n: d.n, pts: d.pts - lastPtsOf(d.did, d.n) }))
+      .sort((a, b) => b.pts - a.pts || DS.findIndex(x=>x.n===a.n) - DS.findIndex(x=>x.n===b.n));
     for (let i = 0; i < DS.length; i++) {
       const prevPos = prevStandings.findIndex(x => x.n === DS[i].n) + 1;
       DS[i].mv = prevPos - DS[i].p; // positive = gained positions
     }
   }
 
-  // Constructor standings with driver breakdowns
+  // Constructor standings with per-driver breakdowns (points scored for this
+  // team — a driver who switched teams appears under both) and the current pairing
   const CS = raw.constructors.map(c => ({
     p: c.pos, t: c.team, pts: c.pts, mv: 0,
     dr: c.drivers.map(d => ({ n: d.name, pts: d.pts })),
+    lu: c.lineup || [],
   }));
 
-  // Constructor movement — same idea as drivers: subtract each team's last-round points
-  // (summed from its drivers' deltas), re-sort to reconstruct the previous order, compare.
-  if (Object.keys(lastRacePtsMap).length > 0) {
-    const teamDelta = {};
-    for (const d of raw.drivers) {
-      const lastName = d.name.split(" ").pop();
-      teamDelta[d.team] = (teamDelta[d.team] || 0) + (lastRacePtsMap[lastName] || 0);
-    }
+  // Constructor movement — same idea as drivers: subtract each team's last-round
+  // points, re-sort to reconstruct the previous order, compare.
+  if (haveLastRound) {
+    const teamDelta = lastRoundTeamPts;
     const prevCS = CS.map(c => ({ t: c.t, pts: c.pts - (teamDelta[c.t] || 0) }))
       .sort((a, b) => b.pts - a.pts || CS.findIndex(x => x.t === a.t) - CS.findIndex(x => x.t === b.t));
     for (const c of CS) {
@@ -158,35 +234,36 @@ function transformData(raw) {
     }
   }
 
+  // One classification row. `p` is the finishing position for a classified car
+  // and a label ("DNF", "DSQ", "DNS", "NC") otherwise — Jolpica numbers every
+  // car, retirements included, so the label comes from its positionText (`out`).
+  // Old builds without `out` fall back to the status for non-numeric positions.
+  const fullRow = (res, sprint) => ({
+    p: res.out || (isNaN(parseInt(res.pos)) ? res.status || "DNF" : parseInt(res.pos)),
+    d: res.driver, t: res.team, did: res.did || "", num: res.num ?? null,
+    grid: res.grid ?? null, laps: res.laps ?? null, pts: rowPts(res, sprint),
+    g: res.pos === "1" ? "WINNER" : (res.gap || res.status || ""),
+  });
+  const podRow = res => ({
+    p: parseInt(res.pos), d: res.driver, t: res.team,
+    g: res.pos === "1" ? "WINNER" : (res.gap.startsWith("+") ? res.gap : `+${res.gap}`),
+  });
+
   // Combine races and sprints, sorted by date
   const allRaces = [
     ...raw.races.map(r => ({
-      r: r.round, nm: r.name, ci: r.circuit, dt: r.date, w: r.results[0]?.driver || "", wt: r.results[0]?.team || "",
+      r: r.round, nm: r.name, ci: r.circuit, dt: r.date, tt: r.time || null, w: r.results[0]?.driver || "", wt: r.results[0]?.team || "",
       tm: r.winnerTime || "", sprint: false,
       fl: r.fastestLap || null, // normalized shape: {driver, time, team} or null
-      pod: r.results.slice(0, 3).map(res => ({
-        p: parseInt(res.pos), d: res.driver, t: res.team,
-        g: res.pos === "1" ? "WINNER" : (res.gap.startsWith("+") ? res.gap : `+${res.gap}`),
-      })),
-      full: r.results.map(res => ({
-        p: isNaN(parseInt(res.pos)) ? res.status || "DNF" : parseInt(res.pos),
-        d: res.driver, t: res.team,
-        g: res.pos === "1" ? "WINNER" : (res.gap || res.status || ""),
-      })),
+      pod: r.results.slice(0, 3).map(podRow),
+      full: r.results.map(res => fullRow(res, false)),
     })),
     ...sprintsArr.map(r => ({
-      r: r.round + "S", nm: r.name, ci: r.circuit, dt: r.date, w: r.results[0]?.driver || "", wt: r.results[0]?.team || "",
+      r: r.round + "S", nm: r.name, ci: r.circuit, dt: r.date, tt: r.time || null, w: r.results[0]?.driver || "", wt: r.results[0]?.team || "",
       tm: "", sprint: true,
       fl: r.fastestLap || null, // normalized shape: {driver, time, team} or null
-      pod: r.results.slice(0, 3).map(res => ({
-        p: parseInt(res.pos), d: res.driver, t: res.team,
-        g: res.pos === "1" ? "WINNER" : (res.gap.startsWith("+") ? res.gap : `+${res.gap}`),
-      })),
-      full: r.results.map(res => ({
-        p: isNaN(parseInt(res.pos)) ? res.status || "DNF" : parseInt(res.pos),
-        d: res.driver, t: res.team,
-        g: res.pos === "1" ? "WINNER" : (res.gap || res.status || ""),
-      })),
+      pod: r.results.slice(0, 3).map(podRow),
+      full: r.results.map(res => fullRow(res, true)),
     })),
   ].sort((a, b) => {
     const da = new Date(a.dt) - new Date(b.dt);
@@ -219,7 +296,7 @@ function transformData(raw) {
   const sched = raw.schedule.map((r, i) => ({
     r: r.round, nm: r.name, ci: r.circuit, dt: r.date, tt: r.time || null,
     st: raceEnded(r) ? "done" : (i === nextRaceIdx ? "next" : "upcoming"),
-    w: r.winner, sp: r.sprint, fc: r.country,
+    w: r.winner, sp: r.sprint, fc: r.country, sdt: r.sprintDate || null, stt: r.sprintTime || null,
   }));
 
   const completedRounds = raw.completedRounds;
@@ -234,56 +311,11 @@ function transformData(raw) {
     results: q.results.map(r => ({ pos: r.pos, d: r.driver, did: r.driverId || "", t: r.team })),
   }));
 
-  // Head-to-head: group drivers by team, compute stats
-  const teamDrivers = {};
-  for (const d of DS) {
-    if (!teamDrivers[d.t]) teamDrivers[d.t] = [];
-    teamDrivers[d.t].push(d);
-  }
-
-  const h2h = Object.entries(teamDrivers).filter(([,drs]) => drs.length >= 2).map(([team, drs]) => {
-    const d1 = drs[0], d2 = drs[1]; // sorted by standings position already
-
-    // Qualifying head-to-head
-    let d1QualWins = 0, d2QualWins = 0;
-    const qualDetails = [];
-    const d1Last=d1.n.split(" ").pop(), d2Last=d2.n.split(" ").pop();
-    for (const q of qualifying) {
-      const r1 = q.results.find(r => r.d === d1Last || r.did === d1.did);
-      const r2 = q.results.find(r => r.d === d2Last || r.did === d2.did);
-      if (r1 && r2) {
-        if (r1.pos < r2.pos) d1QualWins++; else if (r2.pos < r1.pos) d2QualWins++;
-        qualDetails.push({ race: q.name.replace(" Grand Prix",""), d1: r1.pos, d2: r2.pos });
-      }
-    }
-
-    // Race finish head-to-head (non-sprint only)
-    let d1RaceWins = 0, d2RaceWins = 0;
-    const d1Finishes = [], d2Finishes = [];
-    const raceDetails = [];
-    for (const race of allRaces.filter(r => !r.sprint)) {
-      const r1 = race.full.find(r => r.d === d1Last);
-      const r2 = race.full.find(r => r.d === d2Last);
-      if (r1 && r2) {
-        const p1 = typeof r1.p === "number" ? r1.p : 99;
-        const p2 = typeof r2.p === "number" ? r2.p : 99;
-        if (p1 < p2) d1RaceWins++; else if (p2 < p1) d2RaceWins++;
-        if (typeof r1.p === "number") d1Finishes.push(r1.p);
-        if (typeof r2.p === "number") d2Finishes.push(r2.p);
-        raceDetails.push({ race: race.nm.replace(" Grand Prix",""), d1: r1.p, d2: r2.p });
-      }
-    }
-
-    const d1AvgPos = d1Finishes.length > 0 ? +(d1Finishes.reduce((a,b) => a+b, 0) / d1Finishes.length).toFixed(1) : null;
-    const d2AvgPos = d2Finishes.length > 0 ? +(d2Finishes.reduce((a,b) => a+b, 0) / d2Finishes.length).toFixed(1) : null;
-
-    return {
-      team, d1, d2,
-      qual: { d1: d1QualWins, d2: d2QualWins, details: qualDetails },
-      race: { d1: d1RaceWins, d2: d2RaceWins, details: raceDetails },
-      avgPos: { d1: d1AvgPos, d2: d2AvgPos },
-    };
-  });
+  // Head-to-head. Teammates are paired round by round from who actually drove
+  // for the team that weekend (race or qualifying), so a mid-season seat change
+  // starts a new battle instead of setting a driver against his old team-mate's
+  // replacement. Battles follow constructor order, the current pairing first.
+  const h2h = headToHead(DS, CS, raw.races, allRaces, qualifying);
 
   // Get leader info
   const leader = DS[0] || { n: "TBD", t: "Mercedes", pts: 0 };
@@ -298,14 +330,14 @@ function transformData(raw) {
       if(!teamRaceStats[res.team])teamRaceStats[res.team]={wins:0,pods:0,dnfs:0,dns:0,bestFinish:99,driverWins:{},driverPods:{}};
       const s=teamRaceStats[res.team];
       const pos=parseInt(res.pos);
-      if(!isNaN(pos)){
+      const out=resultOut(res);
+      if(!out&&!isNaN(pos)){
         if(pos===1){s.wins++;s.driverWins[res.driver]=(s.driverWins[res.driver]||0)+1;}
         if(pos<=3){s.pods++;s.driverPods[res.driver]=(s.driverPods[res.driver]||0)+1;}
         if(pos<s.bestFinish)s.bestFinish=pos;
       }
-      const st=(res.status||"").toUpperCase();
-      if(st==="DNF"||st==="RETIRED"||st==="ACCIDENT"||st==="COLLISION"||st==="ENGINE"||st==="MECHANICAL")s.dnfs++;
-      if(st==="DNS"||st==="DID NOT START")s.dns++;
+      if(out==="DNF")s.dnfs++;
+      if(out==="DNS")s.dns++;
     }
   }
   // Last race per-team driver finishes
@@ -316,9 +348,9 @@ function transformData(raw) {
     for(const res of lastRaceData.results){
       if(!lastRaceTeamFinish[res.team])lastRaceTeamFinish[res.team]=[];
       const pos=parseInt(res.pos);
-      const st=(res.status||"").toUpperCase();
-      const dnf=st==="DNF"||st==="RETIRED"||st==="ACCIDENT"||st==="DNS";
-      lastRaceTeamFinish[res.team].push({d:res.driver,pos:isNaN(pos)?99:pos,dnf,status:res.status});
+      const out=resultOut(res);
+      const dnf=out==="DNF"||out==="DNS";
+      lastRaceTeamFinish[res.team].push({d:res.driver,pos:out||isNaN(pos)?99:pos,dnf,status:res.status});
     }
   }
   const nRaces=raw.races.length;
@@ -326,7 +358,17 @@ function transformData(raw) {
     const s=teamRaceStats[c.t]||{wins:0,pods:0,dnfs:0,dns:0,bestFinish:99,driverWins:{},driverPods:{}};
     const pts=c.pts;
     const gap=i===0?(CS[1]?pts-CS[1].pts:0):(CS[0].pts-pts);
-    const d1=c.dr[0]||{n:"?",pts:0},d2=c.dr[1]||{n:"?",pts:0};
+    // The garage split is the CURRENT pairing, with each driver's points for this team
+    const lineup=c.lu.length>=2?c.lu:c.dr.slice(0,2).map(d=>d.n);
+    const [d1,d2]=lineup.slice(0,2).map(n=>c.dr.find(d=>d.n===n)||{n,pts:0}).sort((a,b)=>b.pts-a.pts);
+    // A driver who arrived mid-season: from which team, and at which round
+    const arrival=[d1,d2].map(d=>{
+      const drv=DS.find(x=>x.n.split(" ").pop()===d.n);
+      const teams=drv?.teams||[];
+      if(teams.length<2||teams[teams.length-1]!==c.t)return null;
+      const joined=raw.races.find(r=>r.results.some(res=>res.driver===d.n&&res.team===c.t))?.round;
+      return joined?{d,from:teams[teams.length-2],joined}:null;
+    }).find(Boolean);
     const lrf=lastRaceTeamFinish[c.t]||[];
     // Title logic
     let ti;
@@ -424,8 +466,12 @@ function transformData(raw) {
       }
     }
 
-    // DRIVER SPLIT — handle equal points edge case
-    if(d1.pts===d2.pts){
+    // DRIVER SPLIT — handle equal points edge case and a mid-season arrival
+    if(arrival){
+      lines.push(arrival.d===d1
+        ?`${d1.n} leads the garage on ${d1.pts} pts since arriving from ${arrival.from} at round ${arrival.joined}, ahead of ${d2.n} on ${d2.pts}.`
+        :`${d1.n} leads the garage on ${d1.pts} pts, with ${arrival.d.n} on ${arrival.d.pts} since arriving from ${arrival.from} at round ${arrival.joined}.`);
+    } else if(d1.pts===d2.pts){
       if(d1.pts===0)lines.push(`Neither driver has scored yet.`);
       else lines.push(`${d1.n} and ${d2.n} are level on ${d1.pts} pts apiece.`);
     } else {
@@ -437,8 +483,6 @@ function transformData(raw) {
 
   // Points progression — cumulative points by round. Track top-6 for chart lines
   // and ALL drivers for tooltip rankings.
-  const RACE_PTS_TABLE=[25,18,15,12,10,8,6,4,2,1];
-  const SPRINT_PTS_TABLE=[8,7,6,5,4,3,2,1];
   const topNames=DS.slice(0,6).map(d=>d.n);
   const allRosterNames=DS.map(d=>d.n);
   const cumAll=Object.fromEntries(allRosterNames.map(n=>[n,0]));
@@ -452,13 +496,10 @@ function transformData(raw) {
     return{name:n,team:driver?.t||"",points:[0]};
   });
   for(const race of allRaces){
-    const table=race.sprint?SPRINT_PTS_TABLE:RACE_PTS_TABLE;
     for(const res of race.full){
-      const p=parseInt(res.p);
-      if(isNaN(p)||p>table.length)continue;
       const match=allRosterNames.find(n=>n.split(" ").pop()===res.d||n===res.d);
       if(!match)continue;
-      cumAll[match]+=table[p-1]; // no FL bonus — abolished from 2025
+      cumAll[match]+=res.pts||0; // points as awarded (no FL bonus — abolished from 2025)
     }
     if(!race.sprint){
       // Mark sprint weekends — the sprint event shares the round number with an "S" suffix
@@ -476,7 +517,7 @@ function transformData(raw) {
   }
   const progression={labels:progressionLabels,raceNames:progressionRaceNames,series:progressionSeries,standings:progressionStandings};
 
-  return { DS, CS, races: allRaces, pits, pitsByRace, sched, qualifying, h2h, completedRounds, totalRounds, fetchedAt, pitRaceName, leader, lastWinner, fastestLap, narrative, progression };
+  return { season: raw.season, DS, CS, races: allRaces, pits, pitsByRace, sched, qualifying, h2h, completedRounds, totalRounds, fetchedAt, pitRaceName, leader, lastWinner, fastestLap, narrative, progression };
 }
 
 
@@ -560,8 +601,39 @@ function pickLapCompareDrivers(cur, acrAPref, acrBPref) {
 // western-hemisphere timezones.
 const raceDateFmt = (dt, tt) => new Date(`${dt}T${tt || "12:00:00Z"}`).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
 const raceTimeFmt = (dt, tt) => tt ? new Date(`${dt}T${tt}`).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" }) : null;
-const daysUntilRace = (dt, tt) => Math.ceil((new Date(`${dt}T${tt || "12:00:00Z"}`).getTime() - Date.now()) / 86400000);
-const countdownLabel = (dt, tt) => { const d = daysUntilRace(dt, tt); return d <= 0 ? "today" : d === 1 ? "tomorrow" : `in ${d} days`; };
+// Calendar days between today and the race's start, both in the viewer's time
+// zone. Rounding up whole 24-hour blocks said "tomorrow" on race morning.
+const daysUntilRace = (dt, tt) => {
+  const start = new Date(`${dt}T${tt || "12:00:00Z"}`), now = new Date();
+  const day = d => Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 86400000;
+  return Math.round(day(start) - day(now));
+};
+const countdownLabel = (dt, tt) => {
+  if (tt && Date.now() >= new Date(`${dt}T${tt}`).getTime()) return "under way";
+  const d = daysUntilRace(dt, tt);
+  return d <= 0 ? "today" : d === 1 ? "tomorrow" : `in ${d} days`;
+};
+// OpenF1 meeting for a Jolpica Grand Prix ({r, dt}). The OpenF1 script stamps
+// each meeting with its `round` and Jolpica `raceName`; older payloads fall back
+// to the race session's date. Names alone don't join the two APIs: OpenF1's
+// "Bahrain Grand Prix" is Jolpica's "Bahrain Grand Prix in Malaysia" (Sepang),
+// "São Paulo" is "Brazilian", and tracks.json is keyed by Jolpica names.
+const meetingRaceDay = m => (m?.sessions || []).find(s => s.sessionName === "Race")?.dateStart?.slice(0, 10) || null;
+function meetingForRace(meetings, race) {
+  if (!meetings || !race) return null;
+  const round = typeof race.r === "string" ? parseInt(race.r) : race.r;
+  return meetings.find(m => m.round === round) || meetings.find(m => m.round == null && meetingRaceDay(m) === race.dt) || null;
+}
+// Name to look a meeting up by in tracks.json
+const meetingTrackName = m => m?.raceName || m?.meetingName || "";
+
+// Race status from the clock, not the build: done 3h after lights out, the first
+// unfinished round is "next". Recomputed every minute while the page is open.
+const withStatus = (sched, now = Date.now()) => {
+  const ended = r => now - new Date(`${r.dt}T${r.tt || "12:00:00Z"}`).getTime() > 3 * 3600 * 1000;
+  const nextIdx = sched.findIndex(r => !ended(r));
+  return sched.map((r, i) => ({ ...r, st: ended(r) ? "done" : i === nextIdx ? "next" : "upcoming" }));
+};
 
 // One bad data field shouldn't white-screen the whole dashboard — catch render
 // errors per-tab (keyed on the tab, so other tabs stay usable).
@@ -754,7 +826,9 @@ function SB({status}){const m={done:{bg:"rgba(27,127,75,0.12)",c:"var(--green)",
 // team colour; the winner's line is traced in red. Yellow-flag laps and
 // safety-car periods band the sheet. Scrubbed by the stopwatch beneath it,
 // which shares its lap cursor with the read-out (and the replay via #lap=).
-const LapChart=memo(function LapChart({session,lap,setLap}){
+// outNums: car numbers not classified (from the Jolpica classification). A line that
+// ends early is not a retirement by itself — lapped finishers end a lap or two short.
+const LapChart=memo(function LapChart({session,lap,setLap,outNums}){
   const[focus,setFocus]=useState(null);
   const wrapRef=useRef(null);
   const[compact,setCompact]=useState(false);
@@ -816,7 +890,7 @@ const LapChart=memo(function LapChart({session,lap,setLap}){
           </g>);})}
         {/* start + finish numerals */}
         {starts.map(({d,p})=><text key={"s"+d.number} x={ML-8} y={y(p)+fs*0.35} textAnchor="end" className="lc-num" style={{fontSize:fs}} fill={inkify(d.teamColour||"var(--ink-4)")}>{d.number}</text>)}
-        {finals.map(({d,p,l})=>{const retired=l<total-1;return <text key={"f"+d.number} x={retired?x(l)+7:W-MR+8} y={y(p)+fs*0.35} className="lc-num" fill={d.number===winner?"var(--red)":inkify(d.teamColour||"var(--ink-4)")} opacity={retired?0.75:1} style={{fontSize:retired?fs*0.85:fs,fontStyle:retired?"italic":"normal"}}>{retired?`${d.acronym} ×`:d.acronym}</text>;})}
+        {finals.map(({d,p,l})=>{const ended=l<total-1;const retired=!!outNums?.has(String(d.number));return <text key={"f"+d.number} x={ended?x(l)+7:W-MR+8} y={y(p)+fs*0.35} className="lc-num" fill={d.number===winner?"var(--red)":inkify(d.teamColour||"var(--ink-4)")} opacity={retired?0.75:1} style={{fontSize:retired?fs*0.85:fs,fontStyle:retired?"italic":"normal"}}>{retired?`${d.acronym} ×`:d.acronym}</text>;})}
         {/* lap cursor */}
         <line className="lc-cursor" x1={x(cur)} x2={x(cur)} y1={0} y2={H} style={{strokeWidth:compact?2.5:1.25}}/>
         <text x={x(cur)} y={H+fs*0.9} textAnchor="middle" className="lc-num" fill="var(--red)" style={{fontSize:fs*0.85}}>L{cur}</text>
@@ -920,6 +994,16 @@ export default function F1Dashboard(){
   const[tab,setTab]=useState("Overview");
   const[expandedRace,setExpandedRace]=useState(null);
   const[data,setData]=useState(null);
+  // Minute clock: race statuses, countdowns and the freshness stamp follow real
+  // time while the page stays open, and catch up when a hidden tab returns
+  const[clock,setClock]=useState(()=>Date.now());
+  useEffect(()=>{
+    const tick=()=>setClock(Date.now());
+    const id=setInterval(tick,60000);
+    const onVis=()=>{if(document.visibilityState==="visible")tick();};
+    document.addEventListener("visibilitychange",onVis);
+    return()=>{clearInterval(id);document.removeEventListener("visibilitychange",onVis);};
+  },[]);
   const[loading,setLoading]=useState(true);
   const[error,setError]=useState(null);
   // OpenF1 data is split: a light index (meeting/session metadata + headshots,
@@ -1011,7 +1095,7 @@ export default function F1Dashboard(){
   // a meeting whose sessions lack `drivers` simply isn't loaded yet.
   const openf1=useMemo(()=>{
     if(!openf1Index)return null;
-    return {...openf1Index,meetings:openf1Index.meetings.map(m=>openf1Meetings[m.meetingKey]||m)};
+    return {...openf1Index,meetings:openf1Index.meetings.map(m=>openf1Meetings[m.meetingKey]?{...m,...openf1Meetings[m.meetingKey]}:m)};
   },[openf1Index,openf1Meetings]);
 
   // Lazy-load full meeting payloads for whatever the active tab needs.
@@ -1021,15 +1105,19 @@ export default function F1Dashboard(){
     const lastKey=meta[meta.length-1].meetingKey;
     const wanted=new Set();
     if(tab==="Sector Times")wanted.add(selMeeting||lastKey);
-    if(tab==="Overview"){ // the lap chart on the first sheet
-      const lastRace=[...meta].reverse().find(m=>m.sessions.some(s=>s.sessionName==="Race"));
-      if(lastRace)wanted.add(lastRace.meetingKey);
+    if(tab==="Overview"){ // the lap chart on the first sheet — the meeting of the latest classified GP
+      const gp=data?.races?.filter(r=>!r.sprint).slice(-1)[0];
+      const m=meetingForRace(meta,gp)||[...meta].reverse().find(x=>x.sessions.some(s=>s.sessionName==="Race"));
+      if(m)wanted.add(m.meetingKey);
     }
     if(tab==="Telemetry"){
       const lastRace=[...meta].reverse().find(m=>m.sessions.some(s=>s.sessionName==="Race"));
       wanted.add(telMeetingKey||lastRace?.meetingKey||lastKey);
     }
-    if(tab==="Race Results")for(const m of meta)wanted.add(m.meetingKey); // sector enrichment spans all rounds
+    if(tab==="Race Results"){ // sector enrichment for the race(s) on screen — not all ~3 MB of meetings
+      const shown=(data?.races||[]).filter(r=>selRace==="all"||r.r===selRace);
+      for(const r of shown){const m=meetingForRace(meta,data.sched.find(s=>s.r===parseInt(r.r)));if(m)wanted.add(m.meetingKey);}
+    }
     const tried=meetingFetchTried.current;
     for(const key of wanted){
       if(!key||openf1Meetings[key]||tried.has(key))continue;
@@ -1038,12 +1126,18 @@ export default function F1Dashboard(){
         .then(r=>r.ok?r.json():null).catch(()=>null)
         .then(m=>{if(m)setOpenf1Meetings(prev=>prev[key]?prev:{...prev,[key]:m});});
     }
-  },[openf1Index,openf1Meetings,tab,selMeeting,telMeetingKey]);
+  },[openf1Index,openf1Meetings,tab,selMeeting,telMeetingKey,data,selRace]);
+
+  // Cars that weren't classified, per GP date: the lap chart and replay mark
+  // retirements from the official classification, not from where a line ends
+  const outByDay=useMemo(()=>Object.fromEntries((data?.races||[]).filter(r=>!r.sprint).map(r=>[r.dt,new Set(r.full.filter(x=>typeof x.p!=="number"&&x.num!=null).map(x=>String(x.num)))])),[data]);
 
   if(loading)return(<div className="bench" style={{display:"flex",alignItems:"center",justifyContent:"center"}}><div style={{textAlign:"center",color:"#E6ECF1"}}><div className="head" style={{fontSize:30,fontWeight:700,marginBottom:6}}>Opening the season sheets</div><div className="num" style={{color:"#93A1AF",fontSize:13}}>reading data.json …</div></div></div>);
   if(error||!data)return(<div className="bench" style={{display:"flex",alignItems:"center",justifyContent:"center"}}><div style={{textAlign:"center",color:"#E6ECF1"}}><div className="head" style={{fontSize:30,fontWeight:700,color:"#FF5A5A",marginBottom:6}}>The data sheet is missing</div><div className="num" style={{color:"#93A1AF",fontSize:13}}>{error||"No data available. Run: npm run fetch-data"}</div></div></div>);
 
-  const{DS,CS,races,pits,pitsByRace,sched,qualifying,h2h,completedRounds,totalRounds,fetchedAt,pitRaceName,leader,lastWinner,fastestLap,narrative,progression}=data;
+  const{DS,CS,races,pits,pitsByRace,qualifying,h2h,completedRounds,totalRounds,fetchedAt,pitRaceName,leader,lastWinner,fastestLap,narrative,progression}=data;
+  const sched=withStatus(data.sched,clock);
+  const season=data.season||SEASON_FALLBACK;
   const avgP=pits.length>0?`${(pits.reduce((a,b)=>a+b.s,0)/pits.length).toFixed(3)}s`:"N/A";
   const fastestPit=pits.length>0?pits[0]:null;
   const maxDriverPts=Math.max(1,...DS.map(d=>d.pts));
@@ -1062,7 +1156,7 @@ export default function F1Dashboard(){
             <div className="hdr-mark">
               <img src={F1_LOGO} alt="Formula 1"/>
               <div className="sep"/>
-              <h1 className="hdr-title">2026 Season Sheets<small>Formula 1 World Championship · kept lap by lap</small></h1>
+              <h1 className="hdr-title">{season} Season Sheets<small>Formula 1 World Championship · kept lap by lap</small></h1>
             </div>
           </div>
           {(()=>{
@@ -1106,7 +1200,8 @@ export default function F1Dashboard(){
             {(()=>{
               const lastRaceFull=races.filter(r=>!r.sprint).slice(-1)[0];
               // The race session of the newest meeting that has one (lazy-loaded; falls back to a note while it lands)
-              const raceMeeting=openf1?[...openf1.meetings].reverse().find(m=>m.sessions.some(s=>s.sessionName==="Race"&&s.drivers)):null;
+              // Matched to the title's round, so a source that lags can't put one race's chart under another's name
+              const raceMeeting=openf1?meetingForRace(openf1.meetings,lastRaceFull):null;
               const raceSession=raceMeeting?raceMeeting.sessions.find(s=>s.sessionName==="Race"&&s.drivers):null;
               const total=raceSession?Math.max(1,...raceSession.drivers.map(d=>(d.positions||[]).reduce((m,q)=>Math.max(m,q.l||0),0))):0;
               const winnerName=lastRaceFull?.w||"";
@@ -1114,16 +1209,16 @@ export default function F1Dashboard(){
               <div className="hero-grid">
                 <div>
                   <h2 className="sheet-h" style={{fontSize:30}}>Lap chart · {lastRaceFull?lastRaceFull.nm:"—"}</h2>
-                  <p className="sheet-sub">{lastRaceFull?`Round ${lastRaceFull.r} · ${lastRaceFull.ci} · ${raceDateFmt(lastRaceFull.dt)}`:""}{total?` · ${total} laps`:""}{winnerName?` · won by ${winnerName}`:""}{lastRaceFull?.tm?` in ${lastRaceFull.tm}`:""}</p>
+                  <p className="sheet-sub">{lastRaceFull?`Round ${lastRaceFull.r} · ${lastRaceFull.ci} · ${raceDateFmt(lastRaceFull.dt,lastRaceFull.tt)}`:""}{total?` · ${total} laps`:""}{winnerName?` · won by ${winnerName}`:""}{lastRaceFull?.tm?` in ${lastRaceFull.tm}`:""}</p>
                   {raceSession?(
                     <div style={{marginTop:14}}>
-                      <LapChart session={raceSession} lap={Math.min(lapCursor,total)} setLap={setLapCursor}/>
+                      <LapChart session={raceSession} lap={Math.min(lapCursor,total)} setLap={setLapCursor} outNums={outByDay[lastRaceFull?.dt]}/>
                       <LapReadout session={raceSession} lap={Math.min(lapCursor,total)}/>
                       <LapScrubber lap={Math.min(lapCursor,total)} setLap={setLapCursor} total={total}/>
-                      <p className="sheet-sub" style={{marginTop:10}}>Red line: the winner. Circles: pit stops. Yellow columns: local yellows. Drag the stopwatch, or press play. <a href="#lap" onClick={e=>{e.preventDefault();setTab("Telemetry");}}>Open this lap in the replay →</a></p>
+                      <p className="sheet-sub" style={{marginTop:10}}>Red line: the winner. Circles: pit stops. ×: retired. Yellow columns: local yellows. Drag the stopwatch, or press play. <a href="#lap" onClick={e=>{e.preventDefault();setTab("Telemetry");}}>Open this lap in the replay →</a></p>
                     </div>
                   ):(
-                    <div className="num" style={{marginTop:14,padding:"18px 0",borderTop:"1px solid var(--rule)",borderBottom:"1px solid var(--rule)",color:"var(--ink-3)",fontSize:12}}>{openf1?"Lap positions for this round are not in the OpenF1 sheet yet.":"Fetching the lap sheet …"}</div>
+                    <div className="num" style={{marginTop:14,padding:"18px 0",borderTop:"1px solid var(--rule)",borderBottom:"1px solid var(--rule)",color:"var(--ink-3)",fontSize:12}}>{openf1&&!raceMeeting?"Lap positions for this round are not in the OpenF1 sheet yet.":"Fetching the lap sheet …"}</div>
                   )}
                   <div style={{marginTop:22}}>
                   <div className="ledger">
@@ -1213,7 +1308,7 @@ export default function F1Dashboard(){
             {nextRace&&(
             <div>
               <h2 className="sheet-h" style={{fontSize:30}}>Next race · {nextRace.nm}</h2>
-              <p className="sheet-sub">Round {nextRace.r} · {countdownLabel(nextRace.dt,nextRace.tt)} · {nextRace.ci} · {raceDateFmt(nextRace.dt,nextRace.tt)}{nextRace.tt?` · lights out ${new Date(`${nextRace.dt}T${nextRace.tt}`).toLocaleTimeString(undefined,{hour:"numeric",minute:"2-digit"})} local`:""}{nextRace.sp?" · sprint weekend":""}</p>
+              <p className="sheet-sub">Round {nextRace.r} · {countdownLabel(nextRace.dt,nextRace.tt)} · {nextRace.ci} · {raceDateFmt(nextRace.dt,nextRace.tt)}{nextRace.tt?` · lights out ${new Date(`${nextRace.dt}T${nextRace.tt}`).toLocaleTimeString(undefined,{hour:"numeric",minute:"2-digit",timeZoneName:"short"})} your time`:""}{nextRace.sp?" · sprint weekend":""}</p>
               <div style={{borderTop:"1px solid var(--rule)",marginTop:12,paddingTop:16}}>
                 {tracks&&tracks[nextRace.nm]&&(
                   <div style={{display:"flex",justifyContent:"center",padding:"6px 0 8px"}}>
@@ -1483,7 +1578,7 @@ export default function F1Dashboard(){
                       {race.sprint&&<span style={{fontSize:9,fontWeight:700,letterSpacing:.5,padding:"2px 6px",borderRadius:2,background:"rgba(214,40,40,0.15)",color:"var(--red)"}}>SPRINT</span>}
                       <span style={{fontSize:20,fontWeight:700}}>{race.nm}</span>
                     </div>
-                    <div style={{fontSize:12,color:"var(--w40)"}}>{race.ci} · {raceDateFmt(race.dt)}, 2026</div>
+                    <div style={{fontSize:12,color:"var(--w40)"}}>{race.ci} · {raceDateFmt(race.dt,race.tt)}, {season}</div>
                   </div>
                   {race.tm&&<div style={{textAlign:"right"}}>
                     <div style={{fontSize:12,color:"var(--w40)"}}>Race Time</div>
@@ -1521,17 +1616,15 @@ export default function F1Dashboard(){
                 {/* ── OpenF1 Sector Enrichment ── */}
                 {(()=>{
                   if(!openf1||!openf1.meetings||openf1.meetings.length===0)return null;
-                  // Strip " Sprint" suffix to get the base GP name
+                  // The meeting for this round (stamped round, else the race date)
+                  const rn=typeof race.r==="string"?parseInt(race.r):race.r;
+                  let mtg=meetingForRace(openf1.meetings,sched.find(x=>x.r===rn));
+                  // Name fallbacks for payloads without the stamp. No round-index guess:
+                  // a missing meeting shifted every later round onto the wrong race.
                   const baseName=race.nm.replace(/ Sprint$/,"").trim();
                   const baseKey=baseName.replace(/ Grand Prix$/i,"").toLowerCase().trim();
-                  // Strategy 1: exact meetingName match
-                  let mtg=openf1.meetings.find(m=>m.meetingName===baseName);
-                  // Strategy 2: match on stripped GP name
+                  if(!mtg)mtg=openf1.meetings.find(m=>m.meetingName===baseName);
                   if(!mtg)mtg=openf1.meetings.find(m=>m.meetingName.replace(/ Grand Prix$/i,"").toLowerCase().trim()===baseKey);
-                  // Strategy 3: substring matching
-                  if(!mtg)mtg=openf1.meetings.find(m=>{const mk=m.meetingName.replace(/ Grand Prix$/i,"").toLowerCase().trim();return baseKey.includes(mk)||mk.includes(baseKey);});
-                  // Strategy 4: round-number index fallback (round 1 = first meeting, etc.)
-                  if(!mtg){const rn=typeof race.r==="string"?parseInt(race.r):race.r;if(rn>0&&rn<=openf1.meetings.length)mtg=openf1.meetings[rn-1];}
                   if(!mtg)return null;
                   const targetSession=race.sprint?"Sprint":"Race";
                   // Preferred fallback order: target session → Qualifying → Sprint Qualifying → Sprint → Practice 3 → Practice 2 → Practice 1
@@ -1546,29 +1639,34 @@ export default function F1Dashboard(){
                   return <SectorEnrichment sess={sess} isExact={isExact} sessLabel={sessLabel} targetSession={targetSession}/>;
                 })()}
                 {expandedRace===race.r&&(()=>{
-                  // Grand Prix grid from qualifying (sprints set their grid in sprint quali, which we don't carry)
-                  const quali=!race.sprint?qualifying.find(q=>q.round===(typeof race.r==="string"?parseInt(race.r):race.r)):null;
+                  // Starting grid from the classification itself (after penalties, 0 = pit
+                  // lane). Older builds lack it — the GP then falls back to qualifying order.
+                  const hasGrid=race.full.some(r=>r.grid!=null);
+                  const quali=!hasGrid&&!race.sprint?qualifying.find(q=>q.round===(typeof race.r==="string"?parseInt(race.r):race.r)):null;
+                  const showGrid=hasGrid||!!quali;
                   return(
                   <div style={{background:"var(--w02)",border:"1px solid var(--w06)",borderRadius:2,overflow:"hidden",marginTop:4}}>
                     <div style={{overflowX:"auto",WebkitOverflowScrolling:"touch"}}><table style={{width:"100%",borderCollapse:"collapse",minWidth:600,fontSize:13}}>
                       <thead><tr style={{borderBottom:"1px solid var(--w08)"}}>
-                        {(quali?["Pos","","Driver","Team","Grid","+/−","Gap to Winner"]:["Pos","","Driver","Team","Gap to Winner"]).map(h=><th key={h} style={{textAlign:"left",padding:"8px 10px",fontSize:10,textTransform:"uppercase",letterSpacing:1,color:"var(--w30)",fontWeight:500}}>{h}</th>)}
+                        {(showGrid?["Pos","","Driver","Team","Grid","+/−","Gap to Winner"]:["Pos","","Driver","Team","Gap to Winner"]).map(h=><th key={h} style={{textAlign:"left",padding:"8px 10px",fontSize:10,textTransform:"uppercase",letterSpacing:1,color:"var(--w30)",fontWeight:500}}>{h}</th>)}
                       </tr></thead>
                       <tbody>
                         {race.full.map((r,i)=>{
                           const isFinisher=typeof r.p==="number";
                           const isDNF=r.p==="DNF";
                           const isDNS=r.p==="DNS";
-                          const grid=quali?quali.results.find(x=>x.d===r.d)?.pos:null;
+                          const gridRaw=hasGrid?r.grid:quali?.results.find(x=>x.d===r.d)?.pos;
+                          const pitLane=hasGrid&&gridRaw===0;
+                          const grid=pitLane?race.full.length:gridRaw; // pit-lane starts count from the back
                           const gain=grid&&isFinisher?grid-r.p:null;
                           return(
-                            <tr key={i} style={{borderBottom:"1px solid var(--w03)",opacity:isDNF||isDNS?0.5:1}}>
+                            <tr key={i} style={{borderBottom:"1px solid var(--w03)",opacity:isFinisher?1:0.5}}>
                               <td style={{padding:"7px 10px",fontWeight:700,width:36,color:isFinisher&&r.p<=3?(r.p===1?"var(--gold)":r.p===2?"#C0C0C0":"#CD7F32"):"var(--w50)",fontSize:12}}>{r.p}</td>
                               <td style={{padding:"7px 4px",width:28}}><TL team={r.t} size={20}/></td>
                               <td style={{padding:"7px 10px",fontWeight:600}}>{r.d}</td>
                               <td style={{padding:"7px 10px",color:"var(--w40)",fontSize:12}}>{r.t}</td>
-                              {quali&&<td style={{padding:"7px 10px",fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)",color:"var(--w45)",fontSize:12}}>{grid?`P${grid}`:"—"}</td>}
-                              {quali&&<td style={{padding:"7px 10px",fontSize:11,fontWeight:600,color:gain>0?"var(--green)":gain<0?"var(--red)":"var(--w25)"}}>{gain==null?"":gain>0?`▲${gain}`:gain<0?`▼${-gain}`:"—"}</td>}
+                              {showGrid&&<td style={{padding:"7px 10px",fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)",color:"var(--w45)",fontSize:12}}>{pitLane?"Pit lane":grid?`P${grid}`:"—"}</td>}
+                              {showGrid&&<td style={{padding:"7px 10px",fontSize:11,fontWeight:600,color:gain>0?"var(--green)":gain<0?"var(--red)":"var(--w25)"}}>{gain==null?"":gain>0?`▲${gain}`:gain<0?`▼${-gain}`:"—"}</td>}
                               <td style={{padding:"7px 10px",fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)",color:r.g==="WINNER"?"var(--green)":isDNF?"var(--red)":isDNS?"var(--w30)":"var(--w60)",fontSize:12,fontWeight:r.g==="WINNER"?600:400}}>{r.g}</td>
                             </tr>
                           );
@@ -1580,9 +1678,9 @@ export default function F1Dashboard(){
               </div>
             ))}
             <div style={{background:"var(--w02)",border:"1px solid var(--w06)",borderRadius:2,padding:20}}>
-              <div style={{fontSize:13,textTransform:"uppercase",letterSpacing:1.5,color:"var(--w40)",marginBottom:16}}>2026 Season Key Facts</div>
+              <div style={{fontSize:13,textTransform:"uppercase",letterSpacing:1.5,color:"var(--w40)",marginBottom:16}}>{season} Season Key Facts</div>
               <div className="g3">
-                {[{l:"New Regulations",v:"Active aero, 50/50 ICE/ERS split, new chassis"},{l:"New Teams",v:"Cadillac (11th team), Audi (ex-Sauber)"},{l:"New Engine Suppliers",v:"Audi, Honda (Aston Martin), Ford (Red Bull)"},{l:"Calendar",v:"22 races (Bahrain & Saudi postponed)"},{l:"Defending Champions",v:"Norris (WDC) · McLaren (WCC)"},{l:"Youngest Pole",v:"Antonelli — 19y 201d (China)"}].map((f,i)=>(
+                {[{l:"New Regulations",v:"Active aero, 50/50 ICE/ERS split, new chassis"},{l:"New Teams",v:"Cadillac (11th team), Audi (ex-Sauber)"},{l:"New Engine Suppliers",v:"Audi, Honda (Aston Martin), Ford (Red Bull)"},{l:"Calendar",v:`${totalRounds} rounds · Bahrain moved to Sepang, Saudi Arabia postponed`},{l:"Defending Champions",v:"Norris (WDC) · McLaren (WCC)"},{l:"Youngest Pole",v:"Antonelli — 19y 201d (China)"}].map((f,i)=>(
                   <div key={i} style={{padding:14,background:"var(--w02)",borderRadius:2}}>
                     <div style={{fontSize:11,color:"var(--w40)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}}>{f.l}</div>
                     <div style={{fontSize:13,color:"var(--w75)",lineHeight:1.4}}>{f.v}</div>
@@ -1636,8 +1734,7 @@ export default function F1Dashboard(){
 
               {/* Sector Track Overlay */}
               {(()=>{
-                const mtgName=curMtg.meetingName||"";
-                const track=tracks?.[mtgName];
+                const track=tracks?.[meetingTrackName(curMtg)];
                 const sectors=track?splitTrackIntoSectors(track):null;
                 if(!sectors)return null;
                 const findSecDriver=(key,best)=>drivers.find(d=>d[key]&&best&&Math.abs(d[key]-best)<0.001);
@@ -1652,7 +1749,7 @@ export default function F1Dashboard(){
                   <div style={{background:"var(--w02)",border:"1px solid var(--w06)",borderRadius:2,padding:20}}>
                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:4,flexWrap:"wrap",gap:8}}>
                       <div style={{fontSize:15,fontWeight:700}}>Sector Map</div>
-                      <div style={{fontSize:11,color:"var(--w40)"}}>{mtgName} · {curSess.sessionName}</div>
+                      <div style={{fontSize:11,color:"var(--w40)"}}>{curMtg.meetingName} · {curSess.sessionName}</div>
                     </div>
                     <div style={{fontSize:12,color:"var(--w35)",marginBottom:16}}>Each third of the lap coloured by the team that set the fastest sector time</div>
                     <div style={{display:"flex",gap:24,alignItems:"center",flexWrap:"wrap"}}>
@@ -1921,7 +2018,7 @@ export default function F1Dashboard(){
                   d1Val=battle.qual.d1;d2Val=battle.qual.d2;
                   d1Label=`${battle.qual.d1} win${battle.qual.d1!==1?"s":""}`;
                   d2Label=`${battle.qual.d2} win${battle.qual.d2!==1?"s":""}`;
-                  metricNote="Qualifying head-to-head (better grid slot wins)";
+                  metricNote="Qualifying head-to-head (better qualifying position wins)";
                 }else if(h2hMetric==="race"){
                   // Lower avg position = bigger bar. 21−avg keeps backmarkers positive
                   // (10−avg went negative past P10 and inverted the bars).
@@ -1930,10 +2027,13 @@ export default function F1Dashboard(){
                   d2Label=battle.avgPos.d2?`P${battle.avgPos.d2} avg`:"No data";
                   metricNote="Average race finishing position";
                 }else{
-                  d1Val=battle.d1.pts;d2Val=battle.d2.pts;
-                  d1Label=`${battle.d1.pts} pts`;d2Label=`${battle.d2.pts} pts`;
-                  metricNote="Championship points scored";
+                  // Points scored for this team in the rounds the pair shared
+                  d1Val=battle.pts.d1;d2Val=battle.pts.d2;
+                  d1Label=`${battle.pts.d1} pts`;d2Label=`${battle.pts.d2} pts`;
+                  metricNote="Points scored as team-mates";
                 }
+                // A team that changed its line-up gets one card per pairing, labelled by rounds
+                const span=battle.teamPairings>1?(battle.rounds.length>1?`Rounds ${battle.rounds[0]}–${battle.rounds[battle.rounds.length-1]}`:`Round ${battle.rounds[0]}`):null;
                 const total=d1Val+d2Val;
                 const d1Pct=total>0?(d1Val/total)*100:50;
                 const d2Pct=total>0?(d2Val/total)*100:50;
@@ -1942,13 +2042,14 @@ export default function F1Dashboard(){
                 const tied=d1Val===d2Val;
 
                 return(
-                  <div key={battle.team} style={{background:"var(--w02)",border:"1px solid var(--w06)",borderRadius:2,padding:20,overflow:"hidden"}}>
+                  <div key={`${battle.team}-${battle.d1.n}-${battle.d2.n}`} style={{background:"var(--w02)",border:"1px solid var(--w06)",borderRadius:2,padding:20,overflow:"hidden"}}>
                     {/* Team Header */}
-                    <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16}}>
+                    <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16,flexWrap:"wrap"}}>
                       <TL team={battle.team} size={28}/>
                       <div style={{width:3,height:22,borderRadius:2,background:tc,opacity:.8}}/>
                       <span style={{fontSize:16,fontWeight:700}}>{battle.team}</span>
-                      <span style={{fontSize:11,color:"var(--w30)",marginLeft:"auto"}}>{metricNote}{(()=>{if(h2hMetric!=="qual"&&h2hMetric!=="race")return "";const n=(h2hMetric==="qual"?battle.qual?.details:battle.race?.details)?.length;return n!=null?` · ${n} of ${completedRounds} rounds compared`:"";})()}</span>
+                      {span&&<span className="num" style={{fontSize:11,color:"var(--ink-3)"}}>{span}</span>}
+                      <span style={{fontSize:11,color:"var(--w30)",marginLeft:"auto"}}>{metricNote}{(()=>{if(h2hMetric!=="qual"&&h2hMetric!=="race")return "";const n=(h2hMetric==="qual"?battle.qual?.details:battle.race?.details)?.length;return n!=null?` · ${n} of ${battle.rounds.length} round${battle.rounds.length!==1?"s":""} compared`:"";})()}</span>
                     </div>
 
                     {/* Driver vs Driver */}
@@ -1990,15 +2091,18 @@ export default function F1Dashboard(){
                     {h2hMetric!=="pts"&&(
                       <div style={{marginTop:14,display:"flex",gap:6,flexWrap:"wrap"}}>
                         {(h2hMetric==="qual"?battle.qual.details:battle.race.details).map((rd,i)=>{
-                          const d1Won=typeof rd.d1==="number"&&typeof rd.d2==="number"?rd.d1<rd.d2:false;
-                          const d2Won=typeof rd.d1==="number"&&typeof rd.d2==="number"?rd.d2<rd.d1:false;
+                          // A retirement ("DNF"/"DSQ"/…) loses to any classified finish
+                          const rank=v=>typeof v==="number"?v:99;
+                          const d1Won=rank(rd.d1)<rank(rd.d2);
+                          const d2Won=rank(rd.d2)<rank(rd.d1);
+                          const show=v=>typeof v==="number"?`P${v}`:v;
                           return(
                             <div key={i} style={{background:"var(--w03)",borderRadius:2,padding:"6px 10px",fontSize:11,border:"1px solid var(--w04)",minWidth:80}}>
                               <div style={{color:"var(--w35)",marginBottom:3,fontSize:10}}>{rd.race}</div>
                               <div style={{display:"flex",justifyContent:"space-between",gap:8}}>
-                                <span style={{fontWeight:d1Won?700:400,color:d1Won?tc:"var(--w40)"}}>P{rd.d1}</span>
+                                <span style={{fontWeight:d1Won?700:400,color:d1Won?tc:"var(--w40)"}}>{show(rd.d1)}</span>
                                 <span style={{color:"var(--w15)"}}>—</span>
-                                <span style={{fontWeight:d2Won?700:400,color:d2Won?tc:"var(--w40)"}}>P{rd.d2}</span>
+                                <span style={{fontWeight:d2Won?700:400,color:d2Won?tc:"var(--w40)"}}>{show(rd.d2)}</span>
                               </div>
                             </div>
                           );
@@ -2028,8 +2132,19 @@ export default function F1Dashboard(){
           const cFastest=cpits[0];
           const cSlowest=cpits[cpits.length-1];
           const cAvg=`${(cpits.reduce((a,b)=>a+b.s,0)/cpits.length).toFixed(3)}s`;
-          const chart=cpits.filter(d=>d.s<30);
-          const maxS=Math.max(25,...chart.map(d=>d.s))*1.04; // bar scale follows the data, not a hardcoded ceiling
+          // Jolpica times the whole pit-lane transit, which varies by circuit (every
+          // Spanish GP stop took over 30 s), so the chart cutoff and the quick/slow
+          // colours follow this race's median instead of fixed seconds.
+          const byS=cpits.map(d=>d.s).sort((a,b)=>a-b);
+          const med=byS.length?byS[Math.floor((byS.length-1)/2)]:0;
+          // Pit-lane times cluster within ~1 s of the median, so these mark the few
+          // genuinely quick and slow stops (typically 4–7 and 1–3 per race)
+          const quickS=med-0.5, slowS=med+2;
+          const chart=cpits.filter(d=>d.s<=med*1.5); // drive-throughs, repairs and red-flag waits drop out
+          const hiddenStops=cpits.length-chart.length;
+          // Bars run from 25% (fastest) to 100% (slowest shown) so sub-second gaps stay visible
+          const minS=chart.length?chart[0].s:0, maxS=chart.length?chart[chart.length-1].s:1;
+          const barPct=s=>maxS>minS?25+75*(s-minS)/(maxS-minS):100;
           return(
           <div className="fu" style={{display:"flex",flexDirection:"column",gap:24}}>
             {prs.length>1&&(
@@ -2047,14 +2162,14 @@ export default function F1Dashboard(){
             </div>
             <div style={{background:"var(--w02)",border:"1px solid var(--w06)",borderRadius:2,padding:20}}>
               <div style={{fontSize:15,fontWeight:700,marginBottom:4}}>{cName + " — Pit Stop Times"}</div>
-              <div style={{fontSize:12,color:"var(--w35)",marginBottom:20}}>Sorted by duration</div>
+              <div style={{fontSize:12,color:"var(--w35)",marginBottom:20}}>Pit-lane time, fastest first · bars scaled from the fastest to the slowest shown{hiddenStops>0?` · ${hiddenStops} long stop${hiddenStops>1?"s":""} over 1.5× the race median listed below only`:""}</div>
               <div style={{display:"flex",flexDirection:"column",gap:5}}>
                 {chart.map((d,i)=>(
                   <div key={`${curPr.r}-${d.d}-${d.l}`} style={{display:"flex",alignItems:"center",gap:8}}>
                     <TL team={d.t} size={22}/>
                     <div style={{width:96,fontSize:12,color:"var(--w70)",textAlign:"right",flexShrink:0,whiteSpace:"nowrap"}}>{d.d}<span style={{color:"var(--w30)",fontSize:10,marginLeft:4}}>L{d.l}</span></div>
                     <div style={{flex:1,height:22,background:"var(--w04)",borderRadius:2,overflow:"hidden",position:"relative"}}>
-                      <div style={{height:"100%",width:`${(d.s/maxS)*100}%`,background:TC[d.t]||"var(--ink-4)",borderRadius:2,opacity:.8}}/>
+                      <div style={{height:"100%",width:`${barPct(d.s)}%`,background:TC[d.t]||"var(--ink-4)",borderRadius:2,opacity:.8}}/>
                       <div style={{position:"absolute",right:8,top:"50%",transform:"translateY(-50%)",fontSize:11,color:"var(--w60)",fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)"}}>{d.s.toFixed(3)}s</div>
                     </div>
                   </div>
@@ -2074,7 +2189,7 @@ export default function F1Dashboard(){
                       <td style={{padding:"10px 12px"}}><div style={{display:"flex",alignItems:"center",gap:8}}><TL team={d.t} size={24}/><div style={{width:3,height:16,borderRadius:2,background:TC[d.t]}}/><span style={{fontWeight:600}}>{d.d}</span></div></td>
                       <td style={{padding:"10px 12px"}}><div style={{display:"flex",alignItems:"center",gap:6,color:"var(--w50)"}}><TL team={d.t} size={16}/>{d.t}</div></td>
                       <td style={{padding:"10px 12px",fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)"}}>{d.l}</td>
-                      <td style={{padding:"10px 12px",fontWeight:700,fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)",color:d.s<23?"var(--green)":d.s>26?"var(--red)":"var(--fg)"}}>{d.s.toFixed(3)}s</td>
+                      <td style={{padding:"10px 12px",fontWeight:700,fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)",color:d.s<=quickS?"var(--green)":d.s>=slowS?"var(--red)":"var(--fg)"}}>{d.s.toFixed(3)}s</td>
                     </tr>
                   ))}
                 </tbody>
@@ -2189,13 +2304,13 @@ export default function F1Dashboard(){
         {tab==="Schedule"&&(
           <div className="fu" style={{display:"flex",flexDirection:"column",gap:24}}>
             <div style={{display:"flex",gap:16,flexWrap:"wrap"}}>
-              <SC label="Total Races" value={String(totalRounds)} sub="2 postponed (Bahrain, Saudi)" accent="var(--fg)"/>
+              <SC label="Total Races" value={String(totalRounds)} sub="Bahrain moved to Sepang · Saudi Arabia postponed" accent="var(--fg)"/>
               <SC label="Races Completed" value={String(completedRounds)} sub={sched.filter(r=>r.st==="done").map(r=>r.nm.replace(" Grand Prix","")).join(" · ")||"None yet"} accent="var(--green)"/>
               <SC label="Sprint Weekends" value={String(sched.filter(r=>r.sp).length)} sub={sched.filter(r=>r.sp).map(r=>r.fc).join(" · ")} accent="var(--red)"/>
               <SC label="Season Finale" value={sched.length>0?sched[sched.length-1].nm.replace(" Grand Prix",""):"TBD"} sub={sched.length>0?raceDateFmt(sched[sched.length-1].dt,sched[sched.length-1].tt):""} accent="var(--gold)"/>
             </div>
             <div style={{background:"var(--w02)",border:"1px solid var(--w06)",borderRadius:2,padding:20}}>
-              <div style={{fontSize:15,fontWeight:700,marginBottom:4}}>{SEASON} Race Calendar</div>
+              <div style={{fontSize:15,fontWeight:700,marginBottom:4}}>{season} Race Calendar</div>
               <div style={{fontSize:12,color:"var(--w35)",marginBottom:20}}>{sched.length} races · {sched.filter(r=>r.sp).length} Sprint weekends</div>
               {sched.map(race=>{
                 return(
@@ -2229,7 +2344,7 @@ export default function F1Dashboard(){
         )}
 
         {/* ═══ TELEMETRY ═══ */}
-        {tab==="Telemetry"&&<TelemetryTab openf1={openf1} tracks={tracks} telMeetingKey={telMeetingKey} setTelMeetingKey={setTelMeetingKey}/>}
+        {tab==="Telemetry"&&<TelemetryTab openf1={openf1} tracks={tracks} telMeetingKey={telMeetingKey} setTelMeetingKey={setTelMeetingKey} outByDay={outByDay}/>}
         </div>
         </TabErrorBoundary>
       </main>
@@ -2241,7 +2356,7 @@ export default function F1Dashboard(){
 // playback frames re-render only this subtree, never the whole dashboard.
 // Mounted only while the Telemetry tab is active, so the rAF clocks stop on
 // unmount and the live-fetch effects can drop their tab guards.
-const TelemetryTab=memo(function TelemetryTab({openf1,tracks,telMeetingKey,setTelMeetingKey}){
+const TelemetryTab=memo(function TelemetryTab({openf1,tracks,telMeetingKey,setTelMeetingKey,outByDay}){
   const[telSelected,setTelSelected]=useState(()=>new Set());
           // ── Shared derivations (memoized — several panels read these). Hooks must
           // run before the early-return guards below, so empty/loading cases are
@@ -2319,7 +2434,7 @@ const TelemetryTab=memo(function TelemetryTab({openf1,tracks,telMeetingKey,setTe
               </div>
 
               {/* Race Replay — track dots + animated leaderboard + scrubber */}
-              <ReplayPanel cur={cur} race={race} tracks={tracks} allDrivers={allDrivers} telMeetingKey={telMeetingKey}/>
+              <ReplayPanel cur={cur} race={race} tracks={tracks} allDrivers={allDrivers} telMeetingKey={telMeetingKey} outNums={outByDay?.[meetingRaceDay(cur.meeting)]}/>
 
               {/* Lap Compare — pick 2 drivers + 1 lap, live-fetch /car_data + /location */}
               <LapComparePanel openf1={openf1} telMeetingKey={telMeetingKey} allDrivers={allDrivers} cur={cur}/>
@@ -2367,7 +2482,7 @@ const TelemetryTab=memo(function TelemetryTab({openf1,tracks,telMeetingKey,setTe
 
 // ─── Race Replay panel — owns the playback clock, scrubber and dot-hover state
 // so the 60fps animation frames re-render only this panel.
-const ReplayPanel=memo(function ReplayPanel({cur,race,tracks,allDrivers,telMeetingKey}){
+const ReplayPanel=memo(function ReplayPanel({cur,race,tracks,allDrivers,telMeetingKey,outNums}){
   // Race Replay state
   const[replayTime,setReplayTime]=useState(0); // seconds into the race
   const[replayPlaying,setReplayPlaying]=useState(false);
@@ -2381,7 +2496,7 @@ const ReplayPanel=memo(function ReplayPanel({cur,race,tracks,allDrivers,telMeeti
   // Reset replay when meeting changes
   useEffect(()=>{setReplayTime(0);setReplayPlaying(false);},[telMeetingKey]);
 
-  const trackKey=cur.meeting.meetingName;
+  const trackKey=meetingTrackName(cur.meeting);
   // Track sampler + cumulative lap tables are static per race — memoized so the
   // 60fps playback frames don't re-parse the SVG path or rebuild the tables.
   const sampler=useMemo(()=>tracks?buildTrackSampler(tracks[trackKey]):null,[tracks,trackKey]);
@@ -2618,7 +2733,7 @@ const ReplayPanel=memo(function ReplayPanel({cur,race,tracks,allDrivers,telMeeti
                               <div style={{width:3,height:16,background:tc,borderRadius:1.5}}/>
                               <div style={{minWidth:0}}>
                                 <div style={{fontSize:11,fontWeight:700,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",lineHeight:1.1}}>{d.acronym}</div>
-                                <div style={{fontSize:8,color:"var(--w40)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",lineHeight:1.1,marginTop:1}}>L{Math.floor(s.progress)+(s.finished?0:1)}{s.finished?" · FIN":""}</div>
+                                <div style={{fontSize:8,color:"var(--w40)",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",lineHeight:1.1,marginTop:1}}>L{Math.floor(s.progress)+(s.finished?0:1)}{s.finished?(outNums?.has(String(d.number))?" · OUT":" · FIN"):""}</div>
                               </div>
                               <div style={{textAlign:"center"}}>
                                 {compound&&<div style={{display:"inline-flex",alignItems:"center",justifyContent:"center",width:16,height:16,borderRadius:2,background:ccol,fontSize:9,fontWeight:800,color:cdark?"var(--bench)":"var(--fg)"}}>{compound[0]}</div>}

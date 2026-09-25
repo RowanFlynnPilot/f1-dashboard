@@ -2,7 +2,64 @@
 //   npm test
 import test from "node:test";
 import assert from "node:assert/strict";
-import { parsePitSeconds, raceEnded, weekendActive, getCountryCode } from "../scripts/fetch-f1-data.mjs";
+import { parsePitSeconds, raceEnded, weekendActive, getCountryCode, outLabel, currentTeamId, mapResult, constructorBreakdowns, currentLineups } from "../scripts/fetch-f1-data.mjs";
+
+test("outLabel reads Jolpica's positionText: numbers are classified, letters are not", () => {
+  assert.equal(outLabel("1"), null);
+  assert.equal(outLabel("17"), null, "a lapped car is still classified");
+  assert.equal(outLabel("R"), "DNF");
+  assert.equal(outLabel("D"), "DSQ");
+  assert.equal(outLabel("E"), "DSQ");
+  assert.equal(outLabel("W"), "DNS");
+  assert.equal(outLabel("N"), "NC");
+  assert.equal(outLabel(undefined), "DNF");
+});
+
+test("currentTeamId takes the LAST constructor — Jolpica lists them in the order joined", () => {
+  const lawson = { Constructors: [{ constructorId: "rb" }, { constructorId: "red_bull" }] };
+  assert.equal(currentTeamId(lawson), "red_bull");
+  assert.equal(currentTeamId({ Constructors: [{ constructorId: "mercedes" }] }), "mercedes");
+  assert.equal(currentTeamId({}), undefined);
+});
+
+test("mapResult keeps the retirement label, real grid slot and points", () => {
+  const row = mapResult({
+    position: "22", positionText: "R", number: "44", grid: "4", laps: "6", points: "0", status: "Retired",
+    Driver: { driverId: "hamilton", familyName: "Hamilton" }, Constructor: { constructorId: "ferrari" },
+  });
+  assert.equal(row.out, "DNF");
+  assert.equal(row.grid, 4);
+  assert.equal(row.pts, 0);
+  assert.equal(row.team, "Ferrari");
+  assert.equal(row.gap, "Retired");
+  const win = mapResult({ position: "1", positionText: "1", number: "12", grid: "2", laps: "57", points: "25", status: "Finished",
+    Time: { time: "1:34:23.754" }, Driver: { driverId: "antonelli", familyName: "Antonelli" }, Constructor: { constructorId: "mercedes" } });
+  assert.equal(win.out, null);
+  assert.equal(win.gap, "WINNER");
+  assert.equal(win.pts, 25);
+});
+
+test("constructorBreakdowns splits a mid-season mover's points between his teams", () => {
+  const r = (driver, team, pts) => ({ did: driver.toLowerCase(), driver, team, pts });
+  const sessions = [
+    { round: 11, results: [r("Verstappen", "Red Bull", 18), r("Hadjar", "Red Bull", 4), r("Lawson", "Racing Bulls", 6), r("Lindblad", "Racing Bulls", 0)] },
+    { round: 12, results: [r("Verstappen", "Red Bull", 25), r("Lawson", "Red Bull", 8), r("Lindblad", "Racing Bulls", 2), r("Tsunoda", "Racing Bulls", 0)] },
+  ];
+  const b = constructorBreakdowns(sessions);
+  assert.deepEqual(b["Red Bull"], [{ name: "Verstappen", pts: 43 }, { name: "Lawson", pts: 8 }, { name: "Hadjar", pts: 4 }]);
+  assert.deepEqual(b["Racing Bulls"].map(d => d.name), ["Lawson", "Lindblad", "Tsunoda"]);
+  assert.equal(b["Racing Bulls"][0].pts, 6);
+});
+
+test("currentLineups uses the latest round, preferring the race over its qualifying", () => {
+  const races = [{ round: 12, results: [{ team: "Red Bull", driver: "Verstappen" }, { team: "Red Bull", driver: "Lawson" }] }];
+  const quali = [
+    { round: 12, results: [{ team: "Red Bull", driver: "Verstappen" }, { team: "Red Bull", driver: "Hadjar" }] },
+    { round: 13, results: [{ team: "Red Bull", driver: "Lawson" }, { team: "Red Bull", driver: "Verstappen" }] },
+  ];
+  assert.deepEqual(currentLineups(races, quali.slice(0, 1))["Red Bull"], ["Verstappen", "Lawson"], "race wins the tie");
+  assert.deepEqual(currentLineups(races, quali)["Red Bull"], ["Lawson", "Verstappen"], "a newer weekend's qualifying wins");
+});
 import { processRaceControlPeriods, buildSpeedTrace, computeSessionBests, processLapData } from "../scripts/fetch-openf1-data.mjs";
 import { mergeIds } from "../scripts/merge-video-ids.mjs";
 

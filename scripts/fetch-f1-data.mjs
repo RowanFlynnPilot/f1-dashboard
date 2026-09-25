@@ -9,9 +9,12 @@
  * Base URL: https://api.jolpi.ca/ergast/f1/
  */
 
+import fs from "node:fs";
 import { pathToFileURL } from "node:url";
 
-const SEASON = 2026;
+// One season setting for every script (scripts/season.json); SEASON=2027 in the
+// environment overrides it for a dry run of the next season.
+const SEASON = Number(process.env.SEASON) || JSON.parse(fs.readFileSync(new URL("./season.json", import.meta.url), "utf8")).season;
 const BASE = "https://api.jolpi.ca/ergast/f1";
 
 // Fetch with retry/backoff: 429 and 5xx are retried (honoring Retry-After),
@@ -56,10 +59,14 @@ async function getSchedule() {
   return data.MRData.RaceTable.Races;
 }
 
+// The standings list says which round it follows. On a sprint Saturday that can
+// be a round whose race hasn't run yet, so the app's points delta keys off it.
 async function getDriverStandings() {
   const data = await fetchJSON(`${BASE}/${SEASON}/driverstandings.json`);
   const lists = data.MRData.StandingsTable.StandingsLists;
-  return lists.length > 0 ? lists[0].DriverStandings : [];
+  return lists.length > 0
+    ? { round: parseInt(lists[0].round) || 0, standings: lists[0].DriverStandings }
+    : { round: 0, standings: [] };
 }
 
 async function getConstructorStandings() {
@@ -88,15 +95,24 @@ async function getSprintResults(round) {
   }
 }
 
+// Jolpica silently caps `limit` at 100, and a chaotic wet race can exceed that
+// (2026 R6 had 86 stops), so page through with offset until `total` is reached.
 async function getPitStops(round) {
-  try {
-    // limit=200: 22 cars × 5+ stops can exceed the old limit=100 in a chaotic race
-    const data = await fetchJSON(`${BASE}/${SEASON}/${round}/pitstops.json?limit=200`);
+  const stops = [];
+  for (let offset = 0; ; offset += 100) {
+    let data;
+    try {
+      data = await fetchJSON(`${BASE}/${SEASON}/${round}/pitstops.json?limit=100&offset=${offset}`);
+    } catch (e) {
+      if (e.status === 404) return stops;
+      throw e;
+    }
     const races = data.MRData.RaceTable.Races;
-    return races.length > 0 ? races[0].PitStops : [];
-  } catch (e) {
-    if (e.status === 404) return [];
-    throw e;
+    const page = races.length > 0 ? races[0].PitStops : [];
+    stops.push(...page);
+    const total = parseInt(data.MRData.total) || 0;
+    if (page.length === 0 || stops.length >= total) return stops;
+    await sleep(400);
   }
 }
 
@@ -177,6 +193,79 @@ export function parsePitSeconds(str) {
   return parseFloat(s) || 0;
 }
 
+// Classification label for a result that isn't a classified finish, or null.
+// Jolpica's positionText is the position for every classified car (lapped
+// cars included) and a letter otherwise — its `position` field is always a
+// number, so it can't tell a retirement from a finish.
+const OUT_LABELS = { R: "DNF", D: "DSQ", E: "DSQ", W: "DNS", F: "DNQ", N: "NC" };
+export function outLabel(positionText) {
+  if (/^\d+$/.test(String(positionText ?? ""))) return null;
+  return OUT_LABELS[positionText] || "DNF";
+}
+
+// A driver's current team. Jolpica lists every constructor a driver raced for
+// this season in the order they joined (2026 Lawson: ["rb", "red_bull"]), so
+// the last entry is the current team — the first is where they started.
+export function currentTeamId(ds) {
+  const cs = ds?.Constructors || [];
+  return cs[cs.length - 1]?.constructorId;
+}
+
+// One race or sprint result row, as the app consumes it.
+export function mapResult(r) {
+  return {
+    pos: r.position,
+    out: outLabel(r.positionText),
+    num: r.number ?? null,
+    did: r.Driver.driverId,
+    driver: r.Driver.familyName,
+    team: teamName(r.Constructor.constructorId),
+    grid: r.grid != null ? parseInt(r.grid) : null,   // 0 = pit-lane start
+    laps: r.laps != null ? parseInt(r.laps) : null,
+    pts: parseFloat(r.points) || 0,
+    gap: r.position === "1" ? "WINNER" : (r.Time?.time || r.status || ""),
+    status: r.status,
+    fastestLapTime: r.FastestLap?.Time?.time || null,
+    fastestLapRank: r.FastestLap?.rank || null,
+  };
+}
+
+// Points each driver scored for each team, summed from race and sprint results.
+// Driver standings can't give this: a driver who changes team mid-season has
+// one season total, which used to land wholly under his first team.
+export function constructorBreakdowns(sessions) {
+  const byTeam = {};
+  for (const s of sessions) {
+    for (const r of s.results || []) {
+      const team = (byTeam[r.team] ??= {});
+      const d = (team[r.did || r.driver] ??= { name: r.driver, pts: 0, last: 0 });
+      d.pts += r.pts || 0;
+      d.last = Math.max(d.last, s.round);
+    }
+  }
+  const out = {};
+  for (const [team, drivers] of Object.entries(byTeam)) {
+    out[team] = Object.values(drivers)
+      .sort((a, b) => b.pts - a.pts || b.last - a.last)
+      .map(({ name, pts }) => ({ name, pts }));
+  }
+  return out;
+}
+
+// Each team's current pairing, from the most recent round with a classification
+// (a race, or qualifying when the weekend is under way). Team → [familyName, ...].
+export function currentLineups(races, qualifying) {
+  const tagged = [
+    ...(races || []).map(s => ({ ...s, kind: "race" })),
+    ...(qualifying || []).map(s => ({ ...s, kind: "quali" })),
+  ];
+  const latest = tagged.reduce(
+    (best, s) => (!best || s.round > best.round || (s.round === best.round && s.kind === "race") ? s : best), null);
+  const lineups = {};
+  for (const r of latest?.results || []) (lineups[r.team] ??= []).push(r.driver);
+  return lineups;
+}
+
 async function main() {
   console.log(`\n🏎️  Fetching F1 ${SEASON} data from Jolpica API...\n`);
 
@@ -188,8 +277,8 @@ async function main() {
 
   // 2. Get standings
   console.log("🏆 Fetching driver standings...");
-  const driverStandings = await getDriverStandings();
-  console.log(`   Found ${driverStandings.length} drivers\n`);
+  const { round: standingsRound, standings: driverStandings } = await getDriverStandings();
+  console.log(`   Found ${driverStandings.length} drivers (standings after round ${standingsRound})\n`);
   await sleep(500);
 
   console.log("🏗️  Fetching constructor standings...");
@@ -239,46 +328,21 @@ async function main() {
 
   // 5. Transform data for the dashboard
 
-  // Driver standings
+  // Driver standings — `team` is the current team (see currentTeamId), `teams`
+  // every team the driver has raced for this season, in order
   const drivers = driverStandings.map(ds => ({
     pos: parseInt(ds.position),
     name: `${ds.Driver.givenName} ${ds.Driver.familyName}`,
-    team: teamName(ds.Constructors[0]?.constructorId),
+    team: teamName(currentTeamId(ds)),
+    teams: (ds.Constructors || []).map(c => teamName(c.constructorId)),
     pts: parseInt(ds.points),
     wins: parseInt(ds.wins),
     driverId: ds.Driver.driverId,
   }));
 
-  // Constructor standings with driver breakdowns
-  const constructors = constructorStandings.map(cs => {
-    // Find drivers for this constructor
-    const teamDrivers = driverStandings
-      .filter(ds => ds.Constructors[0]?.constructorId === cs.Constructor.constructorId)
-      .map(ds => ({
-        name: ds.Driver.familyName,
-        pts: parseInt(ds.points),
-      }));
-
-    return {
-      pos: parseInt(cs.position),
-      team: teamName(cs.Constructor.constructorId),
-      pts: parseInt(cs.points),
-      wins: parseInt(cs.wins),
-      drivers: teamDrivers,
-    };
-  });
-
   // Race results
   const races = raceResults.map(race => {
-    const results = (race.Results || []).map(r => ({
-      pos: r.position,
-      driver: r.Driver.familyName,
-      team: teamName(r.Constructor.constructorId),
-      gap: r.position === "1" ? "WINNER" : (r.Time?.time || r.status || ""),
-      status: r.status,
-      fastestLapTime: r.FastestLap?.Time?.time || null,
-      fastestLapRank: r.FastestLap?.rank || null,
-    }));
+    const results = (race.Results || []).map(mapResult);
 
     const fastestLapDriver = results.find(r => r.fastestLapRank === "1");
 
@@ -287,6 +351,7 @@ async function main() {
       name: race.raceName,
       circuit: race.Circuit.circuitName,
       date: race.date,
+      time: race.time || null,
       // Winner's total race time, e.g. "1:32:09.123" (P1 carries Time.time)
       winnerTime: (race.Results || [])[0]?.Time?.time || null,
       results,
@@ -298,25 +363,21 @@ async function main() {
     };
   });
 
-  // Sprint results
+  // Sprint results — dated from the schedule's Sprint session: the sprint
+  // endpoint carries the Sunday race date
+  const schedByRound = Object.fromEntries(schedule.map(r => [parseInt(r.round), r]));
   const sprints = sprintResults.map(race => {
-    const results = (race.SprintResults || []).map(r => ({
-      pos: r.position,
-      driver: r.Driver.familyName,
-      team: teamName(r.Constructor.constructorId),
-      gap: r.position === "1" ? "WINNER" : (r.Time?.time || r.status || ""),
-      status: r.status,
-      fastestLapTime: r.FastestLap?.Time?.time || null,
-      fastestLapRank: r.FastestLap?.rank || null,
-    }));
+    const results = (race.SprintResults || []).map(mapResult);
 
     const fastestLapDriver = results.find(r => r.fastestLapRank === "1");
+    const sprintSession = schedByRound[parseInt(race.round)]?.Sprint;
 
     return {
       round: parseInt(race.round),
       name: race.raceName + " Sprint",
       circuit: race.Circuit.circuitName,
-      date: race.date,
+      date: sprintSession?.date || race.date,
+      time: sprintSession?.time || null,
       sprint: true,
       results,
       fastestLap: fastestLapDriver ? {
@@ -337,6 +398,8 @@ async function main() {
     country: getCountryCode(race.Circuit.circuitId),
     completed: raceEnded(race, now),
     sprint: race.Sprint ? true : false,
+    sprintDate: race.Sprint?.date || null,
+    sprintTime: race.Sprint?.time || null,
     winner: (() => {
       const rr = raceResults.find(r => r.round === race.round);
       if (rr && rr.Results && rr.Results[0]) return rr.Results[0].Driver.familyName;
@@ -344,25 +407,60 @@ async function main() {
     })(),
   }));
 
+  // Qualifying, in the app's shape (also feeds the current lineups below)
+  const qualifying = allQualifying.map(q => ({
+    round: q.round,
+    raceName: q.raceName,
+    results: q.results.map(r => ({
+      pos: parseInt(r.position),
+      driver: r.Driver.familyName,
+      driverId: r.Driver.driverId,
+      team: teamName(r.Constructor?.constructorId),
+      q1: r.Q1 || null,
+      q2: r.Q2 || null,
+      q3: r.Q3 || null,
+    })),
+  }));
+
+  // Constructor standings. Per-driver points come from the results, so a
+  // driver who switched teams splits his points between them; `lineup` is the
+  // team's current pairing.
+  const breakdowns = constructorBreakdowns([...races, ...sprints]);
+  const lineups = currentLineups(races, qualifying);
+  const constructors = constructorStandings.map(cs => {
+    const team = teamName(cs.Constructor.constructorId);
+    return {
+      pos: parseInt(cs.position),
+      team,
+      pts: parseInt(cs.points),
+      wins: parseInt(cs.wins),
+      drivers: breakdowns[team] || [],
+      lineup: lineups[team] || [],
+    };
+  });
+
   // Pit stops (most recent race)
   const latestPits = allPitStops.length > 0 ? allPitStops[allPitStops.length - 1] : null;
 
-  // Build a lookup from driverId -> { name, team } using standings data
+  // Names from the standings; the team from that round's classification, so a
+  // stop is filed under the team the driver raced for that weekend
   const driverLookup = {};
   for (const ds of driverStandings) {
     driverLookup[ds.Driver.driverId] = {
       name: ds.Driver.familyName,
       fullName: `${ds.Driver.givenName} ${ds.Driver.familyName}`,
-      team: teamName(ds.Constructors[0]?.constructorId),
+      team: teamName(currentTeamId(ds)),
     };
   }
+  const teamByRound = {};
+  for (const race of races) teamByRound[race.round] = Object.fromEntries(race.results.map(r => [r.did, r.team]));
 
-  const mapStops = (stops) => stops.map(p => {
+  const mapStops = (stops, round) => stops.map(p => {
     const info = driverLookup[p.driverId] || { name: p.driverId, fullName: p.driverId, team: "" };
     return {
       driver: info.name,
       fullName: info.fullName,
-      team: info.team,
+      team: teamByRound[round]?.[p.driverId] || info.team,
       lap: parseInt(p.lap),
       stop: parseInt(p.stop),
       duration: p.duration,
@@ -374,10 +472,10 @@ async function main() {
   const pitStopsByRace = allPitStops.map(entry => ({
     round: entry.round,
     raceName: entry.raceName,
-    stops: mapStops(entry.pitStops),
+    stops: mapStops(entry.pitStops, entry.round),
   }));
 
-  const pitStops = latestPits ? mapStops(latestPits.pitStops) : [];
+  const pitStops = latestPits ? mapStops(latestPits.pitStops, latestPits.round) : [];
 
   // Build final output
   const output = {
@@ -385,6 +483,7 @@ async function main() {
     fetchedAt: new Date().toISOString(),
     completedRounds: completedRaces.length,
     totalRounds: schedule.length,
+    standingsRound,
     drivers,
     constructors,
     races,
@@ -395,26 +494,15 @@ async function main() {
       stops: pitStops,
     },
     pitStopsByRace,
-    qualifying: allQualifying.map(q => ({
-      round: q.round,
-      raceName: q.raceName,
-      results: q.results.map(r => ({
-        pos: parseInt(r.position),
-        driver: r.Driver.familyName,
-        driverId: r.Driver.driverId,
-        team: teamName(r.Constructor?.constructorId),
-        q1: r.Q1 || null,
-        q2: r.Q2 || null,
-        q3: r.Q3 || null,
-      })),
-    })),
+    qualifying,
   };
 
-  // Write to public/data.json
-  const fs = await import("fs");
+  // Write to public/data.json via a temp file + rename, so an interrupted run
+  // can never leave a truncated data.json behind
   const path = await import("path");
   const outPath = path.join(process.cwd(), "public", "data.json");
-  fs.writeFileSync(outPath, JSON.stringify(output, null, 2));
+  fs.writeFileSync(`${outPath}.tmp`, JSON.stringify(output, null, 2));
+  fs.renameSync(`${outPath}.tmp`, outPath);
   
   console.log(`\n✅ Data written to ${outPath}`);
   console.log(`   ${drivers.length} drivers, ${constructors.length} constructors`);
