@@ -9,6 +9,7 @@
  * (the app already caches lap telemetry in sessionStorage).
  */
 const CACHE = "f1dash-v1";
+const MAX_ASSETS = 8; // about four builds of JS + CSS
 
 self.addEventListener("install", () => {
   self.skipWaiting();
@@ -33,7 +34,13 @@ self.addEventListener("fetch", (e) => {
         const hit = await c.match(e.request);
         if (hit) return hit;
         const res = await fetch(e.request);
-        if (res.ok) c.put(e.request, res.clone());
+        if (res.ok) {
+          await c.put(e.request, res.clone());
+          // Each deploy adds new hashed bundles under the same cache name, so keep
+          // only the most recent few (cache keys come back in insertion order)
+          const assets = (await c.keys()).filter((r) => new URL(r.url).pathname.includes("/assets/"));
+          for (const old of assets.slice(0, Math.max(0, assets.length - MAX_ASSETS))) await c.delete(old);
+        }
         return res;
       })
     );

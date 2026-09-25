@@ -9,7 +9,6 @@ const F1_LOGO = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAABQCAIAAADTD
 const DRIVER_IMAGES = {
   "George Russell": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAAFIElEQVR42uVaW0wcVRg+M7Ozu8Ps7rBIEwxFYL1sbIOWhpaUWHkgNaZPmCrGoKmxXlINGlMvj2KMRuODWjUmNmkTn5raxDdTG4lNQyiY2i4tUm4FLNAOAZe9sHPbufiw25npws7l7LI3z9Oc3TPn//75///7z+VHqIOdIH+t7sy3pmPonr48SnTkFzTd02esQ8aA3JVBcrFACoopaFNlclEDUgEDxMZooF/MmwKbIoCTnZepbCiwUV6+wjGXmVHrMvST0j19eSSTjNlsBZUlC+SXN/IrCzWdTk8UW40+Q5AqHVIBvdtkuNBW66DiNnWnrC6UQpw7T+fuTikY2TCgVt4HRWqqI9l2Ib0FQVGb3oetKlD0D2/LFGi2wC1k1FpfMm3UobIsUDqubz0YUFDmDS2Lz29ghEqxQOl//mxGqAgLlA7lQyQHtGS532JOqCAaLdPm0K/7YU413K6qrg7X7p2O7XWI16MkGCkcSU7Pc5euCuMzQFHSwwi367Gga9cOR3MDWu3FKK8iSnI8IS7RQugGe2FYTrBwYYAE169BE6irdSf1Zi9KeTf9N/zJd8L1ydQz1XeY2N+WbR45noh8eUKYuAmxdYZ3IXf74/4PXs+G3p4fe8nqY0cQHIdxITiRWK2fOtoLsLT+wuRs4uw5YXoeSBK2rcbRtN29rxXIsjpeWU+wfwxzf46Kt5flfyOIE8cfafa9fAir25bWgfI6dzzIj04USAGy+wBSRaTRj02FP/0eSGm44iItLtLc4GX9+Nips/quIiT5K39HOb6m/x0tnO5OuOUshDgworNd7cZ/+kVFb3MiRN8TF+kCuZAj8ADicqbjLxpHSML//mt4MICShLzOJKfnmfODfGjcADfqJfFgwPdSt/obNxwSF+4USAG84X7Ngp6qmo/e1rqU19XW4mprYQaGYj+eVmk01YiuDuqNFzZQ0Dr7+1D8zK+FS2SIh9SFM7bpmKquDrL7gJXZ5HBUpFeAJBVQAec9dlN4IfLVqeXD760e+yw584/6u+eZp1RPM/KBxnrqaC/11ouQmRjiHYXl9V12YIi7dAUAIC7ciZ04fd8XH6pJGg8GhGsT+pHswBDAUIzy4Q83eZ592tFYn/auznZuZJS/fB3GAlYOwPRNCkf03eTcgvY8v6RnJKyG2ux9WQpHuJFQ+OPjCstpmXFfq600nIKNQiyEkrML91oku634pJH3rzN65sFqa2zBSK3iYGJAolfEJY2z8UCD9txUr6ZnAIC4aMSMKElg9XWatgxboBgAADDnLvqO9KjkKEzO8lfHsVq/79XnNfS3bqc+MNG5l3hyL/fXWHJqTl6LytE4QlbhDzV6njuIklr2Fcam4BVIOZL1vSVzfpB4Yg8ebAYAIC5n9buvbHT02Mmf7wpxOFuCzpagkVWXV5mBIVsBoG0pYfYDirL2+Q/CjZvZaCry9UlhfMZqUE3NhfuPKxxvNwBALjf1coIN93/j7thN7N+DNzegPlLhBZFe5UPjzG8X5bWYxp4XRiR6xbXrUTwYwPwUWu1DHJjMcNJKODl7ix8JQSxCtaSk3tCUxdHQRpAVtKk3vQspwc9fcccqpWyEbCGKmh59lQ76TdkFzXbmmMthUd7RG1zbVZwFSi0YTLMTanx2V1wdrJyZG5XbZBybFjJDZxR7GIg2sYD1qpGtiFpg4fKl0gue9BNZL0KChg5RXFX2RX//p7JLU9lWEBS/8NVge2q3FbP02IA3yqn425aHbBER/wfwuseAA+6e2AAAAABJRU5ErkJggg==",
   "Kimi Antonelli": "data:image/png;base64,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",
-  "Andrea Kimi Antonelli": "data:image/png;base64,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",
   "Charles Leclerc": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAADhUlEQVR42uWau2/TUBTGf3bsBJJQKsFU0QdSRTdaiYeAge7t/8CQrRIIiYGZFQkkBiQmkEBiYGZEVdUNqWMRKCAqXi2PpS1q09SxYwar7m0S29eO4zjmTE5s3/t995zz3YePMscw8dkzidYqbMXYoxYv6Apb/hxaHuiejNKNBxwogaADyXRDIyIBH8T+aCK/GBuBjgii9R1LUyEItPcXVzp207Iq34fYaIWtGMWkpbVQSSXlgXh1I96+1MDmRKHoNfqWjtzeIxIQw6YlhHrNwcUdGE6eIeQg7l6nuw8nB4YXBlXmffpkbiCFDiHRg/TVxBiWJdD3gQ/lCtUrcZPMWvklUzuHbHkgPaEvnwwqA27qQAy/jxOy4oH0D7+XEzLhgfRIfoTJQU2t9kvOCRmS0QE1TVz3hzgLgFFyU2hTaOfQyijurZts17C9XiygXCc/jT6CWkatYW/SXMNcoVHFtMOngfKLiQgCOo1+m1LHWz4EzqNXKA4JbEV7wM57zLBbZy0xX19AX6AUe8hGJNCEb1hVzCqmgX2Hsv/zp1ArFF30nzBfU/+MZcFp1DFyF9GbSRJYpbFKw7meIBf4/ByF4weR8wHzITsu3A2sDay3GOlVIQ2ukXd/vmKv2fcQCmXjaIWD4f+LXUS5RWkSrYiyi72GuYTh+jONBM4Ifi6h3BUSZghlBn0GfRnjBTU7nSFUEnTTK11myc9zLKUe0I8Kv4H9lNoqpiNNZw9IzVN4w/4+duo8UD+KaRljhUYdex3rOTVxkp6UELQOBGQOwLqxTY6ozlcs9/o7lnhvWG5AxbWzGvkLl7x9ERD7mxEmfpxVXBIh9IfmT4HDuBAno+REBBs006hCwKIw0c6Sv4ReQBkhd4Oi+/8PrHVpX7WqkBNI8nvLMXL3ONHx1mNOutcLbDuqssT+FfRJNCCPstC2km3CS/ZCJcDhljKBNLDhEbsfPVbLdewn7Fal19LiPj655XQN+z47l8lfRR8nV0Y1sH/TfEdjEWObiOujwy80A3E01A4yQ5v6wG8hKRz+zB2rpNkJXimqBh59pQd9R3VROx62JDM5hJX8jvNs5jyQtmQInJ38VKjvrpA5M/crt2k5Nk1yhm4p9vDpOsAD8lUjvchaJD6+ZL3gSWxIvggpMvQIxVUDX/T3P5VdBvYtg6D/ha8+29Ow1s/SYx/dGKTi71AR0iMh/gdnC30OuSt6BAAAAABJRU5ErkJggg==",
   "Lewis Hamilton": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAACgklEQVR42u2aO24UQRCGv+kdsEdaCyQiixCREpOTrUREAgGStVcg4QK+gA+AZEuQwgEIOIEtcQQOYFYEtheLNcHAqjW701398vQ0VLRa1XT9f9eja3qqmnGfePJOsNqcRUSLdVzQcxZmDh2FcDJViAdaKFbQVjIhNDwJGBCb0Xg/GI3AVgR+tqMs5UBg016sdAxZWclt6IvOWUQsJp3VnJJK5IG4dSOuLWVdTi8UqdF3DK2texLQw6YTQqk5rHFbw6k3hFrE4XU6PJxaGH0YlOR5BpJ1IDmHkO5BBhU9hqUEBt94J1eovsS9zayVt0ybHMryQD6hL08GxchFjWL7DU4oxQP5b3+fE4rwQD4l3+NwUNnWfuGZUFAZHanUet/vLY+p3zKttH/e8OM7q1j6hjRQ4QlQwwFNlUzfnAYRQug5u/tM0umnzYGHTGbsptNPS6CCA5p2M79yHV0/OYFn7DyiBs5ZfeIqun5aAg9QL/4Gw3sul7H1kxN4TbNDBZxyfSaIB1f9tASecvcJd4AlNx+4jK6flsCU6hVN+/sjV+e2A8hVPzmBlzR7VMA3fn1mGV3fmYDkAkyXNhhu4JiLVQJ9q+itQzXTboCF3cQR96aIWoEv/DzhwlVfSKAF/L+dHlr+hFD4Tfo+k0P25O2xq/5mArSwFQEfegeU9Xt8ESE0oquhTZAFVSHrt5AMt7+4a5WcndCXosr8zp8V+q3VRW29bMnqcDB/tivOA7klg/V0MlWhwV0hac9M4zada9PbPKE7wx4G0xYPyKdGUmQtgo8vpQ886QvJh5C8oXsMV41+6O9fGru02pYgGH7wte/11OPxIUePDXVjTMPfThGSqBD/Br8RPZiTwufoAAAAAElFTkSuQmCC",
   "Oliver Bearman": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAAEz0lEQVR42mPU0tJioB7omTCZoJqSglwq2shCXUeXFOTi9wOaAso9w0hJDECcQtDRBD1DiTfI9AAeF+N3DdkaqeYBrC4gz26qGEWCBzDto1Z2pMRkJuLtQDa0pCCXioUJmmkkZSqiYoC65QZ17WIiaBxyQUFr16NZBLedTA8gJxu0JERrP8DdTTA54UxCEBdTXk5TnpwgzsDlBiZi9DMMEIAnJJKTEHIMMgwoQE7DxHpgwAOepKhgwpVx6ZlriW8yYfpheMXA4En6xGcGJoYhDpiGRPDjiYThEgODP/hxRcKwiIHBU+STUTkwDdqyn8g6YRgVo0MUsCC3+0kbDmBk1Dc00tM3kJaR4eXlY2Fh+fXr5/v37x89eHDq5ImHD+7DVZpbWIVGRBI08MnjxxN6u0jNBozbdu0lowDl4uZOTs2QV1DApeDIoYMb1q2hnQcozQNBwaF4XM/AwGBjZ29sYkqSmb9//yInCZGhh5WVVVffAM69f+/uqhXLPrx/r6CoFJuQxMXFBRE3NDY5e+Y0AwPDyRPHTp44hmmOlLR0UWkFnAtRTI9MzMXNzczMDOdu3rjh9atXv3//vn3r5oljR+HifHx8+M2xtXOAs79+/XL29Ck6eeDzp09///5F8P//x6rs3bt3eAzh5uYxNDKGc48fPfr79286eeDfv3+nTp6Ac739AkRFxVhZWVVU1SysrOHix44exmOIhZUVCysrhP3379+jRw6RWYySp23ThnVcnJz6hkYMDAzKKirl1bXIsn9+/964fu2tGzdwBhsTk5W1LZx7/uyZz58+0dUDv3/9WrZk0du3b51cXNGkvn//vnTRghvXr+HRrqtvwC8gAOceOrif/IqMPG2iYmLJaRkiIqKYUpycnCnpmefPnV25fOkfHMna1s4ezr5z+9azp0/p6gFmZuaU9ExhYREI98K5s9u3bfn06ZO0tHRoeJS4hAQDA4OhkfGXz583rl+LqV1aRlZBUQnOPbh/H6VtIWIGwJCBto4u3PVfvnxevnTx2zdvfv/69eD+/XVrVsKVWdnYwrMpSvDbI0rP169e4U9seKphiLOZyGgIiYmLw9lv37xBLlJfvniJHFEiMH/CAQ8Pr4GhEXLq/4+jFCbGGyUFuWQWo3C2sIgIcqUmLiGOrBKlumBgYGBgsLS2ZmGBpttvX7+eOXVyAJrTTx4/Rg7R8KgYYWERVlZWBUXFoJBw5OLo7ds3aJnH0soGUXkdI7PywuIBkrLBndu3nj19AucaGZtU1ta3d/fl5BdBcjC8QYocVwwMDHr6Bnz8/IjK6/BB8lIOctuZiYH0id5///7Nnzv75YsXeNScOXVy987tGE1URPa9cO7sJ3IrL+R+PJn1wPt37/q6OwyNjHX09KWkpHl5eZlZWH79+vXh/fuHD++fOXXq/r27aFpkZeWQW+AHD+xnoAZAzNAMiaEhTEcOo049wbmQQRj8w25YZTBHAq4sykRw6GvwuB5r6cKEdbCFgYJVQLRwPZ5pu2EXA4MtMxCsnZjwj90NrB+IGTPHt9wGbdiUnjU02mIPPFYTiAHiV43QItcyEDH5MtwXPCEbRPwiJLKdTsbiqiG/6G8kLbskaDcxLhj4ha9Yy+mht/QYT7kxlBZ/k5RCaFQQAwD9VItnJ2v2ygAAAABJRU5ErkJggg==",
@@ -31,6 +30,8 @@ const DRIVER_IMAGES = {
   "Fernando Alonso": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAAC9ElEQVR42u1aP2/TQBR/PuwkhCYhcaqGSpQKCZAQFY2EhCgSRIgBIZYKMTDwAfhEWRALHyADDKyVunWAMtAJRXRoHQgShEAxTjgGI8s48d357hLfGd5kJb5773fvr989o7i+CvKo8XiT+o7T7kjkaMoV2ml3yBgiL4iDMUQ04ItCFZoKRgQGJwCCxGRpuBdKAzBVAj7eUrZKAGCSnyx3FNkZsfMIb+q0OxKDSWS3RE7FpAG5cUMuL0TdLhwoZi19hFHAnRNA2GwiJjRrDIHcVHOKNSFfYvE4LW5OvhhxMiCW9ZASBYaU2ITCGoRUKWzDrABSP/hEqkBxjjtPr2UvmSYxZEsD6pg+uzMg0JyQFsdPUEJWNKD+8ccpIRMaUCfkcyQHpGzsZ8wJGQqjmpIZrvuTNAMMy67kluvWcj13ykaFXPDPh6cvfrkeeXWuYdc2b4R/+fjs5Xh4xOEGJp8D5FeWqnev8Z2ZgVC51RT34L+ceJ504soFs1qSZkKc6zD2+p+9g08/D/p4NK7e22DlVysvNM/L9AG+Ze5+z93v+c/WYpXdcyqtJiAEAO57J3+moVkUKl46ay3VAGA8PBru7GkWRo8tFEtXL/rPg+1d7I01A1C+edmwTAD40T10u4eaJbLCudP5lQYAYG/0dXtXs0yMCrny9TX/ebizlzRhpQ+gtLGGjucBwOt/+fbmnfxaiKUBJkJ/wiXGg61XgLH4huHSweS+4UpeQhj2/Vbcn4uP7gDA97fdwdZrdhhOu/O/nE6bjOL6Kkcn3apX7Ae3qK/1njzH3mh6DXOyVH94m6OcjvTcEQhc9KZIwXd8Jkwo0mlR+dN+UsgMRSHqXYiCx5+5torKSohzUTT1m181DIQchaZ2LJRKDuRru8xpQDVnoGYnUhRKXRUs5Rlp3CbSNp1nho4MexBYUzTAPjUyC68FhsuXrA88hTdiH0LiFp1juEr7ob9/aeySyptFgvQHX+M+TzmWpzl6TIgbOg1/J7KQGQXi36EWvd7NEM9DAAAAAElFTkSuQmCC",
   "Lance Stroll": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAAEBklEQVR42uVazU/TYBh/+7bdug1WxoqODaKwjIPBiBxMWKIxJHoALh48ePXm0b+GmBj/AC876MEDfsRI1IjEMCWgYmQgbDDmvrutXx5GurJ1/Vq3dfM9dWv7Pr+nz+/5PX3fPohz5iIwb/ge3FG9Jr4cMdEiZi7o+HJE2Ye6C1p3BmklAlUoqqBVnWnFDYMOKCBWRmP4RtMckEVgzLYpU+lwoNGeWenYysxQuw3ppPHliIliUjebrqTSFAFzdcNcW1B1OqlQtBt9nSHRukEHpLSpo1C7fRBxq9KpKYWqiFvX6dbpVIXRDAPUcj/o0hCJpJtC0giCrg4ph7U60PUHrysUsFnidjJrtb8yNfrQXxGwDvW1JwMEPT5gTzx+hSD0SwSs//ibBaEvImAdyTdQHKBltV9jTegjGe3RgUnf+/VsBiC4l7T5KdxP2Ua9kLCJZ46ePOfLjOwtRDBABAM4RUIHgWBQYFguR1cSKXprl0mkjKUBMvnooQEBtV/weRbmZE/JOgAJm2dhDj8/3GzCYnQn+27DwNK5QxRyX7+igB4A4LwcdEyNG6GQQUSCwCTTzMFJ5SApsJxnKaxENwwlJv3iz8rhSfbNOpencd/w0O1r0H5KPyI0Tn/f65AD5ViiHEtUj/ERj4pQEDYAa6HOvY+y6TwAoLJ/TG/+dl2dOr3MSVhUhbhiSeB5SfSaXJYrWlVGeYHe2hV/Dc5NY0MDCIbaAiOOS7U9Efrbrw7mgM6RW41Cu40IBgAANj9F3bt1JqE4LvcuWt47sq4DAstlVta4bEFkfC08ZSaz8knMKIs6gA0NeBbCKOmSIbEd9yyGSz/2M6/XBY6zogMIhJ7FMOo+RV/6uZ/7uMkXSxhFkjdnMc8gAIAIjfF0Obu6YSSJtWyAtTLsE6Miep4uZ15+5rIFgeWYeCr79kutlk1PICiqvQxXYUPDX7h08aemldmCVFLZvznJw4SyHFNwI74c6YSMCnxN+VG3C5EUtSp/JBnNW7EOMMfpmj2H3T0/i7pdCIbivmH3jRmpHLHZgsEkrhJJ+9oSp0jv3XnZU+fuL4nHicfPBIat/DlmkhmcIqt/OkLjjpDMe1vx6w7gBe0JUFtStj0NBCH94sMZujcMejuWX9vSmwCdqwNcrph8+soRGrNP+HEvCZ12BIUCw3H5IpNI0duxyuGJQY0Wv9D0xNZQI8g+WtSrfgux4OPvu20VKwehWYpC1a0v66CXVRcou9nSieKgX/Jl62zfRcBqyaBanZRUqOuh0LJnrtRuU7dt2skKXdfsoWBaJQLau0bakbVAw8eXfm94kk6kvQnJMHQDzVU93/T3P7VdqtrWgqD7ja8Ky1O9o5utxwq60UvN37oY0iYh/ge29EgE/9W0/wAAAABJRU5ErkJggg==",
 };
+// Jolpica spells out his legal name — same photo, no second copy in the bundle
+DRIVER_IMAGES["Andrea Kimi Antonelli"]=DRIVER_IMAGES["Kimi Antonelli"];
 
 const TEAM_LOGOS = {
   "Alpine": "data:image/png;base64,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",
@@ -720,7 +721,7 @@ function TrackMap({raceName,tracks,stroke="var(--fg)",strokeWidth=2,opacity=1,fi
   const t=tracks?.[raceName];
   if(!t)return null;
   return(
-    <svg viewBox={t.viewBox} preserveAspectRatio="xMidYMid meet" style={{display:"block",height,width,overflow:"visible",...style}}>
+    <svg role="img" aria-label={`${raceName} circuit outline`} viewBox={t.viewBox} preserveAspectRatio="xMidYMid meet" style={{display:"block",height,width,overflow:"visible",...style}}>
       <path d={t.path} fill={fill} stroke={stroke} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" opacity={opacity}/>
     </svg>
   );
@@ -957,11 +958,11 @@ const LapChart=memo(function LapChart({session,lap,setLap,outNums}){
   );
 });
 
-const LapReadout=memo(function LapReadout({session,lap}){
+const LapReadout=memo(function LapReadout({session,lap,live=true}){
   const drivers=session.drivers||[];
   const order=drivers.map(d=>{const q=(d.positions||[]).find(z=>z.l===lap);const t=(d.lapTimes||[]).find(z=>z.l===lap);return q?{d,p:q.p,pit:!!t?.pit}:null;}).filter(Boolean).sort((a,b)=>a.p-b.p);
   return(
-    <div className="readout" aria-live="polite">
+    <div className="readout" aria-live={live?"polite":"off"}>
       <span className="ro-lap">LAP {lap}</span>
       {order.map(o=><span key={o.d.number} className={`ro-car${o.pit?" pit":""}`} title={`${o.d.name}${o.pit?" · pit stop this lap":""}`}><i>{o.p}</i><b style={{color:inkify(o.d.teamColour||"var(--ink-4)")}}>{o.d.acronym}</b></span>)}
     </div>
@@ -969,8 +970,7 @@ const LapReadout=memo(function LapReadout({session,lap}){
 });
 
 // Stopwatch scrubber: drives the lap cursor; play advances a lap every 160 ms.
-function LapScrubber({lap,setLap,total}){
-  const[playing,setPlaying]=useState(false);
+function LapScrubber({lap,setLap,total,playing,setPlaying}){
   useEffect(()=>{if(!playing)return;const id=setInterval(()=>setLap(l=>{if(l>=total){setPlaying(false);return l;}return l+1;}),160);return()=>clearInterval(id);},[playing,total,setLap]);
   const pct=(l)=>((l-1)/Math.max(1,total-1))*100;
   const ticks=[];for(let l=1;l<=total;l++){if(l===1||l%5===0||l===total)ticks.push(l);}
@@ -995,6 +995,45 @@ function LapScrubber({lap,setLap,total}){
 const IcoPlay=()=><svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true"><path d="M2 1l9 5-9 5z"/></svg>;
 const IcoPause=()=><svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true"><rect x="1.5" y="1" width="3.2" height="10"/><rect x="7.3" y="1" width="3.2" height="10"/></svg>;
 const IcoRestart=()=><svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true"><rect x="1" y="1" width="2" height="10"/><path d="M11 1L4 6l7 5z"/></svg>;
+
+// ── Deep links ─────────────────────────────────────────────────────────────
+// The URL hash carries the open tab and its selection (#tab=results&r=14,
+// #tab=telemetry&r=14&lap=12, #tab=sectors&r=14&s=qualifying), so any view
+// can be linked and Back/Forward step between tabs. A bare #lap=N — the old
+// scrubber link — still opens the Overview on that lap.
+const TAB_SLUGS={Overview:"overview",Standings:"standings","Race Results":"results","Sector Times":"sectors",Telemetry:"telemetry","Head to Head":"h2h","Pit Stops":"pits",Quotes:"quotes",Schedule:"schedule"};
+const SLUG_TABS=Object.fromEntries(Object.entries(TAB_SLUGS).map(([k,v])=>[v,k]));
+const SESSION_SLUGS={"Practice 1":"fp1","Practice 2":"fp2","Practice 3":"fp3",Qualifying:"qualifying","Sprint Qualifying":"sprint-qualifying",Sprint:"sprint",Race:"race"};
+const hashParams=()=>new URLSearchParams(typeof location!=="undefined"?location.hash.replace(/^#/,""):"");
+const tabFromHash=()=>SLUG_TABS[hashParams().get("tab")]||"Overview";
+const tabHref=(tab,params={})=>"#"+new URLSearchParams({tab:TAB_SLUGS[tab],...Object.fromEntries(Object.entries(params).filter(([,v])=>v!=null).map(([k,v])=>[k,String(v)]))}).toString();
+// Merge params into the current hash without adding a history entry
+function patchHash(params){
+  const p=hashParams();
+  for(const[k,v]of Object.entries(params)){if(v==null||v==="")p.delete(k);else p.set(k,String(v));}
+  const h="#"+p.toString();
+  if(typeof location!=="undefined"&&h!==location.hash){try{history.replaceState(null,"",h);}catch{/* Safari rate-limits history calls */}}
+}
+
+// The Overview's lap chart, read-out and stopwatch. It owns the lap cursor, so
+// playback re-renders this sheet rather than the whole dashboard (the cursor
+// used to live in the root), and it mirrors the lap into the URL — debounced,
+// since Safari throttles history calls. The read-out's live region goes quiet
+// during playback instead of announcing a lap every 160 ms.
+function LapSheet({session,total,outNums,onOpenReplay,replayHref}){
+  const[lap,setLapRaw]=useState(()=>{const L=parseInt(hashParams().get("lap"));return Number.isFinite(L)?Math.max(1,Math.min(total,L)):1;});
+  const setLap=useCallback(v=>setLapRaw(prev=>Math.max(1,Math.min(total,typeof v==="function"?v(prev):v))),[total]);
+  const[playing,setPlaying]=useState(false);
+  useEffect(()=>{const id=setTimeout(()=>patchHash({lap:lap>1?lap:null}),400);return()=>clearTimeout(id);},[lap]);
+  return(
+    <div style={{marginTop:14}}>
+      <LapChart session={session} lap={lap} setLap={setLap} outNums={outNums}/>
+      <LapReadout session={session} lap={lap} live={!playing}/>
+      <LapScrubber lap={lap} setLap={setLap} total={total} playing={playing} setPlaying={setPlaying}/>
+      <p className="sheet-sub" style={{marginTop:10}}>Red line: the winner. Circles: pit stops. ×: retired. Yellow columns: local yellows. Drag the stopwatch, or press play. <a href={replayHref(lap)} onClick={e=>{e.preventDefault();onOpenReplay(lap);}}>Open this lap in the replay →</a></p>
+    </div>
+  );
+}
 
 const TABS=[{id:"Overview",label:"Overview"},{id:"Standings",label:"Standings"},{id:"Race Results",label:"Race Results"},{id:"Sector Times",label:"Sector Times"},{id:"Telemetry",label:"Telemetry"},{id:"Head to Head",label:"Head to Head"},{id:"Pit Stops",label:"Pit Stops"},{id:"Quotes",label:"Quotes"},{id:"Schedule",label:"Schedule"}];
 
@@ -1053,7 +1092,10 @@ const SectorEnrichment=memo(function SectorEnrichment({sess,isExact,sessLabel,ta
 });
 
 export default function F1Dashboard(){
-  const[tab,setTab]=useState("Overview");
+  const[tab,setTab]=useState(()=>tabFromHash());
+  // The deep link the page opened with — applied as the data it names arrives
+  const initialHash=useRef(null);
+  if(initialHash.current===null)initialHash.current=hashParams();
   const[expandedRace,setExpandedRace]=useState(null);
   const[data,setData]=useState(null);
   // The tab title follows the season in data.json (index.html's is the fallback)
@@ -1090,9 +1132,6 @@ export default function F1Dashboard(){
   const[quoteDriver,setQuoteDriver]=useState(null); // null = all drivers
   const[quotesShowAll,setQuotesShowAll]=useState(false); // older rounds collapsed by default
   // Lap cursor for the overview lap chart. Deep-linkable: #lap=34 restores it,
-  // and the Telemetry replay reads it to open on the same lap.
-  const[lapCursor,setLapCursorRaw]=useState(()=>{const m=/lap=(\d+)/.exec(typeof location!=="undefined"?location.hash:"");return m?parseInt(m[1]):1;});
-  const setLapCursor=(v)=>setLapCursorRaw(prev=>{const next=typeof v==="function"?v(prev):v;try{history.replaceState(null,"",`#lap=${next}`);}catch{}return next;});
   const[progHover,setProgHover]=useState(null);
   const[progHidden,setProgHidden]=useState(()=>new Set());
   const[tracks,setTracks]=useState(null);
@@ -1138,9 +1177,12 @@ export default function F1Dashboard(){
         const preloaded={};
         for(const m of of1.meetings){if(m.sessions?.some(s=>s.drivers))preloaded[m.meetingKey]=m;}
         if(Object.keys(preloaded).length>0)setOpenf1Meetings(prev=>({...preloaded,...prev}));
-        setSelMeeting(of1.meetings[of1.meetings.length-1].meetingKey);
-        const lastMtg=of1.meetings[of1.meetings.length-1];
-        const raceSess=lastMtg.sessions.find(s=>s.sessionName==="Race")||lastMtg.sessions[lastMtg.sessions.length-1];
+        const want=initialHash.current,wantTab=SLUG_TABS[want.get("tab")],wantR=parseInt(want.get("r"));
+        const linked=Number.isFinite(wantR)?of1.meetings.find(m=>m.round===wantR):null;
+        if(linked&&wantTab==="Telemetry")setTelMeetingKey(linked.meetingKey);
+        const secMtg=linked&&wantTab==="Sector Times"?linked:of1.meetings[of1.meetings.length-1];
+        setSelMeeting(secMtg.meetingKey);
+        const raceSess=(linked&&wantTab==="Sector Times"&&secMtg.sessions.find(s=>SESSION_SLUGS[s.sessionName]===want.get("s")))||secMtg.sessions.find(s=>s.sessionName==="Race")||secMtg.sessions[secMtg.sessions.length-1];
         if(raceSess)setSelSession(raceSess.sessionKey);
       });
   },[]);
@@ -1157,7 +1199,11 @@ export default function F1Dashboard(){
         // Default the Race Results dropdown to the latest round — "All" was a
         // 17-card, 10,000 px page with the newest race at the bottom
         const lastGP=t?.races?.filter(r=>!r.sprint).slice(-1)[0];
-        if(lastGP)setSelRace(lastGP.r);
+        const want=initialHash.current,wantTab=SLUG_TABS[want.get("tab")],wantR=want.get("r");
+        const linked=wantTab==="Race Results"&&wantR?t?.races?.find(x=>String(x.r)===wantR):null;
+        if(linked)setSelRace(linked.r);
+        else if(lastGP)setSelRace(lastGP.r);
+        if(wantTab==="Pit Stops"&&wantR)setSelPitRace(wantR);
         setLoading(false);
       })
       .catch(e=>{console.error("Failed to load data:",e);setError(e.message);setLoading(false);});
@@ -1207,6 +1253,72 @@ export default function F1Dashboard(){
     }
   },[openf1Index,openf1Meetings,tab,selMeeting,telMeetingKey,data,selRace,meetingFailed]);
 
+  // Mirror the view into the URL. A tab change pushes a history entry (Back
+  // returns to the previous tab); a selection change replaces it. Telemetry and
+  // Sector Times wait for the OpenF1 index so a deep link isn't overwritten
+  // while it loads. A lap stays in the hash only for the same tab and round.
+  const hashTabRef=useRef(tab);
+  useEffect(()=>{
+    if(!data)return;
+    if((tab==="Telemetry"||tab==="Sector Times")&&!openf1Index)return;
+    const meta=openf1Index?.meetings||[];
+    const roundOf=key=>meta.find(m=>m.meetingKey===key)?.round??null;
+    let r=null,sess=null;
+    if(tab==="Race Results"&&selRace!=="all")r=selRace;
+    if(tab==="Pit Stops"&&selPitRace!=null)r=selPitRace;
+    if(tab==="Telemetry")r=roundOf(telMeetingKey??[...meta].reverse().find(m=>m.sessions.some(x=>x.sessionName==="Race"))?.meetingKey);
+    if(tab==="Sector Times"){
+      const mk=selMeeting??meta[meta.length-1]?.meetingKey;
+      r=roundOf(mk);
+      const ss=meta.find(m=>m.meetingKey===mk)?.sessions.find(x=>x.sessionKey===selSession);
+      sess=ss?SESSION_SLUGS[ss.sessionName]:null;
+    }
+    const cur=hashParams();
+    const sameView=(cur.get("tab")||(cur.has("lap")?"overview":null))===TAB_SLUGS[tab]&&(cur.get("r")??null)===(r==null?null:String(r));
+    const next=new URLSearchParams({tab:TAB_SLUGS[tab]});
+    if(r!=null)next.set("r",String(r));
+    if(sess)next.set("s",sess);
+    if(sameView&&cur.get("lap")&&(tab==="Overview"||tab==="Telemetry"))next.set("lap",cur.get("lap"));
+    const h="#"+next.toString();
+    const push=hashTabRef.current!==tab;
+    hashTabRef.current=tab;
+    if(h===location.hash)return;
+    try{history[push?"pushState":"replaceState"](null,"",h);}catch{/* Safari rate-limits history calls */}
+  },[tab,data,openf1Index,selRace,selPitRace,telMeetingKey,selMeeting,selSession]);
+
+  // Back/Forward: restore the tab and selection the URL names
+  const openf1IndexRef=useRef(openf1Index);
+  openf1IndexRef.current=openf1Index;
+  useEffect(()=>{
+    const onPop=()=>{
+      const p=hashParams();
+      const t=SLUG_TABS[p.get("tab")]||"Overview";
+      hashTabRef.current=t; // arriving by Back/Forward is not a new history entry
+      setTab(t);
+      const r=p.get("r");
+      if(t==="Race Results")setSelRace(r?(r.endsWith("S")?r:parseInt(r)):"all");
+      if(t==="Pit Stops")setSelPitRace(r||null);
+      const m=r?(openf1IndexRef.current?.meetings||[]).find(x=>x.round===parseInt(r)):null;
+      if(t==="Telemetry")setTelMeetingKey(m?m.meetingKey:null);
+      if(t==="Sector Times"&&m){
+        setSelMeeting(m.meetingKey);
+        const ss=m.sessions.find(x=>SESSION_SLUGS[x.sessionName]===p.get("s"))||m.sessions.find(x=>x.sessionName==="Race");
+        setSelSession(ss?ss.sessionKey:null);
+      }
+    };
+    window.addEventListener("popstate",onPop);
+    return()=>window.removeEventListener("popstate",onPop);
+  },[]);
+
+  // Overview → replay on the same lap: the URL carries round and lap to the replay
+  const openReplay=useCallback((round,lap)=>{
+    const m=(openf1Index?.meetings||[]).find(x=>x.round===round);
+    if(m)setTelMeetingKey(m.meetingKey);
+    try{history.pushState(null,"",tabHref("Telemetry",{r:round,lap}));}catch{/* rate-limited */}
+    hashTabRef.current="Telemetry";
+    setTab("Telemetry");
+  },[openf1Index]);
+
   // Cars that weren't classified, per GP date: the lap chart and replay mark
   // retirements from the official classification, not from where a line ends
   const outByDay=useMemo(()=>Object.fromEntries((data?.races||[]).filter(r=>!r.sprint).map(r=>[r.dt,new Set(r.full.filter(x=>typeof x.p!=="number"&&x.num!=null).map(x=>String(x.num)))])),[data]);
@@ -1254,19 +1366,20 @@ export default function F1Dashboard(){
         </div>
       </header>
             <div className={`tab-wrap${tabsFade?" fade-r":""}`}>
-        <div className="tab-bar" role="tablist" ref={tabBarRef} onScroll={e=>measureTabs(e.currentTarget)} onKeyDown={e=>{
-          if(e.key!=="ArrowLeft"&&e.key!=="ArrowRight")return;
-          e.preventDefault();
+        <div className="tab-bar" role="tablist" aria-label="Dashboard sheets" ref={tabBarRef} onScroll={e=>measureTabs(e.currentTarget)} onKeyDown={e=>{
+          // Roving focus: arrows move between tabs, Home/End jump to the ends
           const i=TABS.findIndex(t=>t.id===tab);
-          const next=(i+(e.key==="ArrowRight"?1:-1)+TABS.length)%TABS.length;
+          const next=e.key==="ArrowRight"?(i+1)%TABS.length:e.key==="ArrowLeft"?(i-1+TABS.length)%TABS.length:e.key==="Home"?0:e.key==="End"?TABS.length-1:-1;
+          if(next<0)return;
+          e.preventDefault();
           setTab(TABS[next].id);
           e.currentTarget.children[next]?.focus();
         }}>
-          {TABS.map(t=>{return <button key={t.id} role="tab" aria-selected={tab===t.id} className={`tb ${tab===t.id?"a":""}`} onClick={()=>setTab(t.id)}>{t.label}</button>;})}
+          {TABS.map(t=>{return <button key={t.id} id={`tab-${TAB_SLUGS[t.id]}`} role="tab" aria-selected={tab===t.id} aria-controls="sheet" tabIndex={tab===t.id?0:-1} className={`tb ${tab===t.id?"a":""}`} onClick={()=>setTab(t.id)}>{t.label}</button>;})}
         </div>
       </div>
 
-      <main className="main">
+      <main className="main" id="sheet" role="tabpanel" aria-labelledby={`tab-${TAB_SLUGS[tab]}`}>
         <TabErrorBoundary key={tab} onReset={()=>{
           // Back to each tab's defaults: latest race, latest meeting, no expanded rows
           const lastGP=races.filter(r=>!r.sprint).slice(-1)[0];
@@ -1315,12 +1428,7 @@ export default function F1Dashboard(){
                   <h2 className="sheet-h" style={{fontSize:30}}>Lap chart · {lastRaceFull?lastRaceFull.nm:"—"}</h2>
                   <p className="sheet-sub">{lastRaceFull?`Round ${lastRaceFull.r} · ${lastRaceFull.ci} · ${raceDateFmt(lastRaceFull.dt,lastRaceFull.tt)}`:""}{total?` · ${total} laps`:""}{winnerName?` · won by ${winnerName}`:""}{lastRaceFull?.tm?` in ${lastRaceFull.tm}`:""}</p>
                   {raceSession?(
-                    <div style={{marginTop:14}}>
-                      <LapChart session={raceSession} lap={Math.min(lapCursor,total)} setLap={setLapCursor} outNums={outByDay[lastRaceFull?.dt]}/>
-                      <LapReadout session={raceSession} lap={Math.min(lapCursor,total)}/>
-                      <LapScrubber lap={Math.min(lapCursor,total)} setLap={setLapCursor} total={total}/>
-                      <p className="sheet-sub" style={{marginTop:10}}>Red line: the winner. Circles: pit stops. ×: retired. Yellow columns: local yellows. Drag the stopwatch, or press play. <a href="#lap" onClick={e=>{e.preventDefault();setTab("Telemetry");}}>Open this lap in the replay →</a></p>
-                    </div>
+                    <LapSheet key={raceSession.sessionKey} session={raceSession} total={total} outNums={outByDay[lastRaceFull?.dt]} onOpenReplay={lap=>openReplay(lastRaceFull.r,lap)} replayHref={lap=>tabHref("Telemetry",{r:lastRaceFull.r,lap})}/>
                   ):(
                     (()=>{
                       const failed=openf1Status==="failed"||(raceMeeting&&meetingFailed[raceMeeting.meetingKey]);
@@ -1366,7 +1474,7 @@ export default function F1Dashboard(){
                       <h2 className="sheet-h">Classification · {lastRaceFull.nm}</h2>
                       <p className="sheet-sub">Top three{fl?.driver?` · fastest lap ${fl.driver} (${fl.team}) ${fl.time||""}`:""}</p>
                     </div>
-                    <a href="#results" onClick={e=>{e.preventDefault();setSelRace(lastRaceFull.r);setTab("Race Results");}} className="head" style={{fontSize:13,color:"var(--red)",fontWeight:700}}>Full classification →</a>
+                    <a href={tabHref("Race Results",{r:lastRaceFull.r})} onClick={e=>{e.preventDefault();setSelRace(lastRaceFull.r);setTab("Race Results");}} className="head" style={{fontSize:13,color:"var(--red)",fontWeight:700}}>Full classification →</a>
                   </div>
                   <div className="podium">
                     {lastRaceFull.pod.map((p,idx)=>(
@@ -1423,7 +1531,7 @@ export default function F1Dashboard(){
                     <TrackMap raceName={nextRace.nm} tracks={tracks} stroke="var(--ink)" strokeWidth={2.2} opacity={1} height={220} width={320}/>
                   </div>
                 )}
-                <a href="#schedule" onClick={e=>{e.preventDefault();setTab("Schedule");}} className="head" style={{display:"inline-block",marginTop:14,fontSize:13,color:"var(--red)",fontWeight:700}}>Full calendar →</a>
+                <a href={tabHref("Schedule")} onClick={e=>{e.preventDefault();setTab("Schedule");}} className="head" style={{display:"inline-block",marginTop:14,fontSize:13,color:"var(--red)",fontWeight:700}}>Full calendar →</a>
               </div>
             </div>
             )}
@@ -1432,7 +1540,7 @@ export default function F1Dashboard(){
               <h2 className="sheet-h" style={{fontSize:30}}>Season complete</h2>
               <p className="sheet-sub">{season} · {totalRounds} rounds{DS[0]?` · ${DS[0].n} champion on ${DS[0].pts} pts`:""}{CS[0]?` · ${CS[0].t} take the constructors' title`:""}</p>
               <div style={{borderTop:"1px solid var(--rule)",marginTop:12,paddingTop:16}}>
-                <a href="#schedule" onClick={e=>{e.preventDefault();setTab("Schedule");}} className="head" style={{display:"inline-block",fontSize:13,color:"var(--red)",fontWeight:700}}>The full season →</a>
+                <a href={tabHref("Schedule")} onClick={e=>{e.preventDefault();setTab("Schedule");}} className="head" style={{display:"inline-block",fontSize:13,color:"var(--red)",fontWeight:700}}>The full season →</a>
               </div>
             </div>
             )}
@@ -1454,7 +1562,7 @@ export default function F1Dashboard(){
                       <h2 className="sheet-h">Driver reactions</h2>
                       <p className="sheet-sub">{lastRound.raceName}{quoteLag?` · later rounds (through the ${latestGP.nm}) not yet transcribed`:""}</p>
                     </div>
-                    <a href="#quotes" onClick={e=>{e.preventDefault();setTab("Quotes");}} className="head" style={{fontSize:13,color:"var(--red)",fontWeight:700}}>All quotes →</a>
+                    <a href={tabHref("Quotes")} onClick={e=>{e.preventDefault();setTab("Quotes");}} className="head" style={{fontSize:13,color:"var(--red)",fontWeight:700}}>All quotes →</a>
                   </div>
                   <div className="entries">
                     {showQuotes.map((q,i)=>(
@@ -1511,7 +1619,7 @@ export default function F1Dashboard(){
                   <div style={{fontSize:15,fontWeight:700,marginBottom:4}}>Points Progression</div>
                   <div style={{fontSize:12,color:"var(--w35)",marginBottom:16}}>Top 6 drivers · cumulative points by round · hover for details, click legend to filter{progression.labels.some(l=>l.endsWith(" S"))&&" · S = sprint weekend (sprint points included in that round's jump)"}</div>
                   <div style={{position:"relative"}}>
-                    <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{width:"100%",height:240,display:"block",touchAction:"pan-y"}} onPointerMove={onMove} onPointerLeave={()=>setProgHover(null)}>
+                    <svg role="img" aria-label="Points progression: cumulative points by round for the top six drivers" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{width:"100%",height:240,display:"block",touchAction:"pan-y"}} onPointerMove={onMove} onPointerLeave={()=>setProgHover(null)}>
                       {/* Y gridlines + labels */}
                       {yTicks.map(t=>(
                         <g key={t}>
@@ -1582,9 +1690,9 @@ export default function F1Dashboard(){
                       const color=TC[s.team]||"var(--fg)";
                       const visible=isVisible(s.name);
                       return(
-                        <button key={s.name} onClick={()=>toggle(s.name)} style={{display:"flex",alignItems:"center",gap:6,fontSize:11,background:"none",border:"none",color:"inherit",cursor:"pointer",padding:"3px 6px",borderRadius:2,opacity:visible?1:0.35,transition:"opacity 0.2s",fontFamily:"var(--font-ui)"}}>
+                        <button className="chip" key={s.name} onClick={()=>toggle(s.name)} style={{display:"flex",alignItems:"center",gap:6,fontSize:11,background:"none",border:"none",color:"inherit",cursor:"pointer",padding:"3px 6px",borderRadius:2,opacity:visible?1:0.35,transition:"opacity 0.2s",fontFamily:"var(--font-ui)"}}>
                           {isSecond?(
-                            <svg width={16} height={4} style={{display:"block"}}><line x1={0} y1={2} x2={16} y2={2} stroke={color} strokeWidth={2.5} strokeDasharray="4 3"/></svg>
+                            <svg aria-hidden="true" width={16} height={4} style={{display:"block"}}><line x1={0} y1={2} x2={16} y2={2} stroke={color} strokeWidth={2.5} strokeDasharray="4 3"/></svg>
                           ):(
                             <div style={{width:14,height:2.5,background:color,borderRadius:1}}/>
                           )}
@@ -1677,7 +1785,7 @@ export default function F1Dashboard(){
             <div style={{display:"flex",alignItems:"center",gap:14}}>
               <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:"var(--w40)",flexShrink:0}}>Race</div>
               <div style={{position:"relative",flex:1,maxWidth:360}}>
-                <select value={selRace} onChange={e=>{const v=e.target.value;setSelRace(v==="all"?"all":v.includes("S")?v:parseInt(v));}} style={{width:"100%",appearance:"none",WebkitAppearance:"none",MozAppearance:"none",background:"var(--w04)",border:"1px solid var(--w10)",borderRadius:2,padding:"10px 40px 10px 14px",color:"var(--fg)",fontSize:13,fontWeight:500,fontFamily:"var(--font-ui)",cursor:"pointer",outline:"none",transition:"border-color .2s"}}>
+                <select aria-label="Race" value={selRace} onChange={e=>{const v=e.target.value;setSelRace(v==="all"?"all":v.includes("S")?v:parseInt(v));}} style={{width:"100%",appearance:"none",WebkitAppearance:"none",MozAppearance:"none",background:"var(--w04)",border:"1px solid var(--w10)",borderRadius:2,padding:"10px 40px 10px 14px",color:"var(--fg)",fontSize:13,fontWeight:500,fontFamily:"var(--font-ui)",cursor:"pointer",outline:"none",transition:"border-color .2s"}}>
                   <option value="all" style={{background:"var(--sheet)",color:"var(--fg)"}}>All Races & Sprints</option>
                   {races.map(race=>(
                     <option key={race.r} value={race.r} style={{background:"var(--sheet)",color:"var(--fg)"}}>{race.sprint?"SPRINT · ":"RACE · "}R{typeof race.r==="string"?race.r.replace("S",""):race.r} — {race.nm}</option>
@@ -1821,7 +1929,7 @@ export default function F1Dashboard(){
           if(!curMtg.sessions.some(s=>s.drivers))return(
             <div className="fu">
               <label style={{display:"flex",alignItems:"center",gap:12,fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:"var(--ink-3)"}}>Meeting
-                <select value={String(curMtg.meetingKey)} onChange={e=>{const m=openf1.meetings.find(x=>String(x.meetingKey)===e.target.value);if(m){setSelMeeting(m.meetingKey);setSelSession(null);}}} style={{background:"var(--w04)",border:"1px solid var(--w10)",borderRadius:2,padding:"6px 12px",color:"var(--fg)",fontSize:12,fontFamily:"var(--font-ui)"}}>
+                <select aria-label="Meeting" value={String(curMtg.meetingKey)} onChange={e=>{const m=openf1.meetings.find(x=>String(x.meetingKey)===e.target.value);if(m){setSelMeeting(m.meetingKey);setSelSession(null);}}} style={{background:"var(--w04)",border:"1px solid var(--w10)",borderRadius:2,padding:"6px 12px",color:"var(--fg)",fontSize:12,fontFamily:"var(--font-ui)"}}>
                   {openf1.meetings.map(m=><option key={m.meetingKey} value={String(m.meetingKey)}>{m.meetingName.replace(" Grand Prix","")}</option>)}
                 </select>
               </label>
@@ -1840,7 +1948,7 @@ export default function F1Dashboard(){
               {/* Meeting + Session Selectors */}
               <div style={{display:"flex",gap:12,flexWrap:"wrap",alignItems:"center"}}>
                 <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:"var(--w40)"}}>Meeting</div>
-                <select value={String(curMtg.meetingKey)} onChange={e=>{const m=openf1.meetings.find(x=>String(x.meetingKey)===e.target.value);if(!m)return;setSelMeeting(m.meetingKey);const rs=m.sessions.find(s=>s.sessionName==="Race")||m.sessions[m.sessions.length-1];if(rs)setSelSession(rs.sessionKey);}} style={{appearance:"none",WebkitAppearance:"none",MozAppearance:"none",background:"var(--w04)",border:"1px solid var(--w10)",borderRadius:2,padding:"8px 36px 8px 12px",color:"var(--fg)",fontSize:12,fontWeight:500,fontFamily:"var(--font-ui)",cursor:"pointer",outline:"none",minWidth:200,transition:"border-color .2s"}}>
+                <select aria-label="Meeting" value={String(curMtg.meetingKey)} onChange={e=>{const m=openf1.meetings.find(x=>String(x.meetingKey)===e.target.value);if(!m)return;setSelMeeting(m.meetingKey);const rs=m.sessions.find(s=>s.sessionName==="Race")||m.sessions[m.sessions.length-1];if(rs)setSelSession(rs.sessionKey);}} style={{appearance:"none",WebkitAppearance:"none",MozAppearance:"none",background:"var(--w04)",border:"1px solid var(--w10)",borderRadius:2,padding:"8px 36px 8px 12px",color:"var(--fg)",fontSize:12,fontWeight:500,fontFamily:"var(--font-ui)",cursor:"pointer",outline:"none",minWidth:200,transition:"border-color .2s"}}>
                   {openf1.meetings.map(m=>(
                     <option key={m.meetingKey} value={String(m.meetingKey)} style={{background:"var(--sheet)",color:"var(--fg)"}}>{m.meetingName.replace(" Grand Prix","")}</option>
                   ))}
@@ -1876,7 +1984,7 @@ export default function F1Dashboard(){
                     <div style={{fontSize:12,color:"var(--w35)",marginBottom:16}}>Each third of the lap coloured by the team that set the fastest sector time</div>
                     <div style={{display:"flex",gap:24,alignItems:"center",flexWrap:"wrap"}}>
                       <div style={{flex:"1 1 320px",minWidth:280,height:200,display:"flex",alignItems:"center",justifyContent:"center"}}>
-                        <svg viewBox={sectors.viewBox} preserveAspectRatio="xMidYMid meet" style={{display:"block",width:"100%",height:200,overflow:"visible"}}>
+                        <svg role="img" aria-label="Circuit map coloured by the team that set the fastest time in each third of the lap" viewBox={sectors.viewBox} preserveAspectRatio="xMidYMid meet" style={{display:"block",width:"100%",height:200,overflow:"visible"}}>
                           {/* Underlay base track for continuity */}
                           <path d={track.path} fill="none" stroke="var(--w06)" strokeWidth={5} strokeLinecap="round" strokeLinejoin="round"/>
                           {/* Sector segments */}
@@ -1969,7 +2077,7 @@ export default function F1Dashboard(){
                         const tc=inkify(d.teamColour)||"var(--fg)";
                         const atMax=!on&&selected.length>=4;
                         return(
-                          <button key={d.acronym} disabled={atMax} onClick={()=>toggle(d.acronym)} style={{display:"flex",alignItems:"center",gap:6,padding:"5px 10px",borderRadius:2,border:`1px solid ${on?tc:"var(--w08)"}`,background:on?`${alpha(tc,0x1a)}`:"var(--w02)",color:on?"var(--fg)":"var(--w55)",cursor:atMax?"not-allowed":"pointer",fontSize:11,fontWeight:on?700:500,fontFamily:"var(--font-ui)",opacity:atMax?0.35:1,transition:"all .15s"}}>
+                          <button className="chip" aria-pressed={on} key={d.acronym} disabled={atMax} onClick={()=>toggle(d.acronym)} style={{display:"flex",alignItems:"center",gap:6,padding:"5px 10px",borderRadius:2,border:`1px solid ${on?tc:"var(--w08)"}`,background:on?`${alpha(tc,0x1a)}`:"var(--w02)",color:on?"var(--fg)":"var(--w55)",cursor:atMax?"not-allowed":"pointer",fontSize:11,fontWeight:on?700:500,fontFamily:"var(--font-ui)",opacity:atMax?0.35:1,transition:"all .15s"}}>
                             <div style={{width:3,height:11,background:tc,borderRadius:1,opacity:on?1:0.5}}/>
                             <span style={{letterSpacing:0.5}}>{d.acronym}</span>
                           </button>
@@ -2272,7 +2380,7 @@ export default function F1Dashboard(){
             {prs.length>1&&(
               <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
                 <span style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:"var(--w40)",fontWeight:600}}>Race</span>
-                <select value={String(curPr.r)} onChange={e=>setSelPitRace(e.target.value)} style={{appearance:"none",WebkitAppearance:"none",background:"var(--w04)",border:"1px solid var(--w10)",borderRadius:2,padding:"6px 28px 6px 12px",color:"var(--fg)",fontSize:12,fontWeight:500,fontFamily:"var(--font-ui)",cursor:"pointer",outline:"none",minWidth:220}}>
+                <select aria-label="Race" value={String(curPr.r)} onChange={e=>setSelPitRace(e.target.value)} style={{appearance:"none",WebkitAppearance:"none",background:"var(--w04)",border:"1px solid var(--w10)",borderRadius:2,padding:"6px 28px 6px 12px",color:"var(--fg)",fontSize:12,fontWeight:500,fontFamily:"var(--font-ui)",cursor:"pointer",outline:"none",minWidth:220}}>
                   {prs.map(p=><option key={p.r} value={String(p.r)} style={{background:"var(--sheet)"}}>{`R${p.r} — ${p.nm}`}</option>)}
                 </select>
               </div>
@@ -2576,7 +2684,7 @@ const TelemetryTab=memo(function TelemetryTab({openf1,tracks,telMeetingKey,setTe
                     const on=selected.has(d.acronym);
                     const tc=inkify(d.teamColour)||"var(--fg)";
                     return(
-                      <button key={d.acronym} onClick={()=>toggleTel(d.acronym)} style={{display:"flex",alignItems:"center",gap:6,padding:"5px 10px",borderRadius:2,border:`1px solid ${on?tc:"var(--w08)"}`,background:on?`${alpha(tc,0x1a)}`:"var(--w02)",color:on?"var(--fg)":"var(--w50)",cursor:"pointer",fontSize:11,fontWeight:on?700:500,fontFamily:"var(--font-ui)"}}>
+                      <button className="chip" aria-pressed={on} key={d.acronym} onClick={()=>toggleTel(d.acronym)} style={{display:"flex",alignItems:"center",gap:6,padding:"5px 10px",borderRadius:2,border:`1px solid ${on?tc:"var(--w08)"}`,background:on?`${alpha(tc,0x1a)}`:"var(--w02)",color:on?"var(--fg)":"var(--w50)",cursor:"pointer",fontSize:11,fontWeight:on?700:500,fontFamily:"var(--font-ui)"}}>
                         <div style={{width:3,height:11,background:tc,borderRadius:1,opacity:on?1:0.5}}/>
                         <span style={{letterSpacing:0.5}}>{d.acronym}</span>
                       </button>
@@ -2654,11 +2762,14 @@ const ReplayPanel=memo(function ReplayPanel({cur,race,tracks,allDrivers,telMeeti
     const minGap=Math.min(0,...series.flatMap(s=>s.pts.map(p=>p.gap)));
     return{series,totalLaps:lastLap(order[0][1]),maxGap,minGap};
   },[lapsByDriver]);
-  // Shared lap cursor: the overview lap chart writes #lap=N; open the replay on that lap.
+  // Shared lap cursor: the Overview writes #…&r=N&lap=L; open the replay on that
+  // lap — but only for the race it belongs to (it was re-applied to any race picked).
   useEffect(()=>{
-    const m=/lap=(\d+)/.exec(typeof location!=="undefined"?location.hash:"");
-    if(!m)return;
-    const L=parseInt(m[1]);
+    const p=hashParams();
+    const L=parseInt(p.get("lap"));
+    if(!Number.isFinite(L))return;
+    const r=parseInt(p.get("r"));
+    if(Number.isFinite(r)&&cur?.meeting?.round!=null&&r!==cur.meeting.round)return;
     const entries=Object.values(lapsByDriver).filter(v=>v.cumArr.length>0);
     if(L<=1||entries.length===0)return;
     const lead=[...entries].sort((a,b)=>b.cumArr.length-a.cumArr.length||a.total-b.total)[0];
@@ -2734,8 +2845,8 @@ const ReplayPanel=memo(function ReplayPanel({cur,race,tracks,allDrivers,telMeeti
                         <div style={{fontSize:11,color:"var(--w40)",marginTop:2}}>{cur.meeting.meetingName} · Lap {leaderLap} of {totalLaps} · {fmtTime(tClamped)}</div>
                       </div>
                       <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
-                        <button onClick={()=>{if(replayTime>=raceDuration-0.5)setReplayTime(0);setReplayPlaying(p=>!p);}} style={{width:38,height:38,borderRadius:"50%",border:"1px solid var(--w15)",background:replayPlaying?"rgba(214,40,40,0.18)":"var(--w06)",color:"var(--fg)",cursor:"pointer",fontSize:14,fontFamily:"var(--font-ui)",display:"flex",alignItems:"center",justifyContent:"center"}}>{replayPlaying?<IcoPause/>:<IcoPlay/>}</button>
-                        <button onClick={()=>{setReplayPlaying(false);setReplayTime(0);}} title="Restart" style={{width:30,height:30,borderRadius:2,border:"1px solid var(--w08)",background:"var(--w03)",color:"var(--w55)",cursor:"pointer",fontSize:12,fontFamily:"var(--font-ui)"}}><IcoRestart/></button>
+                        <button aria-label={replayPlaying?"Pause replay":"Play replay"} onClick={()=>{if(replayTime>=raceDuration-0.5)setReplayTime(0);setReplayPlaying(p=>!p);}} style={{width:38,height:38,borderRadius:"50%",border:"1px solid var(--w15)",background:replayPlaying?"rgba(214,40,40,0.18)":"var(--w06)",color:"var(--fg)",cursor:"pointer",fontSize:14,fontFamily:"var(--font-ui)",display:"flex",alignItems:"center",justifyContent:"center"}}>{replayPlaying?<IcoPause/>:<IcoPlay/>}</button>
+                        <button onClick={()=>{setReplayPlaying(false);setReplayTime(0);}} title="Restart" aria-label="Restart replay" style={{width:30,height:30,borderRadius:2,border:"1px solid var(--w08)",background:"var(--w03)",color:"var(--w55)",cursor:"pointer",fontSize:12,fontFamily:"var(--font-ui)"}}><IcoRestart/></button>
                         <div style={{display:"flex",gap:3,border:"1px solid var(--w08)",borderRadius:2,padding:2,background:"var(--w02)"}}>
                           {[1,2,4,8,16].map(s=>(
                             <button key={s} onClick={()=>setReplaySpeed(s)} style={{padding:"3px 9px",borderRadius:2,border:"none",background:replaySpeed===s?"rgba(214,40,40,0.18)":"transparent",color:replaySpeed===s?"var(--fg)":"var(--w50)",cursor:"pointer",fontSize:10,fontWeight:replaySpeed===s?700:500,fontFamily:"var(--font-ui)"}}>{s}×</button>
@@ -2752,7 +2863,7 @@ const ReplayPanel=memo(function ReplayPanel({cur,race,tracks,allDrivers,telMeeti
                         const width=((p.end-p.start)/raceDuration)*100;
                         return<div key={i} title={`${st.label} L${periods[i]?.lapStart}-${periods[i]?.lapEnd}`} style={{position:"absolute",top:11,left:`${left}%`,width:`${Math.max(0.5,width)}%`,height:6,background:st.fill,opacity:0.45,borderRadius:1}}/>;
                       })}
-                      <input type="range" min={0} max={Math.floor(raceDuration)} step={0.5} value={tClamped} onChange={(e)=>{setReplayPlaying(false);setReplayTime(parseFloat(e.target.value));}} style={{position:"absolute",inset:0,width:"100%",height:28,margin:0,background:"transparent",appearance:"none",WebkitAppearance:"none",cursor:"pointer"}}/>
+                      <input type="range" aria-label="Race time" min={0} max={Math.floor(raceDuration)} step={0.5} value={tClamped} onChange={(e)=>{setReplayPlaying(false);setReplayTime(parseFloat(e.target.value));}} style={{position:"absolute",inset:0,width:"100%",height:28,margin:0,background:"transparent",appearance:"none",WebkitAppearance:"none",cursor:"pointer"}}/>
                       <style>{`input[type=range]::-webkit-slider-thumb{appearance:none;width:14px;height:22px;border-radius:3px;background:var(--red);border:2px solid var(--sheet);cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,0.35)}input[type=range]::-moz-range-thumb{width:14px;height:22px;border-radius:3px;background:var(--red);border:2px solid var(--sheet);cursor:pointer}input[type=range]::-webkit-slider-runnable-track{background:transparent}input[type=range]::-moz-range-track{background:transparent}`}</style>
                     </div>
                     {/* Race control banner */}
@@ -2778,7 +2889,7 @@ const ReplayPanel=memo(function ReplayPanel({cur,race,tracks,allDrivers,telMeeti
                             .map(s=>({...s,pt:sampler.sample(s.fracOfLap)}));
                           const hovered=replayDotHover?driverStates.find(s=>s.driver.number===replayDotHover.driverNumber):null;
                           return(
-                            <svg viewBox={t.viewBox} preserveAspectRatio="xMidYMid meet" style={{width:"100%",height:440,display:"block",overflow:"visible",touchAction:"pan-y"}}>
+                            <svg role="img" aria-label="Race replay: every car's position on the circuit at the current race time" viewBox={t.viewBox} preserveAspectRatio="xMidYMid meet" style={{width:"100%",height:440,display:"block",overflow:"visible",touchAction:"pan-y"}}>
                               {/* Sector underlay — S1/S2/S3 thirds in faint hues beneath the track line */}
                               {sectors&&(()=>{
                                 const segs=[{d:sectors.s1,c:"var(--purple)"},{d:sectors.s2,c:"var(--green)"},{d:sectors.s3,c:"#FF8000"}];
@@ -2881,7 +2992,7 @@ const ReplayPanel=memo(function ReplayPanel({cur,race,tracks,allDrivers,telMeeti
                       return(
                         <div style={{marginTop:14,background:"var(--w03)",border:"1px solid var(--w04)",borderRadius:2,padding:"12px 14px"}}>
                           <div style={{fontSize:10,textTransform:"uppercase",letterSpacing:1.2,color:"var(--w40)",fontWeight:600,marginBottom:8}}>Gap to winner (s) by lap · top 6 finishers · capped at 60s</div>
-                          <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{width:"100%",height:120,display:"block"}}>
+                          <svg role="img" aria-label="Gap to the winner by lap for the top six finishers" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{width:"100%",height:120,display:"block"}}>
                             {[minGap,(minGap+maxGap)/2,maxGap].map((g,i)=>(
                               <g key={i}>
                                 <line x1={padL} x2={W-padR} y1={yOf(g)} y2={yOf(g)} stroke="var(--w06)"/>
@@ -3238,20 +3349,20 @@ const LapComparePanel=memo(function LapComparePanel({openf1,telMeetingKey,allDri
                       <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
                         <span style={{fontSize:10,color:"var(--w40)",textTransform:"uppercase",letterSpacing:1}}>A</span>
                         {usable.map(d=>{const on=d.acronym===acrA;const dc=inkify(d.teamColour)||"var(--fg)";return(
-                          <button key={"lcA-"+d.acronym} onClick={()=>{setLapCompareA(d.acronym);setLapCompareLap(null);}} style={{padding:"3px 8px",borderRadius:2,border:`1px solid ${on?dc:"var(--w08)"}`,background:on?`${alpha(dc,0x1a)}`:"var(--w02)",color:on?"var(--fg)":"var(--w55)",cursor:"pointer",fontSize:10,fontWeight:on?700:500,fontFamily:"var(--font-ui)",letterSpacing:0.4}}>{d.acronym}</button>
+                          <button className="chip" aria-pressed={on} key={"lcA-"+d.acronym} onClick={()=>{setLapCompareA(d.acronym);setLapCompareLap(null);}} style={{padding:"3px 8px",borderRadius:2,border:`1px solid ${on?dc:"var(--w08)"}`,background:on?`${alpha(dc,0x1a)}`:"var(--w02)",color:on?"var(--fg)":"var(--w55)",cursor:"pointer",fontSize:10,fontWeight:on?700:500,fontFamily:"var(--font-ui)",letterSpacing:0.4}}>{d.acronym}</button>
                         );})}
                       </div>
                       <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
                         <span style={{fontSize:10,color:"var(--w40)",textTransform:"uppercase",letterSpacing:1}}>B</span>
                         {usable.map(d=>{const on=d.acronym===acrB;const dc=inkify(d.teamColour)||"var(--fg)";return(
-                          <button key={"lcB-"+d.acronym} onClick={()=>{setLapCompareB(d.acronym);setLapCompareLap(null);}} style={{padding:"3px 8px",borderRadius:2,border:`1px solid ${on?dc:"var(--w08)"}`,background:on?`${alpha(dc,0x1a)}`:"var(--w02)",color:on?"var(--fg)":"var(--w55)",cursor:"pointer",fontSize:10,fontWeight:on?700:500,fontFamily:"var(--font-ui)",letterSpacing:0.4}}>{d.acronym}</button>
+                          <button className="chip" aria-pressed={on} key={"lcB-"+d.acronym} onClick={()=>{setLapCompareB(d.acronym);setLapCompareLap(null);}} style={{padding:"3px 8px",borderRadius:2,border:`1px solid ${on?dc:"var(--w08)"}`,background:on?`${alpha(dc,0x1a)}`:"var(--w02)",color:on?"var(--fg)":"var(--w55)",cursor:"pointer",fontSize:10,fontWeight:on?700:500,fontFamily:"var(--font-ui)",letterSpacing:0.4}}>{d.acronym}</button>
                         );})}
                       </div>
                     </div>
                     {/* Lap dropdown selector */}
                     <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10,flexWrap:"wrap"}}>
                       <span style={{fontSize:10,textTransform:"uppercase",letterSpacing:1,color:"var(--w40)",fontWeight:600}}>Lap</span>
-                      <select value={lapCompareLap||""} onChange={(e)=>{const v=parseInt(e.target.value);if(!isNaN(v))onPickLap(v);}} style={{appearance:"none",WebkitAppearance:"none",background:"var(--w04)",border:"1px solid var(--w10)",borderRadius:2,padding:"6px 28px 6px 12px",color:"var(--fg)",fontSize:12,fontWeight:500,fontFamily:"var(--font-ui)",cursor:"pointer",outline:"none",minWidth:200}}>
+                      <select aria-label="Lap to compare" value={lapCompareLap||""} onChange={(e)=>{const v=parseInt(e.target.value);if(!isNaN(v))onPickLap(v);}} style={{appearance:"none",WebkitAppearance:"none",background:"var(--w04)",border:"1px solid var(--w10)",borderRadius:2,padding:"6px 28px 6px 12px",color:"var(--fg)",fontSize:12,fontWeight:500,fontFamily:"var(--font-ui)",cursor:"pointer",outline:"none",minWidth:200}}>
                         {!lapCompareLap&&<option value="" disabled style={{background:"var(--sheet)"}}>Select a lap…</option>}
                         {(()=>{
                           // Union of usable laps across both drivers
@@ -3277,7 +3388,7 @@ const LapComparePanel=memo(function LapComparePanel({openf1,telMeetingKey,allDri
                     </div>
                     {/* Lap selector chart */}
                     <div style={{fontSize:10,textTransform:"uppercase",letterSpacing:1,color:"var(--w40)",fontWeight:600,marginBottom:6}}>Or click any marker on the chart</div>
-                    <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{width:"100%",height:140,display:"block"}}>
+                    <svg role="img" aria-label="Lap times for both compared drivers across the race; select a lap to compare" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{width:"100%",height:140,display:"block"}}>
                       {yTicks.map((v,i)=>(
                         <g key={i}>
                           <line x1={padL} x2={W-padR} y1={yOf(v)} y2={yOf(v)} stroke="var(--w06)"/>
@@ -3295,7 +3406,7 @@ const LapComparePanel=memo(function LapComparePanel({openf1,telMeetingKey,allDri
                     {/* Legend */}
                     <div style={{display:"flex",gap:14,marginTop:8,flexWrap:"wrap",fontSize:11}}>
                       <div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:14,height:2,background:tcA}}/><span style={{fontWeight:600}}>{drA.acronym}</span><span style={{color:"var(--w40)",fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)"}}>{fmtLapTime(fastestA.t)} L{fastestA.l}</span></div>
-                      <div style={{display:"flex",alignItems:"center",gap:6}}><svg width={14} height={2}><line x1={0} y1={1} x2={14} y2={1} stroke={tcB} strokeWidth={2} strokeDasharray="3 2"/></svg><span style={{fontWeight:600}}>{drB.acronym}</span><span style={{color:"var(--w40)",fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)"}}>{fmtLapTime(fastestB.t)} L{fastestB.l}</span></div>
+                      <div style={{display:"flex",alignItems:"center",gap:6}}><svg aria-hidden="true" width={14} height={2}><line x1={0} y1={1} x2={14} y2={1} stroke={tcB} strokeWidth={2} strokeDasharray="3 2"/></svg><span style={{fontWeight:600}}>{drB.acronym}</span><span style={{color:"var(--w40)",fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)"}}>{fmtLapTime(fastestB.t)} L{fastestB.l}</span></div>
                       <div style={{display:"flex",alignItems:"center",gap:6,color:"var(--w50)"}}><div style={{width:8,height:8,borderRadius:"50%",border:"1.5px solid var(--green)"}}/><span>fastest lap</span></div>
                     </div>
                     {/* Live telemetry viewer once a lap is picked */}
@@ -3370,10 +3481,10 @@ const LapComparePanel=memo(function LapComparePanel({openf1,telMeetingKey,allDri
                             <>
                               {/* Playback controls */}
                               <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10,flexWrap:"wrap"}}>
-                                <button onClick={()=>{if(playT>=playDuration-0.05)setLapComparePlayTime(0);setLapComparePlaying(p=>!p);}} style={{width:32,height:32,borderRadius:"50%",border:"1px solid var(--w15)",background:lapComparePlaying?"rgba(214,40,40,0.18)":"var(--w06)",color:"var(--fg)",cursor:"pointer",fontSize:12,fontFamily:"var(--font-ui)",display:"flex",alignItems:"center",justifyContent:"center"}}>{lapComparePlaying?<IcoPause/>:<IcoPlay/>}</button>
-                                <button onClick={()=>{setLapComparePlaying(false);setLapComparePlayTime(0);}} style={{width:28,height:28,borderRadius:2,border:"1px solid var(--w08)",background:"var(--w03)",color:"var(--w55)",cursor:"pointer",fontSize:11,fontFamily:"var(--font-ui)"}}><IcoRestart/></button>
+                                <button aria-label={lapComparePlaying?"Pause lap playback":"Play lap"} onClick={()=>{if(playT>=playDuration-0.05)setLapComparePlayTime(0);setLapComparePlaying(p=>!p);}} style={{width:32,height:32,borderRadius:"50%",border:"1px solid var(--w15)",background:lapComparePlaying?"rgba(214,40,40,0.18)":"var(--w06)",color:"var(--fg)",cursor:"pointer",fontSize:12,fontFamily:"var(--font-ui)",display:"flex",alignItems:"center",justifyContent:"center"}}>{lapComparePlaying?<IcoPause/>:<IcoPlay/>}</button>
+                                <button aria-label="Restart lap" title="Restart" onClick={()=>{setLapComparePlaying(false);setLapComparePlayTime(0);}} style={{width:28,height:28,borderRadius:2,border:"1px solid var(--w08)",background:"var(--w03)",color:"var(--w55)",cursor:"pointer",fontSize:11,fontFamily:"var(--font-ui)"}}><IcoRestart/></button>
                                 <div style={{fontSize:11,color:"var(--w70)",fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)",minWidth:90}}>{playT.toFixed(2)}s / {playDuration.toFixed(2)}s</div>
-                                <input type="range" min={0} max={playDuration} step={0.05} value={playT} onChange={(e)=>{setLapComparePlaying(false);setLapComparePlayTime(parseFloat(e.target.value));}} style={{flex:1,minWidth:200,height:24,margin:0,appearance:"none",WebkitAppearance:"none",cursor:"pointer",background:"transparent"}}/>
+                                <input type="range" aria-label="Time in lap" min={0} max={playDuration} step={0.05} value={playT} onChange={(e)=>{setLapComparePlaying(false);setLapComparePlayTime(parseFloat(e.target.value));}} style={{flex:1,minWidth:200,height:24,margin:0,appearance:"none",WebkitAppearance:"none",cursor:"pointer",background:"transparent"}}/>
                                 {/* Zoom controls */}
                                 <div style={{display:"flex",gap:2,border:"1px solid var(--w08)",borderRadius:2,padding:2,background:"var(--w02)"}}>
                                   <button onClick={()=>{const z1=Math.max(1,lapZoom*0.8);setLapZoom(z1);setLapPan(p=>clampPan(p,z1));}} style={{width:24,height:24,borderRadius:2,border:"none",background:"transparent",color:"var(--w60)",cursor:"pointer",fontSize:12,fontFamily:"var(--font-ui)"}}>−</button>
@@ -3383,7 +3494,7 @@ const LapComparePanel=memo(function LapComparePanel({openf1,telMeetingKey,allDri
                               </div>
                               {/* Track view (live x/y) */}
                               <div style={{display:"grid",gridTemplateColumns:"1fr 200px",gap:14,alignItems:"start"}} className="lap-compare-grid">
-                                <svg ref={lapSvgRef} viewBox={`${vbX} ${vbY} ${vbW} ${vbH}`} preserveAspectRatio="xMidYMid meet"
+                                <svg role="img" aria-label="Both drivers' positions on the circuit through the compared lap" ref={lapSvgRef} viewBox={`${vbX} ${vbY} ${vbW} ${vbH}`} preserveAspectRatio="xMidYMid meet"
                                   onPointerDown={(e)=>{e.currentTarget.setPointerCapture(e.pointerId);lapDragRef.current={x:e.clientX,y:e.clientY,panX:lapPan.x,panY:lapPan.y,vbW};}}
                                   onPointerMove={(e)=>{if(!lapDragRef.current)return;const dx=(e.clientX-lapDragRef.current.x);const dy=(e.clientY-lapDragRef.current.y);const rect=e.currentTarget.getBoundingClientRect();const scale=lapDragRef.current.vbW/rect.width;setLapPan(clampPan({x:lapDragRef.current.panX-dx*scale,y:lapDragRef.current.panY-dy*scale},z));}}
                                   onPointerUp={()=>{lapDragRef.current=null;}}
@@ -3447,7 +3558,7 @@ const LapComparePanel=memo(function LapComparePanel({openf1,telMeetingKey,allDri
                                 return(
                                   <div style={{marginTop:14}}>
                                     <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.2,color:"var(--w50)",fontWeight:600,marginBottom:8}}>Gap {drA.acronym}−{drB.acronym} (s) · <span style={{color:tcA}}>below 0 = {drA.acronym} ahead</span></div>
-                                    <svg viewBox={`0 0 ${g.dW} ${g.dH}`} preserveAspectRatio="none" style={{width:"100%",height:120,display:"block"}}>
+                                    <svg role="img" aria-label="Time delta between the two drivers through the compared lap" viewBox={`0 0 ${g.dW} ${g.dH}`} preserveAspectRatio="none" style={{width:"100%",height:120,display:"block"}}>
                                       <defs>
                                         <clipPath id="lapGapAbove"><rect x={g.dPadL} y={g.dPadT} width={g.pw} height={g.ph/2}/></clipPath>
                                         <clipPath id="lapGapBelow"><rect x={g.dPadL} y={y0} width={g.pw} height={g.ph/2}/></clipPath>
@@ -3476,7 +3587,7 @@ const LapComparePanel=memo(function LapComparePanel({openf1,telMeetingKey,allDri
                                 return(
                                   <div style={{marginTop:14}}>
                                     <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.2,color:"var(--w50)",fontWeight:600,marginBottom:8}}>Speed Trace</div>
-                                    <svg viewBox={`0 0 ${cW} ${cH}`} preserveAspectRatio="none" style={{width:"100%",height:180,display:"block"}}>
+                                    <svg role="img" aria-label="Speed through the compared lap for both drivers" viewBox={`0 0 ${cW} ${cH}`} preserveAspectRatio="none" style={{width:"100%",height:180,display:"block"}}>
                                       {yTicksS.map((v,i)=>(<g key={i}>
                                         <line x1={cPadL} x2={cW-cPadR} y1={yOfS(v)} y2={yOfS(v)} stroke="var(--w06)"/>
                                         <text x={cPadL-8} y={yOfS(v)+4} textAnchor="end" fill="var(--w40)" fontSize="9" fontFamily="var(--font-ui)">{v} km/h</text>
@@ -3492,7 +3603,7 @@ const LapComparePanel=memo(function LapComparePanel({openf1,telMeetingKey,allDri
                                       const g=lapStripPaths.geo;
                                       const xPh=g.sPadL+playFrac*g.pw;
                                       return(<>
-                                        <svg viewBox={`0 0 ${g.sW} ${g.sH}`} preserveAspectRatio="none" style={{width:"100%",height:g.sH,display:"block",marginTop:8}}>
+                                        <svg role="img" aria-label="Throttle and brake through the compared lap" viewBox={`0 0 ${g.sW} ${g.sH}`} preserveAspectRatio="none" style={{width:"100%",height:g.sH,display:"block",marginTop:8}}>
                                           <line x1={g.sPadL} x2={g.sW-g.sPadR} y1={g.sPadT+g.ph} y2={g.sPadT+g.ph} stroke="var(--w08)"/>
                                           <text x={g.sPadL+4} y={g.sPadT+8} fill="var(--w40)" fontSize="9" letterSpacing="1.2" fontFamily="var(--font-ui)">THROTTLE</text>
                                           <path d={lapStripPaths.thAreaA} fill={tcA} fillOpacity={0.10}/>
@@ -3500,7 +3611,7 @@ const LapComparePanel=memo(function LapComparePanel({openf1,telMeetingKey,allDri
                                           <path d={lapStripPaths.thB} stroke={tcB} strokeWidth={1.4} fill="none" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="4 3" opacity={0.55}/>
                                           <line x1={xPh} x2={xPh} y1={g.sPadT} y2={g.sPadT+g.ph} stroke="var(--w40)" strokeWidth={1} strokeDasharray="3 3"/>
                                         </svg>
-                                        <svg viewBox={`0 0 ${g.sW} ${g.sH}`} preserveAspectRatio="none" style={{width:"100%",height:g.sH,display:"block",marginTop:6}}>
+                                        <svg role="img" aria-label="Throttle and brake through the compared lap" viewBox={`0 0 ${g.sW} ${g.sH}`} preserveAspectRatio="none" style={{width:"100%",height:g.sH,display:"block",marginTop:6}}>
                                           <line x1={g.sPadL} x2={g.sW-g.sPadR} y1={g.sPadT+g.ph} y2={g.sPadT+g.ph} stroke="var(--w08)"/>
                                           <text x={g.sPadL+4} y={g.sPadT+8} fill="var(--w40)" fontSize="9" letterSpacing="1.2" fontFamily="var(--font-ui)">BRAKE</text>
                                           <path d={lapStripPaths.brAreaA} fill={tcA} fillOpacity={0.28}/>
@@ -3579,10 +3690,10 @@ const LapTimesChart=memo(function LapTimesChart({maxLap,yMin,yMax,race,visibleDr
                       <div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:14,height:8,background:"rgba(255,218,0,0.45)",borderRadius:2}}/><span>Safety Car</span></div>
                       <div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:14,height:8,background:"rgba(255,152,0,0.45)",borderRadius:2}}/><span>Virtual SC</span></div>
                       <div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:14,height:8,background:"rgba(214,40,40,0.55)",borderRadius:2}}/><span>Red Flag</span></div>
-                      <div style={{display:"flex",alignItems:"center",gap:6}}><svg width={14} height={8}><line x1={7} y1={0} x2={7} y2={8} stroke="rgba(255,200,0,0.7)" strokeWidth={1.5} strokeDasharray="2 2"/><circle cx={7} cy={2} r={2} fill="var(--yellow)"/></svg><span>Local yellow flag</span></div>
+                      <div style={{display:"flex",alignItems:"center",gap:6}}><svg aria-hidden="true" width={14} height={8}><line x1={7} y1={0} x2={7} y2={8} stroke="rgba(255,200,0,0.7)" strokeWidth={1.5} strokeDasharray="2 2"/><circle cx={7} cy={2} r={2} fill="var(--yellow)"/></svg><span>Local yellow flag</span></div>
                     </div>
                     <div style={{position:"relative"}}>
-                      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{width:"100%",height:280,display:"block",touchAction:"pan-y"}} onPointerMove={onMove} onPointerLeave={()=>setTelLapHover(null)}>
+                      <svg role="img" aria-label="Lap times by lap for the selected drivers" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{width:"100%",height:280,display:"block",touchAction:"pan-y"}} onPointerMove={onMove} onPointerLeave={()=>setTelLapHover(null)}>
                         {/* Race control bands — behind gridlines */}
                         {periods.map((p,i)=>{
                           const st=periodStyle[p.type];if(!st||!p.lapStart||!p.lapEnd)return null;
@@ -4109,7 +4220,7 @@ const TireManagementPanel=memo(function TireManagementPanel({race,allDrivers,max
                                 const dark=a.compound==="HARD";
                                 const tc=inkify(a.driver.teamColour)||"var(--fg)";
                                 return(
-                                  <button key={key} onClick={()=>togglePick(key)} title="Click to remove" style={{display:"flex",alignItems:"center",gap:5,padding:"3px 7px 3px 6px",borderRadius:2,border:`1px solid ${tc}`,background:`${alpha(tc,0x1a)}`,color:"var(--ink)",cursor:"pointer",fontSize:10,fontWeight:700,fontFamily:"var(--font-ui)"}}>
+                                  <button className="chip" key={key} onClick={()=>togglePick(key)} title="Click to remove" style={{display:"flex",alignItems:"center",gap:5,padding:"3px 7px 3px 6px",borderRadius:2,border:`1px solid ${tc}`,background:`${alpha(tc,0x1a)}`,color:"var(--ink)",cursor:"pointer",fontSize:10,fontWeight:700,fontFamily:"var(--font-ui)"}}>
                                     <div style={{width:11,height:11,borderRadius:2,background:col,display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,fontWeight:800,color:compoundInk(a.compound)}}>{a.compound[0]}</div>
                                     <span style={{letterSpacing:0.4}}>{a.driver.acronym}</span>
                                     <span style={{fontSize:9,color:"var(--w55)",fontWeight:400}}>S{a.stint.stintNumber}</span>
@@ -4165,7 +4276,7 @@ const TireManagementPanel=memo(function TireManagementPanel({race,allDrivers,max
                               const tc=inkify(a.driver.teamColour)||"var(--fg)";
                               const atMax=selectedKeys.size>=4;
                               return(
-                                <button key={key} disabled={atMax} onClick={()=>togglePick(key)} style={{display:"flex",alignItems:"center",gap:5,padding:"3px 7px",borderRadius:2,border:"1px solid var(--w08)",background:"var(--w02)",color:"var(--w55)",cursor:atMax?"not-allowed":"pointer",fontSize:10,fontWeight:500,fontFamily:"var(--font-ui)",opacity:atMax?0.4:1}}>
+                                <button className="chip" key={key} disabled={atMax} onClick={()=>togglePick(key)} style={{display:"flex",alignItems:"center",gap:5,padding:"3px 7px",borderRadius:2,border:"1px solid var(--w08)",background:"var(--w02)",color:"var(--w55)",cursor:atMax?"not-allowed":"pointer",fontSize:10,fontWeight:500,fontFamily:"var(--font-ui)",opacity:atMax?0.4:1}}>
                                   <div style={{width:11,height:11,borderRadius:2,background:col,display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,fontWeight:800,color:compoundInk(a.compound)}}>{a.compound[0]}</div>
                                   <span style={{letterSpacing:0.4,color:tc,fontWeight:600}}>{a.driver.acronym}</span>
                                   <span style={{fontSize:9,color:"var(--w40)",fontWeight:400}}>S{a.stint.stintNumber}</span>
@@ -4174,7 +4285,7 @@ const TireManagementPanel=memo(function TireManagementPanel({race,allDrivers,max
                             })}
                           </div>
                           <div style={{position:"relative"}}>
-                            <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{width:"100%",height:240,display:"block",touchAction:"pan-y"}} onPointerMove={onMove} onPointerLeave={()=>setOverlayHover(null)}>
+                            <svg role="img" aria-label="Tyre degradation: lap-time loss per lap of each stint" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{width:"100%",height:240,display:"block",touchAction:"pan-y"}} onPointerMove={onMove} onPointerLeave={()=>setOverlayHover(null)}>
                               {yTicks.map((v,i)=>(
                                 <g key={i}>
                                   <line x1={padL} x2={W-padR} y1={yOf(v)} y2={yOf(v)} stroke="var(--w06)"/>
@@ -4282,7 +4393,7 @@ const PositionChartPanel=memo(function PositionChartPanel({maxLap,visibleDrivers
                     <div style={{fontSize:15,fontWeight:700,marginBottom:4}}>Position by Lap</div>
                     <div style={{fontSize:12,color:"var(--w35)",marginBottom:16}}>Lines cross at overtakes — flat clusters = safety car, sharp drops = pit stops</div>
                     <div style={{position:"relative"}}>
-                      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{width:"100%",height:280,display:"block",touchAction:"pan-y"}} onPointerMove={onMove} onPointerLeave={()=>setTelPosHover(null)}>
+                      <svg role="img" aria-label="Race position by lap for the selected drivers" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{width:"100%",height:280,display:"block",touchAction:"pan-y"}} onPointerMove={onMove} onPointerLeave={()=>setTelPosHover(null)}>
                         {periods.map((p,i)=>{
                           const st=periodStyle[p.type];if(!st||!p.lapStart||!p.lapEnd)return null;
                           const x1=xOf(p.lapStart);const x2=xOf(Math.max(p.lapStart,p.lapEnd));
@@ -4435,7 +4546,7 @@ const DeltaChartPanel=memo(function DeltaChartPanel({allDrivers,maxLap,race}){
                       </div>
                     </div>
                     <div style={{position:"relative"}}>
-                      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{width:"100%",height:240,display:"block",touchAction:"pan-y"}} onPointerMove={onMove} onPointerLeave={()=>setDeltaHover(null)}>
+                      <svg role="img" aria-label="Gap to the leader by lap for the selected drivers" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{width:"100%",height:240,display:"block",touchAction:"pan-y"}} onPointerMove={onMove} onPointerLeave={()=>setDeltaHover(null)}>
                         {periods.map((p,i)=>{const st=periodStyle[p.type];if(!st||!p.lapStart||!p.lapEnd)return null;const x1=xOf(p.lapStart);const x2=xOf(Math.max(p.lapStart,p.lapEnd));return(<rect key={i} x={x1} y={padT} width={Math.max(2,x2-x1)} height={plotH} fill={st.fill}/>);})}
                         {yTicks.map((v,i)=>(
                           <g key={i}>
@@ -4548,7 +4659,7 @@ const SpeedTracePanel=memo(function SpeedTracePanel({allDrivers}){
                         const on=selected.has(d.acronym);
                         const tc=inkify(d.teamColour)||"var(--fg)";
                         return(
-                          <button key={d.acronym} onClick={()=>toggle(d.acronym)} style={{display:"flex",alignItems:"center",gap:6,padding:"5px 10px",borderRadius:2,border:`1px solid ${on?tc:"var(--w08)"}`,background:on?`${alpha(tc,0x1a)}`:"var(--w02)",color:on?"var(--fg)":"var(--w55)",cursor:"pointer",fontSize:11,fontWeight:on?700:500,fontFamily:"var(--font-ui)"}}>
+                          <button className="chip" aria-pressed={on} key={d.acronym} onClick={()=>toggle(d.acronym)} style={{display:"flex",alignItems:"center",gap:6,padding:"5px 10px",borderRadius:2,border:`1px solid ${on?tc:"var(--w08)"}`,background:on?`${alpha(tc,0x1a)}`:"var(--w02)",color:on?"var(--fg)":"var(--w55)",cursor:"pointer",fontSize:11,fontWeight:on?700:500,fontFamily:"var(--font-ui)"}}>
                             <div style={{width:3,height:11,background:tc,borderRadius:1,opacity:on?1:0.5}}/>
                             <span style={{letterSpacing:0.5}}>{d.acronym}</span>
                             <span style={{fontSize:9,color:"var(--w40)",fontWeight:400,fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)"}}>{d.fastLapTrace.lapTime.toFixed(3)}s</span>
@@ -4557,7 +4668,7 @@ const SpeedTracePanel=memo(function SpeedTracePanel({allDrivers}){
                       })}
                     </div>
                     <div style={{position:"relative"}}>
-                      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{width:"100%",height:280,display:"block",touchAction:"pan-y"}} onPointerMove={onMove} onPointerLeave={()=>setTelTraceHover(null)}>
+                      <svg role="img" aria-label="Speed against distance on each driver's fastest lap" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{width:"100%",height:280,display:"block",touchAction:"pan-y"}} onPointerMove={onMove} onPointerLeave={()=>setTelTraceHover(null)}>
                         {yTicks.map(v=>(
                           <g key={v}>
                             <line x1={padL} x2={W-padR} y1={yOf(v)} y2={yOf(v)} stroke="var(--w06)"/>
