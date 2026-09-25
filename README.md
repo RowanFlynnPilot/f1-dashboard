@@ -1,200 +1,96 @@
-# 🏎️ F1 2026 Season Dashboard
+# F1 2026 Season Sheets
 
-A real-time Formula 1 dashboard built with React + Vite, pulling data from two APIs:
+A Formula 1 season dashboard drawn as a timekeeper's lap chart, and the self-updating data pipeline behind it.
 
-- **Jolpica API** (Ergast successor) — Standings, race results, pit stops, schedule
-- **OpenF1 API** — Sector times, speed traps, stint/tire data
+**Live: [rowanflynnpilot.github.io/f1-dashboard](https://rowanflynnpilot.github.io/f1-dashboard/)**
 
-Auto-deploys to GitHub Pages via GitHub Actions. Data refreshes weekly (or on-demand).
+![The Overview sheet: the last Grand Prix as a lap chart beside the drivers' standings](docs/overview.png)
 
----
+Three public sources are fetched, joined, validated and deployed on a schedule with no server and no manual step, apart from one: YouTube blocks cloud IPs, so reaction-video transcripts are fetched from a home machine. Every figure on the page traces back to a source and a fetch time printed on the sheet.
 
-## ✨ Features
+## What it shows
 
-| Tab | What it shows |
-|-----|--------------|
-| **Overview** | Championship leader, last race winner, fastest lap, pit stop stats, next race countdown |
-| **Standings** | Drivers' & Constructors' championships with team-colored bars and driver breakdowns |
-| **Race Results** | Podium cards, full classification, fastest lap — **now enriched with OpenF1 sector time breakdowns (Top 5 per race)** |
-| **Sector Times** | Full driver comparison table: best S1/S2/S3, theoretical best lap, speed traps (I1/I2/ST). Meeting & session selectors (FP1–Race). Visual speed trap bar chart. |
-| **Pit Stops** | Ranked pit stop times with bar visualization |
-| **Schedule** | Full 2026 calendar with completion status, sprint flags, winners |
+| Sheet | What's on it |
+|---|---|
+| **Overview** | The last Grand Prix as a lap chart (positions by lap, pit stops, yellow flags) with a stopwatch scrubber, the standings, the podium and the next race |
+| **Standings** | Drivers' and constructors' championships, points progression by round, a generated season narrative |
+| **Race Results** | Every race and sprint classification with starting grid, places gained, and OpenF1 sector data |
+| **Sector Times** | Best sectors and speed traps per session, a circuit map coloured by the fastest team in each sector |
+| **Telemetry** | Race replay on the circuit outline, gap to the winner, lap times, positions, tyre strategy and degradation, and Lap Compare: two drivers' speed, throttle and brake through the same lap |
+| **Head to Head** | Team-mate battles in qualifying, race finishes and points, one per pairing |
+| **Pit Stops** | Every stop of every race, ranked, relative to that race's median |
+| **Quotes** | What drivers said after each session, extracted from F1's reaction videos |
+| **Schedule** | The calendar in your time zone, with sprint weekends and results |
 
----
+Every view has its own URL, so links go straight to it, for example [the Spanish GP replay at lap 30](https://rowanflynnpilot.github.io/f1-dashboard/#tab=telemetry&r=14&lap=30). Back and Forward move between sheets.
 
-## 🚀 GitHub Setup Guide
+![Telemetry: the race replay at lap 30 with the gap-to-winner chart](docs/telemetry.png)
 
-### Step 1 — Create the Repository
+## How it works
 
-1. Go to [github.com/new](https://github.com/new)
-2. Name it `f1-dashboard` (this must match the `base` in `vite.config.js`)
-3. Set it to **Public**
-4. Do **not** initialize with a README (we're uploading one)
-5. Click **Create repository**
-
-### Step 2 — Upload the Project Files
-
-1. Extract the `.tar.gz` you downloaded
-2. In your new repo, click **"Add file"** → **"Upload files"**
-3. Drag and drop these files/folders:
-   - `src/` (folder with `main.jsx` and `App.jsx`)
-   - `public/` (folder with `data.json` and `openf1/`)
-   - `scripts/` (folder with `fetch-f1-data.mjs` and `fetch-openf1-data.mjs`)
-   - `index.html`
-   - `package.json`
-   - `vite.config.js`
-   - `.gitignore`
-   - `README.md`
-4. Commit directly to `main`
-
-### Step 3 — Create the GitHub Actions Workflow
-
-The `.github/` folder doesn't transfer through drag-and-drop uploads. Create it manually:
-
-1. In your repo, click **"Add file"** → **"Create new file"**
-2. In the filename field, type: `.github/workflows/deploy.yml`
-   - GitHub will auto-create the folder structure as you type the slashes
-3. Paste the contents of the `deploy.yml` file (see below)
-4. Click **"Commit changes"**
-
-<details>
-<summary><strong>📋 deploy.yml contents (click to expand)</strong></summary>
-
-```yaml
-name: Fetch F1 Data & Deploy
-
-on:
-  schedule:
-    - cron: '0 23 * * 0'   # Every Sunday 5 PM CT
-  push:
-    branches: ['main']
-  workflow_dispatch:         # Manual trigger
-
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-concurrency:
-  group: "pages"
-  cancel-in-progress: false
-
-jobs:
-  build-and-deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-      - run: npm ci
-      - name: Fetch F1 data from Jolpica API
-        run: node scripts/fetch-f1-data.mjs
-      - name: Fetch sector & speed data from OpenF1 API
-        run: node scripts/fetch-openf1-data.mjs
-      - run: npm run build
-      - uses: actions/configure-pages@v4
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: './dist'
-      - id: deployment
-        uses: actions/deploy-pages@v4
+```mermaid
+flowchart LR
+  J["Jolpica F1 API<br/>results, standings, calendar"] --> FJ["fetch-f1-data.mjs"]
+  O["OpenF1 API<br/>laps, positions, stints, car telemetry"] --> FO["fetch-openf1-data.mjs<br/>incremental cache"]
+  Y["F1 on YouTube<br/>reaction videos"] -. "transcripts, fetched locally" .-> FQ["fetch-driver-quotes.py<br/>Claude, JSON schema"]
+  FJ --> V{"validate-data.mjs"}
+  FO --> V
+  FQ --> V
+  V -- pass --> B["vite build"] --> P["GitHub Pages"]
+  P --> C["commit data back to main<br/>cache, baseline, keepalive"]
+  P --> A["React app<br/>static JSON, lazy-loaded meetings"]
+  O -. "Lap Compare, on demand" .-> A
 ```
 
-</details>
+A GitHub Actions workflow runs on every push and on three crons timed around race weekends (Saturday evening, Sunday night, Monday morning, UTC).
 
-### Step 4 — Enable GitHub Pages
+- **Three sources, one join.** Jolpica supplies the official classification, OpenF1 the lap-by-lap data. Their names disagree (OpenF1's "Bahrain Grand Prix" is Jolpica's "Bahrain Grand Prix in Malaysia"), so meetings are joined to rounds by race date and stamped with the round.
+- **Incremental, and it persists itself.** A race weekend is final once its race has lap positions, so OpenF1 meetings are served from a cache that CI commits back to `main` after each deploy. The same commit keeps the validator's baseline current and keeps the repository active, so GitHub never disables the schedule for inactivity.
+- **Validated before it ships.** `validate-data.mjs` fails the deploy on malformed data (a truncated classification, a season under way with no standings) or on data that shrank since the last deploy, so a bad fetch leaves the previous site live. A new season legitimately starts empty and is recognised as such, and a manual `allow_shrink` covers a round leaving the calendar.
+- **Fails soft, and says so.** Each source can fail without blocking the others. The run then turns red, and a job summary lists what each source shipped and whether quotes lag the results.
+- **Correct under real-world edge cases.** Teams follow each round's classification (2026: Lawson moved to Red Bull at round 12, so head-to-heads and team breakdowns split at that round). Retirements come from Jolpica's position text, not its numeric position. The points delta follows the round the standings cover, which matters on a sprint Saturday.
+- **Precomputed where a browser would struggle.** Lap Compare's default view ships inside the meeting file, so the Telemetry tab opens without live API calls; OpenF1's free tier allows about three requests a second.
+- **LLM extraction with guardrails.** Quotes are extracted from auto-captions with a JSON schema, a per-round roster so a mid-season seat change doesn't relabel older quotes, explicit handling of truncated or refused responses, and manual overrides for misattributions.
 
-1. Go to your repo's **Settings** → **Pages**
-2. Under **Source**, select **GitHub Actions**
-3. That's it — the workflow handles the rest
+## Design
 
-### Step 5 — Trigger the First Deploy
+The visual system is written down in [DESIGN.md](DESIGN.md): ruled timing sheets on a dark bench, every figure in Courier Prime, each car in its team colour, no glows or gradients. [PRODUCT.md](PRODUCT.md) records who the dashboard is for and what it has to do.
 
-1. Go to the **Actions** tab in your repo
-2. Click **"Fetch F1 Data & Deploy"** in the left sidebar
-3. Click **"Run workflow"** → **"Run workflow"**
-4. Wait 1–2 minutes for it to complete
-5. Your dashboard will be live at: `https://YOUR-USERNAME.github.io/f1-dashboard/`
-
----
-
-## 🔄 How Data Updates Work
-
-The GitHub Actions workflow runs automatically **Saturday 20:00, Sunday 23:00 and Monday 06:00 UTC** (and on every push to `main`) and does:
-
-1. `node scripts/fetch-f1-data.mjs` — Pulls standings, results, pit stops, schedule from Jolpica API → `public/data.json`
-2. `node scripts/fetch-openf1-data.mjs` — Pulls sector times, speed traps, stint data from OpenF1 API → `public/openf1/index.json` + `public/openf1/meetings/` (incremental; past weekends come from the committed cache)
-3. `node scripts/validate-data.mjs` — Refuses to deploy malformed or shrunken data
-4. `npm run build` — Builds the React app with fresh data
-5. Deploys to GitHub Pages
-6. Commits the fetched data back to `main` so the next run starts from it (run `git pull` before pushing local changes)
-
-You can also trigger it manually anytime from the Actions tab (useful after race weekends).
-
----
-
-## 🏗️ Local Development
+## Run it locally
 
 ```bash
-# Install dependencies
-npm install
-
-# Fetch live data from both APIs
-npm run fetch-all
-
-# Or fetch individually:
-npm run fetch-data       # Jolpica API only
-npm run fetch-openf1     # OpenF1 API only
-
-# Start dev server
+npm ci
+npm run fetch-all   # Jolpica + OpenF1 into public/
 npm run dev
 ```
 
-The dashboard ships with the last deployed data in `public/data.json` and `public/openf1/`, so `npm run dev` works immediately without fetching. `npm test` runs the unit tests for the fetch-script helpers.
+Driver quotes need Python 3.10+, `pip install youtube-transcript-api anthropic requests` and an `ANTHROPIC_API_KEY`:
 
----
-
-## 📁 Project Structure
-
-```
-f1-dashboard/
-├── .github/workflows/
-│   └── deploy.yml              ← GitHub Actions (fetch + build + deploy)
-├── scripts/
-│   ├── fetch-f1-data.mjs       ← Jolpica API fetcher (standings, results, pits)
-│   └── fetch-openf1-data.mjs   ← OpenF1 API fetcher (sectors, speeds, stints)
-├── src/
-│   ├── main.jsx                ← React entry point
-│   └── App.jsx                 ← Dashboard (all tabs, all visualizations)
-├── public/
-│   ├── data.json               ← Jolpica data (generated)
-│   └── openf1/                 ← OpenF1 data: index.json + meetings/{key}.json (generated)
-├── index.html
-├── package.json
-├── vite.config.js
-└── README.md
+```bash
+python scripts/fetch-driver-quotes.py --fetch-transcripts   # from a home connection
+python scripts/fetch-driver-quotes.py                       # extract quotes
 ```
 
----
+## Quality gates
 
-## 📊 Data Sources
+- `npm run lint` runs ESLint with React's hooks rules as errors.
+- `npm test` runs node:test over the fetch helpers, the validator and the dashboard's data transforms.
+- CI runs both before any data is fetched, then the validator before the build.
 
-| Source | What it provides | Auth required? | Rate limit |
-|--------|-----------------|----------------|------------|
-| [Jolpica API](https://github.com/jolpica/jolpica-f1) | Standings, race results, qualifying, pit stops, schedule | No | Generous |
-| [OpenF1 API](https://openf1.org) | Sector times, speed traps (I1/I2/ST), stints, tire compounds | No (historical) | 3 req/s, 30 req/min |
+## Project layout
 
-OpenF1 data is available from the 2023 season onwards. Historical data is free; real-time data during live sessions requires a paid subscription.
+```
+.github/workflows/deploy.yml   fetch → validate → build → deploy → commit data back
+scripts/                       fetch scripts, validator, commit and summary helpers
+src/App.jsx                    the dashboard: every sheet and component
+src/data.js                    pure data logic (transforms, statuses, joins)
+src/styles.css                 design tokens and sheet styles
+public/                        fetched data (data.json, openf1/, driver-quotes.json, tracks.json)
+test/                          node:test suites
+```
 
----
+## Credits
 
-## ⚠️ Important Notes
+Race data from [Jolpica F1](https://github.com/jolpica/jolpica-f1) and [OpenF1](https://openf1.org). Driver quotes are extracted from [Formula 1's YouTube channel](https://www.youtube.com/@Formula1). Circuit outlines come from [bacinger/f1-circuits](https://github.com/bacinger/f1-circuits).
 
-- **Repo name matters**: The `base` in `vite.config.js` is set to `/f1-dashboard/`. If you name your repo something different, update this value to match.
-- **2026 season**: OpenF1 may not have 2026 data until sessions actually occur. The dashboard handles this gracefully — the Sector Times tab shows a helpful message, and Race Results cards simply skip the sector enrichment when no OpenF1 data is available.
-- **Mock data included**: The repo ships with realistic mock data so the dashboard renders immediately. Run `npm run fetch-all` to replace with live API data.
+The code is MIT-licensed. Formula 1 names, driver photos and team logos belong to their owners. This is an unofficial fan project and is not affiliated with Formula 1.

@@ -258,6 +258,7 @@ Paper geometry. Sheets and panels have a 2px radius (the sheet's top-left corner
 - **Filter chips (sessions, drivers, rounds, metrics):** `--w02`/`--w03` fill, `--w08` hairline, `--w40`–`--w55` text, Barlow 11–13px, padding `5px 10px` to `8px 20px`.
 - **Selected:** red filter chips take `red-soft` fill with a `record-red` border and `ink` text; driver chips take the driver's ink-clamped colour as border and a ten-percent tint of it as fill, weight 700.
 - **Disabled (max drivers reached):** opacity 0.35, `not-allowed` cursor.
+- **Target size:** toggle chips carry `.chip` — at least 24px tall (WCAG 2.2), 32px under `pointer: coarse` — and expose `aria-pressed`.
 
 ### Cards / Containers
 - **Sheet:** `sheet` paper, `0 2px 2px 2px` radius, sheet shadow, `26px 28px 30px` padding; opens with the `sheet-band` (Courier 12px, `ink-3`, `sheet-2` fill, 1px `rule` under-edge) that names the sheet number and its sources.
@@ -273,6 +274,8 @@ Paper geometry. Sheets and panels have a 2px radius (the sheet's top-left corner
 
 ### Navigation
 - **Index tabs:** a flex bar of `.tb` tabs on the sheet's top edge, each `flex:1`, Barlow Condensed 600 14px uppercase `0.06em`, `bench-2` fill with a `bench-3` border and no bottom border, top corners 2px, sitting 2px low. Hover lifts text to `bench-ink` on `bench-3`. Active takes the `sheet` colour and `ink` text, rises flush to the sheet and gains 2px top padding so it joins the paper. On mobile the bar scrolls horizontally (`flex:0 0 auto`, 12.5px) and a right-edge fade into the bench (`.fade-r`) shows overflow.
+
+- **Colophon:** a `.colophon` footer on the bench below the sheet, in the header stamp's Courier (12px, `#93A1AF`, links `#DDE4EA` underlined): who built it, the repository, the data sources, and that it is unofficial.
 
 ### Lap Chart (signature)
 An SVG timing sheet: laps as columns with Courier lap numbers, positions as rows, each car a `round`-joined polyline in its ink-clamped team colour with its car number written in the same ink at both ends; the winner's trace is `record-red` and slightly heavier. Pit stops are open circles, local-yellow laps are pale `yellow` columns, the cursor is a 1.25px red vertical. Focusing a car fades the others to 0.28 opacity (180ms). Lines draw on with `.ink-draw` (stroke-dashoffset, 1.6s) the first time a tab is visited. A `LapReadout` beneath lists the running order at the cursor lap in Courier 11.5px; the `LapScrubber` (stopwatch rail plus play button) drives the cursor shared with the replay.
@@ -301,3 +304,20 @@ An SVG timing sheet: laps as columns with Courier lap numbers, positions as rows
 - **Don't** reintroduce the dark-card theme: no `#0a0a0f` grounds, no white-alpha surfaces, no Outfit.
 - **Don't** use raw broadcast liveries or the old teal (`#27F4D2`) as a semantic positive colour; positive deltas are `green`.
 - **Don't** use emoji or Unicode glyphs as icons; icons are inline SVG (the scrubber play glyph is the model).
+- **Don't** make a colour translucent by appending a hex alpha (`${c}22`): it is invalid CSS whenever the colour is a `var(--token)`. Use `alpha(c, 0x22)` in App.jsx, which emits `color-mix(in srgb, c 13%, transparent)`.
+
+## Rasters
+
+Shipping images and where they come from. All are headless-Chrome captures of the dashboard itself (reduced motion, 1× scale), taken 2026-09-24 from the local build with that day's data; nothing is drawn or generated.
+
+| File | Size | Capture |
+|---|---|---|
+| `public/og.png` | 1200×630 | Overview first viewport — the social card (`og:image`, `twitter:image`) |
+| `docs/overview.png` | 1440×1000 | Overview first viewport — README hero |
+| `docs/telemetry.png` | 1440×1005 | `#tab=telemetry&r=14&lap=30`, cropped above the Lap Compare panel — README |
+
+Re-capture after a visual change with:
+
+```bash
+chrome --headless=new --hide-scrollbars --force-prefers-reduced-motion --force-device-scale-factor=1 --window-size=1200,630 --virtual-time-budget=10000 --screenshot=og.png http://localhost:5177/f1-dashboard/
+```

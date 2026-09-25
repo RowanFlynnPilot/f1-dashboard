@@ -103,6 +103,10 @@ input[type=range]{accent-color:var(--red)}
 .tb:focus-visible{outline-offset:-3px}
 
 .main{padding:0 32px 40px;max-width:1280px;margin:0 auto}
+/* colophon: the header stamp's Courier, on the bench below the sheet */
+.colophon{max-width:1280px;margin:0 auto;padding:0 32px 36px;display:flex;flex-wrap:wrap;gap:6px 22px;font-family:var(--font-data);font-size:12px;line-height:1.5;color:#93A1AF}
+.colophon a{color:#DDE4EA;text-decoration:underline;text-decoration-color:#5B6671;text-underline-offset:3px}
+.colophon a:hover{color:#FFFFFF;text-decoration-color:currentColor}
 .sheet{background:var(--sheet);color:var(--ink);border-radius:0 2px 2px 2px;box-shadow:0 18px 40px -22px rgba(0,0,0,.7),0 2px 0 rgba(0,0,0,.25);padding:26px 28px 30px;position:relative}
 .sheet-band{margin:-26px -28px 22px;padding:12px 28px;background:var(--sheet-2);border-bottom:1px solid var(--rule);display:flex;justify-content:space-between;align-items:baseline;gap:16px;flex-wrap:wrap;font-family:var(--font-data);font-size:12px;color:var(--ink-3)}
 .sheet-band b{color:var(--ink);font-weight:700}
@@ -220,6 +224,7 @@ td{font-family:var(--font-ui)}
   .tab-wrap.fade-r::after{right:14px}
   .tb{padding:8px 12px 7px;font-size:12.5px;flex:0 0 auto}
   .main{padding:0 14px 28px}
+  .colophon{padding:0 14px 28px;flex-direction:column}
   .sheet{padding:18px 16px 22px}
   .sheet-band{margin:-18px -16px 16px;padding:10px 16px}
   .g2{grid-template-columns:1fr}

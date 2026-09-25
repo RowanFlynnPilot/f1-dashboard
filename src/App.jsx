@@ -2064,6 +2064,15 @@ export default function F1Dashboard(){
         </div>
         </TabErrorBoundary>
       </main>
+
+      {/* Colophon — on the bench, in the header stamp's Courier: who built it,
+          where the source and pipeline live, where the data comes from */}
+      <footer className="colophon">
+        <span>Built by <a href="https://github.com/RowanFlynnPilot">RowanFlynnPilot</a></span>
+        <span><a href="https://github.com/RowanFlynnPilot/f1-dashboard">Source &amp; data pipeline on GitHub</a></span>
+        <span>Data · Jolpica F1 · OpenF1 · Formula 1 on YouTube</span>
+        <span>Unofficial fan project · not affiliated with Formula 1</span>
+      </footer>
     </div>
   );
 }
@@ -2307,7 +2316,9 @@ const ReplayPanel=memo(function ReplayPanel({cur,race,tracks,allDrivers,telMeeti
                 const fmtTime=(s)=>{const m=Math.floor(s/60);const sec=Math.floor(s%60);return`${m}:${String(sec).padStart(2,"0")}`;};
                 const fmtGapToLeader=(d)=>{
                   if(d===ranked[0])return"LEADER";
-                  const lapsBehind=Math.floor(leaderProgress)-Math.floor(d.progress);
+                  // Lapped = a full lap of progress behind. Comparing laps completed made a
+                  // car 3 s back read "+1 lap" whenever the leader had just crossed the line.
+                  const lapsBehind=Math.floor(leaderProgress-d.progress);
                   if(lapsBehind>=1)return`+${lapsBehind} lap${lapsBehind>1?"s":""}`;
                   // Same lap — approximate seconds gap using leader's current lap pace
                   const leadCurLapTime=ranked[0]?(ranked[0].finished?lapsByDriver[ranked[0].driver.number]?.cumArr.slice(-1)[0]?.t||90:(lapsByDriver[ranked[0].driver.number]?.cumArr[ranked[0].lap]?.t||90)):90;
