@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, useRef, Fragment, Component, memo } from "react";
+import { transformData, countdownLabel, withStatus, meetingRaceDay, meetingForRace, meetingTrackName } from "./data.js";
 
 // The season comes from data.json (scripts/season.json drives the fetch); this is
 // only the fallback before it loads.
@@ -95,466 +96,6 @@ const alpha=(c,a)=>`color-mix(in srgb, ${c} ${Math.round(a/2.55)}%, transparent)
 // Normalize OpenF1 team names to match TC/TL keys
 function normTeam(t){if(!t)return"";return t.replace(" F1 Team","").replace("Red Bull Racing","Red Bull").replace("Kick Sauber","Audi").trim();}
 
-// Data is loaded dynamically from data.json (fetched from Jolpica API)
-// Transform functions convert API format to dashboard format
-
-// Classification label of a raw data.json result: null for a classified finish,
-// else "DNF" / "DSQ" / "DNS" / "NC". Current builds carry it as `out` (from
-// Jolpica's positionText); older builds only have the status text.
-function resultOut(res){
-  if(res.out!==undefined)return res.out;
-  const st=(res.status||"").toLowerCase();
-  if(st.includes("did not start"))return"DNS";
-  if(st.includes("disqualified"))return"DSQ";
-  if(isNaN(parseInt(res.pos))||/retired|accident|collision|engine|mechanical/.test(st))return"DNF";
-  return null;
-}
-
-// Teammate battles, one per pair of drivers who shared a garage. Pairs come from
-// who raced or qualified for each team in each round, so a seat change mid-season
-// (2026: Lawson to Red Bull from round 12) yields a battle per pairing, each
-// scored only over the rounds that pair actually shared.
-function headToHead(DS, CS, rawRaces, allRaces, qualifying) {
-  const byDid = new Map(DS.filter(d => d.did).map(d => [d.did, d]));
-  const byLast = new Map(DS.map(d => [d.n.split(" ").pop(), d]));
-  const seats = {}; // team → round → Map(name → DS entry)
-  const seat = (team, round, did, last) => {
-    const d = (did && byDid.get(did)) || byLast.get(last);
-    if (d && team) ((seats[team] ??= {})[round] ??= new Map()).set(d.n, d);
-  };
-  for (const r of rawRaces) for (const res of r.results || []) seat(res.team, r.round, res.did, res.driver);
-  for (const q of qualifying) for (const res of q.results) seat(res.t, q.round, res.did, res.d);
-  const same = (row, d) => (row.did ? row.did === d.did : row.d === d.n.split(" ").pop());
-  const avg = a => (a.length ? +(a.reduce((s, v) => s + v, 0) / a.length).toFixed(1) : null);
-
-  const battles = [];
-  for (const c of CS) {
-    const pairs = {};
-    for (const [round, drivers] of Object.entries(seats[c.t] || {})) {
-      const [a, b] = [...drivers.values()].sort((x, y) => x.p - y.p); // d1 = higher in the standings
-      if (a && b) (pairs[`${a.n}|${b.n}`] ??= { d1: a, d2: b, rounds: [] }).rounds.push(Number(round));
-    }
-    const list = Object.values(pairs).map(p => ({ ...p, rounds: p.rounds.sort((x, y) => x - y) }))
-      .sort((x, y) => y.rounds.at(-1) - x.rounds.at(-1)); // current pairing first
-    for (const { d1, d2, rounds } of list) {
-      const inPair = new Set(rounds);
-      let q1 = 0, q2 = 0;
-      const qualDetails = [];
-      for (const q of qualifying) {
-        if (!inPair.has(q.round)) continue;
-        const r1 = q.results.find(r => r.t === c.t && same(r, d1));
-        const r2 = q.results.find(r => r.t === c.t && same(r, d2));
-        if (!r1 || !r2) continue;
-        if (r1.pos < r2.pos) q1++; else if (r2.pos < r1.pos) q2++;
-        qualDetails.push({ race: q.name.replace(" Grand Prix", ""), d1: r1.pos, d2: r2.pos });
-      }
-      // Finishing order from races; points from races and sprints, for this team only
-      let w1 = 0, w2 = 0, pts1 = 0, pts2 = 0;
-      const f1 = [], f2 = [], raceDetails = [];
-      for (const race of allRaces) {
-        if (!inPair.has(parseInt(race.r))) continue;
-        const r1 = race.full.find(r => r.t === c.t && same(r, d1));
-        const r2 = race.full.find(r => r.t === c.t && same(r, d2));
-        pts1 += r1?.pts || 0;
-        pts2 += r2?.pts || 0;
-        if (race.sprint || !r1 || !r2) continue;
-        const p1 = typeof r1.p === "number" ? r1.p : 99, p2 = typeof r2.p === "number" ? r2.p : 99;
-        if (p1 < p2) w1++; else if (p2 < p1) w2++;
-        if (typeof r1.p === "number") f1.push(r1.p); // average finish counts classified finishes only
-        if (typeof r2.p === "number") f2.push(r2.p);
-        raceDetails.push({ race: race.nm.replace(" Grand Prix", ""), d1: r1.p, d2: r2.p });
-      }
-      battles.push({
-        team: c.t, d1, d2, rounds, teamPairings: list.length,
-        qual: { d1: q1, d2: q2, details: qualDetails },
-        race: { d1: w1, d2: w2, details: raceDetails },
-        avgPos: { d1: avg(f1), d2: avg(f2) },
-        pts: { d1: pts1, d2: pts2 },
-      });
-    }
-  }
-  return battles;
-}
-
-function transformData(raw) {
-  // Only the calendar is required: before round 1 of a new season there are no
-  // standings yet, and the sheets show a season-opener view rather than an error
-  if (!raw || !Array.isArray(raw.schedule)) return null;
-  raw = { drivers: [], constructors: [], races: [], sprints: [], qualifying: [], ...raw };
-
-  // Points delta: what each driver scored in the round the standings follow —
-  // that round's race and/or sprint. Keyed off standingsRound because on a
-  // sprint Saturday the standings already include the sprint while the last
-  // race is the previous round (subtracting that race gave wrong arrows).
-  // No fastest-lap bonus — the FL point was abolished from the 2025 season.
-  const F1_PTS = {1:25,2:18,3:15,4:12,5:10,6:8,7:6,8:4,9:2,10:1};
-  const SPRINT_PTS = {1:8,2:7,3:6,4:5,5:4,6:3,7:2,8:1};
-  const sprintsArr = raw.sprints || [];
-  // Older data.json builds lack per-result points — derive them from position
-  const rowPts = (row, sprint) => row.pts ?? (row.out ? 0 : (sprint ? SPRINT_PTS : F1_PTS)[parseInt(row.pos)] || 0);
-  const lastRound = raw.standingsRound || Math.max(0, ...raw.races.map(r => r.round), ...sprintsArr.map(s => s.round));
-  const lastRoundPts = {};      // driverId (or surname on old builds) → points
-  const lastRoundTeamPts = {};  // team → points, by the team each car raced for
-  for (const [sessions, sprint] of [[raw.races, false], [sprintsArr, true]]) {
-    for (const s of sessions) {
-      if (s.round !== lastRound) continue;
-      for (const r of s.results || []) {
-        const pts = rowPts(r, sprint);
-        const key = r.did || r.driver;
-        lastRoundPts[key] = (lastRoundPts[key] || 0) + pts;
-        lastRoundTeamPts[r.team] = (lastRoundTeamPts[r.team] || 0) + pts;
-      }
-    }
-  }
-  const lastPtsOf = (did, name) => lastRoundPts[did] ?? lastRoundPts[name.split(" ").pop()] ?? 0;
-  const haveLastRound = Object.keys(lastRoundPts).length > 0;
-
-  const DS = raw.drivers.map(d => {
-    const delta = lastPtsOf(d.driverId, d.name);
-    return { p: d.pos, n: d.name, t: d.team, pts: d.pts, wins: d.wins || 0, d: delta > 0 ? `+${delta}` : "—", mv: 0, did: d.driverId || "", teams: d.teams || [d.team] };
-  });
-
-  // Compute position movement: compare current standings vs what they'd be without last-round points
-  if (haveLastRound) {
-    const prevStandings = DS.map(d => ({ n: d.n, pts: d.pts - lastPtsOf(d.did, d.n) }))
-      .sort((a, b) => b.pts - a.pts || DS.findIndex(x=>x.n===a.n) - DS.findIndex(x=>x.n===b.n));
-    for (let i = 0; i < DS.length; i++) {
-      const prevPos = prevStandings.findIndex(x => x.n === DS[i].n) + 1;
-      DS[i].mv = prevPos - DS[i].p; // positive = gained positions
-    }
-  }
-
-  // Constructor standings with per-driver breakdowns (points scored for this
-  // team — a driver who switched teams appears under both) and the current pairing
-  const CS = raw.constructors.map(c => ({
-    p: c.pos, t: c.team, pts: c.pts, mv: 0,
-    dr: c.drivers.map(d => ({ n: d.name, pts: d.pts })),
-    lu: c.lineup || [],
-  }));
-
-  // Constructor movement — same idea as drivers: subtract each team's last-round
-  // points, re-sort to reconstruct the previous order, compare.
-  if (haveLastRound) {
-    const teamDelta = lastRoundTeamPts;
-    const prevCS = CS.map(c => ({ t: c.t, pts: c.pts - (teamDelta[c.t] || 0) }))
-      .sort((a, b) => b.pts - a.pts || CS.findIndex(x => x.t === a.t) - CS.findIndex(x => x.t === b.t));
-    for (const c of CS) {
-      const prevPos = prevCS.findIndex(x => x.t === c.t) + 1;
-      c.mv = prevPos - c.p; // positive = gained places
-    }
-  }
-
-  // One classification row. `p` is the finishing position for a classified car
-  // and a label ("DNF", "DSQ", "DNS", "NC") otherwise — Jolpica numbers every
-  // car, retirements included, so the label comes from its positionText (`out`).
-  // Old builds without `out` fall back to the status for non-numeric positions.
-  const fullRow = (res, sprint) => ({
-    p: res.out || (isNaN(parseInt(res.pos)) ? res.status || "DNF" : parseInt(res.pos)),
-    d: res.driver, t: res.team, did: res.did || "", num: res.num ?? null,
-    grid: res.grid ?? null, laps: res.laps ?? null, pts: rowPts(res, sprint),
-    g: res.pos === "1" ? "WINNER" : (res.gap || res.status || ""),
-  });
-  const podRow = res => ({
-    p: parseInt(res.pos), d: res.driver, t: res.team,
-    g: res.pos === "1" ? "WINNER" : (res.gap.startsWith("+") ? res.gap : `+${res.gap}`),
-  });
-
-  // Combine races and sprints, sorted by date
-  const allRaces = [
-    ...raw.races.map(r => ({
-      r: r.round, nm: r.name, ci: r.circuit, dt: r.date, tt: r.time || null, w: r.results[0]?.driver || "", wt: r.results[0]?.team || "",
-      tm: r.winnerTime || "", sprint: false,
-      fl: r.fastestLap || null, // normalized shape: {driver, time, team} or null
-      pod: r.results.slice(0, 3).map(podRow),
-      full: r.results.map(res => fullRow(res, false)),
-    })),
-    ...sprintsArr.map(r => ({
-      r: r.round + "S", nm: r.name, ci: r.circuit, dt: r.date, tt: r.time || null, w: r.results[0]?.driver || "", wt: r.results[0]?.team || "",
-      tm: "", sprint: true,
-      fl: r.fastestLap || null, // normalized shape: {driver, time, team} or null
-      pod: r.results.slice(0, 3).map(podRow),
-      full: r.results.map(res => fullRow(res, true)),
-    })),
-  ].sort((a, b) => {
-    const da = new Date(a.dt) - new Date(b.dt);
-    if (da !== 0) return da;
-    // Same date: sprints come before the main race
-    if (a.sprint && !b.sprint) return -1;
-    if (!a.sprint && b.sprint) return 1;
-    return 0;
-  });
-
-  // Pit stops from most recent race (durationSec is current; durationMs is the
-  // legacy field name from older data.json builds — both hold seconds)
-  const pits = (raw.pitStops?.stops || []).map(p => ({
-    d: p.driver, fn: p.fullName || p.driver, t: p.team || "", s: p.durationSec ?? p.durationMs, l: p.lap,
-  })).filter(p => p.s > 0 && p.s < 60);
-
-  // Per-race pit stops for the Pit Stops tab's race selector (older data.json
-  // builds only carry the latest race — the tab falls back to `pits` then)
-  const pitsByRace = (raw.pitStopsByRace || []).map(pr => ({
-    r: pr.round, nm: pr.raceName,
-    stops: pr.stops.map(p => ({ d: p.driver, fn: p.fullName || p.driver, t: p.team || "", s: p.durationSec ?? p.durationMs, l: p.lap })).filter(p => p.s > 0 && p.s < 60),
-  })).filter(pr => pr.stops.length > 0);
-
-  // Schedule — status is computed client-side from race date + UTC start time,
-  // so a stale weekly build can't keep the NEXT RACE badge on a finished race.
-  // +3h after the start covers the race distance.
-  const now = new Date();
-  const raceEnded = (r) => now - new Date(`${r.date}T${r.time || "12:00:00Z"}`) > 3 * 3600 * 1000;
-  const nextRaceIdx = raw.schedule.findIndex(r => !raceEnded(r));
-  const sched = raw.schedule.map((r, i) => ({
-    r: r.round, nm: r.name, ci: r.circuit, dt: r.date, tt: r.time || null,
-    st: raceEnded(r) ? "done" : (i === nextRaceIdx ? "next" : "upcoming"),
-    w: r.winner, sp: r.sprint, fc: r.country, sdt: r.sprintDate || null, stt: r.sprintTime || null,
-  }));
-
-  const completedRounds = raw.completedRounds;
-  const totalRounds = raw.totalRounds;
-  const fetchedAt = raw.fetchedAt;
-  const pitRaceName = raw.pitStops?.raceName || "";
-
-  // Qualifying data
-  const qualifying = (raw.qualifying || []).map(q => ({
-    round: q.round,
-    name: q.raceName,
-    results: q.results.map(r => ({ pos: r.pos, d: r.driver, did: r.driverId || "", t: r.team })),
-  }));
-
-  // Head-to-head. Teammates are paired round by round from who actually drove
-  // for the team that weekend (race or qualifying), so a mid-season seat change
-  // starts a new battle instead of setting a driver against his old team-mate's
-  // replacement. Battles follow constructor order, the current pairing first.
-  const h2h = headToHead(DS, CS, raw.races, allRaces, qualifying);
-
-  // Get leader info
-  const leader = DS[0] || { n: "TBD", t: "Mercedes", pts: 0 };
-  const lastRace = allRaces.filter(r => !r.sprint).slice(-1)[0];
-  const lastWinner = lastRace ? { name: lastRace.w, team: lastRace.wt, race: lastRace.nm } : null;
-  const fastestLap = lastRace?.fl || null;
-
-  // Build season narrative from raw race data
-  const teamRaceStats={};
-  for(const r of raw.races){
-    for(const res of r.results){
-      if(!teamRaceStats[res.team])teamRaceStats[res.team]={wins:0,pods:0,dnfs:0,dns:0,bestFinish:99,driverWins:{},driverPods:{}};
-      const s=teamRaceStats[res.team];
-      const pos=parseInt(res.pos);
-      const out=resultOut(res);
-      if(!out&&!isNaN(pos)){
-        if(pos===1){s.wins++;s.driverWins[res.driver]=(s.driverWins[res.driver]||0)+1;}
-        if(pos<=3){s.pods++;s.driverPods[res.driver]=(s.driverPods[res.driver]||0)+1;}
-        if(pos<s.bestFinish)s.bestFinish=pos;
-      }
-      if(out==="DNF")s.dnfs++;
-      if(out==="DNS")s.dns++;
-    }
-  }
-  // Last race per-team driver finishes
-  const lastRaceData=raw.races[raw.races.length-1];
-  const lastRaceName=lastRaceData?lastRaceData.name:"";
-  const lastRaceTeamFinish={};
-  if(lastRaceData){
-    for(const res of lastRaceData.results){
-      if(!lastRaceTeamFinish[res.team])lastRaceTeamFinish[res.team]=[];
-      const pos=parseInt(res.pos);
-      const out=resultOut(res);
-      const dnf=out==="DNF"||out==="DNS";
-      lastRaceTeamFinish[res.team].push({d:res.driver,pos:out||isNaN(pos)?99:pos,dnf,status:res.status});
-    }
-  }
-  const nRaces=raw.races.length;
-  const narrative=CS.slice(0,4).map((c,i)=>{
-    const s=teamRaceStats[c.t]||{wins:0,pods:0,dnfs:0,dns:0,bestFinish:99,driverWins:{},driverPods:{}};
-    const pts=c.pts;
-    const gap=i===0?(CS[1]?pts-CS[1].pts:0):(CS[0].pts-pts);
-    // The garage split is the CURRENT pairing, with each driver's points for this team
-    const lineup=c.lu.length>=2?c.lu:c.dr.slice(0,2).map(d=>d.n);
-    const [d1,d2]=lineup.slice(0,2).map(n=>c.dr.find(d=>d.n===n)||{n,pts:0}).sort((a,b)=>b.pts-a.pts);
-    // A driver who arrived mid-season: from which team, and at which round
-    const arrival=[d1,d2].map(d=>{
-      const drv=DS.find(x=>x.n.split(" ").pop()===d.n);
-      const teams=drv?.teams||[];
-      if(teams.length<2||teams[teams.length-1]!==c.t)return null;
-      const joined=raw.races.find(r=>r.results.some(res=>res.driver===d.n&&res.team===c.t))?.round;
-      return joined?{d,from:teams[teams.length-2],joined}:null;
-    }).find(Boolean);
-    const lrf=lastRaceTeamFinish[c.t]||[];
-    // Title logic
-    let ti;
-    if(i===0){ti=s.wins>=nRaces*0.5&&gap>20?"Dominant Force":s.wins>0?"Championship Leaders":"Points Leaders";}
-    else if(i===1){ti=s.pods>0?"Best of the Rest":"Chasing the Leaders";}
-    else if(i===2){ti=s.dnfs+s.dns>0?"Under Pressure":"Midfield Battle";}
-    else{ti=s.dnfs+s.dns>=2?"In Crisis":s.bestFinish>10?"Struggling":"Work to Do";}
-    // Compose narrative — vary opening by rank, combine related facts to avoid template feel.
-    const lines=[];
-    const winEntries=Object.entries(s.driverWins);
-    const podEntries=Object.entries(s.driverPods);
-    // Sort last-race finish, pull DNF status off the worst entry
-    let best=null,worst=null;
-    if(lrf.length>=1){const sorted=[...lrf].sort((a,b)=>a.pos-b.pos);best=sorted[0];worst=sorted[sorted.length-1];}
-    const lr=lastRaceName;
-
-    // OPENING — wins, podiums, or struggles. Avoid the templated "X have also reached the podium."
-    if(s.wins>0){
-      if(winEntries.length===1){
-        const[d,w]=winEntries[0];
-        lines.push(`${d} ${w===nRaces?"has swept every round":`has taken ${w} win${w>1?"s":""}`} from ${nRaces} race${nRaces>1?"s":""} so far.`);
-      } else {
-        const wlist=winEntries.map(([d,w])=>`${d} (${w})`).join(" and ");
-        lines.push(`${wlist} have shared ${s.wins} wins from ${nRaces} race${nRaces>1?"s":""}.`);
-      }
-      const nonWinPod=podEntries.filter(([d])=>!s.driverWins[d]).map(([d])=>d);
-      if(nonWinPod.length>0){
-        lines.push(`${nonWinPod.join(" and ")} ${nonWinPod.length>1?"have":"has"} added further podiums.`);
-      }
-    } else if(s.pods>0){
-      if(podEntries.length===2&&podEntries[0][1]===podEntries[1][1]){
-        const n=podEntries[0][1];
-        lines.push(`${podEntries[0][0]} and ${podEntries[1][0]} have each ${n===1?"scored a podium":`taken ${n} podiums`} so far.`);
-      } else if(podEntries.length===2){
-        const top=podEntries[0][1]>podEntries[1][1]?podEntries[0]:podEntries[1];
-        const bot=podEntries[0][1]>podEntries[1][1]?podEntries[1]:podEntries[0];
-        lines.push(`${top[0]} leads the way with ${top[1]} podium${top[1]>1?"s":""}, while ${bot[0]} has added ${bot[1]}.`);
-      } else {
-        const[d,n]=podEntries[0];
-        lines.push(`${d} ${n===1?"has been the team's lone podium scorer":`accounts for all ${n} of the team's podiums`} this season.`);
-      }
-    } else if(s.bestFinish<99){
-      lines.push(`No podiums yet — their best result is P${s.bestFinish}.`);
-    }
-
-    // POINTS / POSITION — vary the framing per rank to break the template feel
-    if(i===0){
-      if(gap>0)lines.push(`The team leads the constructors' standings on ${pts} pts, ${gap} clear of ${CS[1].t}.`);
-      else lines.push(`Tied at the top on ${pts} pts.`);
-    } else if(i===1){
-      lines.push(`That puts them ${gap} points behind ${CS[0].t} on ${pts}.`);
-    } else if(i===2){
-      lines.push(`The team sits ${gap} points adrift of ${CS[0].t} on ${pts}.`);
-    } else {
-      lines.push(`A ${gap}-point gap to ${CS[0].t} leaves them on just ${pts}.`);
-    }
-
-    // RELIABILITY + LAST RACE — merge into one sentence when the last race featured a team retirement
-    const lastRaceDnf=!!(worst&&worst.dnf);
-    const hasReliability=(s.dnfs+s.dns)>0;
-    let lastRaceCovered=false;
-    if(hasReliability){
-      const issues=[];
-      if(s.dnfs>0)issues.push(`${s.dnfs} DNF${s.dnfs>1?"s":""}`);
-      if(s.dns>0)issues.push(`${s.dns} DNS`);
-      const issuesStr=issues.join(" and ");
-      if(lastRaceDnf&&best&&worst&&lr){
-        // Combine retirement with whatever the other driver did
-        let bestClause;
-        if(best.pos===1)bestClause=`${best.d} still took victory`;
-        else if(best.pos<=3)bestClause=`${best.d} salvaged ${best.pos===2?"P2":"P3"}`;
-        else if(best.pos<=10)bestClause=`${best.d} brought it home in P${best.pos}`;
-        else bestClause=`${best.d} also finished outside the points`;
-        lines.push(`Reliability has bitten with ${issuesStr} this season — ${worst.d} retired at the ${lr}, where ${bestClause}.`);
-        lastRaceCovered=true;
-      } else {
-        lines.push(`Reliability remains a concern, with ${issuesStr} so far this season.`);
-      }
-    }
-
-    // STANDALONE LAST RACE — only when not already covered above
-    if(best&&worst&&lr&&!lastRaceCovered){
-      if(best.pos===1){
-        if(worst.pos<=10)lines.push(`${best.d} won the ${lr} with ${worst.d} home in P${worst.pos}.`);
-        else lines.push(`${best.d} won the ${lr}.`);
-      } else if(best.pos<=3){
-        const verb=best.pos===2?"finished runner-up":"rounded out the podium";
-        const worstClause=worst.pos===best.pos?"":worst.pos<=10?` while ${worst.d} took P${worst.pos}`:` though ${worst.d} fell back to P${worst.pos}`;
-        lines.push(`${best.d} ${verb} at the ${lr}${worstClause}.`);
-      } else if(best.pos<=10){
-        const worstClause=worst.pos===best.pos?"":worst.pos<=10?` and ${worst.d} P${worst.pos}`:` while ${worst.d} finished outside the points`;
-        lines.push(`${best.d} scraped points with P${best.pos} at the ${lr}${worstClause}.`);
-      } else {
-        lines.push(`Neither car troubled the points at the ${lr}.`);
-      }
-    }
-
-    // DRIVER SPLIT — handle equal points edge case and a mid-season arrival
-    if(arrival){
-      lines.push(arrival.d===d1
-        ?`${d1.n} leads the garage on ${d1.pts} pts since arriving from ${arrival.from} at round ${arrival.joined}, ahead of ${d2.n} on ${d2.pts}.`
-        :`${d1.n} leads the garage on ${d1.pts} pts, with ${arrival.d.n} on ${arrival.d.pts} since arriving from ${arrival.from} at round ${arrival.joined}.`);
-    } else if(d1.pts===d2.pts){
-      if(d1.pts===0)lines.push(`Neither driver has scored yet.`);
-      else lines.push(`${d1.n} and ${d2.n} are level on ${d1.pts} pts apiece.`);
-    } else {
-      lines.push(`${d1.n} leads the garage on ${d1.pts} to ${d2.n}'s ${d2.pts}.`);
-    }
-
-    return{t:c.t,ti,desc:lines.join(" ")};
-  });
-
-  // Points progression — cumulative points by round. Track top-6 for chart lines
-  // and ALL drivers for tooltip rankings.
-  const topNames=DS.slice(0,6).map(d=>d.n);
-  const allRosterNames=DS.map(d=>d.n);
-  const cumAll=Object.fromEntries(allRosterNames.map(n=>[n,0]));
-  const progressionLabels=["Start"];
-  const progressionRaceNames=["Season start"];
-  const progressionStandings=[
-    allRosterNames.map((n,idx)=>({name:n,pts:0,pos:idx+1})),
-  ];
-  const progressionSeries=topNames.map(n=>{
-    const driver=DS.find(x=>x.n===n);
-    return{name:n,team:driver?.t||"",points:[0]};
-  });
-  for(const race of allRaces){
-    for(const res of race.full){
-      const match=allRosterNames.find(n=>n.split(" ").pop()===res.d||n===res.d);
-      if(!match)continue;
-      cumAll[match]+=res.pts||0; // points as awarded (no FL bonus — abolished from 2025)
-    }
-    if(!race.sprint){
-      // Mark sprint weekends — the sprint event shares the round number with an "S" suffix
-      const hadSprint=allRaces.some(x=>x.sprint&&x.r===race.r+"S");
-      progressionLabels.push("R"+race.r+(hadSprint?" S":""));
-      progressionRaceNames.push(race.nm);
-      // Snapshot current standings (sorted by pts, ties broken by original DS order)
-      const ranked=allRosterNames
-        .map(n=>({name:n,pts:cumAll[n],dsIdx:allRosterNames.indexOf(n)}))
-        .sort((a,b)=>b.pts-a.pts||a.dsIdx-b.dsIdx)
-        .map((d,i)=>({name:d.name,pts:d.pts,pos:i+1}));
-      progressionStandings.push(ranked);
-      progressionSeries.forEach(s=>s.points.push(cumAll[s.name]));
-    }
-  }
-  const progression={labels:progressionLabels,raceNames:progressionRaceNames,series:progressionSeries,standings:progressionStandings};
-
-  return { season: raw.season, DS, CS, races: allRaces, pits, pitsByRace, sched, qualifying, h2h, completedRounds, totalRounds, fetchedAt, pitRaceName, leader, lastWinner, fastestLap, narrative, progression };
-}
-
-
-// Animated count-up for stat hero numbers. Returns the eased value at this render frame.
-function useCountUp(target, duration = 1200, decimals = 0) {
-  const [value, setValue] = useState(decimals > 0 ? 0 : 0);
-  useEffect(() => {
-    let raf;
-    const start = performance.now();
-    const tick = (now) => {
-      const t = Math.min(1, (now - start) / duration);
-      const eased = 1 - Math.pow(1 - t, 3); // easeOutCubic
-      const v = target * eased;
-      setValue(decimals > 0 ? v : Math.round(v));
-      if (t < 1) raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [target, duration, decimals]);
-  return value;
-}
-
-function AnimatedNum({value, duration=1200, decimals=0, prefix="", suffix=""}) {
-  const v = useCountUp(value, duration, decimals);
-  return <>{prefix}{decimals>0?v.toFixed(decimals):v}{suffix}</>;
-}
-
 // Shared requestAnimationFrame clock for Race Replay and Lap Compare playback.
 // Advances `time` by elapsed-seconds × speed while playing; reads the current
 // duration from a ref (published by the render) and auto-pauses at the end so
@@ -613,39 +154,6 @@ function pickLapCompareDrivers(cur, acrAPref, acrBPref) {
 // western-hemisphere timezones.
 const raceDateFmt = (dt, tt) => new Date(`${dt}T${tt || "12:00:00Z"}`).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
 const raceTimeFmt = (dt, tt) => tt ? new Date(`${dt}T${tt}`).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" }) : null;
-// Calendar days between today and the race's start, both in the viewer's time
-// zone. Rounding up whole 24-hour blocks said "tomorrow" on race morning.
-const daysUntilRace = (dt, tt) => {
-  const start = new Date(`${dt}T${tt || "12:00:00Z"}`), now = new Date();
-  const day = d => Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 86400000;
-  return Math.round(day(start) - day(now));
-};
-const countdownLabel = (dt, tt) => {
-  if (tt && Date.now() >= new Date(`${dt}T${tt}`).getTime()) return "under way";
-  const d = daysUntilRace(dt, tt);
-  return d <= 0 ? "today" : d === 1 ? "tomorrow" : `in ${d} days`;
-};
-// OpenF1 meeting for a Jolpica Grand Prix ({r, dt}). The OpenF1 script stamps
-// each meeting with its `round` and Jolpica `raceName`; older payloads fall back
-// to the race session's date. Names alone don't join the two APIs: OpenF1's
-// "Bahrain Grand Prix" is Jolpica's "Bahrain Grand Prix in Malaysia" (Sepang),
-// "São Paulo" is "Brazilian", and tracks.json is keyed by Jolpica names.
-const meetingRaceDay = m => (m?.sessions || []).find(s => s.sessionName === "Race")?.dateStart?.slice(0, 10) || null;
-function meetingForRace(meetings, race) {
-  if (!meetings || !race) return null;
-  const round = typeof race.r === "string" ? parseInt(race.r) : race.r;
-  return meetings.find(m => m.round === round) || meetings.find(m => m.round == null && meetingRaceDay(m) === race.dt) || null;
-}
-// Name to look a meeting up by in tracks.json
-const meetingTrackName = m => m?.raceName || m?.meetingName || "";
-
-// Race status from the clock, not the build: done 3h after lights out, the first
-// unfinished round is "next". Recomputed every minute while the page is open.
-const withStatus = (sched, now = Date.now()) => {
-  const ended = r => now - new Date(`${r.dt}T${r.tt || "12:00:00Z"}`).getTime() > 3 * 3600 * 1000;
-  const nextIdx = sched.findIndex(r => !ended(r));
-  return sched.map((r, i) => ({ ...r, st: ended(r) ? "done" : i === nextIdx ? "next" : "upcoming" }));
-};
 
 // One bad data field shouldn't white-screen the whole dashboard — catch render
 // errors per-tab (keyed on the tab, so other tabs stay usable).
@@ -813,26 +321,6 @@ function processLapTelemetry(carData, location){
   return samples;
 }
 
-// Given a driver's lapTimes array and a race time (seconds), returns
-// { lap: laps_completed_with_fraction, lapInProgress, fracOfLap, finished }.
-// lap is a float — integer part = laps completed, fractional = progress into
-// the current lap. Used to position dots and rank drivers.
-function driverProgressAtTime(driver,raceTime){
-  const laps=[...(driver.lapTimes||[])].sort((a,b)=>a.l-b.l);
-  if(laps.length===0)return null;
-  let cum=0;
-  for(let i=0;i<laps.length;i++){
-    const l=laps[i];
-    if(raceTime<=cum+l.t){
-      const frac=Math.max(0,Math.min(1,(raceTime-cum)/l.t));
-      return{lap:(l.l-1)+frac,lapInProgress:l.l,fracOfLap:frac,finished:false};
-    }
-    cum+=l.t;
-  }
-  // Past the last lap — driver finished or retired
-  return{lap:laps[laps.length-1].l,lapInProgress:laps[laps.length-1].l,fracOfLap:1,finished:true,finishedAt:cum};
-}
-
 // Split a TrackMap path into three equal-length segments. Used for the sector
 // overlay on Sector Times. Returns three path strings, the start point of each
 // sector boundary (for label dots), and the original viewBox.
@@ -896,7 +384,7 @@ const LapChart=memo(function LapChart({session,lap,setLap,outNums}){
     const m=()=>setCompact(el.clientWidth<640);m();
     const ro=new ResizeObserver(m);ro.observe(el);return()=>ro.disconnect();
   },[]);
-  const drivers=session.drivers||[];
+  const drivers=useMemo(()=>session.drivers||[],[session.drivers]);
   const total=Math.max(1,...drivers.map(d=>(d.positions||[]).reduce((m,q)=>Math.max(m,q.l||0),0)));
   const n=Math.max(drivers.length,20);
   // Compact (phone) keeps the same 1000-unit width but taller rows and larger type,
@@ -971,7 +459,7 @@ const LapReadout=memo(function LapReadout({session,lap,live=true}){
 
 // Stopwatch scrubber: drives the lap cursor; play advances a lap every 160 ms.
 function LapScrubber({lap,setLap,total,playing,setPlaying}){
-  useEffect(()=>{if(!playing)return;const id=setInterval(()=>setLap(l=>{if(l>=total){setPlaying(false);return l;}return l+1;}),160);return()=>clearInterval(id);},[playing,total,setLap]);
+  useEffect(()=>{if(!playing)return;const id=setInterval(()=>setLap(l=>{if(l>=total){setPlaying(false);return l;}return l+1;}),160);return()=>clearInterval(id);},[playing,total,setLap,setPlaying]);
   const pct=(l)=>((l-1)/Math.max(1,total-1))*100;
   const ticks=[];for(let l=1;l<=total;l++){if(l===1||l%5===0||l===total)ticks.push(l);}
   return(
@@ -1210,7 +698,7 @@ export default function F1Dashboard(){
     loadOpenf1Index();
     fetch(import.meta.env.BASE_URL + "driver-quotes.json").then(r=>r.ok?r.json():null).catch(()=>null).then(dq=>{if(dq&&dq.rounds)setQuotes(dq);});
     fetch(import.meta.env.BASE_URL + "tracks.json").then(r=>r.ok?r.json():null).catch(()=>null).then(tk=>{if(tk)setTracks(tk);});
-  },[]);
+  },[loadOpenf1Index]);
 
   // Composed view: index metadata with full meeting payloads spliced in as they
   // load. Same shape as the old single openf1 object, so consumers are unchanged;
@@ -1326,7 +814,7 @@ export default function F1Dashboard(){
   if(loading)return(<div className="bench" style={{display:"flex",alignItems:"center",justifyContent:"center"}}><div style={{textAlign:"center",color:"#E6ECF1"}}><div className="head" style={{fontSize:30,fontWeight:700,marginBottom:6}}>Opening the season sheets</div><div className="num" style={{color:"#93A1AF",fontSize:13}}>reading data.json …</div></div></div>);
   if(error||!data)return(<div className="bench" style={{display:"flex",alignItems:"center",justifyContent:"center"}}><div style={{textAlign:"center",color:"#E6ECF1"}}><div className="head" style={{fontSize:30,fontWeight:700,color:"#FF5A5A",marginBottom:6}}>The season sheets didn't load</div><div style={{color:"#C9D3DC",fontSize:14,marginBottom:6}}>Check your connection, then try again.</div>{error&&<div className="num" style={{color:"#93A1AF",fontSize:12}}>{error}</div>}<button onClick={()=>window.location.reload()} className="head" style={{marginTop:16,padding:"8px 18px",borderRadius:2,border:"1px solid #9DB3CF",background:"transparent",color:"#E6ECF1",fontSize:14,fontWeight:700,cursor:"pointer"}}>Try again</button></div></div>);
 
-  const{DS,CS,races,pits,pitsByRace,qualifying,h2h,completedRounds,totalRounds,fetchedAt,pitRaceName,leader,lastWinner,fastestLap,narrative,progression}=data;
+  const{DS,CS,races,pits,pitsByRace,qualifying,h2h,completedRounds,totalRounds,fetchedAt,pitRaceName,leader,narrative,progression}=data;
   const sched=withStatus(data.sched,clock);
   const seasonDone=sched.length>0&&sched.every(r=>r.st==="done");
   const season=data.season||SEASON_FALLBACK;
@@ -1334,7 +822,6 @@ export default function F1Dashboard(){
   const fastestPit=pits.length>0?pits[0]:null;
   const maxDriverPts=Math.max(1,...DS.map(d=>d.pts));
   const nextRace=sched.find(r=>r.st==="next");
-  const lastRaceFL=fastestLap;
   const headshots=openf1?.driverHeadshots||{};
 
   return(
@@ -2269,7 +1756,6 @@ export default function F1Dashboard(){
                 const d2Pct=total>0?(d2Val/total)*100:50;
                 const d1Leads=d1Val>d2Val;
                 const d2Leads=d2Val>d1Val;
-                const tied=d1Val===d2Val;
 
                 return(
                   <div key={`${battle.team}-${battle.d1.n}-${battle.d2.n}`} style={{background:"var(--w02)",border:"1px solid var(--w06)",borderRadius:2,padding:20,overflow:"hidden"}}>
@@ -2394,7 +1880,7 @@ export default function F1Dashboard(){
               <div style={{fontSize:15,fontWeight:700,marginBottom:4}}>{cName + " — Pit Stop Times"}</div>
               <div style={{fontSize:12,color:"var(--w35)",marginBottom:20}}>Pit-lane time, fastest first · bars scaled from the fastest to the slowest shown{hiddenStops>0?` · ${hiddenStops} long stop${hiddenStops>1?"s":""} over 1.5× the race median listed below only`:""}</div>
               <div style={{display:"flex",flexDirection:"column",gap:5}}>
-                {chart.map((d,i)=>(
+                {chart.map(d=>(
                   <div key={`${curPr.r}-${d.d}-${d.l}`} style={{display:"flex",alignItems:"center",gap:8}}>
                     <TL team={d.t} size={22}/>
                     <div style={{width:96,fontSize:12,color:"var(--w70)",textAlign:"right",flexShrink:0,whiteSpace:"nowrap"}}>{d.d}<span style={{color:"var(--w30)",fontSize:10,marginLeft:4}}>L{d.l}</span></div>
@@ -2775,7 +2261,7 @@ const ReplayPanel=memo(function ReplayPanel({cur,race,tracks,allDrivers,telMeeti
     const lead=[...entries].sort((a,b)=>b.cumArr.length-a.cumArr.length||a.total-b.total)[0];
     const e=lead.cumArr.find(x=>x.l===L-1);
     if(e){setReplayPlaying(false);setReplayTime(e.cum+0.01);}
-  },[lapsByDriver]);
+  },[lapsByDriver,cur?.meeting?.round]);
   return (()=>{
                 const raceDuration=Math.max(1,...Object.values(lapsByDriver).map(x=>x.total));
                 replayDurationRef.current=raceDuration; // rAF clock auto-pauses here
@@ -2887,7 +2373,6 @@ const ReplayPanel=memo(function ReplayPanel({cur,race,tracks,allDrivers,telMeeti
                           const dotPositions=driverStates
                             .filter(s=>s.onTrack||s.finished)
                             .map(s=>({...s,pt:sampler.sample(s.fracOfLap)}));
-                          const hovered=replayDotHover?driverStates.find(s=>s.driver.number===replayDotHover.driverNumber):null;
                           return(
                             <svg role="img" aria-label="Race replay: every car's position on the circuit at the current race time" viewBox={t.viewBox} preserveAspectRatio="xMidYMid meet" style={{width:"100%",height:440,display:"block",overflow:"visible",touchAction:"pan-y"}}>
                               {/* Sector underlay — S1/S2/S3 thirds in faint hues beneath the track line */}
@@ -2934,7 +2419,6 @@ const ReplayPanel=memo(function ReplayPanel({cur,race,tracks,allDrivers,telMeeti
                           const stint=stintForDriver(d.number,s.lapInProgress||Math.floor(s.progress)+1);
                           const compound=(stint?.compound||"").toUpperCase();
                           const ccol=COMPOUND_COLORS[compound]||"var(--ink-4)";
-                          const cdark=compound==="HARD";
                           const rank=ranked.findIndex(r=>r.driver.number===d.number)+1;
                           return(
                             <div style={{position:"absolute",left:replayDotHover.x,top:replayDotHover.y-58,transform:"translateX(-50%)",background:"var(--panel-2)",border:`1px solid ${inkify(d.teamColour)||"var(--fg)"}55`,borderRadius:2,padding:"8px 12px",pointerEvents:"none",boxShadow:"0 6px 18px -4px rgba(0,0,0,0.35)",zIndex:20,minWidth:140}}>
@@ -2963,7 +2447,6 @@ const ReplayPanel=memo(function ReplayPanel({cur,race,tracks,allDrivers,telMeeti
                           const stint=stintForDriver(d.number,s.lapInProgress||Math.floor(s.progress)+1);
                           const compound=(stint?.compound||"").toUpperCase();
                           const ccol=COMPOUND_COLORS[compound]||"var(--w20)";
-                          const cdark=compound==="HARD";
                           return(
                             <div key={d.number} style={{display:"grid",gridTemplateColumns:"20px 26px 1fr 22px 50px",gap:5,padding:"4px 7px",alignItems:"center",background:idx<3?`${alpha(tc,0x14)}`:"var(--w02)",border:idx<3?`1px solid ${alpha(tc,0x30)}`:"1px solid var(--w04)",borderRadius:2,opacity:s.finished?0.55:1,transition:"opacity 0.2s"}}>
                               <div style={{fontSize:11,fontWeight:800,color:idx<3?tc:"var(--w40)",fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)"}}>{idx+1}</div>
@@ -3207,7 +2690,6 @@ const LapComparePanel=memo(function LapComparePanel({openf1,telMeetingKey,allDri
     const line=pts.map((p,i)=>`${i===0?"M":"L"}${xOf(p.f)},${yOf(p.delta)}`).join(" ");
     const area=`M${xOf(0)},${yOf(0)} `+pts.map(p=>`L${xOf(p.f)},${yOf(p.delta)}`).join(" ")+` L${xOf(1)},${yOf(0)} Z`;
     return{pts,yMax,line,area,geo:{dW,dH,dPadL,dPadR,dPadT,dPadB,pw,ph}};
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   },[samplesA,samplesB,lapTimeA,lapTimeB]);
   // Track outline split into runs colored by whoever is faster at that distance fraction.
   // Mirrors the render IIFE's projection exactly (bbox over both drivers, auto-rotate, 4% pad).
@@ -3288,7 +2770,6 @@ const LapComparePanel=memo(function LapComparePanel({openf1,telMeetingKey,allDri
     };
     el.addEventListener("wheel",onWheel,{passive:false});
     return()=>el.removeEventListener("wheel",onWheel);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   },[samplesA,samplesB,lapCompareLap]);
 
   return (()=>{
@@ -3833,7 +3314,6 @@ const TireStrategyPanel=memo(function TireStrategyPanel({race,maxLap,allDrivers,
                                 const pct=(lapsInStint/maxLap)*100;
                                 const c=(s.compound||"UNKNOWN").toUpperCase();
                                 const col=COMPOUND_COLORS[c]||COMPOUND_COLORS.UNKNOWN;
-                                const dark=c==="HARD";
                                 const isHovered=hovered&&hovered.driverNumber===d.number&&hovered.stintNumber===s.stintNumber;
                                 return(
                                   <div key={i}
@@ -3861,7 +3341,6 @@ const TireStrategyPanel=memo(function TireStrategyPanel({race,maxLap,allDrivers,
                       const{driver,stint,stats,overallAvg}=hoveredData;
                       const c=(stint.compound||"UNKNOWN").toUpperCase();
                       const col=COMPOUND_COLORS[c]||COMPOUND_COLORS.UNKNOWN;
-                      const dark=c==="HARD";
                       const delta=(stats.avg&&overallAvg)?stats.avg-overallAvg:null;
                       return(
                         <div style={{position:"absolute",left:hovered.x,top:hovered.y+6,transform:"translateX(-50%)",background:"var(--panel-2)",border:`1px solid ${alpha(col,0x40)}`,borderRadius:2,padding:"12px 14px",pointerEvents:"none",minWidth:220,boxShadow:"0 6px 18px -4px rgba(0,0,0,0.35)",zIndex:10}}>
@@ -4025,7 +3504,6 @@ const TireManagementPanel=memo(function TireManagementPanel({race,allDrivers,max
                           {compounds.map(c=>{
                             const col=COMPOUND_COLORS[c]||"var(--ink-4)";
                             const on=activeCompound===c;
-                            const dark=c==="HARD";
                             return(
                               <button key={c} onClick={()=>setTireCompound(c)} style={{display:"flex",alignItems:"center",gap:6,padding:"5px 10px",borderRadius:2,border:`1px solid ${on?col:"var(--w08)"}`,background:on?`${alpha(col,0x22)}`:"var(--w02)",color:on?"var(--fg)":"var(--w55)",cursor:"pointer",fontSize:11,fontWeight:on?700:500,fontFamily:"var(--font-ui)"}}>
                                 <div style={{width:14,height:14,borderRadius:2,background:col,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:800,color:compoundInk(c)}}>{c[0]}</div>
@@ -4096,7 +3574,6 @@ const TireManagementPanel=memo(function TireManagementPanel({race,allDrivers,max
                               <div style={{fontSize:10,textTransform:"uppercase",letterSpacing:0.8,color:"var(--w35)",fontWeight:600,padding:"6px 8px"}}>Driver</div>
                               {compounds.map(c=>{
                                 const col=COMPOUND_COLORS[c]||"var(--ink-4)";
-                                const dark=c==="HARD";
                                 return(
                                   <div key={c} style={{display:"flex",alignItems:"center",gap:6,padding:"6px 8px"}}>
                                     <div style={{width:14,height:14,borderRadius:2,background:col,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:800,color:compoundInk(c)}}>{c[0]}</div>
@@ -4217,7 +3694,6 @@ const TireManagementPanel=memo(function TireManagementPanel({race,allDrivers,max
                               {selectedAnalyzed.map(a=>{
                                 const key=a.driver.number+"-"+a.stint.stintNumber;
                                 const col=COMPOUND_COLORS[a.compound]||"var(--ink-4)";
-                                const dark=a.compound==="HARD";
                                 const tc=inkify(a.driver.teamColour)||"var(--fg)";
                                 return(
                                   <button className="chip" key={key} onClick={()=>togglePick(key)} title="Click to remove" style={{display:"flex",alignItems:"center",gap:5,padding:"3px 7px 3px 6px",borderRadius:2,border:`1px solid ${tc}`,background:`${alpha(tc,0x1a)}`,color:"var(--ink)",cursor:"pointer",fontSize:10,fontWeight:700,fontFamily:"var(--font-ui)"}}>
@@ -4237,7 +3713,6 @@ const TireManagementPanel=memo(function TireManagementPanel({race,allDrivers,max
                               <button onClick={()=>setOverlayCompoundFilter("ALL")} style={{padding:"3px 9px",borderRadius:2,border:`1px solid ${activeFilter==="ALL"?"var(--fg)":"var(--w08)"}`,background:activeFilter==="ALL"?"var(--w08)":"var(--w02)",color:activeFilter==="ALL"?"var(--fg)":"var(--w55)",cursor:"pointer",fontSize:10,fontWeight:activeFilter==="ALL"?700:500,fontFamily:"var(--font-ui)"}}>All <span style={{color:"var(--w40)",fontWeight:400,marginLeft:2}}>{analyzed.length}</span></button>
                               {availCompounds.map(c=>{
                                 const col=COMPOUND_COLORS[c]||"var(--ink-4)";
-                                const dark=c==="HARD";
                                 const on=activeFilter===c;
                                 return(
                                   <button key={c} onClick={()=>setOverlayCompoundFilter(c)} style={{display:"flex",alignItems:"center",gap:5,padding:"3px 9px",borderRadius:2,border:`1px solid ${on?col:"var(--w08)"}`,background:on?`${alpha(col,0x22)}`:"var(--w02)",color:on?"var(--fg)":"var(--w55)",cursor:"pointer",fontSize:10,fontWeight:on?700:500,fontFamily:"var(--font-ui)"}}>
@@ -4272,7 +3747,6 @@ const TireManagementPanel=memo(function TireManagementPanel({race,allDrivers,max
                             {filteredStints.filter(a=>!selectedKeys.has(a.driver.number+"-"+a.stint.stintNumber)).map(a=>{
                               const key=a.driver.number+"-"+a.stint.stintNumber;
                               const col=COMPOUND_COLORS[a.compound]||"var(--ink-4)";
-                              const dark=a.compound==="HARD";
                               const tc=inkify(a.driver.teamColour)||"var(--fg)";
                               const atMax=selectedKeys.size>=4;
                               return(
@@ -4467,7 +3941,7 @@ const DeltaChartPanel=memo(function DeltaChartPanel({allDrivers,maxLap,race}){
   const[deltaA,setDeltaA]=useState(null); // delta-line driver A (acronym)
   const[deltaB,setDeltaB]=useState(null); // delta-line driver B (acronym)
   const[deltaHover,setDeltaHover]=useState(null); // {lap}
-                const{usable,acrA,acrB,drA,drB,commonLaps,deltas}=useMemo(()=>{
+                const{usable,acrA,acrB,drA,drB,deltas}=useMemo(()=>{
                   // Drivers with usable lap-time arrays
                   const usable=allDrivers.filter(d=>(d.lapTimes||[]).length>=3);
                   if(usable.length<2)return{usable};
@@ -4506,7 +3980,6 @@ const DeltaChartPanel=memo(function DeltaChartPanel({allDrivers,maxLap,race}){
                 const yLo=yMin-yPad,yHi=yMax+yPad;
                 const W=800,H=240,padL=58,padR=20,padT=18,padB=34;
                 const plotW=W-padL-padR,plotH=H-padT-padB;
-                const lastLap=commonLaps[commonLaps.length-1];
                 const xOf=l=>padL+((l-1)/Math.max(1,maxLap-1))*plotW;
                 const yOf=v=>padT+plotH-((v-yLo)/(yHi-yLo))*plotH;
                 const zeroY=yOf(0);
