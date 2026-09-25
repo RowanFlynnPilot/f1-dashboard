@@ -17,6 +17,11 @@
 #>
 param([switch]$Register)
 
+# Decode native output as UTF-8 (the fetch script prints emoji; the console's
+# OEM code page garbled them in the log)
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$env:PYTHONIOENCODING = "utf-8"
+
 $TaskName = "F1 Dashboard transcripts"
 $Repo = Split-Path -Parent $PSScriptRoot
 $Log = Join-Path $env:LOCALAPPDATA "f1-dashboard-transcripts.log"
