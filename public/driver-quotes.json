@@ -1,6 +1,6 @@
 {
   "season": 2026,
-  "fetchedAt": "2026-10-12T02:26:58Z",
+  "fetchedAt": "2026-10-12T14:04:37Z",
   "rounds": [
     {
       "round": 1,
@@ -3879,6 +3879,198 @@
             }
           ],
           "extractedAt": "2026-10-05T14:04:21Z"
+        }
+      }
+    },
+    {
+      "round": 17,
+      "raceName": "Singapore Grand Prix",
+      "sessions": {
+        "sprint": {
+          "videoId": "oNNyZWon8OE",
+          "quotes": [
+            {
+              "driver": "Charles Leclerc",
+              "team": "Ferrari",
+              "quote": "Start was awful again, so I hope we learn from that and try to be better because this is really not sustainable if you want to fight for the win on a track like this.",
+              "context": "Poor start and race frustration"
+            },
+            {
+              "driver": "Lewis Hamilton",
+              "team": "Ferrari",
+              "quote": "I felt the grip on the grid and I was like, I can do a different type of start. And I did and had the best start basically of most of the guys around me.",
+              "context": "Great start in wet conditions"
+            },
+            {
+              "driver": "Max Verstappen",
+              "team": "Red Bull",
+              "quote": "I was very happy with my setup yesterday but in the wet it was very, very, very difficult for me. I just really struggled to rotate the car and kill the tire, and couldn't really follow Lewis and Max in front.",
+              "context": "Struggling with wet setup differences"
+            },
+            {
+              "driver": "Oscar Piastri",
+              "team": "McLaren",
+              "quote": "It's been a strong day so far. Car's been good in the race in these conditions at least, and it was pretty quick yesterday in quali, so we need to try and convert that this afternoon going into qualifying.",
+              "context": "Strong car performance in sprint"
+            },
+            {
+              "driver": "Oliver Bearman",
+              "team": "Haas",
+              "quote": "It was a really good race. The car was mega super fast. I think we were flying out there. To score points in a sprint race especially means we have to get a bit lucky, but we also executed and I'm really proud of my performance as well.",
+              "context": "Scoring points in sprint race"
+            },
+            {
+              "driver": "Alexander Albon",
+              "team": "Williams",
+              "quote": "Quite an unspectacular race. Just a bit of side-by-side racing with Ollie in lap one, but unfortunately lost the position to him. Happy to pick up those two points and time to reset, regroup and go again this afternoon.",
+              "context": "Sprint race summary and points"
+            },
+            {
+              "driver": "Lando Norris",
+              "team": "McLaren",
+              "quote": "I think the pace was very strong. In the last lap there was a big opportunity into five, so I went for it. The gap closed a bit more than I would have liked and I had to back out of it.",
+              "context": "Late race overtake attempt"
+            },
+            {
+              "driver": "Pierre Gasly",
+              "team": "Alpine",
+              "quote": "We had a mega start, mega first couple of laps where we moved forward, but once it dried up everybody was used to the conditions and we were not quick enough. The car doesn't feel great since the beginning of the weekend.",
+              "context": "Sprint race pace and car issues"
+            },
+            {
+              "driver": "Franco Colapinto",
+              "team": "Alpine",
+              "quote": "From 22 to P12, what a comeback. Honestly, I did nothing all race, just let everyone have the mistakes or issues they had. We tried something on the setup that unfortunately we couldn't learn from because of the conditions.",
+              "context": "Big grid position recovery in sprint"
+            },
+            {
+              "driver": "George Russell",
+              "team": "Mercedes",
+              "quote": "I just misjudged it to be honest. I came on the throttle and got more power than I was expecting from the battery, went a little bit wide and touched the white line. Number one rule in the rain is don't touch the white lines. Very silly mistake.",
+              "context": "Crash after great start explained"
+            },
+            {
+              "driver": "Sergio P\u00e9rez",
+              "team": "Cadillac",
+              "quote": "I was on the inside into turn 16 with Lance and wasn't expecting him to shut the door there, but when he closed the door I tried to brake but it was just too late.",
+              "context": "Collision with Lance Stroll"
+            },
+            {
+              "driver": "Lance Stroll",
+              "team": "Aston Martin",
+              "quote": "I don't know. I haven't seen it yet. I don't know exactly what happened. I got hit.",
+              "context": "Collision incident reaction"
+            }
+          ],
+          "extractedAt": "2026-10-12T14:04:02Z"
+        },
+        "qualifying": {
+          "videoId": "m0ft7GE4PXo",
+          "quotes": [
+            {
+              "driver": "Max Verstappen",
+              "team": "Red Bull",
+              "quote": "It was always very close between everyone and yeah, we got ahead when it mattered. The car has been in a good window all weekend and that makes it a lot easier to find your rhythm around here. Just incredibly happy to start first, still a long race ahead but we have done everything well so hopefully we can continue that tomorrow.",
+              "context": "Pole position reaction at Singapore"
+            },
+            {
+              "driver": "Charles Leclerc",
+              "team": "Ferrari",
+              "quote": "Q1 and Q2 was very tricky for me. I had something in the car that I didn't quite like that wasn't putting me in too much confidence under the braking. But then in Q3 it got a little bit better and I could drive more normally and the pace came. When you see the gap, I'm pretty sure there were 5 tenths we could have found to be on pole, but Max just did a better job.",
+              "context": "Discussing difficult qualifying and gap to pole"
+            },
+            {
+              "driver": "Fernando Alonso",
+              "team": "Aston Martin",
+              "quote": "It was feeling great in Q1 and Q2, the car felt fantastic and I was so happy with the balance. Then the car just went over the edge. The window is so small for that perfect balance and with the tiniest adjustment of 1% brake balance it threw the whole thing off in Q3, which ultimately lost the tenth and a half that we needed.",
+              "context": "Explaining car balance issues in Q3"
+            },
+            {
+              "driver": "Alexander Albon",
+              "team": "Williams",
+              "quote": "We've not done anything, nothing's changed, so there's no reason why we're going to be suddenly on the pace. The car is just too much of a challenge. I have to feel like I'm almost crashing to put in a purple sector, but you just can't do that because the tires don't survive.",
+              "context": "Frustrated with car's qualifying performance"
+            },
+            {
+              "driver": "Lando Norris",
+              "team": "McLaren",
+              "quote": "Looked relatively convincingly the third or fourth quickest. Max had us covered and I think the Ferraris did too, to be honest. Wasn't the smoothest of sessions, just a few mistakes here and there. Not that easy to get time out of the car.",
+              "context": "Assessing McLaren's qualifying pace"
+            },
+            {
+              "driver": "Oscar Piastri",
+              "team": "McLaren",
+              "quote": "Very happy because it's a challenging track here with all the corners and all the walls. It's quite difficult to put everything together, but especially that Q3 I think was one of the best Q3s of the season. I took this extra risk in the last run that really paid off. I touched the wall in turn nine more than I was planning to, but it was really on the limit and I got rewarded with P8.",
+              "context": "Happy with strong Q3 performance"
+            },
+            {
+              "driver": "George Russell",
+              "team": "Mercedes",
+              "quote": "It wasn't a great lap. I pushed a bit too hard in Q3 and went a little bit slower, which is a bit frustrating. We had a really quick car today and had the potential to be one place higher. You want to put together the best lap in Q3 and I didn't today.",
+              "context": "Frustrated with Q3 execution"
+            },
+            {
+              "driver": "Andrea Kimi Antonelli",
+              "team": "Mercedes",
+              "quote": "Happy with how I built throughout the session. I felt like I got to a good level in Q2. Q3 I wasn't very happy with \u2014 when I wanted to put it all on the line I just didn't have the same grip. We need to understand why; I think the tire wasn't the easiest today.",
+              "context": "Mixed feelings after Q3 grip issues"
+            },
+            {
+              "driver": "Esteban Ocon",
+              "team": "Haas",
+              "quote": "Q3 was out of reach in all honesty unfortunately. We ran three softs in Q2 which gave us all the possibility in the world, but it was just not enough. Overall a solid Saturday \u2014 lucky to pick up two points in the sprint, and P11 is not a bad position to start from.",
+              "context": "Reflecting on qualifying and sprint result"
+            },
+            {
+              "driver": "Oliver Bearman",
+              "team": "Haas",
+              "quote": "Q2 was not as clean as Q1. I spent a long time in the garage after Q1 finished and the tires didn't feel great on the first run, so I was a bit blind going into the second one. I got traffic in sector 3 as well. But the fact that we were genuinely fighting for Q3 today is a good feeling.",
+              "context": "Disappointed but encouraged by Q3 fight"
+            },
+            {
+              "driver": "Franco Colapinto",
+              "team": "Alpine",
+              "quote": "We progressed well. I tried to push a little bit harder on the last run but the car didn't take it unfortunately and we were just sliding too much. We got in the top 10 in the sprint from 16th, so that was positive. We'll do everything we can to have a decent start tomorrow.",
+              "context": "Positive about sprint result despite qualifying"
+            },
+            {
+              "driver": "Pierre Gasly",
+              "team": "Alpine",
+              "quote": "Some very strong laps in Q1, really feeling comfortable with the car. Then in Q2 I got impeded by Nico in turn five. As a team we didn't give ourselves the best chance today to show all the potential in Q2, which is a shame because there was zero pressure to do it.",
+              "context": "Frustrated by Q2 impeding incident"
+            },
+            {
+              "driver": "Lewis Hamilton",
+              "team": "Ferrari",
+              "quote": "The last lap of Q2 was the worst balance I've had all weekend by far and I had a lot of oversteer which was not the case before. I'm a bit lost with the grip I had especially on the rear \u2014 the last run was just in general extremely poor so we need to understand what happened.",
+              "context": "Confused by sudden loss of rear grip"
+            },
+            {
+              "driver": "Lance Stroll",
+              "team": "Aston Martin",
+              "quote": "Some of the bumps were not so good \u2014 bumpy tracks are more challenging for us \u2014 and then we had some traffic on the last lap so lost a bunch of time.",
+              "context": "Explaining difficult qualifying conditions"
+            },
+            {
+              "driver": "Carlos Sainz",
+              "team": "Williams",
+              "quote": "A strong lap from my side. The guys did a tremendous job to put the car together and it felt really solid, really complete. We were a lot closer to the Aston than we thought initially, only a tenth down. It was a very very strong lap.",
+              "context": "Pleased with strong qualifying lap"
+            },
+            {
+              "driver": "Nico H\u00fclkenberg",
+              "team": "Audi",
+              "quote": "I lost all the deployment. It felt like I was on the charge mode instead of the quali mode, so we need to look at the procedure and what happened there. I just had the first run basically, which is a shame.",
+              "context": "Deployment issue ruined qualifying run"
+            },
+            {
+              "driver": "Gabriel Bortoleto",
+              "team": "Audi",
+              "quote": "What's funny is that I felt nice in sector one until turn eight where I basically broke the gearbox. The car was absolutely damaged but I didn't want to stop on track so I kept bringing the car back to the garage. I'm just craving to be out there on track and do my best, so I'm really frustrated because we've had issues in every session but FP1.",
+              "context": "Frustrated after gearbox failure in qualifying"
+            }
+          ],
+          "extractedAt": "2026-10-12T14:04:35Z"
         }
       }
     }
