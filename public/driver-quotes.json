@@ -1,6 +1,6 @@
 {
   "season": 2026,
-  "fetchedAt": "2026-10-26T13:16:36Z",
+  "fetchedAt": "2026-10-26T14:04:17Z",
   "rounds": [
     {
       "round": 1,
@@ -4071,6 +4071,204 @@
             }
           ],
           "extractedAt": "2026-10-12T14:04:35Z"
+        }
+      }
+    },
+    {
+      "round": 18,
+      "raceName": "United States Grand Prix",
+      "sessions": {
+        "qualifying": {
+          "videoId": "F3aaTsKR1hM",
+          "quotes": [
+            {
+              "driver": "Andrea Kimi Antonelli",
+              "team": "Mercedes",
+              "quote": "Having a clean run helped to build momentum. We didn't make mistakes and I felt very good in the car, especially in Q3. It was tricky with the wind because the balance was changing quite a lot from corner to corner, but that last lap was looking good. I pushed a little bit more and just lost it, which was a shame, but still very happy with the result.",
+              "context": "Reflecting on strong qualifying performance"
+            },
+            {
+              "driver": "Max Verstappen",
+              "team": "Red Bull",
+              "quote": "Just a few corners didn't come together in Q3 for something I don't understand because I didn't make mistakes, but it was just not as planted as what I hoped for. You just can't put the power down basically, and that cost me definitely in the first run. Then the wind picked up and no one could improve.",
+              "context": "Explaining why pole position slipped away"
+            },
+            {
+              "driver": "Lando Norris",
+              "team": "McLaren",
+              "quote": "Q1, Q2, Q3 all felt solid from my perspective. The second lap was good, I made improvements and I felt positive. I think there's just something these guys are able to extract more somehow, whether it's coming from the tires or something else \u2014 I really don't know.",
+              "context": "Analyzing gap to front in qualifying"
+            },
+            {
+              "driver": "George Russell",
+              "team": "Mercedes",
+              "quote": "Things were looking good in the first parts of qualifying. Q2 I felt very strong, but unfortunately I made a couple of mistakes in Q3 and didn't do the lap. I think top three was definitely on the cards for me, and I went slower in Q3 than I did in Q2.",
+              "context": "Disappointed with Q3 mistakes"
+            },
+            {
+              "driver": "Pierre Gasly",
+              "team": "Alpine",
+              "quote": "My last attempt I really managed to squeeze everything out of it, so I felt like it was one of those Q3 laps. Unfortunately missed out by 200 milliseconds. I know there wasn't more in it, but it just shows we're kind of chasing a bit behind and on a day like today we didn't quite have enough to beat them.",
+              "context": "Narrowly missing Q3 cutoff"
+            },
+            {
+              "driver": "Nico H\u00fclkenberg",
+              "team": "Audi",
+              "quote": "Others just found a bit more lap time than us in Q2. Ultimately we were lacking a bit too much and missed it by tenths \u2014 fine margins as usual in the midfield.",
+              "context": "Missing Q3 by small margin"
+            },
+            {
+              "driver": "Gabriel Bortoleto",
+              "team": "Audi",
+              "quote": "The Q1 lap, apart from the last corner where I almost crashed, was one of the best laps of my life. I felt amazing in the car. I knew it was the only lap I could put out there because in Q2 I would need to stay the whole session helping Nico with a tow. I gave it all in Q1 and it was so satisfying.",
+              "context": "Satisfaction despite grid penalty"
+            },
+            {
+              "driver": "Oliver Bearman",
+              "team": "Haas",
+              "quote": "My final lap in Q2 was very good. It was just a shame it got deleted. I thought I was on the edge in turn 11 and it looks like I was just over, but it's so hard \u2014 with the camera view and the glare of the sun, you're playing with millimeters, which is a shame.",
+              "context": "Lap deletion for track limits in Q2"
+            },
+            {
+              "driver": "Esteban Ocon",
+              "team": "Haas",
+              "quote": "There are some positives in that we did improve a little bit with the setup, but the fundamental characteristics remain unfortunately. We're still fighting with inconsistency across the cars, and when we fight these inconsistencies it's not enough to get out of Q1.",
+              "context": "Struggling with car inconsistency in Q1"
+            },
+            {
+              "driver": "Lance Stroll",
+              "team": "Aston Martin",
+              "quote": "The car was a lot worse today than yesterday. I just had no rear grip. Not too many changes overnight \u2014 it just took a big step backwards and I'm not sure why.",
+              "context": "Car performance drop in qualifying"
+            },
+            {
+              "driver": "Carlos Sainz",
+              "team": "Williams",
+              "quote": "It's been a general weekend where we've invested a lot into next year. I did some really good laps and changed a few things on the setup that helped me be more comfortable, but on that last lap I was probably just pushing too hard. I did a mega sector one and two but couldn't close the lap, and unfortunately made a mistake towards the end.",
+              "context": "Pushing too hard on final qualifying lap"
+            },
+            {
+              "driver": "Alexander Albon",
+              "team": "Williams",
+              "quote": "Maybe we need to review our run plan a bit. I felt like we went out really early on the last run. We've been fighting a lot with the car and the tires, and I almost finished qualifying just as confused as I was in FP1.",
+              "context": "Confused by car behavior throughout qualifying"
+            },
+            {
+              "driver": "Sergio P\u00e9rez",
+              "team": "Cadillac",
+              "quote": "It was a really strong lap but unfortunately I had an issue with the K deployment and lost a few tenths. I went a little bit too early on throttle on the final corner and that meant I overspent the K's, so I lost a little in the final sector unfortunately.",
+              "context": "Energy deployment issue cost lap time"
+            },
+            {
+              "driver": "Valtteri Bottas",
+              "team": "Cadillac",
+              "quote": "We were hoping to be closer to Williams but they are a bit out of reach, especially on one lap. It's been an interesting weekend exploring the setup because of the bumpiness of the track. I think me and Checo both got the most out of it \u2014 we're just not that quick here.",
+              "context": "Assessing Cadillac's pace versus Williams"
+            }
+          ],
+          "extractedAt": "2026-10-26T14:03:37Z"
+        },
+        "race": {
+          "videoId": "q03CkMtY9CE",
+          "quotes": [
+            {
+              "driver": "Andrea Kimi Antonelli",
+              "team": "Mercedes",
+              "quote": "I have to give credit to the strategy because they trusted in the one stop and I'm really happy that we made it stick. It was a great team effort, great team execution and now we look forward to the next one.",
+              "context": "Winning the race with one-stop strategy"
+            },
+            {
+              "driver": "Charles Leclerc",
+              "team": "Ferrari",
+              "quote": "The pace was quite strong. Mercedes saw something that maybe Red Bull and I didn't really consider seriously, which was the one stop, and they made it work very nicely. So this is something we'll have to analyze, but the whole race has been very good.",
+              "context": "Reflecting on race pace and strategy"
+            },
+            {
+              "driver": "Lewis Hamilton",
+              "team": "Ferrari",
+              "quote": "Charles obviously did a great job this weekend. I've really got to try to extract more from this car in the next couple of races. I do believe I could be quicker if we could just get the set up right.",
+              "context": "Assessing his own performance vs teammate"
+            },
+            {
+              "driver": "Max Verstappen",
+              "team": "Red Bull",
+              "quote": "Too many issues with the power unit unfortunately in terms of consistency, and then you can't rely on a consistent balance through the corner because if every lap and every corner it's doing something different, that is very hard to be on top of things. A slow pit stop was also very costly today.",
+              "context": "Explaining race difficulties and issues"
+            },
+            {
+              "driver": "Lando Norris",
+              "team": "McLaren",
+              "quote": "I think we achieved the best we could today. It was clear we didn't have the pace of the others, but we gave it a good try. We gave ourselves the most opportunities so I'm happy, just not quick enough.",
+              "context": "Reflecting on McLaren's race performance"
+            },
+            {
+              "driver": "George Russell",
+              "team": "Mercedes",
+              "quote": "It was a very bad day. Probably did six laps from the 50 where the pace was okay, and the others were way off the pace, so I don't know where the performance has gone. Need to understand it and come back stronger for Mexico.",
+              "context": "Disappointed with poor race performance"
+            },
+            {
+              "driver": "Liam Lawson",
+              "team": "Racing Bulls",
+              "quote": "When everyone finishes, for us it's a P9 or P10, that's sort of the best we can do. Honestly, we executed really well today and had a great race. Couldn't really do more. Overall it's been a strong weekend.",
+              "context": "Satisfied with points finish result"
+            },
+            {
+              "driver": "Pierre Gasly",
+              "team": "Alpine",
+              "quote": "After the contact with Ollie we lost quite a lot, we had quite a big damage on the floor. It was a small touch honestly and I didn't expect the floor to be that damaged. Considering the pace after that and the fact we managed to hold on to P10 is positive.",
+              "context": "Discussing contact damage and P10 result"
+            },
+            {
+              "driver": "Gabriel Bortoleto",
+              "team": "Audi",
+              "quote": "I think we did a good race. I overtook a lot of cars, kept it clean at the same time, no damage. I had a bit of fun overtaking people and yeah, being out there trying my best, putting some good pace.",
+              "context": "Positive about places gained from back"
+            },
+            {
+              "driver": "Fernando Alonso",
+              "team": "Aston Martin",
+              "quote": "It was the best race by far of the year for us in terms of competitiveness. The car was very strong in the race with good tire management. We got a lot of damage on lap one with the Albon incident, but despite that the car was still competitive.",
+              "context": "Best race of year despite lap one damage"
+            },
+            {
+              "driver": "Lance Stroll",
+              "team": "Aston Martin",
+              "quote": "We still saw a lot less downforce than I expected. That was our story yesterday, missing a lot of downforce compared to the other cars. We tried to change some things and we still saw some losses, so we have to understand that.",
+              "context": "Struggling with downforce deficit all weekend"
+            },
+            {
+              "driver": "Alexander Albon",
+              "team": "Williams",
+              "quote": "I felt like there was a car on his right side at the time. There was a point when I realized he didn't see me or he was pinched by the car on his right hand side. I got damage, he got damage, so not ideal.",
+              "context": "Explaining lap one contact with Alonso"
+            },
+            {
+              "driver": "Carlos Sainz",
+              "team": "Williams",
+              "quote": "I had a pretty big hit with the wall, damaged the front wing, and after that it was 15-20 laps with a lot of damage in the car and a very long pit stop changing the front wing. But once we got the front wing back in the car, I was pretty competitive and recovered well.",
+              "context": "Describing race after early wall contact"
+            },
+            {
+              "driver": "Sergio P\u00e9rez",
+              "team": "Cadillac",
+              "quote": "The issue was really sudden, just braking into turn one I got this sound like putting nuts and bolts in a blender, which is not great, and then I had some engine cuts when I tried to get on power. But until then everything was going to plan.",
+              "context": "Explaining sudden mechanical retirement"
+            },
+            {
+              "driver": "Franco Colapinto",
+              "team": "Alpine",
+              "quote": "Car damage after I got under with our wing, so it was a safety call. Starting from the back was tricky, then chose to start on the hard to try and get something later in the race, but a lot of traffic from the cars ahead, very tricky to overtake.",
+              "context": "Explaining car retirement due to damage"
+            },
+            {
+              "driver": "Oliver Bearman",
+              "team": "Haas",
+              "quote": "I sent a move on the inside. He saw me because he left space, but for me it didn't really feel like enough. I picked up a huge amount of damage on my car and was losing a second a lap due to downforce, and then on top of that I picked up a penalty. In my view it was a racing incident.",
+              "context": "Defending his move on Gasly and penalty"
+            }
+          ],
+          "extractedAt": "2026-10-26T14:04:15Z"
         }
       }
     }
