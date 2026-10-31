@@ -1,9 +1,9 @@
 {
   "season": 2026,
-  "fetchedAt": "2026-10-26T14:01:31.290Z",
+  "fetchedAt": "2026-10-31T23:26:09.426Z",
   "completedRounds": 18,
   "totalRounds": 23,
-  "standingsRound": 18,
+  "standingsRound": 19,
   "drivers": [
     {
       "pos": 1,
@@ -258,6 +258,17 @@
       "pts": 0,
       "wins": 0,
       "driverId": "perez"
+    },
+    {
+      "pos": 24,
+      "name": "Ryo Hirakawa",
+      "team": "Haas",
+      "teams": [
+        "Haas"
+      ],
+      "pts": 0,
+      "wins": 0,
+      "driverId": "ryo_hirakawa"
     }
   ],
   "constructors": [
@@ -277,8 +288,8 @@
         }
       ],
       "lineup": [
-        "Antonelli",
-        "Russell"
+        "Russell",
+        "Antonelli"
       ]
     },
     {
@@ -297,8 +308,8 @@
         }
       ],
       "lineup": [
-        "Leclerc",
-        "Hamilton"
+        "Hamilton",
+        "Leclerc"
       ]
     },
     {
@@ -405,8 +416,8 @@
         }
       ],
       "lineup": [
-        "Ocon",
-        "Bearman"
+        "Bearman",
+        "Hirakawa"
       ]
     },
     {
@@ -445,8 +456,8 @@
         }
       ],
       "lineup": [
-        "Albon",
-        "Sainz"
+        "Sainz",
+        "Albon"
       ]
     },
     {
@@ -465,8 +476,8 @@
         }
       ],
       "lineup": [
-        "Stroll",
-        "Alonso"
+        "Alonso",
+        "Stroll"
       ]
     },
     {
@@ -19590,6 +19601,210 @@
           "driverId": "bottas",
           "team": "Cadillac",
           "q1": "1:37.523",
+          "q2": null,
+          "q3": null
+        }
+      ]
+    },
+    {
+      "round": 19,
+      "raceName": "Mexico City Grand Prix",
+      "results": [
+        {
+          "pos": 1,
+          "driver": "Hamilton",
+          "driverId": "hamilton",
+          "team": "Ferrari",
+          "q1": "1:17.341",
+          "q2": "1:16.953",
+          "q3": "1:16.514"
+        },
+        {
+          "pos": 2,
+          "driver": "Russell",
+          "driverId": "russell",
+          "team": "Mercedes",
+          "q1": "1:17.659",
+          "q2": "1:17.027",
+          "q3": "1:16.523"
+        },
+        {
+          "pos": 3,
+          "driver": "Leclerc",
+          "driverId": "leclerc",
+          "team": "Ferrari",
+          "q1": "1:17.506",
+          "q2": "1:16.944",
+          "q3": "1:16.633"
+        },
+        {
+          "pos": 4,
+          "driver": "Verstappen",
+          "driverId": "max_verstappen",
+          "team": "Red Bull",
+          "q1": "1:17.942",
+          "q2": "1:16.876",
+          "q3": "1:16.692"
+        },
+        {
+          "pos": 5,
+          "driver": "Antonelli",
+          "driverId": "antonelli",
+          "team": "Mercedes",
+          "q1": "1:17.918",
+          "q2": "1:17.133",
+          "q3": "1:16.707"
+        },
+        {
+          "pos": 6,
+          "driver": "Norris",
+          "driverId": "norris",
+          "team": "McLaren",
+          "q1": "1:17.733",
+          "q2": "1:16.728",
+          "q3": "1:16.824"
+        },
+        {
+          "pos": 7,
+          "driver": "Hadjar",
+          "driverId": "hadjar",
+          "team": "Red Bull",
+          "q1": "1:17.385",
+          "q2": "1:17.047",
+          "q3": "1:16.900"
+        },
+        {
+          "pos": 8,
+          "driver": "Lawson",
+          "driverId": "lawson",
+          "team": "Racing Bulls",
+          "q1": "1:18.097",
+          "q2": "1:17.207",
+          "q3": "1:17.029"
+        },
+        {
+          "pos": 9,
+          "driver": "Lindblad",
+          "driverId": "arvid_lindblad",
+          "team": "Racing Bulls",
+          "q1": "1:18.210",
+          "q2": "1:17.135",
+          "q3": "1:17.117"
+        },
+        {
+          "pos": 10,
+          "driver": "Gasly",
+          "driverId": "gasly",
+          "team": "Alpine",
+          "q1": "1:18.194",
+          "q2": "1:17.278",
+          "q3": "1:17.153"
+        },
+        {
+          "pos": 11,
+          "driver": "Hülkenberg",
+          "driverId": "hulkenberg",
+          "team": "Audi",
+          "q1": "1:17.868",
+          "q2": "1:17.306",
+          "q3": null
+        },
+        {
+          "pos": 12,
+          "driver": "Colapinto",
+          "driverId": "colapinto",
+          "team": "Alpine",
+          "q1": "1:18.517",
+          "q2": "1:17.640",
+          "q3": null
+        },
+        {
+          "pos": 13,
+          "driver": "Piastri",
+          "driverId": "piastri",
+          "team": "McLaren",
+          "q1": "1:17.659",
+          "q2": "1:17.646",
+          "q3": null
+        },
+        {
+          "pos": 14,
+          "driver": "Bortoleto",
+          "driverId": "bortoleto",
+          "team": "Audi",
+          "q1": "1:17.727",
+          "q2": "1:17.680",
+          "q3": null
+        },
+        {
+          "pos": 15,
+          "driver": "Bearman",
+          "driverId": "bearman",
+          "team": "Haas",
+          "q1": "1:18.083",
+          "q2": "1:18.083",
+          "q3": null
+        },
+        {
+          "pos": 16,
+          "driver": "Sainz",
+          "driverId": "sainz",
+          "team": "Williams",
+          "q1": "1:18.521",
+          "q2": "1:18.885",
+          "q3": null
+        },
+        {
+          "pos": 17,
+          "driver": "Albon",
+          "driverId": "albon",
+          "team": "Williams",
+          "q1": "1:18.630",
+          "q2": null,
+          "q3": null
+        },
+        {
+          "pos": 18,
+          "driver": "Alonso",
+          "driverId": "alonso",
+          "team": "Aston Martin",
+          "q1": "1:18.908",
+          "q2": null,
+          "q3": null
+        },
+        {
+          "pos": 19,
+          "driver": "Hirakawa",
+          "driverId": "ryo_hirakawa",
+          "team": "Haas",
+          "q1": "1:18.958",
+          "q2": null,
+          "q3": null
+        },
+        {
+          "pos": 20,
+          "driver": "Stroll",
+          "driverId": "stroll",
+          "team": "Aston Martin",
+          "q1": "1:19.072",
+          "q2": null,
+          "q3": null
+        },
+        {
+          "pos": 21,
+          "driver": "Pérez",
+          "driverId": "perez",
+          "team": "Cadillac",
+          "q1": "1:19.105",
+          "q2": null,
+          "q3": null
+        },
+        {
+          "pos": 22,
+          "driver": "Bottas",
+          "driverId": "bottas",
+          "team": "Cadillac",
+          "q1": "1:19.852",
           "q2": null,
           "q3": null
         }
