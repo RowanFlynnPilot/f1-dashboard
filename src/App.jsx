@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback, useRef, Fragment, Component, memo } from "react";
+import { useState, useEffect, useLayoutEffect, useMemo, useCallback, useRef, Fragment, Component, memo } from "react";
 import { transformData, countdownLabel, withStatus, meetingRaceDay, meetingForRace, meetingTrackName, greenFlagLaps, racePace, onTrackPasses, lapOneGains, miniSectors, titleOutlook, pointsFor } from "./data.js";
 
 // The season comes from data.json (scripts/season.json drives the fetch); this is
@@ -371,7 +371,7 @@ function SheetStatus({title,detail,onRetry,children}){
     </div>
   );
 }
-function SC({label,value,sub,accent,icon}){return (<div style={{background:"var(--w03)",border:"1px solid var(--w06)",borderRadius:2,padding:"14px 16px",flex:1,minWidth:130}}><div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:"var(--w40)",marginBottom:8,fontFamily:"var(--font-ui)"}}>{label}</div><div style={{display:"flex",alignItems:"center",gap:8}}>{icon}{" "}<span style={{fontSize:22,fontWeight:700,color:accent||"var(--fg)",lineHeight:1,fontFamily:"var(--font-ui)"}}>{value}</span></div>{sub&&<div style={{fontSize:11,color:"var(--w50)",marginTop:6,fontFamily:"var(--font-ui)"}}>{sub}</div>}</div>);}
+function SC({label,value,sub,accent,icon}){return (<div style={{background:"var(--w03)",border:"1px solid var(--w06)",borderRadius:2,padding:"14px 16px",flex:1,minWidth:130}}><div className="sc-label" style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:"var(--w40)",marginBottom:8,fontFamily:"var(--font-ui)"}}>{label}</div><div style={{display:"flex",alignItems:"center",gap:8}}>{icon}{" "}<span style={{fontSize:22,fontWeight:700,color:accent||"var(--fg)",lineHeight:1,fontFamily:"var(--font-ui)"}}>{value}</span></div>{sub&&<div style={{fontSize:11,color:"var(--w50)",marginTop:6,fontFamily:"var(--font-ui)"}}>{sub}</div>}</div>);}
 
 function SB({status}){const m={done:{bg:"rgba(27,127,75,0.12)",c:"var(--green)",t:"COMPLETED"},next:{bg:"rgba(214,40,40,0.15)",c:"var(--red)",t:"NEXT RACE"},postponed:{bg:"rgba(183,121,31,0.12)",c:"var(--amber)",t:"POSTPONED"},upcoming:{bg:"var(--w05)",c:"var(--w40)",t:"UPCOMING"}};const s=m[status]||m.upcoming;return (<span style={{fontSize:10,fontWeight:700,letterSpacing:1,padding:"3px 8px",borderRadius:2,background:s.bg,color:s.c}}>{s.t}</span>);}
 
@@ -386,7 +386,9 @@ const LapChart=memo(function LapChart({session,lap,setLap,outNums}){
   const[focus,setFocus]=useState(null);
   const wrapRef=useRef(null);
   const[compact,setCompact]=useState(false);
-  useEffect(()=>{
+  // Measured before paint: a phone that first drew the desktop layout and then
+  // flipped to compact doubled the chart's height and pushed the read-out down
+  useLayoutEffect(()=>{
     const el=wrapRef.current;if(!el)return;
     const m=()=>setCompact(el.clientWidth<640);m();
     const ro=new ResizeObserver(m);ro.observe(el);return()=>ro.disconnect();
@@ -947,7 +949,7 @@ export default function F1Dashboard(){
                     <span><i>avg pit</i><b>{avgP}</b></span>
                     <span><i>fastest pit</i><b>{fastestPit?`${fastestPit.s.toFixed(3)}s`:"N/A"}</b><small>{fastestPit?fastestPit.d:""}</small></span>
                     <span><i>rounds</i><b>{completedRounds}<em>/{totalRounds}</em></b></span>
-                    <span><i>winners</i><b>{String(new Set(races.filter(r=>!r.sprint&&r.w).map(r=>r.w)).size)}</b><em style={{fontStyle:"normal",color:"var(--ink-4)"}}>/{races.filter(r=>!r.sprint).length}</em></span>
+                    <span><i>winners</i><b>{String(new Set(races.filter(r=>!r.sprint&&r.w).map(r=>r.w)).size)}<em>/{races.filter(r=>!r.sprint).length}</em></b></span>
                   </div>
                               </div>
                 </div>

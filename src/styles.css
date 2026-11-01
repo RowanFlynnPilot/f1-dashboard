@@ -4,6 +4,20 @@
    written in its team colour. No glow, no textures, no gradients: grid, ink,
    rules. Fonts load from index.html: Barlow / Barlow Condensed / Courier Prime.
    ───────────────────────────────────────────────────────────────────────── */
+/* Metric-matched fallbacks. The web fonts load without blocking, so text first
+   paints in a local face and swaps — and Barlow Condensed is ~27% narrower than
+   Arial, so headings rewrapped and the sheet jumped (the last of the page's
+   layout shift). Each fallback is scaled to the web font's measured widths
+   (size-adjust, per weight band: Arial only has regular and bold) and given its
+   vertical metrics, so the swap changes glyph shapes, not layout. Roboto stands
+   in on Android, which has no Arial. Ratios measured in Chrome against Arial and
+   Courier New, Oct 2026. */
+@font-face{font-family:"Barlow Fallback";font-weight:100 500;src:local("Arial"),local("ArialMT"),local("Roboto"),local("Roboto-Regular");size-adjust:93.3%;ascent-override:107.2%;descent-override:21.4%;line-gap-override:0%}
+@font-face{font-family:"Barlow Fallback";font-weight:600 900;src:local("Arial Bold"),local("Arial-BoldMT"),local("Roboto Bold"),local("Roboto-Bold");size-adjust:89.6%;ascent-override:111.6%;descent-override:22.3%;line-gap-override:0%}
+@font-face{font-family:"Barlow Condensed Fallback";font-weight:100 500;src:local("Arial"),local("ArialMT"),local("Roboto"),local("Roboto-Regular");size-adjust:74%;ascent-override:135.1%;descent-override:27%;line-gap-override:0%}
+@font-face{font-family:"Barlow Condensed Fallback";font-weight:600 900;src:local("Arial Bold"),local("Arial-BoldMT"),local("Roboto Bold"),local("Roboto-Bold");size-adjust:72.2%;ascent-override:138.5%;descent-override:27.7%;line-gap-override:0%}
+@font-face{font-family:"Courier Prime Fallback";font-weight:100 500;src:local("Courier New"),local("CourierNewPSMT"),local("Courier");size-adjust:100%;ascent-override:78.1%;descent-override:34.2%;line-gap-override:0%}
+@font-face{font-family:"Courier Prime Fallback";font-weight:600 900;src:local("Courier New Bold"),local("CourierNewPS-BoldMT"),local("Courier Bold");size-adjust:100%;ascent-override:78.1%;descent-override:34.2%;line-gap-override:0%}
 :root{
   /* bench (the desk the sheets sit on) */
   --bench:#1B1F24; --bench-2:#242A31; --bench-3:#2E353D;
@@ -32,9 +46,9 @@
   --w70:rgba(20,24,29,0.88); --w75:rgba(20,24,29,0.9); --w80:rgba(20,24,29,0.92);
   --w85:rgba(20,24,29,0.95); --w90:rgba(20,24,29,0.97);
   /* type */
-  --font-ui:'Barlow',system-ui,-apple-system,'Segoe UI',sans-serif;
-  --font-head:'Barlow Condensed','Barlow',system-ui,sans-serif;
-  --font-data:'Courier Prime','Courier New',Courier,monospace;
+  --font-ui:'Barlow','Barlow Fallback',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --font-head:'Barlow Condensed','Barlow Condensed Fallback',system-ui,sans-serif;
+  --font-data:'Courier Prime','Courier Prime Fallback','Courier New',Courier,monospace;
   /* motion */
   --ease-out:cubic-bezier(0.16,1,0.3,1);
   color-scheme:light;
@@ -234,7 +248,16 @@ td{font-family:var(--font-ui)}
   .hdr-mark{align-items:flex-start}
   .sheet-band span{min-width:0;overflow-wrap:anywhere}
   .readout{font-size:11px}
-  .ledger>span{padding-right:10px;margin-right:10px}
+  /* phones: a fixed 2×2 of label-over-value cells. The inline row filled ~295 of
+     ~305 px, so any change in text width (the font swap) wrapped it to a third line */
+  .ledger{display:grid;grid-template-columns:1fr 1fr;gap:8px 0}
+  .ledger>span{flex-direction:column;align-items:flex-start;gap:1px;margin:0;padding:0 0 0 12px;border-right:none;white-space:normal;min-width:0}
+  .ledger>span:nth-child(odd){padding-left:0;border-right:1px solid var(--rule-faint)}
+  .ledger>span:last-child{padding-left:12px}
+  .ledger>span:nth-child(odd):last-child{padding-left:0}
+  /* stat-card labels wrap to one or two lines depending on the font; two are
+     reserved so the swap from the fallback can't change the card's height */
+  .sc-label{min-height:2.9em}
   .stamp{text-align:left;white-space:normal}
   .tab-wrap{padding:0 14px;margin-top:14px}
   .tab-wrap.fade-r::after{right:14px}
