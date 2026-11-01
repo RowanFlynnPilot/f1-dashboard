@@ -119,6 +119,7 @@ input[type=range]{accent-color:var(--red)}
 /* ── first viewport: lap chart + billing ──────────────────────────────── */
 .hero-grid{display:grid;grid-template-columns:minmax(0,62fr) minmax(0,38fr);gap:0 32px;align-items:start}
 .hero-grid>div{min-width:0}
+.lapsheet-slot{min-height:620px}
 .lapchart{min-width:0}
 .lapchart{position:relative;user-select:none}
 .lapchart svg{display:block;width:100%;height:auto;overflow:visible}
@@ -226,6 +227,7 @@ td{font-family:var(--font-ui)}
   .hero-grid{grid-template-columns:1fr}
         }
 @media(max-width:768px){
+  .lapsheet-slot{min-height:545px}
   .hdr{padding:14px 14px 0}
   .hdr-title{font-size:26px}
   .hdr-title small{letter-spacing:.1em;font-size:11px;white-space:normal}

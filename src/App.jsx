@@ -929,6 +929,9 @@ export default function F1Dashboard(){
                 <div>
                   <h2 className="sheet-h" style={{fontSize:30}}>Lap chart · {lastRaceFull?lastRaceFull.nm:"—"}</h2>
                   <p className="sheet-sub">{lastRaceFull?`Round ${lastRaceFull.r} · ${lastRaceFull.ci} · ${raceDateFmt(lastRaceFull.dt,lastRaceFull.tt)}`:""}{total?` · ${total} laps`:""}{winnerName?` · won by ${winnerName}`:""}{lastRaceFull?.tm?` in ${lastRaceFull.tm}`:""}</p>
+                  {/* The slot holds the lap sheet's height while its meeting file loads — the
+                      one-line note used to jump to ~600 px and push the page down (CLS 0.3) */}
+                  <div className="lapsheet-slot">
                   {raceSession?(
                     <LapSheet key={raceSession.sessionKey} session={raceSession} total={total} outNums={outByDay[lastRaceFull?.dt]} onOpenReplay={lap=>openReplay(lastRaceFull.r,lap)} replayHref={lap=>tabHref("Telemetry",{r:lastRaceFull.r,lap})}/>
                   ):(
@@ -938,6 +941,7 @@ export default function F1Dashboard(){
                       return <div className="num" style={{marginTop:14,padding:"18px 0",borderTop:"1px solid var(--rule)",borderBottom:"1px solid var(--rule)",color:"var(--ink-3)",fontSize:12}}>{openf1&&!raceMeeting?"Lap positions for this round are not in the OpenF1 sheet yet.":"Fetching the lap sheet …"}</div>;
                     })()
                   )}
+                  </div>
                   <div style={{marginTop:22}}>
                   <div className="ledger">
                     <span><i>avg pit</i><b>{avgP}</b></span>
