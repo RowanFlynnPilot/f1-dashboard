@@ -82,6 +82,13 @@ jobs:
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
 
+      # Season percentiles from the data just fetched (no network). Soft: a
+      # failure ships the committed season-stats.json.
+      - name: Build season stats
+        id: stats
+        continue-on-error: true
+        run: node scripts/build-season-stats.mjs
+
       - name: Validate fetched data
         run: node scripts/validate-data.mjs
         env:
@@ -117,6 +124,7 @@ jobs:
         env:
           JOLPICA_OUTCOME: ${{ steps.jolpica.outcome }}
           OPENF1_OUTCOME: ${{ steps.openf1.outcome }}
+          STATS_OUTCOME: ${{ steps.stats.outcome }}
           QUOTES_OUTCOME: ${{ steps.quotes.outcome }}
           COMMIT_OUTCOME: ${{ steps.commit.outcome }}
       - name: Fail the run if a source failed

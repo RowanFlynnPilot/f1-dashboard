@@ -9,7 +9,7 @@
 # hand while this run was in flight survives. A lost push race is retried.
 set -euo pipefail
 
-DATA=(public/data.json public/openf1 public/driver-quotes.json)
+DATA=(public/data.json public/openf1 public/driver-quotes.json public/season-stats.json)
 IDS=scripts/video-ids.json
 
 git config user.name "github-actions[bot]"

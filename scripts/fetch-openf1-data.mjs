@@ -445,6 +445,38 @@ async function buildLapCompareDefault(sessionKey, drivers) {
   return out;
 }
 
+// Race extras: pit-lane timing, OpenF1's raw overtakes and the weather, in
+// compact rows. Bump RACE_EXTRAS_VERSION when the shape changes and the
+// cached races refetch them (a few per run).
+export const RACE_EXTRAS_VERSION = 1;
+const round1 = v => (v == null ? null : Math.round(v * 10) / 10);
+const round3 = v => (v == null ? null : Math.round(v * 1000) / 1000);
+export function compactRaceExtras(pit, overtakes, weather) {
+  return {
+    // [driver, lap, stationary s, pit-lane s] — stop_duration is the car at rest
+    pitStops: (pit || []).filter(p => p.driver_number != null)
+      .map(p => [p.driver_number, p.lap_number ?? null, round3(p.stop_duration), round3(p.lane_duration ?? p.pit_duration)]),
+    // [epoch ms, overtaking driver, overtaken driver, position gained] — every
+    // position swap, pit cycles included; the app filters (onTrackPasses)
+    overtakes: (overtakes || []).filter(o => o.date && o.overtaking_driver_number != null)
+      .map(o => [Date.parse(o.date), o.overtaking_driver_number, o.overtaken_driver_number, o.position ?? null]),
+    // [epoch ms, track °C, air °C, rainfall 0/1] — about one a minute
+    weather: (weather || []).filter(w => w.date)
+      .map(w => [Date.parse(w.date), round1(w.track_temperature), round1(w.air_temperature), w.rainfall ? 1 : 0]),
+    extrasV: RACE_EXTRAS_VERSION,
+  };
+}
+
+async function fetchRaceExtras(sessionKey) {
+  const pit = await optional(`${BASE}/pit?session_key=${sessionKey}`);
+  await sleep(2000);
+  const overtakes = await optional(`${BASE}/overtakes?session_key=${sessionKey}`);
+  await sleep(2000);
+  const weather = await optional(`${BASE}/weather?session_key=${sessionKey}`);
+  await sleep(2000);
+  return compactRaceExtras(pit, overtakes, weather);
+}
+
 // Write via a temp file + rename, so an interrupted run never leaves a
 // truncated JSON file for the next run (or the deploy) to trip over
 function writeAtomic(file, text) {
@@ -519,6 +551,12 @@ async function main() {
       .filter(k => (readCachedMeeting(k)?.sessions || []).some(s => s.sessionName === "Race" && s.drivers && !s.lapCompareDefault))
       .slice(0, 3),
   );
+  // Cached races without the current pit/overtake/weather extras, newest first
+  const extrasBackfill = new Set(
+    meetings.filter(m => new Date(m.date_start) <= now).map(m => m.meeting_key).reverse()
+      .filter(k => (readCachedMeeting(k)?.sessions || []).some(s => s.sessionName === "Race" && s.drivers && s.extrasV !== RACE_EXTRAS_VERSION))
+      .slice(0, 25),
+  );
   const emptyMeetings = [];
   const markEmpty = (meeting) => emptyMeetings.push({ meetingKey: meeting.meeting_key, meetingName: meeting.meeting_name, checkedAt: now.toISOString() });
 
@@ -547,6 +585,15 @@ async function main() {
             if (def) { race.lapCompareDefault = def; console.log(`   🛰️  Added the Lap Compare default (lap ${def.lap})`); }
           } catch (e) {
             console.log(`   ⚠️  Lap Compare default skipped: ${e.message}`);
+          }
+        }
+        const raceX = (cached.sessions || []).find(s => s.sessionName === "Race" && s.drivers && s.extrasV !== RACE_EXTRAS_VERSION);
+        if (raceX && extrasBackfill.has(meeting.meeting_key)) {
+          try {
+            Object.assign(raceX, await fetchRaceExtras(raceX.sessionKey));
+            console.log(`   🛰️  Added pit/overtake/weather extras (${raceX.pitStops.length} stops, ${raceX.overtakes.length} swaps)`);
+          } catch (e) {
+            console.log(`   ⚠️  Race extras skipped: ${e.message}`);
           }
         }
         allMeetingData.push(cached);
@@ -768,6 +815,12 @@ async function main() {
           } catch (e) {
             partial = true;
             console.log(`      ⚠️  Lap Compare default failed: ${e.message}`);
+          }
+          try {
+            Object.assign(sessionOut, await fetchRaceExtras(session.session_key));
+          } catch (e) {
+            partial = true;
+            console.log(`      ⚠️  Race extras failed: ${e.message}`);
           }
         }
 

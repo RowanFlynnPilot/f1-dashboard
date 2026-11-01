@@ -226,12 +226,20 @@ export function transformData(raw) {
   const fetchedAt = raw.fetchedAt;
   const pitRaceName = raw.pitStops?.raceName || "";
 
-  // Qualifying data
-  const qualifying = (raw.qualifying || []).map(q => ({
-    round: q.round,
-    name: q.raceName,
-    results: q.results.map(r => ({ pos: r.pos, d: r.driver, did: r.driverId || "", t: r.team })),
-  }));
+  // Qualifying data — each driver's best lap of the session and its gap to pole (%)
+  const qualifying = (raw.qualifying || []).map(q => {
+    const best = q.results.map(r => Math.min(...[r.q1, r.q2, r.q3].map(lapTime).filter(Boolean)));
+    const pole = Math.min(...best.filter(Number.isFinite));
+    return {
+      round: q.round,
+      name: q.raceName,
+      results: q.results.map((r, i) => ({
+        pos: r.pos, d: r.driver, did: r.driverId || "", t: r.team,
+        best: Number.isFinite(best[i]) ? best[i] : null,
+        gap: Number.isFinite(best[i]) && Number.isFinite(pole) ? (best[i] / pole - 1) * 100 : null,
+      })),
+    };
+  });
 
   // Head-to-head. Teammates are paired round by round from who actually drove
   // for the team that weekend (race or qualifying), so a mid-season seat change
@@ -475,3 +483,305 @@ export const withStatus = (sched, now = Date.now()) => {
   const nextIdx = sched.findIndex(r => !ended(r));
   return sched.map((r, i) => ({ ...r, st: ended(r) ? "done" : i === nextIdx ? "next" : "upcoming" }));
 };
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Analytics layer — season metrics, race pace, passes, title outlook. Shared by
+// the app, scripts/build-season-stats.mjs and the tests. Inputs are the shapes
+// in data.json and the OpenF1 meeting files (race session: drivers[].lapTimes
+// {l, t, pit, ds}, drivers[].positions {l, p}, stints, raceControlPeriods,
+// overtakes [[ms, by, of, pos]], pitStops [[num, lap, stop, lane]]).
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const median = a => {
+  if (!a.length) return null;
+  const s = [...a].sort((x, y) => x - y), m = s.length >> 1;
+  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+};
+export const quantile = (a, q) => {
+  if (!a.length) return null;
+  const s = [...a].sort((x, y) => x - y), i = (s.length - 1) * q, lo = Math.floor(i);
+  return s[lo] + (s[Math.min(s.length - 1, lo + 1)] - s[lo]) * (i - lo);
+};
+const mean = a => (a.length ? a.reduce((s, v) => s + v, 0) / a.length : null);
+
+// Laps under SC / VSC / red flag, plus the restart lap after each period
+export function neutralLaps(session) {
+  const set = new Set();
+  for (const p of session?.raceControlPeriods || []) for (let l = p.lapStart; l <= p.lapEnd + 1; l++) set.add(l);
+  return set;
+}
+
+// A driver's representative racing laps: no lap 1, no in- or out-lap, nothing
+// under a safety car or VSC (or the restart lap), and nothing slower than 107%
+// of their own median — what's left measures pace, not incidents.
+export function greenFlagLaps(driver, session) {
+  const laps = (driver?.lapTimes || []).filter(l => l.t > 0).sort((a, b) => a.l - b.l);
+  const outLaps = new Set(laps.filter(l => l.pit).map(l => l.l));
+  const neutral = neutralLaps(session);
+  const kept = laps.filter(l => l.l > 1 && !outLaps.has(l.l) && !outLaps.has(l.l + 1) && !neutral.has(l.l));
+  if (kept.length < 3) return kept;
+  const med = median(kept.map(l => l.t));
+  return kept.filter(l => l.t <= med * 1.07);
+}
+
+const compoundAt = (session, num, lap) =>
+  (session?.stints || []).find(s => s.driverNumber === num && lap >= (s.lapStart || 1) && lap <= (s.lapEnd || 999))?.compound || "UNKNOWN";
+
+// Per-driver distribution of green-flag lap times for one race, in finishing
+// order. Box stats use Tukey whiskers (1.5 × IQR, clamped to the data).
+export function racePace(session, minLaps = 8) {
+  const finalPos = d => d.positions?.at(-1)?.p ?? 99;
+  return (session?.drivers || [])
+    .map(d => {
+      const laps = greenFlagLaps(d, session).map(l => ({ l: l.l, t: l.t, c: compoundAt(session, d.number, l.l) }));
+      if (laps.length < minLaps) return null;
+      const ts = laps.map(l => l.t), q1 = quantile(ts, 0.25), q3 = quantile(ts, 0.75), iqr = q3 - q1;
+      return {
+        number: d.number, acronym: d.acronym, team: d.team, teamColour: d.teamColour, laps, n: laps.length,
+        q1, med: median(ts), q3,
+        lo: Math.min(...ts.filter(t => t >= q1 - 1.5 * iqr)), hi: Math.max(...ts.filter(t => t <= q3 + 1.5 * iqr)),
+        pos: finalPos(d),
+      };
+    })
+    .filter(Boolean)
+    .sort((a, b) => a.pos - b.pos);
+}
+
+// The lap a driver was on at an instant (epoch ms), from their lap start times
+function lapAt(driver, ms) {
+  const laps = driver?.lapTimes || [];
+  let lap = null;
+  for (const l of laps) if (l.ds != null && l.ds <= ms) lap = l.l;
+  return lap;
+}
+
+// On-track passes from OpenF1's raw overtakes, which record every position
+// swap. Dropped: lap 1 (its own metric), swaps where either car pitted that
+// lap or the next (pit cycles), swaps under a safety car/VSC, swaps with a car
+// on a different lap (lapping), and swaps on a car's final lap when it retired
+// (a stopping car isn't overtaken). Returns {byDriver: {num: {made, lost}}, kept, raw}.
+export function onTrackPasses(session, outNums = new Set()) {
+  const drivers = Object.fromEntries((session?.drivers || []).map(d => [d.number, d]));
+  const neutral = neutralLaps(session);
+  // pit-out lap or the in-lap before it
+  const pitAround = (d, lap) => (d?.lapTimes || []).some(l => l.pit && (l.l === lap || l.l === lap + 1));
+  const byDriver = {};
+  const bump = (n, k) => { (byDriver[n] ??= { made: 0, lost: 0 })[k]++; };
+  let kept = 0;
+  const raw = session?.overtakes || [];
+  for (const [ms, by, of] of raw) {
+    const a = drivers[by], b = drivers[of];
+    if (!a || !b) continue;
+    const lap = lapAt(a, ms), lapB = lapAt(b, ms);
+    if (lap == null || lap <= 1 || lapB !== lap || neutral.has(lap)) continue;
+    if (pitAround(a, lap) || pitAround(b, lap)) continue;
+    const lastB = b.lapTimes?.at(-1)?.l ?? 0;
+    if (outNums.has(String(of)) && lap >= lastB - 1) continue;
+    bump(by, "made"); bump(of, "lost"); kept++;
+  }
+  return { byDriver, kept, raw: raw.length };
+}
+
+// Places gained on lap 1: starting grid (Jolpica; 0 = pit lane, counted from
+// the back) minus the position at the end of lap 1 (OpenF1). {num: gain}
+export function lapOneGains(session, results) {
+  const field = (results || []).length || 20;
+  const gridByNum = Object.fromEntries((results || []).filter(r => r.num != null).map(r => [String(r.num), r.grid === 0 ? field : r.grid]));
+  const out = {};
+  for (const d of session?.drivers || []) {
+    const p1 = d.positions?.find(p => p.l === 1)?.p, g = gridByNum[String(d.number)];
+    if (p1 != null && g) out[d.number] = g - p1;
+  }
+  return out;
+}
+
+// Mini-sector dominance from the fastest-lap speed traces ({d, s} samples).
+// Each trace's time is spread over distance as Δd / v and scaled to the real
+// lap time; the lap is cut into `n` equal-distance segments and each goes to
+// the driver who covered it quickest. Only drivers with a trace take part.
+export function miniSectors(session, n = 25) {
+  const runs = (session?.drivers || [])
+    .filter(d => (d.fastLapTrace?.trace || []).length >= 10)
+    .map(d => {
+      const tr = d.fastLapTrace.trace, d0 = tr[0].d, D = tr.at(-1).d - d0;
+      const seg = new Array(n).fill(0);
+      for (let i = 1; i < tr.length; i++) {
+        const dd = tr[i].d - tr[i - 1].d, v = (tr[i].s + tr[i - 1].s) / 2;
+        if (dd <= 0 || v <= 0) continue;
+        const f = ((tr[i].d + tr[i - 1].d) / 2 - d0) / D;
+        seg[Math.min(n - 1, Math.max(0, Math.floor(f * n)))] += dd / v;
+      }
+      const total = seg.reduce((s, v) => s + v, 0);
+      return { number: d.number, acronym: d.acronym, team: d.team, teamColour: d.teamColour,
+        lap: d.fastLapTrace.lap, lapTime: d.fastLapTrace.lapTime, seg: seg.map(v => (total > 0 ? (v / total) * d.fastLapTrace.lapTime : Infinity)) };
+    });
+  if (runs.length < 2) return null;
+  const winners = Array.from({ length: n }, (_, i) => runs.reduce((best, r) => (r.seg[i] < best.seg[i] ? r : best)).number);
+  const count = Object.fromEntries(runs.map(r => [r.number, winners.filter(w => w === r.number).length]));
+  return { n, winners, runs, count };
+}
+
+// ── Title outlook ────────────────────────────────────────────────────────────
+// Deterministic maths (maximum points left, who can still win, what clinches
+// it next) plus a Monte Carlo projection. The simulation draws each driver's
+// result at every remaining event from their own season results — position
+// plus noise, a retirement when the draw lands on one — and sorts the field,
+// so every simulated race is a consistent finishing order. Seeded, so the
+// numbers don't jump between renders.
+const RACE_POINTS = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1];
+const SPRINT_POINTS = [8, 7, 6, 5, 4, 3, 2, 1];
+
+function rng(seed) {
+  let a = seed >>> 0;
+  return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+}
+
+export function remainingEvents(sched, sprintsRun) {
+  const ran = new Set((sprintsRun || []).map(s => (typeof s === "object" ? s.round ?? parseInt(s.r) : s)));
+  const out = [];
+  for (const r of sched || []) {
+    if (r.st === "done") continue;
+    if (r.sp && !ran.has(r.r)) out.push({ round: r.r, name: r.nm, kind: "sprint", max: SPRINT_POINTS[0] });
+    out.push({ round: r.r, name: r.nm, kind: "race", max: RACE_POINTS[0] });
+  }
+  return out;
+}
+
+export function titleOutlook({ DS, sched, races, sprints, sims = 4000, seed = 2026 }) {
+  const events = remainingEvents(sched, sprints);
+  const maxLeft = events.reduce((s, e) => s + e.max, 0);
+  const field = (DS || []).filter(d => d.pts != null);
+  if (!field.length) return null;
+  const leader = field[0];
+  const alive = field.filter(d => d.pts + maxLeft >= leader.pts);
+  const rival = field[1];
+  const clinched = !!rival && leader.pts - rival.pts > maxLeft;
+
+  // What clinches it at the next weekend: the lead after it must exceed the
+  // points left after it, over every rival still alive
+  const next = events.length ? events.filter(e => e.round === events[0].round) : [];
+  const leftAfter = maxLeft - next.reduce((s, e) => s + e.max, 0);
+  const needed = clinched || !rival ? null : { round: next[0]?.round, name: next[0]?.name, rival: rival.n, margin: leftAfter + 1 - (leader.pts - rival.pts) };
+
+  // Monte Carlo
+  const hist = {};
+  for (const r of races || []) for (const row of r.full || []) (hist[row.did || row.d] ??= []).push(typeof row.p === "number" ? row.p : null);
+  const last = d => d.n.split(" ").pop();
+  const rand = rng(seed);
+  const titles = Object.fromEntries(field.map(d => [d.n, 0]));
+  for (let s = 0; s < sims && events.length; s++) {
+    const tot = Object.fromEntries(field.map(d => [d.n, d.pts]));
+    for (const e of events) {
+      const table = e.kind === "sprint" ? SPRINT_POINTS : RACE_POINTS;
+      const order = field.map(d => {
+        const h = hist[d.did] || hist[last(d)] || [];
+        const draw = h.length ? h[Math.floor(rand() * h.length)] : 12 + rand() * 8;
+        return { n: d.n, score: draw == null ? 100 + rand() : draw + (rand() - 0.5) * 3 };
+      }).sort((a, b) => a.score - b.score);
+      order.forEach((o, i) => { if (o.score < 100 && i < table.length) tot[o.n] += table[i]; });
+    }
+    let best = null;
+    for (const d of field) if (!best || tot[d.n] > tot[best] || (tot[d.n] === tot[best] && rand() < 0.5)) best = d.n;
+    titles[best]++;
+  }
+  const prob = Object.fromEntries(field.map(d => [d.n, events.length ? titles[d.n] / sims : d === leader ? 1 : 0]));
+  return {
+    events, maxLeft, clinched, needed, sims: events.length ? sims : 0,
+    drivers: field.map(d => ({ n: d.n, t: d.t, pts: d.pts, max: d.pts + maxLeft, alive: alive.includes(d), behind: leader.pts - d.pts, prob: prob[d.n] })),
+  };
+}
+
+// Points for a finishing position in a race or sprint (null/0 = no points)
+export const pointsFor = (pos, kind = "race") => (pos ? (kind === "sprint" ? SPRINT_POINTS : RACE_POINTS)[pos - 1] || 0 : 0);
+
+// ── Season metrics and percentiles ──────────────────────────────────────────
+export const lapTime = s => {
+  if (!s) return null;
+  const m = String(s).match(/^(?:(\d+):)?(\d+(?:\.\d+)?)$/);
+  return m ? (m[1] ? +m[1] * 60 : 0) + +m[2] : null;
+};
+
+export const SEASON_METRICS = [
+  { key: "qualiGap", label: "Qualifying pace", unit: "% off pole", better: "low", digits: 2, note: "Median gap of the driver's best qualifying lap to pole, per round." },
+  { key: "racePace", label: "Race pace", unit: "% off best", better: "low", digits: 2, note: "Median green-flag lap against the race's quickest median, per race." },
+  { key: "consistency", label: "Consistency", unit: "% lap spread", better: "low", digits: 2, note: "Standard deviation of green-flag laps as a share of their mean, per race." },
+  { key: "lap1", label: "Starts", unit: "places on lap 1", better: "high", digits: 1, note: "Average places gained from the grid by the end of lap 1." },
+  { key: "passes", label: "Overtaking", unit: "passes / race", better: "high", digits: 1, note: "On-track passes per race, pit cycles, lapping and safety-car swaps excluded." },
+  { key: "teammateQuali", label: "Beats team-mate", unit: "% of qualifyings", better: "high", digits: 0, note: "Share of qualifying sessions ahead of the team-mate that weekend." },
+  { key: "pointsPerStart", label: "Scoring", unit: "points / start", better: "high", digits: 1, note: "Season points per Grand Prix started." },
+  { key: "finishRate", label: "Reliability", unit: "% classified", better: "high", digits: 0, note: "Share of Grands Prix with a classified finish." },
+  { key: "pitStop", label: "Pit crew", unit: "s stationary", better: "low", digits: 2, note: "Median time stationary in the box (OpenF1), the team's crew more than the driver." },
+];
+
+// Season metrics per driver plus a percentile for each (0–100, 100 = best in
+// the field), among drivers with at least `minStarts` Grand Prix starts.
+export function buildSeasonStats(data, meetingsByRound, { minStarts = 5 } = {}) {
+  const drivers = (data?.drivers || []).map(d => ({ name: d.name, did: d.driverId, team: d.team, last: d.name.split(" ").pop() }));
+  const vals = Object.fromEntries(drivers.map(d => [d.did, Object.fromEntries(SEASON_METRICS.map(m => [m.key, []]))]));
+  const push = (did, k, v) => { if (vals[did] && v != null && Number.isFinite(v)) vals[did][k].push(v); };
+  const starts = {}, finishes = {};
+
+  for (const q of data?.qualifying || []) {
+    const best = q.results.map(r => ({ r, t: Math.min(...[r.q1, r.q2, r.q3].map(lapTime).filter(Boolean)) })).filter(x => Number.isFinite(x.t));
+    const pole = Math.min(...best.map(x => x.t));
+    for (const { r, t } of best) push(r.driverId, "qualiGap", (t / pole - 1) * 100);
+    const byTeam = {};
+    for (const r of q.results) (byTeam[r.team] ??= []).push(r);
+    for (const pair of Object.values(byTeam)) if (pair.length === 2) {
+      const [a, b] = pair;
+      push(a.driverId, "teammateQuali", a.pos < b.pos ? 100 : 0);
+      push(b.driverId, "teammateQuali", b.pos < a.pos ? 100 : 0);
+    }
+  }
+
+  for (const race of data?.races || []) {
+    const numToDid = Object.fromEntries(race.results.filter(r => r.num != null).map(r => [String(r.num), r.did]));
+    for (const r of race.results) {
+      starts[r.did] = (starts[r.did] || 0) + 1;
+      if (!r.out) finishes[r.did] = (finishes[r.did] || 0) + 1;
+    }
+    const session = (meetingsByRound?.[race.round]?.sessions || []).find(s => s.sessionName === "Race" && s.drivers);
+    if (!session) continue;
+    const pace = racePace(session);
+    const ref = Math.min(...pace.filter(p => p.n >= 10).map(p => p.med));
+    for (const p of pace) {
+      const did = numToDid[String(p.number)];
+      if (Number.isFinite(ref)) push(did, "racePace", (p.med / ref - 1) * 100);
+      const ts = p.laps.map(l => l.t), m = mean(ts);
+      push(did, "consistency", (Math.sqrt(mean(ts.map(t => (t - m) ** 2))) / m) * 100);
+    }
+    const outNums = new Set(race.results.filter(r => r.out).map(r => String(r.num)));
+    for (const [num, g] of Object.entries(lapOneGains(session, race.results))) push(numToDid[num], "lap1", g);
+    if ((session.overtakes || []).length) {
+      const { byDriver } = onTrackPasses(session, outNums);
+      for (const r of race.results) push(r.did, "passes", byDriver[r.num]?.made || 0);
+    }
+    for (const [num, , stop] of session.pitStops || []) if (stop > 0 && stop < 20) push(numToDid[String(num)], "pitStop", stop);
+  }
+
+  for (const d of drivers) {
+    const s = starts[d.did] || 0;
+    const pts = (data.drivers.find(x => x.driverId === d.did) || {}).pts || 0;
+    if (s) { push(d.did, "pointsPerStart", pts / s); push(d.did, "finishRate", ((finishes[d.did] || 0) / s) * 100); }
+  }
+
+  const summary = k => (["teammateQuali", "pointsPerStart", "finishRate", "lap1", "passes"].includes(k) ? mean : median);
+  const rows = drivers.map(d => ({
+    name: d.name, did: d.did, team: d.team, starts: starts[d.did] || 0,
+    metrics: Object.fromEntries(SEASON_METRICS.map(m => {
+      const v = vals[d.did][m.key];
+      return [m.key, { value: v.length ? summary(m.key)(v) : null, n: v.length }];
+    })),
+  }));
+  const eligible = rows.filter(r => r.starts >= minStarts);
+  for (const m of SEASON_METRICS) {
+    const pool = eligible.filter(r => r.metrics[m.key].value != null);
+    for (const r of rows) {
+      const v = r.metrics[m.key].value;
+      if (v == null || !pool.includes(r) || pool.length < 2) { r.metrics[m.key].pct = null; continue; }
+      const worse = pool.filter(o => (m.better === "low" ? o.metrics[m.key].value > v : o.metrics[m.key].value < v)).length;
+      r.metrics[m.key].pct = Math.round((worse / (pool.length - 1)) * 100);
+    }
+  }
+  return { season: data?.season, rounds: (data?.races || []).length, minStarts, metrics: SEASON_METRICS, drivers: rows };
+}

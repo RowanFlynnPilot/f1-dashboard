@@ -50,6 +50,8 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   out("|---|---|---|");
   out(`| Jolpica | ${outcome(env.JOLPICA_OUTCOME)} | ${data ? `round ${data.completedRounds} of ${data.totalRounds}${lastRace ? ` · ${lastRace.name}` : ""} · fetched ${utc(data.fetchedAt)}` : "data.json unreadable"} |`);
   out(`| OpenF1 | ${outcome(env.OPENF1_OUTCOME)} | ${index ? `${meetings.length} meetings${lastMeeting ? ` · latest race ${lastMeeting.meetingName}` : ""} · fetched ${utc(index.fetchedAt)}` : "index.json unreadable"} |`);
+  const stats = read("public/season-stats.json");
+  out(`| Season stats | ${outcome(env.STATS_OUTCOME)} | ${stats ? `${stats.drivers.filter(d => d.starts >= stats.minStarts).length} drivers rated through round ${stats.rounds}` : "season-stats.json unreadable"} |`);
   out(`| Quotes | ${outcome(env.QUOTES_OUTCOME)} | ${lastQuoted ? `race quotes through round ${lastQuoted.round} · ${lastQuoted.raceName}` : "no race quotes yet"} |`);
   out(`| Data commit | ${outcome(env.COMMIT_OUTCOME)} | ${env.COMMIT_OUTCOME === "success" ? "cache and validator baseline saved to main" : "see the commit step log"} |`);
 

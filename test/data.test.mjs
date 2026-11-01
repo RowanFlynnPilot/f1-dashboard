@@ -2,7 +2,7 @@
 //   npm test
 import test from "node:test";
 import assert from "node:assert/strict";
-import { transformData, countdownLabel, withStatus, meetingForRace } from "../src/data.js";
+import { transformData, countdownLabel, withStatus, meetingForRace, greenFlagLaps, racePace, onTrackPasses, lapOneGains, miniSectors, titleOutlook, remainingEvents, buildSeasonStats } from "../src/data.js";
 
 // A classification row in data.json's shape
 const row = (pos, driver, team, pts, extra = {}) => ({
@@ -126,4 +126,130 @@ test("meetingForRace prefers the stamped round and falls back to the race date",
   const unstamped = [{ meetingKey: 2, meetingName: "São Paulo Grand Prix", sessions: [{ sessionName: "Race", dateStart: "2026-11-08T17:00:00+00:00" }] }];
   assert.equal(meetingForRace(unstamped, { r: 20, dt: "2026-11-08" })?.meetingKey, 2, "names differ; the date joins them");
   assert.equal(meetingForRace(unstamped, { r: 21, dt: "2026-11-22" }), null);
+});
+
+// ── Analytics ───────────────────────────────────────────────────────────────
+// A synthetic race session: `laps` laps at `base` seconds (+ `slope` per lap),
+// lap starts every lap time from t0, pit-out laps flagged.
+const T0 = 1_800_000_000_000;
+function car(number, { base = 90, slope = 0, laps = 20, pitOut = [], slow = {}, pos = () => number } = {}) {
+  const lapTimes = [];
+  let ds = T0;
+  for (let l = 1; l <= laps; l++) {
+    const t = slow[l] ?? base + slope * l;
+    lapTimes.push({ l, t, pit: pitOut.includes(l), ds });
+    ds += t * 1000;
+  }
+  return { number, acronym: `D${number}`, team: "Team", teamColour: "#123456", lapTimes,
+    positions: lapTimes.map(x => ({ l: x.l, p: pos(x.l) })) };
+}
+
+test("greenFlagLaps drops lap 1, in- and out-laps, neutralised laps and outliers", () => {
+  const d = car(1, { pitOut: [10], slow: { 1: 100, 15: 120 } });
+  const session = { drivers: [d], raceControlPeriods: [{ type: "SC", lapStart: 5, lapEnd: 6 }] };
+  const kept = greenFlagLaps(d, session).map(l => l.l);
+  for (const gone of [1, 9, 10, 5, 6, 7, 15]) assert.ok(!kept.includes(gone), `lap ${gone} should be dropped`);
+  assert.deepEqual(kept, [2, 3, 4, 8, 11, 12, 13, 14, 16, 17, 18, 19, 20]);
+});
+
+test("racePace summarises each car's green-flag laps in finishing order", () => {
+  const a = car(1, { base: 90, pos: () => 2 }), b = car(2, { base: 89, pos: () => 1 });
+  const pace = racePace({ drivers: [a, b], stints: [{ driverNumber: 2, compound: "HARD", lapStart: 1, lapEnd: 20 }] });
+  assert.deepEqual(pace.map(p => p.number), [2, 1]);
+  assert.equal(pace[0].med, 89);
+  assert.equal(pace[0].laps[0].c, "HARD");
+  assert.equal(pace[1].laps[0].c, "UNKNOWN");
+});
+
+test("onTrackPasses keeps racing passes and drops pit cycles, lapping and lap 1", () => {
+  const a = car(1, { laps: 20 }), b = car(2, { laps: 20, pitOut: [12] }), c = car(3, { laps: 20 });
+  const at = (d, lap) => d.lapTimes[lap - 1].ds + 10_000; // 10 s into that lap
+  const session = {
+    drivers: [a, b, c],
+    overtakes: [
+      [at(a, 1), 1, 2, 1],   // lap 1 — its own metric
+      [at(a, 5), 1, 2, 1],   // racing pass
+      [at(a, 11), 3, 2, 2],  // b's in-lap — pit cycle
+      [at(a, 12), 1, 2, 1],  // b's out-lap — pit cycle
+      [at(c, 8), 3, 1, 1],   // racing pass
+    ],
+  };
+  const { byDriver, kept, raw } = onTrackPasses(session);
+  assert.equal(raw, 5);
+  assert.equal(kept, 2);
+  assert.deepEqual(byDriver[1], { made: 1, lost: 1 });
+  assert.deepEqual(byDriver[3], { made: 1, lost: 0 });
+  // A car a lap down: the swap is lapping, not a pass
+  const slow = car(4, { base: 180, laps: 10 });
+  const lapped = onTrackPasses({ drivers: [a, slow], overtakes: [[at(a, 6), 1, 4, 1]] });
+  assert.equal(lapped.kept, 0);
+});
+
+test("lapOneGains: grid minus position after lap 1, pit-lane starts from the back", () => {
+  const s = { drivers: [car(1, { pos: () => 3 }), car(2, { pos: () => 1 })] };
+  const results = [{ num: "1", grid: 1 }, { num: "2", grid: 0 }, { num: "3", grid: 2 }];
+  assert.deepEqual(lapOneGains(s, results), { 1: -2, 2: 2 });
+});
+
+test("miniSectors gives each segment to the quicker trace", () => {
+  const trace = fast => Array.from({ length: 21 }, (_, i) => ({ d: i * 250, s: i < 10 ? (fast ? 300 : 280) : (fast ? 200 : 220) }));
+  const mk = (number, fast) => ({ number, acronym: `D${number}`, fastLapTrace: { lap: 10, lapTime: 80, trace: trace(fast) } });
+  const ms = miniSectors({ drivers: [mk(1, true), mk(2, false)] }, 4);
+  assert.deepEqual(ms.winners, [1, 1, 2, 2]);
+  assert.deepEqual(ms.count, { 1: 2, 2: 2 });
+  assert.equal(miniSectors({ drivers: [mk(1, true)] }), null, "needs two traces");
+});
+
+test("titleOutlook: points left, who's alive, clinch maths and a seeded projection", () => {
+  const sched = [
+    { r: 1, nm: "A", st: "done", sp: false },
+    { r: 2, nm: "B", st: "next", sp: true },
+    { r: 3, nm: "C", st: "upcoming", sp: false },
+  ];
+  assert.deepEqual(remainingEvents(sched, []).map(e => `${e.round}${e.kind[0]}`), ["2s", "2r", "3r"]);
+  assert.deepEqual(remainingEvents(sched, [{ r: "2S" }]).map(e => `${e.round}${e.kind[0]}`), ["2r", "3r"], "a sprint already run is gone");
+  const DS = [
+    { n: "Ann One", did: "one", t: "X", pts: 100 },
+    { n: "Bob Two", did: "two", t: "X", pts: 70 },
+    { n: "Cat Three", did: "three", t: "Y", pts: 30 },
+  ];
+  const races = [{ r: 1, full: [{ did: "one", p: 1 }, { did: "two", p: 2 }, { did: "three", p: "DNF" }] }];
+  const o = titleOutlook({ DS, sched, races, sprints: [], sims: 500 });
+  assert.equal(o.maxLeft, 58);
+  assert.deepEqual(o.drivers.map(d => d.alive), [true, true, false]);
+  assert.equal(o.clinched, false);
+  // After round 2 only 25 remain: Ann needs a lead of 26+, she has 30, so she can drop 4 to Bob
+  assert.equal(o.needed.margin, -4);
+  const sum = o.drivers.reduce((s, d) => s + d.prob, 0);
+  assert.ok(Math.abs(sum - 1) < 1e-9);
+  assert.ok(o.drivers[0].prob > o.drivers[1].prob);
+  assert.deepEqual(titleOutlook({ DS, sched, races, sprints: [], sims: 500 }).drivers.map(d => d.prob), o.drivers.map(d => d.prob), "seeded");
+});
+
+test("buildSeasonStats ranks metrics into percentiles where 100 is best", () => {
+  const raw = {
+    season: 2026,
+    drivers: [
+      { name: "Ann One", driverId: "one", team: "X", pts: 50 },
+      { name: "Bob Two", driverId: "two", team: "X", pts: 20 },
+      { name: "Cat Three", driverId: "three", team: "Y", pts: 0 },
+    ],
+    qualifying: [{ round: 1, results: [
+      { pos: 1, driverId: "one", team: "X", q1: "1:30.000" },
+      { pos: 2, driverId: "two", team: "X", q1: "1:30.900" },
+      { pos: 3, driverId: "three", team: "Y", q1: "1:31.800" },
+    ] }],
+    races: [{ round: 1, results: [
+      { num: "1", did: "one", out: null, grid: 1 },
+      { num: "2", did: "two", out: null, grid: 2 },
+      { num: "3", did: "three", out: "DNF", grid: 3 },
+    ] }],
+  };
+  const st = buildSeasonStats(raw, {}, { minStarts: 1 });
+  const by = Object.fromEntries(st.drivers.map(d => [d.did, d.metrics]));
+  assert.equal(by.two.qualiGap.value.toFixed(2), "1.00");
+  assert.deepEqual([by.one.qualiGap.pct, by.two.qualiGap.pct, by.three.qualiGap.pct], [100, 50, 0]);
+  assert.deepEqual([by.one.teammateQuali.value, by.two.teammateQuali.value], [100, 0]);
+  assert.equal(by.three.finishRate.value, 0);
+  assert.equal(by.one.racePace.value, null, "no meeting file, no race pace");
 });

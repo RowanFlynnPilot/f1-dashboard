@@ -13,7 +13,8 @@
     "fetch-openf1": "node scripts/fetch-openf1-data.mjs",
     "fetch-all": "node scripts/fetch-f1-data.mjs && node scripts/fetch-openf1-data.mjs",
     "fetch-quotes": "python scripts/fetch-driver-quotes.py",
-    "fetch-tracks": "node scripts/fetch-tracks.mjs"
+    "fetch-tracks": "node scripts/fetch-tracks.mjs",
+    "build-stats": "node scripts/build-season-stats.mjs"
   },
   "dependencies": {
     "react": "^19.3.1",

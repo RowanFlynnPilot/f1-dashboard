@@ -62,7 +62,7 @@ test("currentLineups uses the latest round, preferring the race over its qualify
 });
 import { processRaceControlPeriods, buildSpeedTrace, computeSessionBests, processLapData } from "../scripts/fetch-openf1-data.mjs";
 import { mergeIds } from "../scripts/merge-video-ids.mjs";
-import { matchRound, raceIsFinal, lapCompareDefaultPick, compactLapTelemetry } from "../scripts/fetch-openf1-data.mjs";
+import { matchRound, raceIsFinal, lapCompareDefaultPick, compactLapTelemetry, compactRaceExtras, RACE_EXTRAS_VERSION } from "../scripts/fetch-openf1-data.mjs";
 import { validate } from "../scripts/validate-data.mjs";
 import { quoteGaps } from "../scripts/run-summary.mjs";
 
@@ -231,4 +231,16 @@ test("processLapData + computeSessionBests ignore pit-out laps and rank by theor
   const bests = computeSessionBests(stats);
   assert.equal(bests.fastestS1, 28.5);
   assert.equal(bests.topSTSpeed, 310);
+});
+
+test("compactRaceExtras keeps stationary time, raw swaps and a weather row per reading", () => {
+  const x = compactRaceExtras(
+    [{ driver_number: 4, lap_number: 22, stop_duration: 2.4567, lane_duration: 21.9, pit_duration: 22.1 }, { driver_number: 1, lap_number: 30, stop_duration: null, pit_duration: 24 }],
+    [{ date: "2026-10-25T20:10:00Z", overtaking_driver_number: 4, overtaken_driver_number: 1, position: 3 }, { date: null, overtaking_driver_number: 1 }],
+    [{ date: "2026-10-25T20:00:00Z", track_temperature: 38.26, air_temperature: 27.04, rainfall: 0 }],
+  );
+  assert.deepEqual(x.pitStops, [[4, 22, 2.457, 21.9], [1, 30, null, 24]]);
+  assert.deepEqual(x.overtakes, [[Date.parse("2026-10-25T20:10:00Z"), 4, 1, 3]]);
+  assert.deepEqual(x.weather, [[Date.parse("2026-10-25T20:00:00Z"), 38.3, 27, 0]]);
+  assert.equal(x.extrasV, RACE_EXTRAS_VERSION);
 });
