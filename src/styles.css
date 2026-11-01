@@ -133,6 +133,8 @@ input[type=range]{accent-color:var(--red)}
 /* ── first viewport: lap chart + billing ──────────────────────────────── */
 .hero-grid{display:grid;grid-template-columns:minmax(0,62fr) minmax(0,38fr);gap:0 32px;align-items:start}
 .hero-grid>div{min-width:0}
+.race-pills{display:flex;flex-wrap:wrap;gap:4px;flex:1 1 0;min-width:0}
+.race-pills>button{flex:0 0 auto;white-space:nowrap}
 .lapsheet-slot{min-height:620px}
 .lapchart{min-width:0}
 .lapchart{position:relative;user-select:none}
@@ -241,6 +243,12 @@ td{font-family:var(--font-ui)}
   .hero-grid{grid-template-columns:1fr}
         }
 @media(max-width:768px){
+  /* Telemetry's 18 race buttons: one sideways-scrolling row instead of ~5 wrapped
+     rows, whose count changed with the font swap. The clipped button at the edge
+     shows there is more. */
+  .race-pills{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;scroll-snap-type:x proximity;overscroll-behavior-x:contain;padding-bottom:2px}
+  .race-pills::-webkit-scrollbar{display:none}
+  .race-pills>button{scroll-snap-align:start}
   .lapsheet-slot{min-height:545px}
   .hdr{padding:14px 14px 0}
   .hdr-title{font-size:26px}

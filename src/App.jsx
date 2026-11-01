@@ -2567,6 +2567,15 @@ const TelemetryTab=memo(function TelemetryTab({openf1,tracks,telMeetingKey,setTe
             const cur=raceMeetings.find(rm=>rm.meeting.meetingKey===activeKey);
             return{raceMeetings,activeKey,cur,race:cur.race};
           },[openf1,telMeetingKey]);
+          // Phones scroll the race row sideways; keep the selected race in view
+          // (the newest race sits at the far end, off-screen)
+          const pillsRef=useRef(null);
+          useLayoutEffect(()=>{
+            const el=pillsRef.current,b=el?.querySelector('[aria-pressed="true"]');
+            if(!b||el.scrollWidth<=el.clientWidth)return;
+            const er=el.getBoundingClientRect(),br=b.getBoundingClientRect();
+            el.scrollLeft+=br.left-er.left-(er.width-br.width)/2;
+          },[activeKey,raceMeetings.length,race]); // `race` lands after the loading guard, when the row first exists
           // Default selection — finishing top 5. Use final position from per-lap snapshots.
           const{allDrivers,sortedByFinish,defaultSel}=useMemo(()=>{
             const allDrivers=race?.drivers||[];
@@ -2623,9 +2632,9 @@ const TelemetryTab=memo(function TelemetryTab({openf1,tracks,telMeetingKey,setTe
               {/* Meeting selector */}
               <div style={{display:"flex",alignItems:"center",gap:14,flexWrap:"wrap"}}>
                 <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:"var(--w40)"}}>Race</div>
-                <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
+                <div ref={pillsRef} className="race-pills" role="group" aria-label="Race">
                   {raceMeetings.map(rm=>(
-                    <button key={rm.meeting.meetingKey} onClick={()=>{setTelMeetingKey(rm.meeting.meetingKey);setTelSelected(new Set());}} style={{cursor:"pointer",padding:"6px 14px",borderRadius:2,border:activeKey===rm.meeting.meetingKey?"1px solid rgba(214,40,40,0.4)":"1px solid var(--w08)",background:activeKey===rm.meeting.meetingKey?"rgba(214,40,40,0.12)":"var(--w03)",color:activeKey===rm.meeting.meetingKey?"var(--red)":"var(--w50)",fontSize:12,fontWeight:activeKey===rm.meeting.meetingKey?600:400,fontFamily:"var(--font-ui)"}}>{meetingTrackName(rm.meeting).replace(" Grand Prix","")}</button>
+                    <button key={rm.meeting.meetingKey} aria-pressed={activeKey===rm.meeting.meetingKey} onClick={()=>{setTelMeetingKey(rm.meeting.meetingKey);setTelSelected(new Set());}} style={{cursor:"pointer",padding:"6px 14px",borderRadius:2,border:activeKey===rm.meeting.meetingKey?"1px solid rgba(214,40,40,0.4)":"1px solid var(--w08)",background:activeKey===rm.meeting.meetingKey?"rgba(214,40,40,0.12)":"var(--w03)",color:activeKey===rm.meeting.meetingKey?"var(--red-ink)":"var(--w50)",fontSize:12,fontWeight:activeKey===rm.meeting.meetingKey?600:400,fontFamily:"var(--font-ui)"}}>{meetingTrackName(rm.meeting).replace(" Grand Prix","")}</button>
                   ))}
                 </div>
               </div>
