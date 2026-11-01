@@ -23,13 +23,36 @@ class RootBoundary extends React.Component {
   }
 }
 
-ReactDOM.createRoot(document.getElementById('root')).render(
+const rootEl = document.getElementById('root')
+const tree = (raw, renderAt) => (
   <React.StrictMode>
     <RootBoundary>
-      <App />
+      <App initialRaw={raw} renderAt={renderAt} />
     </RootBoundary>
-  </React.StrictMode>,
+  </React.StrictMode>
 )
+const mount = raw => ReactDOM.createRoot(rootEl).render(tree(raw, null))
+
+// The build pre-renders the Overview into the page (scripts/prerender.mjs). It
+// stays on screen while the bundle loads; once data.json (preloaded by
+// index.html) is in hand React hydrates it — adopting the existing elements
+// rather than replacing them — rendering first at the build's clock and in UTC
+// so the HTML matches, then switching to live time. Deep links to other sheets
+// get the loading shell instead (index.html's inline check) and mount normally.
+if (rootEl.dataset.prerendered) {
+  fetch(import.meta.env.BASE_URL + 'data.json')
+    .then(r => (r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status))))
+    .then(
+      raw => ReactDOM.hydrateRoot(rootEl, tree(raw, Number(rootEl.dataset.renderAt) || null), {
+        // a mismatch (say, data.json changed under a cached page) makes React
+        // re-render from scratch; worth a note, not an error
+        onRecoverableError: e => console.warn('Pre-rendered page re-rendered:', e?.message || e),
+      }),
+      () => mount(null),
+    )
+} else {
+  mount(null)
+}
 
 // Offline support: cache the shell + last-fetched data (production only — a SW
 // in dev would serve stale modules and fight HMR).

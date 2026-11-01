@@ -244,3 +244,14 @@ test("compactRaceExtras keeps stationary time, raw swaps and a weather row per r
   assert.deepEqual(x.weather, [[Date.parse("2026-10-25T20:00:00Z"), 38.3, 27, 0]]);
   assert.equal(x.extrasV, RACE_EXTRAS_VERSION);
 });
+
+import { injectPrerender } from "../scripts/prerender.mjs";
+test("injectPrerender swaps the shell for the render and keeps it for deep links", () => {
+  const html = `<html><head><noscript>fonts</noscript></head><body>\n<div id="root"><!--shell--><div class="bench">Opening…</div><!--/shell--></div>\n<noscript>needs JS</noscript></body></html>`;
+  const out = injectPrerender(html, `<div class="sheet">Lap chart $1 $& price</div>`, 123);
+  assert.match(out, /<div id="root" data-prerendered="overview" data-render-at="123"><div class="sheet">Lap chart \$1 \$& price<\/div><\/div>/, "rendered HTML in place, $ patterns left alone");
+  assert.match(out, /<\/div><template id="loading-shell"><div class="bench">Opening…<\/div><\/template><script>/, "shell kept in a template, guard right after it");
+  assert.ok(out.indexOf('id="loading-shell"') < out.indexOf("location.hash"), "template exists before the guard runs");
+  assert.ok(!out.includes("<!--shell-->"));
+  assert.throws(() => injectPrerender("<div id=\"root\"></div>", "x", 1), /markers/);
+});

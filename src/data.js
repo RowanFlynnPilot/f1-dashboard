@@ -452,14 +452,16 @@ export function transformData(raw) {
 
 // Calendar days between today and the race's start, both in the viewer's time
 // zone. Rounding up whole 24-hour blocks said "tomorrow" on race morning.
-export const daysUntilRace = (dt, tt, now = new Date()) => {
+// `utc` counts UTC calendar days — the pre-rendered page and the render that
+// hydrates it both use it, so they agree whatever the viewer's zone
+export const daysUntilRace = (dt, tt, now = new Date(), utc = false) => {
   const start = new Date(`${dt}T${tt || "12:00:00Z"}`);
-  const day = d => Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 86400000;
+  const day = d => (utc ? Math.floor(d.getTime() / 86400000) : Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 86400000);
   return Math.round(day(start) - day(now));
 };
-export const countdownLabel = (dt, tt, now = new Date()) => {
+export const countdownLabel = (dt, tt, now = new Date(), utc = false) => {
   if (tt && now.getTime() >= new Date(`${dt}T${tt}`).getTime()) return "under way";
-  const d = daysUntilRace(dt, tt, now);
+  const d = daysUntilRace(dt, tt, now, utc);
   return d <= 0 ? "today" : d === 1 ? "tomorrow" : `in ${d} days`;
 };
 // OpenF1 meeting for a Jolpica Grand Prix ({r, dt}). The OpenF1 script stamps

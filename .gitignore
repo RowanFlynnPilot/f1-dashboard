@@ -10,3 +10,4 @@ __pycache__/
 .impeccable/review/
 .impeccable/config.local.json
 *.tmp
+.ssr/

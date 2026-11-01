@@ -159,7 +159,12 @@ function pickLapCompareDrivers(cur, acrAPref, acrBPref) {
 // Format a race date (and optional UTC start time) in the viewer's locale.
 // Without a time, anchor at 12:00 UTC so the calendar date doesn't shift in
 // western-hemisphere timezones.
-const raceDateFmt = (dt, tt) => new Date(`${dt}T${tt || "12:00:00Z"}`).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+// `fixed` formats in en-US/UTC: the pre-rendered page and the render that hydrates
+// it must print identical text, so both use it until hydration completes
+const FIXED_FMT={locale:"en-US",timeZone:"UTC"};
+// "2026-10-31 22:39": the same width in every zone and locale (UTC when `utc`)
+const isoMinute=(iso,utc)=>{const d=new Date(iso),p=n=>String(n).padStart(2,"0");return utc?d.toISOString().slice(0,16).replace("T"," "):`${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;};
+const raceDateFmt = (dt, tt, fixed) => new Date(`${dt}T${tt || "12:00:00Z"}`).toLocaleDateString(fixed?.locale, { weekday: "short", month: "short", day: "numeric", timeZone: fixed?.timeZone });
 const raceTimeFmt = (dt, tt) => tt ? new Date(`${dt}T${tt}`).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" }) : null;
 
 // One bad data field shouldn't white-screen the whole dashboard — catch render
@@ -230,7 +235,7 @@ function DH({name,size=32,headshots}){const[tryLevel,setTryLevel]=useState(0);
     return (<div style={{width:size,height:size,borderRadius:"50%",background:`${alpha(tc,0x22)}`,border:`2px solid ${alpha(tc,0x66)}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:size*0.32,fontWeight:800,color:tc,flexShrink:0,letterSpacing:0.5}}>{acr}</div>);
   }
   return (<img src={u} alt={name} width={size} height={size} loading="lazy" decoding="async" onError={()=>setTryLevel(prev=>prev+1)} style={{width:size,height:size,borderRadius:"50%",objectFit:"cover",objectPosition:"top center",flexShrink:0,background:"var(--w05)"}}/>);}
-function TL({team,size=20}){const[e,sE]=useState(false);const u=TEAM_LOGOS[team];if(!u||e)return null;const isData=u.startsWith("data:");return (<img src={u} alt={team} {...(isData?{}:{referrerPolicy:"no-referrer",crossOrigin:"anonymous"})} width={size} height={size} onError={()=>sE(true)} style={{width:size,height:size,objectFit:"contain",flexShrink:0,...(team==="Cadillac"?{filter:"invert(1) brightness(1.15)"}:{})}}/>);}
+function TL({team,size=20}){const[e,sE]=useState(false);const u=TEAM_LOGOS[team];if(!u||e)return null;const isData=u.startsWith("data:");return (<img src={u} alt={team} {...(isData?{}:{referrerPolicy:"no-referrer",crossOrigin:"anonymous"})} width={size} height={size} loading="lazy" decoding="async" onError={()=>sE(true)} style={{width:size,height:size,objectFit:"contain",flexShrink:0,...(team==="Cadillac"?{filter:"invert(1) brightness(1.15)"}:{})}}/>);}
 
 // Inline SVG circuit outline. Sourced from bacinger/f1-circuits via fetch-tracks.mjs.
 // Caller controls the container size — SVG scales to fit while preserving aspect.
@@ -590,18 +595,42 @@ const SectorEnrichment=memo(function SectorEnrichment({sess,isExact,sessLabel,ta
   );
 });
 
-export default function F1Dashboard(){
+// Default selections once data.json is in: the Race Results dropdown opens on the
+// latest round ("All" was a 17-card, 10,000 px page with the newest race at the
+// bottom) unless the deep link names one; Pit Stops takes a linked round.
+function initialSelections(t,want){
+  const lastGP=t?.races?.filter(r=>!r.sprint).slice(-1)[0];
+  const wantTab=SLUG_TABS[want.get("tab")],wantR=want.get("r");
+  const linked=wantTab==="Race Results"&&wantR?t?.races?.find(x=>String(x.r)===wantR):null;
+  return{selRace:linked?linked.r:lastGP?lastGP.r:"all",selPitRace:wantTab==="Pit Stops"&&wantR?wantR:null};
+}
+
+// `initialRaw` is data.json already in hand: the build-time pre-render
+// (scripts/prerender.mjs) and the client taking over that pre-rendered page
+// both pass it, so the first render is the finished Overview, not the loading
+// screen — the two renders match and the swap moves nothing.
+export default function F1Dashboard({initialRaw=null,renderAt=null}){
   const[tab,setTab]=useState(()=>tabFromHash());
   // The deep link the page opened with — applied as the data it names arrives
   const initialHash=useRef(null);
   if(initialHash.current===null)initialHash.current=hashParams();
+  const initial=useRef(undefined);
+  if(initial.current===undefined){const t=initialRaw?transformData(initialRaw):null;initial.current={t,sel:t?initialSelections(t,initialHash.current):null};}
   const[expandedRace,setExpandedRace]=useState(null);
-  const[data,setData]=useState(null);
+  const[data,setData]=useState(initial.current.t);
   // The tab title follows the season in data.json (index.html's is the fallback)
   useEffect(()=>{if(data?.season)document.title=`F1 ${data.season} Dashboard`;},[data]);
   // Minute clock: race statuses, countdowns and the freshness stamp follow real
   // time while the page stays open, and catch up when a hidden tab returns
-  const[clock,setClock]=useState(()=>Date.now());
+  // `renderAt`: the build's clock, for the pre-render and the render that hydrates
+  // it. Live time and the viewer's own zone take over right after hydration.
+  const[clock,setClock]=useState(()=>renderAt??Date.now());
+  const[hydrated,setHydrated]=useState(!renderAt);
+  useEffect(()=>{if(!hydrated){setHydrated(true);setClock(Date.now());}},[hydrated]);
+  const fixedFmt=hydrated?null:FIXED_FMT;
+  const dateFmt=(dt,tt)=>raceDateFmt(dt,tt,fixedFmt);
+  const countdown=(dt,tt)=>countdownLabel(dt,tt,new Date(clock),!hydrated);
+  const stampFmt=(iso,opts)=>new Date(iso).toLocaleString(fixedFmt?.locale,{...opts,timeZone:fixedFmt?.timeZone});
   useEffect(()=>{
     const tick=()=>setClock(Date.now());
     const id=setInterval(tick,60000);
@@ -609,7 +638,7 @@ export default function F1Dashboard(){
     document.addEventListener("visibilitychange",onVis);
     return()=>{clearInterval(id);document.removeEventListener("visibilitychange",onVis);};
   },[]);
-  const[loading,setLoading]=useState(true);
+  const[loading,setLoading]=useState(!initial.current.t);
   const[error,setError]=useState(null);
   // OpenF1 data is split: a light index (meeting/session metadata + headshots,
   // ~11 KB) loads on page load; full per-meeting payloads (~200 KB each) load
@@ -623,9 +652,9 @@ export default function F1Dashboard(){
   const retryMeeting=useCallback(key=>{meetingFetchTried.current.delete(key);setMeetingFailed(prev=>{const n={...prev};delete n[key];return n;});},[]);
   const[selMeeting,setSelMeeting]=useState(null);
   const[selSession,setSelSession]=useState(null);
-  const[selRace,setSelRace]=useState("all");
+  const[selRace,setSelRace]=useState(initial.current.sel?.selRace??"all");
   const[h2hMetric,setH2hMetric]=useState("qual");
-  const[selPitRace,setSelPitRace]=useState(null); // round id; null = latest
+  const[selPitRace,setSelPitRace]=useState(initial.current.sel?.selPitRace??null); // round id; null = latest
   const[quotes,setQuotes]=useState(null);
   const[seasonStats,setSeasonStats]=useState(null); // public/season-stats.json (scripts/build-season-stats.mjs)
   const[quotesSession,setQuotesSession]=useState("race");
@@ -655,7 +684,8 @@ export default function F1Dashboard(){
   },[loading]); // the bar only exists once the loading screen is gone
   // The fade-up entrance runs only the first time each tab is opened — replaying
   // it on every switch made navigation feel laggy on slower phones.
-  const visitedTabs=useRef(new Set());
+  const visitedTabs=useRef(null);
+  if(visitedTabs.current===null)visitedTabs.current=new Set(initialRaw?[tab]:[]); // a pre-rendered sheet is already on screen: no entrance
   const tabSeen=visitedTabs.current.has(tab);
   useEffect(()=>{const id=setTimeout(()=>visitedTabs.current.add(tab),1200);return()=>clearTimeout(id);},[tab]);
 
@@ -691,19 +721,14 @@ export default function F1Dashboard(){
     // data.json alone gates first paint — the dashboard used to stay on the
     // loading screen until the multi-MB telemetry payload finished downloading.
     // Everything else streams in and populates state when it lands.
-    fetch(import.meta.env.BASE_URL + "data.json")
+    if(!initialRaw)fetch(import.meta.env.BASE_URL + "data.json")
       .then(r=>{if(!r.ok)throw new Error(`HTTP ${r.status}`);return r.json()})
       .then(raw=>{
         const t=transformData(raw);
         setData(t);
-        // Default the Race Results dropdown to the latest round — "All" was a
-        // 17-card, 10,000 px page with the newest race at the bottom
-        const lastGP=t?.races?.filter(r=>!r.sprint).slice(-1)[0];
-        const want=initialHash.current,wantTab=SLUG_TABS[want.get("tab")],wantR=want.get("r");
-        const linked=wantTab==="Race Results"&&wantR?t?.races?.find(x=>String(x.r)===wantR):null;
-        if(linked)setSelRace(linked.r);
-        else if(lastGP)setSelRace(lastGP.r);
-        if(wantTab==="Pit Stops"&&wantR)setSelPitRace(wantR);
+        const sel=initialSelections(t,initialHash.current);
+        setSelRace(sel.selRace);
+        if(sel.selPitRace)setSelPitRace(sel.selPitRace);
         setLoading(false);
       })
       .catch(e=>{console.error("Failed to load data:",e);setError(e.message);setLoading(false);});
@@ -711,7 +736,7 @@ export default function F1Dashboard(){
     fetch(import.meta.env.BASE_URL + "season-stats.json").then(r=>r.ok?r.json():null).catch(()=>null).then(st=>{if(st&&st.drivers)setSeasonStats(st);});
     fetch(import.meta.env.BASE_URL + "driver-quotes.json").then(r=>r.ok?r.json():null).catch(()=>null).then(dq=>{if(dq&&dq.rounds)setQuotes(dq);});
     fetch(import.meta.env.BASE_URL + "tracks.json").then(r=>r.ok?r.json():null).catch(()=>null).then(tk=>{if(tk)setTracks(tk);});
-  },[loadOpenf1Index]);
+  },[loadOpenf1Index,initialRaw]);
 
   // Composed view: index metadata with full meeting payloads spliced in as they
   // load. Same shape as the old single openf1 object, so consumers are unchanged;
@@ -859,15 +884,15 @@ export default function F1Dashboard(){
             </div>
           </div>
           {(()=>{
-            const ageDays=Math.floor((Date.now()-new Date(fetchedAt).getTime())/86400000);
+            const ageDays=Math.floor((clock-new Date(fetchedAt).getTime())/86400000);
             const cls=ageDays<4?"":ageDays<10?"amber":"red";
             const label=ageDays<=0?"data fetched today":ageDays===1?"data fetched yesterday":`data fetched ${ageDays} days ago`;
             return(
-          <div className="stamp fu" style={{animationDelay:"0.1s"}} title={new Date(fetchedAt).toLocaleString()}>
+          <div className="stamp fu" style={{animationDelay:"0.1s"}} title={stampFmt(fetchedAt)}>
             <div><b>ROUND {completedRounds} / {totalRounds}</b> completed</div>
             {!nextRace&&seasonDone&&DS[0]&&<div>season complete · <b>{DS[0].n.split(" ").pop().toUpperCase()}</b> champion</div>}
             {!seasonDone&&clinch&&DS[0]&&<div><b>{DS[0].n.split(" ").pop().toUpperCase()}</b> · {season} champion · clinched R{clinch.round}</div>}
-            {nextRace&&<div>next · <b>{nextRace.nm.replace(" Grand Prix"," GP").toUpperCase()}</b> · {raceDateFmt(nextRace.dt,nextRace.tt)} · {countdownLabel(nextRace.dt,nextRace.tt)}</div>}
+            {nextRace&&<div>next · <b>{nextRace.nm.replace(" Grand Prix"," GP").toUpperCase()}</b> · {dateFmt(nextRace.dt,nextRace.tt)} · {countdown(nextRace.dt,nextRace.tt)}</div>}
             {(()=>{const pending=sched.filter(r=>r.st==="done"&&!races.some(x=>!x.sprint&&x.r===r.r));return pending.length?<div style={{color:"#F2B8B8"}}>R{pending[0].r} {pending[0].nm.replace(" Grand Prix"," GP")} · results pending next fetch</div>:null;})()}
             <div className="fresh"><i className={cls}/>{label} · Jolpica · OpenF1</div>
           </div>);})()}
@@ -897,7 +922,11 @@ export default function F1Dashboard(){
         <div className={(tabSeen?"no-anim ":"")+"sheet"}>
         <div className="sheet-band">
           <span><b>{tab.toUpperCase()}</b> · sheet {String(TABS.findIndex(t=>t.id===tab)+1).padStart(2,"0")} of {String(TABS.length).padStart(2,"0")}</span>
-          <span>sources · Jolpica F1 · OpenF1{quotes?" · F1 YouTube via Claude":""} · fetched {new Date(fetchedAt).toLocaleString(undefined,{dateStyle:"medium",timeStyle:"short"})}</span>
+          {/* Fixed-width timestamp and a source list that doesn't wait on a fetch:
+              the band wraps on phones, so text that grew after first paint (the
+              local time replacing the pre-render's UTC, quotes arriving) pushed the
+              sheet down */}
+          <span>sources · Jolpica F1 · OpenF1{tab==="Overview"||tab==="Quotes"?" · F1 YouTube via Claude":""} · fetched <span title={stampFmt(fetchedAt,{dateStyle:"full",timeStyle:"long"})}>{isoMinute(fetchedAt,!hydrated)}</span></span>
         </div>
 
         {/* ═══ OVERVIEW ═══ */}
@@ -910,7 +939,7 @@ export default function F1Dashboard(){
               <div className="hero-grid">
                 <div>
                   <h2 className="sheet-h" style={{fontSize:30}}>{season} season</h2>
-                  <p className="sheet-sub">{nextRace?`Opens at the ${nextRace.nm} · ${raceDateFmt(nextRace.dt,nextRace.tt)} · ${countdownLabel(nextRace.dt,nextRace.tt)}`:"The calendar hasn't been published yet"}</p>
+                  <p className="sheet-sub">{nextRace?`Opens at the ${nextRace.nm} · ${dateFmt(nextRace.dt,nextRace.tt)} · ${countdown(nextRace.dt,nextRace.tt)}`:"The calendar hasn't been published yet"}</p>
                   {nextRace&&tracks&&tracks[nextRace.nm]&&(
                     <div style={{display:"flex",justifyContent:"center",padding:"18px 0",borderTop:"1px solid var(--rule)",marginTop:14}}>
                       <TrackMap raceName={nextRace.nm} tracks={tracks} stroke="var(--ink)" strokeWidth={2.2} height={220} width={320}/>
@@ -934,7 +963,7 @@ export default function F1Dashboard(){
               <div className="hero-grid">
                 <div>
                   <h2 className="sheet-h" style={{fontSize:30}}>Lap chart · {lastRaceFull?lastRaceFull.nm:"—"}</h2>
-                  <p className="sheet-sub">{lastRaceFull?`Round ${lastRaceFull.r} · ${lastRaceFull.ci} · ${raceDateFmt(lastRaceFull.dt,lastRaceFull.tt)}`:""}{total?` · ${total} laps`:""}{winnerName?` · won by ${winnerName}`:""}{lastRaceFull?.tm?` in ${lastRaceFull.tm}`:""}</p>
+                  <p className="sheet-sub">{lastRaceFull?`Round ${lastRaceFull.r} · ${lastRaceFull.ci} · ${dateFmt(lastRaceFull.dt,lastRaceFull.tt)}`:""}{(total||lastRaceFull?.full?.[0]?.laps)?` · ${total||lastRaceFull.full[0].laps} laps`:""}{winnerName?` · won by ${winnerName}`:""}{lastRaceFull?.tm?` in ${lastRaceFull.tm}`:""}</p>
                   {/* The slot holds the lap sheet's height while its meeting file loads — the
                       one-line note used to jump to ~600 px and push the page down (CLS 0.3) */}
                   <div className="lapsheet-slot">
@@ -1036,7 +1065,7 @@ export default function F1Dashboard(){
             {nextRace&&(
             <div>
               <h2 className="sheet-h" style={{fontSize:30}}>Next race · {nextRace.nm}</h2>
-              <p className="sheet-sub">Round {nextRace.r} · {countdownLabel(nextRace.dt,nextRace.tt)} · {nextRace.ci} · {raceDateFmt(nextRace.dt,nextRace.tt)}{nextRace.tt?` · lights out ${new Date(`${nextRace.dt}T${nextRace.tt}`).toLocaleTimeString(undefined,{hour:"numeric",minute:"2-digit",timeZoneName:"short"})} your time`:""}{nextRace.sp?" · sprint weekend":""}</p>
+              <p className="sheet-sub">Round {nextRace.r} · {countdown(nextRace.dt,nextRace.tt)} · {nextRace.ci} · {dateFmt(nextRace.dt,nextRace.tt)}{nextRace.tt?` · lights out ${new Date(`${nextRace.dt}T${nextRace.tt}`).toLocaleTimeString(undefined,{hour:"numeric",minute:"2-digit",timeZoneName:"short"})} your time`:""}{nextRace.sp?" · sprint weekend":""}</p>
               <div style={{borderTop:"1px solid var(--rule)",marginTop:12,paddingTop:16}}>
                 {tracks&&tracks[nextRace.nm]&&(
                   <div style={{display:"flex",justifyContent:"center",padding:"6px 0 8px"}}>
@@ -1319,7 +1348,7 @@ export default function F1Dashboard(){
                       {race.sprint&&<span style={{fontSize:9,fontWeight:700,letterSpacing:.5,padding:"2px 6px",borderRadius:2,background:"rgba(214,40,40,0.15)",color:"var(--red-ink)"}}>SPRINT</span>}
                       <span style={{fontSize:20,fontWeight:700}}>{race.nm}</span>
                     </div>
-                    <div style={{fontSize:12,color:"var(--w40)"}}>{race.ci} · {raceDateFmt(race.dt,race.tt)}, {season}</div>
+                    <div style={{fontSize:12,color:"var(--w40)"}}>{race.ci} · {dateFmt(race.dt,race.tt)}, {season}</div>
                   </div>
                   {race.tm&&<div style={{textAlign:"right"}}>
                     <div style={{fontSize:12,color:"var(--w40)"}}>Race Time</div>
@@ -2075,7 +2104,7 @@ export default function F1Dashboard(){
               <SC label="Total Races" value={String(totalRounds)} sub="Bahrain moved to Sepang · Saudi Arabia postponed" accent="var(--fg)"/>
               <SC label="Races Completed" value={String(completedRounds)} sub={sched.filter(r=>r.st==="done").map(r=>r.nm.replace(" Grand Prix","")).join(" · ")||"None yet"} accent="var(--green)"/>
               <SC label="Sprint Weekends" value={String(sched.filter(r=>r.sp).length)} sub={sched.filter(r=>r.sp).map(r=>r.fc).join(" · ")} accent="var(--red)"/>
-              <SC label="Season Finale" value={sched.length>0?sched[sched.length-1].nm.replace(" Grand Prix",""):"TBD"} sub={sched.length>0?raceDateFmt(sched[sched.length-1].dt,sched[sched.length-1].tt):""} accent="var(--gold)"/>
+              <SC label="Season Finale" value={sched.length>0?sched[sched.length-1].nm.replace(" Grand Prix",""):"TBD"} sub={sched.length>0?dateFmt(sched[sched.length-1].dt,sched[sched.length-1].tt):""} accent="var(--gold)"/>
             </div>
             <div style={{background:"var(--w02)",border:"1px solid var(--w06)",borderRadius:2,padding:20}}>
               <div style={{fontSize:15,fontWeight:700,marginBottom:4}}>{season} Race Calendar</div>
@@ -2094,12 +2123,12 @@ export default function F1Dashboard(){
                     <div style={{display:"flex",alignItems:"center",gap:8}}>
                       <span style={{fontSize:14,fontWeight:600,color:race.st==="postponed"?"var(--w40)":"var(--fg)"}}>{race.nm}</span>
                       {race.sp&&<span style={{fontSize:9,fontWeight:700,letterSpacing:.5,padding:"2px 6px",borderRadius:2,background:"rgba(214,40,40,0.15)",color:"var(--red-ink)"}}>SPRINT</span>}
-                      {race.st==="next"&&<span style={{fontSize:10,fontWeight:600,padding:"2px 8px",borderRadius:2,background:"rgba(214,40,40,0.1)",color:"var(--w70)"}}>{countdownLabel(race.dt,race.tt)}</span>}
+                      {race.st==="next"&&<span style={{fontSize:10,fontWeight:600,padding:"2px 8px",borderRadius:2,background:"rgba(214,40,40,0.1)",color:"var(--w70)"}}>{countdown(race.dt,race.tt)}</span>}
                     </div>
                     <div style={{fontSize:11,color:"var(--w35)",marginTop:2}}>{race.ci}</div>
                   </div>
                   <div style={{fontSize:12,color:"var(--w50)",marginRight:16,fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)",flexShrink:0,textAlign:"right",width:105}}>
-                    <div>{raceDateFmt(race.dt,race.tt)}</div>
+                    <div>{dateFmt(race.dt,race.tt)}</div>
                     {race.tt&&<div style={{fontSize:10,color:"var(--w30)",marginTop:1}}>{raceTimeFmt(race.dt,race.tt)}</div>}
                   </div>
                   <div style={{width:95,flexShrink:0,display:"flex",justifyContent:"flex-end"}}><SB status={race.st}/></div>

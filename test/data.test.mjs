@@ -268,3 +268,9 @@ test("titleClinch finds the round where the lead first beat the points left", ()
   assert.deepEqual(titleClinch({ DS, sched, races }), { round: 3, name: "R3 GP", lead: 65, left: 25 });
   assert.equal(titleClinch({ DS, sched, races: races.slice(0, 3) }), null);
 });
+
+test("countdownLabel can count UTC days, for the pre-rendered page", () => {
+  // 23:30 UTC on the 31st, race on the 1st at 20:00 UTC: tomorrow in UTC
+  assert.equal(countdownLabel("2026-11-01", "20:00:00Z", new Date("2026-10-31T23:30:00Z"), true), "tomorrow");
+  assert.equal(countdownLabel("2026-11-01", "20:00:00Z", new Date("2026-11-01T00:30:00Z"), true), "today");
+});
