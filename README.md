@@ -38,6 +38,12 @@ Every derived number has a "How this is computed" note under its chart, and the 
 
 All the data is downloadable from the page footer; [docs/DATA.md](docs/DATA.md) describes every file and field.
 
+![The Title Fight: points left, the clinch condition, simulated title odds and a what-if grid](docs/title-fight.png)
+
+Every driver has a shareable ratings card, drawn in the browser from the same numbers, with a link back to their page:
+
+![A Driver Ratings card: Max Verstappen's season percentiles in nine metrics](docs/ratings-card.png)
+
 ## How it works
 
 ```mermaid
@@ -64,6 +70,7 @@ A GitHub Actions workflow runs on every push and on three crons timed around rac
 - **Validated before it ships.** `validate-data.mjs` fails the deploy on malformed data (a truncated classification, a season under way with no standings) or on data that shrank since the last deploy, so a bad fetch leaves the previous site live. A new season legitimately starts empty and is recognised as such, and a manual `allow_shrink` covers a round leaving the calendar.
 - **Fails soft, and says so.** Each source can fail without blocking the others. The run then turns red, and a job summary lists what each source shipped and whether quotes lag the results.
 - **Correct under real-world edge cases.** Teams follow each round's classification (2026: Lawson moved to Red Bull at round 12, so head-to-heads and team breakdowns split at that round). Retirements come from Jolpica's position text, not its numeric position. The points delta follows the round the standings cover, which matters on a sprint Saturday.
+- **Pre-rendered, then hydrated.** The build renders the Overview to HTML with the day's data, so the first sheet paints with the page instead of after the script; React then adopts that HTML rather than redrawing it. Both renders use the build's clock and UTC so they match exactly. Lighthouse mobile: performance in the 90s, accessibility 100, layout shift ~0.
 - **Precomputed where a browser would struggle.** Lap Compare's default view ships inside the meeting file, so the Telemetry tab opens without live API calls; OpenF1's free tier allows about three requests a second.
 - **LLM extraction with guardrails.** Quotes are extracted from auto-captions with a JSON schema, a per-round roster so a mid-season seat change doesn't relabel older quotes, explicit handling of truncated or refused responses, and manual overrides for misattributions.
 
@@ -90,7 +97,8 @@ python scripts/fetch-driver-quotes.py                       # extract quotes
 
 - `npm run lint` runs ESLint with React's hooks rules as errors.
 - `npm test` runs node:test over the fetch helpers, the validator and the dashboard's data transforms.
-- CI runs both before any data is fetched, then the validator before the build.
+- `npm run e2e` runs a Playwright smoke test of the built site at phone and desktop sizes: every sheet opens without errors, and the pre-rendered Overview hydrates without a mismatch or layout shift.
+- CI runs lint and tests before any data is fetched, the validator before the build, and the smoke test before the deploy.
 
 ## Project layout
 
@@ -98,11 +106,13 @@ python scripts/fetch-driver-quotes.py                       # extract quotes
 .github/workflows/deploy.yml   fetch → validate → build → deploy → commit data back
 scripts/                       fetch scripts, validator, commit and summary helpers
 src/App.jsx                    the dashboard: every sheet and component
+src/prerender.jsx              server entry for the build-time pre-render of the Overview
 src/data.js                    pure data logic (transforms, joins, race pace, passes, title odds, percentiles)
 src/styles.css                 design tokens and sheet styles
 public/                        fetched data (data.json, openf1/, driver-quotes.json, season-stats.json, tracks.json)
 docs/DATA.md                   data dictionary: every file and field
 test/                          node:test suites
+e2e/                           Playwright smoke test of the built site
 ```
 
 ## Credits

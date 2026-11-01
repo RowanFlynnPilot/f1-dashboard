@@ -296,7 +296,7 @@ Derived numbers (title odds, race pace, percentiles, mini-sectors) sit in the sa
 
 ### Do:
 - **Do** put every number in Courier Prime with `tabular-nums`, including large points totals and lap counters.
-- **Do** run any data-sourced colour through `inkify()` before rendering it on paper; use it as stroke, text, bar or dot.
+- **Do** run any data-sourced colour through `inkify()` before rendering it on paper; use it as stroke, text, bar or dot. Small team-coloured text takes the 4.5:1 ink (`TCT`, or `inkify(c, TEXT_CONTRAST)`), not the 3.1:1 line ink (`TC`).
 - **Do** separate sections with a single 1px `rule` line and size hierarchy, not with boxes.
 - **Do** open every sheet with a `sheet-band` naming its sources and fetch time.
 - **Do** keep radii at 2px on sheets, panels, buttons and selects; circles only for the stopwatch button, headshots and the freshness dot.
@@ -315,16 +315,20 @@ Derived numbers (title odds, race pace, percentiles, mini-sectors) sit in the sa
 
 ## Rasters
 
-Shipping images and where they come from. All are headless-Chrome captures of the dashboard itself (reduced motion, 1× scale), taken 2026-09-24 from the local build with that day's data; nothing is drawn or generated.
+Shipping images and where they come from. All are headless-Chrome captures of the dashboard itself (reduced motion, 1× scale), taken 2026-10-31 from the local production build (`npm run build` + `vite preview`) with that day's data; nothing is drawn or generated.
 
 | File | Size | Capture |
 |---|---|---|
 | `public/og.png` | 1200×630 | Overview first viewport — the social card (`og:image`, `twitter:image`) |
 | `docs/overview.png` | 1440×1000 | Overview first viewport — README hero |
-| `docs/telemetry.png` | 1440×1005 | `#tab=telemetry&r=14&lap=30`, cropped above the Lap Compare panel — README |
+| `docs/telemetry.png` | 1440×1189 | `#tab=telemetry&r=14&lap=30`, cropped at the end of the Replay section — README |
+| `docs/title-fight.png` | 1440×660 | `#tab=standings`, cropped below the Title Fight panel — README |
+| `docs/ratings-card.png` | 1200×630 | The Driver Ratings "Download card" PNG for `max_verstappen` (canvas-drawn by the page) — README |
 
 Re-capture after a visual change with:
 
 ```bash
 chrome --headless=new --hide-scrollbars --force-prefers-reduced-motion --force-device-scale-factor=1 --window-size=1200,630 --virtual-time-budget=10000 --screenshot=og.png http://localhost:5177/f1-dashboard/
 ```
+
+The cropped captures and the ratings card were taken with Playwright (`chromium.launch({ channel: "chrome" })`, `reducedMotion: "reduce"`, `deviceScaleFactor: 1`): crop with `page.screenshot({ clip })` to an element's bounding box, and save the card from the page's own Download card button (`page.waitForEvent("download")`). The card prints the page's canonical URL, so captures from a local build still show the live address.

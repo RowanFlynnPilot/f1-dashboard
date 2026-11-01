@@ -19,15 +19,18 @@ f1-dashboard/
 │   ├── fetch-driver-quotes.py      ← YouTube + Claude API → public/driver-quotes.json
 │   ├── fetch-tracks.mjs            ← Circuit GeoJSON → public/tracks.json (manual, not in CI)
 │   ├── build-season-stats.mjs      ← data.json + meeting files → public/season-stats.json (percentiles; CI, no network)
+│   ├── prerender.mjs               ← build: injects the rendered Overview into dist/index.html (shell kept in a <template> for deep links)
 │   ├── validate-data.mjs           ← CI gate: fails the deploy if fetched data is malformed or shrank vs HEAD
 │   ├── commit-data.sh              ← CI: commits this run's data on top of the latest main (never skips)
 │   ├── merge-video-ids.mjs         ← CI: merges discovered video IDs into main's (main wins)
 │   ├── run-summary.mjs             ← CI: job summary + "quotes lag" warning annotation
 │   └── weekly-transcripts.ps1      ← local scheduled task: fetch transcripts, commit, push (see Quote workflow)
+├── e2e/smoke.spec.mjs              ← Playwright smoke test of the built site (installed Chrome; playwright.config.mjs) — CI gate before deploy
 ├── test/                           ← node:test (`npm test`): scripts.test.mjs (fetch helpers, validator), data.test.mjs (src/data.js)
 ├── src/
 │   ├── main.jsx                    ← React entry point + root error boundary
-│   ├── App.jsx                     ← ~4,300 lines, ALL tabs and components in one file
+│   ├── App.jsx                     ← ~4,800 lines, ALL tabs and components in one file
+│   ├── prerender.jsx               ← SSR entry: renderToString(<App initialRaw renderAt/>) for the build-time pre-render
 │   ├── data.js                     ← pure data logic: transformData, head-to-head, statuses, joins + the analytics layer (green-flag laps, race pace, passes, lap-1 gains, mini-sectors, title outlook, season percentiles)
 │   └── styles.css                  ← design tokens + sheet styles
 ├── public/
@@ -48,9 +51,10 @@ f1-dashboard/
 ```
 
 ### Key architectural decisions
-- **Single-file React app** — All tabs and components live in `App.jsx` (styles in `styles.css`). This is intentional for simplicity. Don't split into separate component files. The one split is `src/data.js`: pure data logic with no JSX, so node:test can load it directly — keep React out of it.
+- **Single-file React app** — All tabs and components live in `App.jsx` (styles in `styles.css`). This is intentional for simplicity. Don't split into separate component files. The one split is `src/data.js`: pure data logic with no JSX, so node:test can load it directly — keep React out of it. (`src/prerender.jsx` is a three-line SSR entry, not a component file.)
+- **Pre-rendered Overview** — `npm run build` = `vite build` + `vite build --ssr src/prerender.jsx --outDir .ssr` + `node scripts/prerender.mjs`, which writes the Overview, rendered from `public/data.json`, into `dist/index.html` (`#root[data-prerendered][data-render-at]`). `main.jsx` fetches data.json, then **hydrates** (`hydrateRoot`) — replacing the DOM made the heading a new, later LCP. The server render and the hydrating render must print identical HTML: both use the build's clock and en-US/UTC (`renderAt` → `hydrated` state, `dateFmt`/`countdown`/`stampFmt`/`isoMinute` in App); live time and local zone apply right after. Anything new on the Overview that depends on time, locale, or a client-only fetch must follow that rule, or React logs "Pre-rendered page re-rendered" and the e2e test fails. Text that changes after first paint and rewraps causes layout shift — keep it stable (see the band's fixed-width timestamp). Deep links to other sheets: an inline guard swaps the loading shell (`<template id="loading-shell">`) back in before paint. A failed pre-render never fails the build.
 - **Static data files** — Data is fetched at build time by scripts, saved as JSON in `public/`, and loaded client-side via `fetch()`. Only `data.json` gates first paint; the OpenF1 payload is split into a light `openf1/index.json` plus per-meeting files that lazy-load when Sector Times / Telemetry / Race Results need them (all output minified — pretty-printing tripled the old single-file payload). One runtime exception: the Telemetry tab's Lap Compare live-fetches OpenF1 `/car_data` + `/location` for laps other than its default (gated on the tab being open, requests spaced 400 ms apart with 429 backoff, cached in sessionStorage). The default pair and lap ship precomputed in the meeting file (`lapCompareDefault`), so opening the tab makes no live calls.
-- **Deep links** — the URL hash carries the tab and its selection (`#tab=results&r=14`, `#tab=telemetry&r=14&lap=30`, `#tab=sectors&r=14&s=qualifying`). Tab changes push history entries (Back/Forward work); selections replace. `TAB_SLUGS` / `SESSION_SLUGS` in App.jsx define the names; a bare `#lap=N` still opens the Overview.
+- **Deep links** — the URL hash carries the tab and its selection (`#tab=results&r=14`, `#tab=telemetry&r=14&lap=30`, `#tab=sectors&r=14&s=qualifying`). Tab changes push history entries (Back/Forward work); selections replace. `TAB_SLUGS` / `SESSION_SLUGS` in App.jsx define the names; a bare `#lap=N` still opens the Overview. Driver Ratings: `#tab=h2h&d=<Jolpica driverId>` (e.g. `max_verstappen`).
 - **GitHub Actions deployment** — Uses `npm ci` (requires `package-lock.json`). Source set to "GitHub Actions" in Pages settings, not branch-based.
 - **Vite base path** — `vite.config.js` has `base: '/f1-dashboard/'` for GitHub Pages subdirectory hosting.
 
@@ -155,7 +159,7 @@ The visual world (chosen Sept 2026 via the Impeccable skill; recorded in `DESIGN
 - Fonts (loaded in `index.html`): `--font-head` Barlow Condensed (headings, labels, tabs), `--font-ui` Barlow (body), `--font-data` Courier Prime (every numeral and data cell; `fontVariantNumeric:"tabular-nums"` sites also set it).
 
 ### Team colours (`TC`)
-`TC_RAW` holds the broadcast liveries; `TC` is `inkify()`'d — lightness is clamped so pale liveries (Mercedes teal, Williams blue, Haas silver) read at text sizes on the sheet while keeping their hue. OpenF1 `teamColour` values are passed through `inkify()` at every use. Team colour is ink, never a fill behind text.
+`TC_RAW` holds the broadcast liveries; `TC` is `inkify()`'d — lightness is clamped so pale liveries (Mercedes teal, Williams blue, Haas silver) read at text sizes on the sheet while keeping their hue. OpenF1 `teamColour` values are passed through `inkify()` at every use. Team colour is ink, never a fill behind text. `TC` targets 3.1:1 (lines, bars, large labels); **`TCT`** (`inkify(v, TEXT_CONTRAST=4.6)`) is for small team-coloured text — Lighthouse accessibility is 100, keep it there.
 ```javascript
 Mercedes "#27F4D2" → ink ~#178f7b   Ferrari "#E80020"   McLaren "#FF8000"   Red Bull "#3671C6"
 Racing Bulls "#6692FF"   Alpine "#FF87BC"   Aston Martin "#229971"   Haas "#B6BABD"
@@ -214,7 +218,8 @@ Position movement (`mv` field) subtracts those points from current totals, re-so
 ```bash
 # Local development
 npm run dev                     # Start Vite dev server (hot reload)
-npm run build                   # Production build → dist/
+npm run build                   # Production build → dist/ (+ SSR build and Overview pre-render)
+npm run e2e                     # Playwright smoke test of dist/ (run after build) — CI gate
 npm run lint                    # ESLint (react-hooks rules are errors) — CI gate
 npm test                        # node:test: fetch helpers, validator, src/data.js — CI gate
 
@@ -240,7 +245,7 @@ Steps:
 1. Checkout **latest `main`** (not the triggering SHA — a queued run starts from its predecessor's data commit) → Setup Node 22 → `npm ci` → `npm run lint` → `npm test`
 2. Fetch Jolpica, fetch OpenF1, fetch driver quotes — each `continue-on-error` with an `id`. The scripts only write at the end, so a failed source leaves its committed files in place and the others still ship. Then `build-season-stats.mjs` (also soft).
 3. `node scripts/validate-data.mjs` — hard-fails the deploy if data is malformed or shrank vs the committed baseline (a failed build keeps the previous deploy live). Shrink checks are skipped when the season changes; `ALLOW_SHRINK` downgrades them to warnings.
-4. `npm run build` → deploy to GitHub Pages
+4. `npm run build` (with the Overview pre-render) → `npm run e2e` smoke test (fails the deploy; traces uploaded) → deploy to GitHub Pages
 5. **Commit the fetched data back to `main`** via `scripts/commit-data.sh` (run from a copy, since it resets the checkout): snapshot `public/data.json`, `public/openf1/`, `public/driver-quotes.json`, `public/season-stats.json`, reset to the latest `origin/main`, lay them back on top, merge `scripts/video-ids.json` (main wins), commit as `github-actions[bot]`, push with retries. It used to rebase, which silently skipped the commit whenever the quotes step had recorded new video IDs or a queued run followed another. `GITHUB_TOKEN` pushes never trigger workflows, so it can't loop. **Run `git pull` before pushing local work** — main moves after every deploy.
 6. `scripts/run-summary.mjs` writes the job summary (what each source shipped, quote lag) — then the run turns red if any source failed.
 

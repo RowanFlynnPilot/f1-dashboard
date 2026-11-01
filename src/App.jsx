@@ -2407,7 +2407,8 @@ const DriverRatings=memo(function DriverRatings({stats,DS,headshots,season}){
   const row=sorted.find(d=>d.did===sel)||sorted[0];
   const team=DS.find(d=>d.did===row.did)?.t||row.team;
   const col=TC[team]||"var(--ink-3)";
-  const link=`${location.origin}${location.pathname}${tabHref("Head to Head",{d:row.did})}`;
+  // the canonical address, so a card made from a local or preview build still points at the live site
+  const link=`${document.querySelector('link[rel=canonical]')?.href||location.origin+location.pathname}${tabHref("Head to Head",{d:row.did})}`;
   const choose=did=>{setSel(did);patchHash({d:did});};
   const download=async()=>{
     try{await document.fonts?.ready;}catch{/* fonts optional */}
