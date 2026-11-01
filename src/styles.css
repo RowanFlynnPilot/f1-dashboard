@@ -209,6 +209,18 @@ table{font-variant-numeric:tabular-nums}
 th{font-family:var(--font-head);letter-spacing:.08em}
 td{font-family:var(--font-ui)}
 
+/* "How this is computed" — the method note under every analytics sheet */
+.how{margin-top:14px;border-top:1px solid var(--rule-faint);padding-top:8px;font-size:12px;color:var(--ink-3)}
+.how summary{cursor:pointer;list-style:none;display:inline-block;font-family:var(--font-head);text-transform:uppercase;letter-spacing:.08em;font-size:11px;font-weight:600;color:var(--ink-3)}
+.how summary::-webkit-details-marker{display:none}
+.how summary::before{content:"+";display:inline-block;width:1.1em;font-family:var(--font-data)}
+.how[open] summary::before{content:"−"}
+.how summary:hover{color:var(--ink)}
+.how>div{margin-top:8px;max-width:76ch;line-height:1.55}
+.how li{margin:2px 0}
+/* driver ratings: label · percentile bar · percentile · value */
+.rating-row{display:grid;grid-template-columns:150px 1fr 36px 170px;align-items:center;gap:12px}
+
 /* ── responsive ──────────────────────────────────────────────────────── */
 @media(max-width:1024px){
   .hero-grid{grid-template-columns:1fr}
@@ -247,6 +259,9 @@ td{font-family:var(--font-ui)}
 }
 @media(max-width:480px){
   .g4{grid-template-columns:1fr}
+  .rating-row{grid-template-columns:1fr 34px;row-gap:2px}
+  .rating-row>:nth-child(2){grid-column:1/-1;grid-row:2}
+  .rating-row>:nth-child(4){grid-column:1/-1;grid-row:3}
         .recap-podium{grid-template-columns:1fr!important}
   .compare-grid-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
   .compare-grid{min-width:520px}

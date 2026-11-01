@@ -280,6 +280,13 @@ Paper geometry. Sheets and panels have a 2px radius (the sheet's top-left corner
 ### Lap Chart (signature)
 An SVG timing sheet: laps as columns with Courier lap numbers, positions as rows, each car a `round`-joined polyline in its ink-clamped team colour with its car number written in the same ink at both ends; the winner's trace is `record-red` and slightly heavier. Pit stops are open circles, local-yellow laps are pale `yellow` columns, the cursor is a 1.25px red vertical. Focusing a car fades the others to 0.28 opacity (180ms). Lines draw on with `.ink-draw` (stroke-dashoffset, 1.6s) the first time a tab is visited. A `LapReadout` beneath lists the running order at the cursor lap in Courier 11.5px; the `LapScrubber` (stopwatch rail plus play button) drives the cursor shared with the replay.
 
+### Analytics panels
+Derived numbers (title odds, race pace, percentiles, mini-sectors) sit in the same panel as everything else (`--w02` fill, 1px `--w06` border, 20px padding) with a 15px bold title and a 12px `--w35` sub-line that says what is plotted and how to read it. Every one ends with a **How this is computed** disclosure (`details.how`): a `rule-faint` top rule, a condensed 11px uppercase summary with a Courier `+`/`−`, and up to 76ch of plain-language method that names what was filtered out and what the number can't tell you.
+- Team colour stays ink: percentile bars, box outlines, track segments and sparklines. Box plots take at most a 10% team tint; the finishing heatmap shades with an ink ramp (square-root scale) and marks the team with a dash at the row start.
+- Team-mates sharing a colour are told apart by a dashed second line (progression chart, mini-sector map).
+- Tyre compounds keep their own colours (`COMPOUND_COLORS`) as small dots, never as large fills.
+- The shareable ratings card is drawn on a canvas in the same world: sheet paper, a bench header and footer band, Barlow Condensed name, Courier figures, and the deep link printed on it.
+
 ### Motion
 - `.fu` fade-up (10px, 0.5s, `--ease-out` = `cubic-bezier(0.16,1,0.3,1)`) on a sheet and staggered 40–320ms across its children, only the first time a tab is visited (`visitedTabs` ref adds `.no-anim` after 1.2s).
 - State transitions 150–200ms (background, colour, border, opacity); tab transform 180ms.

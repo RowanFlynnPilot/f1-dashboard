@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, useRef, Fragment, Component, memo } from "react";
-import { transformData, countdownLabel, withStatus, meetingRaceDay, meetingForRace, meetingTrackName } from "./data.js";
+import { transformData, countdownLabel, withStatus, meetingRaceDay, meetingForRace, meetingTrackName, greenFlagLaps, racePace, onTrackPasses, lapOneGains, miniSectors, titleOutlook, pointsFor } from "./data.js";
 
 // The season comes from data.json (scripts/season.json drives the fetch); this is
 // only the fallback before it loads.
@@ -623,6 +623,7 @@ export default function F1Dashboard(){
   const[h2hMetric,setH2hMetric]=useState("qual");
   const[selPitRace,setSelPitRace]=useState(null); // round id; null = latest
   const[quotes,setQuotes]=useState(null);
+  const[seasonStats,setSeasonStats]=useState(null); // public/season-stats.json (scripts/build-season-stats.mjs)
   const[quotesSession,setQuotesSession]=useState("race");
   const[quoteDriver,setQuoteDriver]=useState(null); // null = all drivers
   const[quotesShowAll,setQuotesShowAll]=useState(false); // older rounds collapsed by default
@@ -703,6 +704,7 @@ export default function F1Dashboard(){
       })
       .catch(e=>{console.error("Failed to load data:",e);setError(e.message);setLoading(false);});
     loadOpenf1Index();
+    fetch(import.meta.env.BASE_URL + "season-stats.json").then(r=>r.ok?r.json():null).catch(()=>null).then(st=>{if(st&&st.drivers)setSeasonStats(st);});
     fetch(import.meta.env.BASE_URL + "driver-quotes.json").then(r=>r.ok?r.json():null).catch(()=>null).then(dq=>{if(dq&&dq.rounds)setQuotes(dq);});
     fetch(import.meta.env.BASE_URL + "tracks.json").then(r=>r.ok?r.json():null).catch(()=>null).then(tk=>{if(tk)setTracks(tk);});
   },[loadOpenf1Index]);
@@ -735,6 +737,11 @@ export default function F1Dashboard(){
       const shown=(data?.races||[]).filter(r=>selRace==="all"||r.r===selRace);
       for(const r of shown){const m=meetingForRace(meta,data.sched.find(s=>s.r===parseInt(r.r)));if(m)wanted.add(m.meetingKey);}
     }
+    if(tab==="Pit Stops"){ // OpenF1's stationary times for the race on screen
+      const pr=selPitRace??data?.pitsByRace?.at(-1)?.r;
+      const m=pr!=null?meetingForRace(meta,data.sched.find(s=>String(s.r)===String(pr))):null;
+      if(m)wanted.add(m.meetingKey);
+    }
     const tried=meetingFetchTried.current;
     for(const key of wanted){
       if(!key||openf1Meetings[key]||tried.has(key))continue;
@@ -746,7 +753,7 @@ export default function F1Dashboard(){
           else setMeetingFailed(prev=>({...prev,[key]:true}));
         });
     }
-  },[openf1Index,openf1Meetings,tab,selMeeting,telMeetingKey,data,selRace,meetingFailed]);
+  },[openf1Index,openf1Meetings,tab,selMeeting,telMeetingKey,data,selRace,selPitRace,meetingFailed]);
 
   // Mirror the view into the URL. A tab change pushes a history entry (Back
   // returns to the previous tab); a selection change replaces it. Telemetry and
@@ -774,6 +781,7 @@ export default function F1Dashboard(){
     if(r!=null)next.set("r",String(r));
     if(sess)next.set("s",sess);
     if(sameView&&cur.get("lap")&&(tab==="Overview"||tab==="Telemetry"))next.set("lap",cur.get("lap"));
+    if(sameView&&cur.get("d")&&tab==="Head to Head")next.set("d",cur.get("d"));
     const h="#"+next.toString();
     const push=hashTabRef.current!==tab;
     hashTabRef.current=tab;
@@ -1079,6 +1087,8 @@ export default function F1Dashboard(){
         {/* ═══ STANDINGS ═══ */}
         {tab==="Standings"&&<TabBody render={()=>(
           <div className="fu" style={{display:"flex",flexDirection:"column",gap:24}}>
+            {/* Title fight — maths, projection and what-if */}
+            <TitleFight DS={DS} sched={sched} races={races}/>
             {/* Points Progression Chart */}
             {progression&&progression.labels.length>=3&&(()=>{
               const W=800,H=240,padL=44,padR=24,padT=20,padB=32;
@@ -1251,6 +1261,8 @@ export default function F1Dashboard(){
                 ))})()}
               </div>
             </div>
+            <PositionHeatmap races={races} DS={DS}/>
+            <QualiGapTrend qualifying={qualifying}/>
             {/* Narrative */}
             {narrative&&narrative.length>0&&(
             <div style={{background:"var(--w02)",border:"1px solid var(--w06)",borderRadius:2,padding:20}}>
@@ -1363,11 +1375,18 @@ export default function F1Dashboard(){
                   const hasGrid=race.full.some(r=>r.grid!=null);
                   const quali=!hasGrid&&!race.sprint?qualifying.find(q=>q.round===(typeof race.r==="string"?parseInt(race.r):race.r)):null;
                   const showGrid=hasGrid||!!quali;
+                  // OpenF1 extras for a Grand Prix: places gained on lap 1, filtered on-track passes
+                  const rmtg=!race.sprint&&openf1?meetingForRace(openf1.meetings,sched.find(x=>x.r===race.r)):null;
+                  const rsess=rmtg?.sessions?.find(x=>x.sessionName==="Race"&&x.drivers);
+                  const outNums=new Set(race.full.filter(x=>typeof x.p!=="number"&&x.num!=null).map(x=>String(x.num)));
+                  const lap1=rsess&&hasGrid?lapOneGains(rsess,race.full):null;
+                  const passes=rsess?.overtakes?onTrackPasses(rsess,outNums).byDriver:null;
+                  const heads=[...(showGrid?["Pos","","Driver","Team","Grid","+/−"]:["Pos","","Driver","Team"]),...(lap1?["Lap 1"]:[]),...(passes?["Passes"]:[]),"Gap to Winner"];
                   return(
                   <div style={{background:"var(--w02)",border:"1px solid var(--w06)",borderRadius:2,overflow:"hidden",marginTop:4}}>
                     <div style={{overflowX:"auto",WebkitOverflowScrolling:"touch"}}><table style={{width:"100%",borderCollapse:"collapse",minWidth:600,fontSize:13}}>
                       <thead><tr style={{borderBottom:"1px solid var(--w08)"}}>
-                        {(showGrid?["Pos","","Driver","Team","Grid","+/−","Gap to Winner"]:["Pos","","Driver","Team","Gap to Winner"]).map(h=><th key={h} style={{textAlign:"left",padding:"8px 10px",fontSize:10,textTransform:"uppercase",letterSpacing:1,color:"var(--w30)",fontWeight:500}}>{h}</th>)}
+                        {heads.map(h=><th key={h} style={{textAlign:"left",padding:"8px 10px",fontSize:10,textTransform:"uppercase",letterSpacing:1,color:"var(--w30)",fontWeight:500}}>{h}</th>)}
                       </tr></thead>
                       <tbody>
                         {race.full.map((r,i)=>{
@@ -1386,12 +1405,15 @@ export default function F1Dashboard(){
                               <td style={{padding:"7px 10px",color:"var(--w40)",fontSize:12}}>{r.t}</td>
                               {showGrid&&<td style={{padding:"7px 10px",fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)",color:"var(--w45)",fontSize:12}}>{pitLane?"Pit lane":grid?`P${grid}`:"—"}</td>}
                               {showGrid&&<td style={{padding:"7px 10px",fontSize:11,fontWeight:600,color:gain>0?"var(--green)":gain<0?"var(--red)":"var(--w25)"}}>{gain==null?"":gain>0?`▲${gain}`:gain<0?`▼${-gain}`:"—"}</td>}
+                              {lap1&&(()=>{const g=lap1[r.num];return <td className="num" style={{padding:"7px 10px",fontSize:11,fontWeight:600,color:g>0?"var(--green)":g<0?"var(--red-ink)":"var(--w25)"}}>{g==null?"":g>0?`+${g}`:g<0?`−${-g}`:"0"}</td>;})()}
+                              {passes&&(()=>{const p=passes[r.num]||{made:0,lost:0};return <td className="num" style={{padding:"7px 10px",fontSize:11,color:"var(--w60)",whiteSpace:"nowrap"}} title={`${p.made} made · ${p.lost} lost`}><b style={{color:"var(--fg)"}}>{p.made}</b> / {p.lost}</td>;})()}
                               <td style={{padding:"7px 10px",fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)",color:r.g==="WINNER"?"var(--green)":isDNF?"var(--red)":isDNS?"var(--w30)":"var(--w60)",fontSize:12,fontWeight:r.g==="WINNER"?600:400}}>{r.g}</td>
                             </tr>
                           );
                         })}
                       </tbody>
                     </table></div>
+                    {(lap1||passes)&&<div style={{padding:"8px 12px 12px",fontSize:11,color:"var(--w50)"}}>{lap1&&"Lap 1 · places gained from the grid by the end of the opening lap. "}{passes&&"Passes · on-track passes made / lost, from OpenF1 — pit cycles, lapping and safety-car swaps left out."}</div>}
                   </div>
                   );})()}
               </div>
@@ -1719,6 +1741,7 @@ export default function F1Dashboard(){
         {/* ═══ HEAD TO HEAD ═══ */}
         {tab==="Head to Head"&&<TabBody render={()=>(
           <div className="fu" style={{display:"flex",flexDirection:"column",gap:24}}>
+            <DriverRatings stats={seasonStats} DS={DS} headshots={headshots} season={season}/>
             {/* Metric Toggle */}
             <div style={{display:"flex",alignItems:"center",gap:14,flexWrap:"wrap"}}>
               <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.5,color:"var(--w40)"}}>Compare by</div>
@@ -1868,6 +1891,14 @@ export default function F1Dashboard(){
           // Bars run from 25% (fastest) to 100% (slowest shown) so sub-second gaps stay visible
           const minS=chart.length?chart[0].s:0, maxS=chart.length?chart[chart.length-1].s:1;
           const barPct=s=>maxS>minS?25+75*(s-minS)/(maxS-minS):100;
+          // OpenF1 times the car at rest in the box; Jolpica the whole pit lane. Joined by
+          // car number (from the classification) and lap, ±1 since the two count laps differently.
+          const pitMtg=curPr.r!=null&&openf1?meetingForRace(openf1.meetings,sched.find(x=>String(x.r)===String(curPr.r))):null;
+          const pitSess=pitMtg?.sessions?.find(x=>x.sessionName==="Race"&&x.pitStops);
+          const numOf=Object.fromEntries((races.find(x=>!x.sprint&&String(x.r)===String(curPr.r))?.full||[]).map(x=>[x.d,String(x.num)]));
+          const stoppedFor=d=>{if(!pitSess)return null;const n=numOf[d.d];const rows=pitSess.pitStops.filter(p=>String(p[0])===n&&p[2]>0);const hit=rows.find(p=>p[1]===d.l)||rows.find(p=>Math.abs(p[1]-d.l)===1);return hit?hit[2]:null;};
+          const stopped=cpits.map(stoppedFor);
+          const quickest=stopped.reduce((b,v,i)=>v!=null&&(b<0||v<stopped[b])?i:b,-1);
           return(
           <div className="fu" style={{display:"flex",flexDirection:"column",gap:24}}>
             {prs.length>1&&(
@@ -1881,6 +1912,7 @@ export default function F1Dashboard(){
             <div style={{display:"flex",gap:16,flexWrap:"wrap"}}>
               <SC label="Fastest Pit Stop" value={cFastest?`${cFastest.s.toFixed(3)}s`:"N/A"} sub={cFastest?`${cFastest.d} · Lap ${cFastest.l}`:""} accent="var(--gold)" icon={cFastest&&cFastest.t?<TL team={cFastest.t} size={24}/>:null}/>
               <SC label="Avg Pit Stop" value={cAvg} sub={`${cpits.length} stops · ${cName}`} accent="var(--green)"/>
+              {quickest>=0&&<SC label="Quickest Crew" value={`${stopped[quickest].toFixed(1)}s`} sub={`${cpits[quickest].d} · Lap ${cpits[quickest].l} · stationary`} accent="var(--gold)" icon={cpits[quickest].t?<TL team={cpits[quickest].t} size={24}/>:null}/>}
               <SC label="Slowest Pit Stop" value={cSlowest?`${cSlowest.s.toFixed(3)}s`:"N/A"} sub={cSlowest?`${cSlowest.d} · Lap ${cSlowest.l}`:""} accent="var(--red)" icon={cSlowest&&cSlowest.t?<TL team={cSlowest.t} size={24}/>:null}/>
             </div>
             <div style={{background:"var(--w02)",border:"1px solid var(--w06)",borderRadius:2,padding:20}}>
@@ -1903,7 +1935,7 @@ export default function F1Dashboard(){
               <div style={{fontSize:15,fontWeight:700,marginBottom:16}}>{"Full Pit Stop Summary — " + cName}</div>
               <div style={{overflowX:"auto",WebkitOverflowScrolling:"touch"}}><table style={{width:"100%",borderCollapse:"collapse",minWidth:600,fontSize:13}}>
                 <thead><tr style={{borderBottom:"1px solid var(--w08)"}}>
-                  {["#","Driver","Team","Lap","Duration"].map(h=><th key={h} style={{textAlign:"left",padding:"8px 12px",fontSize:11,textTransform:"uppercase",letterSpacing:1,color:"var(--w35)",fontWeight:500}}>{h}</th>)}
+                  {["#","Driver","Team","Lap","Pit lane",...(pitSess?["Stopped"]:[])].map(h=><th key={h} style={{textAlign:"left",padding:"8px 12px",fontSize:11,textTransform:"uppercase",letterSpacing:1,color:"var(--w35)",fontWeight:500}}>{h}</th>)}
                 </tr></thead>
                 <tbody>
                   {cpits.map((d,i)=>(
@@ -1913,10 +1945,12 @@ export default function F1Dashboard(){
                       <td style={{padding:"10px 12px"}}><div style={{display:"flex",alignItems:"center",gap:6,color:"var(--w50)"}}><TL team={d.t} size={16}/>{d.t}</div></td>
                       <td style={{padding:"10px 12px",fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)"}}>{d.l}</td>
                       <td style={{padding:"10px 12px",fontWeight:700,fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)",color:d.s<=quickS?"var(--green)":d.s>=slowS?"var(--red)":"var(--fg)"}}>{d.s.toFixed(3)}s</td>
+                      {pitSess&&<td className="num" style={{padding:"10px 12px",color:i===quickest?"var(--green)":"var(--w60)",fontWeight:i===quickest?700:400}}>{stopped[i]!=null?`${stopped[i].toFixed(1)}s`:"—"}</td>}
                     </tr>
                   ))}
                 </tbody>
               </table></div>
+              <HowComputed>Pit lane is Jolpica's timing from pit entry to pit exit, so it depends on the length of each circuit's pit lane; the quick and slow colours compare each stop with this race's median. Stopped is OpenF1's time with the car at rest in the box — the crew's part of the stop — matched to Jolpica's stop by car number and lap (one lap either way, as the two count laps differently). A dash means OpenF1 had no stationary time for that stop.</HowComputed>
             </div>
           </div>);
         }}/>}
@@ -2079,11 +2113,431 @@ export default function F1Dashboard(){
         <span>Built by <a href="https://github.com/RowanFlynnPilot">RowanFlynnPilot</a></span>
         <span><a href="https://github.com/RowanFlynnPilot/f1-dashboard">Source &amp; data pipeline on GitHub</a></span>
         <span>Data · Jolpica F1 · OpenF1 · Formula 1 on YouTube</span>
+        <span>Raw data · {[["data.json","results"],["season-stats.json","ratings"],["openf1/index.json","OpenF1 index"],["driver-quotes.json","quotes"]].map(([p,l],i)=><Fragment key={p}>{i>0&&" · "}<a href={import.meta.env.BASE_URL+p} download>{l}</a></Fragment>)} · <a href="https://github.com/RowanFlynnPilot/f1-dashboard/blob/main/docs/DATA.md">data dictionary</a></span>
         <span>Unofficial fan project · not affiliated with Formula 1</span>
       </footer>
     </div>
   );
 }
+
+// ─── Analytics sheets — title fight, finishing heatmap, qualifying trend,
+// driver ratings, race pace, weather, mini-sectors. The maths lives in
+// src/data.js (tested); these only draw it. Each carries a "How this is
+// computed" note, because a number nobody can check is a number nobody trusts.
+const FUEL_S_PER_LAP=0.03; // lap time gained per lap of fuel burned — a rule-of-thumb figure, not measured
+const PANEL={background:"var(--w02)",border:"1px solid var(--w06)",borderRadius:2,padding:20};
+const SELECT_STYLE={appearance:"none",WebkitAppearance:"none",background:"var(--w04)",border:"1px solid var(--w10)",borderRadius:2,padding:"5px 10px",color:"var(--fg)",fontSize:12,fontFamily:"var(--font-data)",cursor:"pointer"};
+const lastName=n=>(n||"").split(" ").pop();
+const fmtLap=s=>{if(s==null||!Number.isFinite(s))return"—";const m=Math.floor(s/60);return `${m}:${(s-m*60).toFixed(3).padStart(6,"0")}`;};
+const fmtMetric=(v,m)=>v==null?"no data":`${v.toFixed(m.digits)}${m.unit.startsWith("%")?"":" "}${m.unit}`;
+const pctLabel=(p,sure)=>p==null?"—":sure?`${Math.round(p*100)}%`:p<0.005?"<1%":p>0.995?">99%":`${Math.round(p*100)}%`;
+
+function PanelHead({title,sub}){
+  return(<><div style={{fontSize:15,fontWeight:700,marginBottom:4}}>{title}</div>{sub&&<div style={{fontSize:12,color:"var(--w35)",marginBottom:16}}>{sub}</div>}</>);
+}
+function HowComputed({children}){
+  return(<details className="how"><summary>How this is computed</summary><div>{children}</div></details>);
+}
+
+// ── Standings: the title fight ─────────────────────────────────────────────
+const TitleFight=memo(function TitleFight({DS,sched,races}){
+  const outlook=useMemo(()=>titleOutlook({DS,sched,races,sprints:races.filter(r=>r.sprint)}),[DS,sched,races]);
+  const[whatIf,setWhatIf]=useState({}); // `${eventIndex}|${driver}` → finishing position ("0" = no points)
+  if(!outlook)return null;
+  const{events,maxLeft,clinched,needed,drivers,sims}=outlook;
+  const leader=drivers[0],rival=drivers[1];
+  const L=d=>lastName(d.n);
+  if(!events.length)return(
+    <div style={PANEL}>
+      <PanelHead title="Title Fight" sub="Season complete"/>
+      <div className="head" style={{fontSize:26,fontWeight:700}}>{leader.n} · champion by {leader.pts-(rival?.pts||0)} points</div>
+    </div>
+  );
+  const alive=drivers.filter(d=>d.alive);
+  const contenders=alive.slice(0,4);
+  const nextMax=events.filter(e=>e.round===events[0].round).reduce((s,e)=>s+e.max,0);
+  let line;
+  if(clinched)line=<>{leader.n} is champion: {leader.pts-rival.pts} points clear with {maxLeft} left to win.</>;
+  else if(needed&&needed.margin<=0)line=<>{L(leader)} clinches the title at the {needed.name} unless {L(rival)} outscores {L(leader)} there by {1-needed.margin} points or more.</>;
+  else if(needed&&needed.margin<=nextMax)line=<>{L(leader)} can clinch at the {needed.name} by outscoring {L(rival)} there by {needed.margin} points or more.</>;
+  else line=<>The title can't be settled at the {events[0].name}: {alive.length} drivers can still mathematically win it.</>;
+  const pick=(i,n)=>whatIf[`${i}|${n}`]||"";
+  const totals=contenders.map(d=>({...d,total:d.pts+events.reduce((s,e,i)=>s+pointsFor(parseInt(pick(i,d.n))||0,e.kind),0)})).sort((a,b)=>b.total-a.total);
+  const clash=events.map((e,i)=>{const ps=contenders.map(d=>pick(i,d.n)).filter(p=>p&&p!=="0");return new Set(ps).size<ps.length;});
+  const anyPick=Object.values(whatIf).some(Boolean);
+  const maxProb=Math.max(...drivers.map(d=>d.prob));
+  return(
+    <div style={PANEL}>
+      <PanelHead title="Title Fight" sub={`${events.length} point-scoring session${events.length>1?"s":""} left · ${maxLeft} points still available to one driver`}/>
+      <p style={{margin:"0 0 18px",fontSize:15,maxWidth:"70ch",lineHeight:1.45}}>{line}</p>
+      <div className="g2" style={{alignItems:"start"}}>
+        <div className="tbl-wrap" style={{overflowX:"auto"}}>
+          <table style={{width:"100%",borderCollapse:"collapse",fontSize:13,minWidth:380}}>
+            <thead><tr style={{borderBottom:"1px solid var(--w08)"}}>{["Driver","Pts","Behind","Max","Title odds"].map(h=><th key={h} style={{textAlign:h==="Driver"||h==="Title odds"?"left":"right",padding:"6px 8px",fontSize:10,textTransform:"uppercase",letterSpacing:1,color:"var(--w40)",fontWeight:600}}>{h}</th>)}</tr></thead>
+            <tbody>
+              {drivers.slice(0,Math.max(4,alive.length)).map(d=>(
+                <tr key={d.n} style={{borderBottom:"1px solid var(--w04)",opacity:d.alive?1:0.55}}>
+                  <td style={{padding:"6px 8px",whiteSpace:"nowrap"}}><span style={{display:"inline-block",width:3,height:12,background:TC[d.t]||"var(--ink-4)",marginRight:8,verticalAlign:"-1px"}}/>{L(d)}{!d.alive&&<span style={{fontSize:10,color:"var(--w40)",marginLeft:6}}>out of it</span>}</td>
+                  <td className="num" style={{padding:"6px 8px",textAlign:"right",fontWeight:700}}>{d.pts}</td>
+                  <td className="num" style={{padding:"6px 8px",textAlign:"right",color:"var(--w50)"}}>{d.behind?`−${d.behind}`:"—"}</td>
+                  <td className="num" style={{padding:"6px 8px",textAlign:"right",color:"var(--w50)"}}>{d.max}</td>
+                  <td style={{padding:"6px 8px",minWidth:120}}>
+                    <div style={{display:"flex",alignItems:"center",gap:8}}>
+                      <div style={{flex:1,height:6,background:"var(--w04)"}}><div style={{height:"100%",width:`${maxProb>0?(d.prob/maxProb)*100:0}%`,background:TC[d.t]||"var(--ink-4)"}}/></div>
+                      <span className="num" style={{width:34,textAlign:"right",fontSize:12}}>{d.alive?pctLabel(d.prob,clinched):"0%"}</span>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div>
+          <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.2,color:"var(--w50)",fontWeight:600,marginBottom:8}}>What if… pick their finishes</div>
+          <div style={{overflowX:"auto"}}>
+            <table style={{borderCollapse:"collapse",fontSize:12}}>
+              <thead><tr><th/>{contenders.map(d=><th key={d.n} style={{padding:"4px 6px",fontSize:11,fontWeight:700,color:TC[d.t]||"var(--fg)",textAlign:"left"}}>{L(d)}</th>)}</tr></thead>
+              <tbody>
+                {events.map((e,i)=>(
+                  <tr key={i}>
+                    <td style={{padding:"3px 8px 3px 0",whiteSpace:"nowrap",color:clash[i]?"var(--red-ink)":"var(--w60)"}}>R{e.round} {e.name.replace(" Grand Prix","")}{e.kind==="sprint"?" sprint":""}</td>
+                    {contenders.map(d=>(
+                      <td key={d.n} style={{padding:"3px 6px"}}>
+                        <select aria-label={`${d.n}, ${e.name}${e.kind==="sprint"?" sprint":""}`} value={pick(i,d.n)} onChange={ev=>setWhatIf(w=>({...w,[`${i}|${d.n}`]:ev.target.value}))} style={SELECT_STYLE}>
+                          <option value="">—</option>
+                          {Array.from({length:e.kind==="sprint"?8:10},(_,k)=><option key={k} value={k+1}>P{k+1}</option>)}
+                          <option value="0">no pts</option>
+                        </select>
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div style={{marginTop:12,fontSize:13}}>
+            {anyPick?(
+              <>
+                <div className="num" style={{display:"flex",gap:14,flexWrap:"wrap"}}>{totals.map((d,i)=><span key={d.n} style={{fontWeight:i===0?700:400}}>{L(d)} {d.total}</span>)}</div>
+                <div style={{marginTop:6,color:"var(--w60)"}}>{clash.some(Boolean)?"Two drivers can't share a finishing position — check the rows in red.":`On those results ${L(totals[0])} leads by ${totals[0].total-totals[1].total}. Blank picks score nothing.`}</div>
+                <button className="chip" onClick={()=>setWhatIf({})} style={{marginTop:8,fontSize:11,padding:"4px 10px",background:"var(--w03)",border:"1px solid var(--w10)",borderRadius:2,cursor:"pointer",color:"var(--fg)"}}>Clear picks</button>
+              </>
+            ):<span style={{color:"var(--w50)"}}>Blank picks score nothing; set a few to see where the totals land.</span>}
+          </div>
+        </div>
+      </div>
+      <HowComputed>
+        Points left: 25 for every Grand Prix still to run and 8 for every sprint, the most one driver can add. A driver is still in it while their points plus that maximum reach the leader's total (ties go to countback, which this ignores). The clinch line compares the leader with the nearest rival: after the next weekend the lead must exceed the points that remain. Title odds come from {sims.toLocaleString()} simulated run-ins: at each remaining session every driver draws one of their own finishes this season at random, plus a little noise, a retirement when the draw lands on one, and the field is sorted into a finishing order and scored. It's a projection from this season's form, not a prediction; the seed is fixed so the numbers don't move between visits.
+      </HowComputed>
+    </div>
+  );
+});
+
+// ── Standings: where each driver finishes ──────────────────────────────────
+const PositionHeatmap=memo(function PositionHeatmap({races,DS}){
+  const gps=races.filter(r=>!r.sprint);
+  const field=Math.max(20,...gps.map(r=>r.full.length));
+  const rows=DS.map(d=>{
+    const counts=Array(field+1).fill(0);let n=0;
+    for(const r of gps){const row=r.full.find(x=>(x.did&&x.did===d.did)||x.d===lastName(d.n));if(!row)continue;n++;if(typeof row.p==="number")counts[row.p-1]++;else counts[field]++;}
+    return{d,counts,n};
+  }).filter(r=>r.n>0);
+  if(!rows.length)return null;
+  const max=Math.max(1,...rows.flatMap(r=>r.counts));
+  const cols=[...Array.from({length:field},(_,i)=>`${i+1}`),"DNF"];
+  return(
+    <div style={PANEL}>
+      <PanelHead title="Where They Finish" sub={`Grand Prix finishing positions, ${gps.length} races · darker = more often (square-root scale, so rare finishes still show) · DNF column counts every unclassified result`}/>
+      <div className="tbl-wrap" style={{overflowX:"auto"}}>
+        <table style={{borderCollapse:"separate",borderSpacing:2,fontSize:11,minWidth:760,width:"100%"}}>
+          <thead><tr><th/>{cols.map(c=><th key={c} className="num" style={{fontSize:10,fontWeight:400,color:c==="1"?"var(--red-ink)":"var(--w45)",padding:"0 0 4px"}}>{c==="DNF"?c:`P${c}`}</th>)}</tr></thead>
+          <tbody>
+            {rows.map(({d,counts})=>{
+              const col=TC[d.t]||"var(--ink-3)";
+              return(
+                <tr key={d.n}>
+                  <th scope="row" style={{textAlign:"left",fontWeight:600,whiteSpace:"nowrap",paddingRight:8,fontSize:12}}><span style={{display:"inline-block",width:3,height:11,background:col,marginRight:6,verticalAlign:"-1px"}}/>{lastName(d.n)}</th>
+                  {counts.map((c,i)=>(
+                    <td key={i} className="num" title={c?`${lastName(d.n)}: ${cols[i]==="DNF"?"not classified":`P${cols[i]}`} ×${c}`:undefined} style={{textAlign:"center",height:20,minWidth:22,background:c?alpha("var(--ink)",Math.round(18+190*Math.sqrt(c/max))):"var(--w02)",color:Math.sqrt(c/max)>0.55?"var(--sheet)":"var(--ink)",fontSize:10}}>{c||""}</td>
+                  ))}
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+      <HowComputed>Every classified Grand Prix result for each driver in the standings, counted by finishing position. Sprints are left out. Drivers who raced for two teams carry their current team's mark.</HowComputed>
+    </div>
+  );
+});
+
+// ── Standings: qualifying gap to pole, per team, round by round ────────────
+const QualiGapTrend=memo(function QualiGapTrend({qualifying}){
+  const teams=useMemo(()=>{
+    const by={};
+    for(const q of qualifying)for(const r of q.results){if(r.gap==null)continue;const t=by[r.t]??={};t[q.round]=Math.min(t[q.round]??Infinity,r.gap);}
+    return Object.entries(by).map(([t,rounds])=>{
+      const pts=Object.entries(rounds).map(([r,g])=>({r:+r,g})).sort((a,b)=>a.r-b.r);
+      const gs=pts.map(p=>p.g).sort((a,b)=>a-b);
+      return{t,pts,med:gs[Math.floor((gs.length-1)/2)],poles:pts.filter(p=>p.g===0).length};
+    }).sort((a,b)=>a.med-b.med);
+  },[qualifying]);
+  if(teams.length<2||qualifying.length<2)return null;
+  const rounds=qualifying.map(q=>q.round),r0=Math.min(...rounds),r1=Math.max(...rounds);
+  const CAP=4; // % — slower laps (rain, a crash in Q1) pin to the floor
+  const W=200,H=64,pad=4;
+  const x=r=>pad+((r-r0)/Math.max(1,r1-r0))*(W-pad*2);
+  const y=g=>pad+(Math.min(g,CAP)/CAP)*(H-pad*2);
+  return(
+    <div style={PANEL}>
+      <PanelHead title="Qualifying Gap to Pole" sub={`Each team's best car, % off pole, rounds ${r0}–${r1} · pole at the top line · ordered by season median`}/>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(190px,1fr))",gap:"18px 20px"}}>
+        {teams.map(tm=>{
+          const col=TC[tm.t]||"var(--ink-3)";
+          const path=tm.pts.map((p,i)=>`${i?"L":"M"}${x(p.r).toFixed(1)},${y(p.g).toFixed(1)}`).join(" ");
+          return(
+            <div key={tm.t}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",gap:6}}>
+                <span className="head" style={{fontSize:14,fontWeight:700,color:col}}>{tm.t}</span>
+                <span className="num" style={{fontSize:11,color:"var(--w55)"}}>{tm.med.toFixed(2)}%{tm.poles?` · ${tm.poles} pole${tm.poles>1?"s":""}`:""}</span>
+              </div>
+              <svg role="img" aria-label={`${tm.t}: median ${tm.med.toFixed(2)}% off pole`} viewBox={`0 0 ${W} ${H}`} style={{width:"100%",height:H,display:"block",borderTop:"1px solid var(--rule-soft)",borderBottom:"1px solid var(--rule-faint)"}}>
+                {[1,2,3].map(g=><line key={g} x1={0} x2={W} y1={y(g)} y2={y(g)} stroke="var(--rule-faint)" strokeWidth={0.6}/>)}
+                <path d={path} fill="none" stroke={col} strokeWidth={1.6} strokeLinejoin="round"/>
+                {tm.pts.map(p=><circle key={p.r} cx={x(p.r)} cy={y(p.g)} r={p.g===0?2.6:1.6} fill={p.g===0?"var(--red)":col}><title>{`R${p.r}: ${p.g===0?"pole":`+${p.g.toFixed(2)}%`}`}</title></circle>)}
+              </svg>
+            </div>
+          );
+        })}
+      </div>
+      <div className="num" style={{fontSize:10,color:"var(--w40)",marginTop:8}}>Guides at 1%, 2%, 3% · anything past {CAP}% sits on the floor</div>
+      <HowComputed>For each qualifying session, every driver's best lap across Q1, Q2 and Q3 is compared with pole as a percentage; the team's quicker car is plotted. Percentages rather than seconds, so a 70-second lap and a 100-second lap compare fairly. A wet session or a car knocked out early with a problem shows as a spike.</HowComputed>
+    </div>
+  );
+});
+
+// ── Head to Head: driver ratings (percentiles), with a shareable card ──────
+function drawRatingsCard(canvas,{row,metrics,season,rounds,team,link}){
+  const W=1200,H=630,ctx=canvas.getContext("2d");
+  canvas.width=W;canvas.height=H;
+  const col=TC[team]||"#39424C";
+  ctx.fillStyle="#DDE4EA";ctx.fillRect(0,0,W,H);
+  ctx.fillStyle="#1B1F24";ctx.fillRect(0,0,W,64);
+  ctx.fillStyle="#E6ECF1";ctx.font="700 26px 'Barlow Condensed', sans-serif";ctx.textBaseline="middle";
+  ctx.fillText(`${season} SEASON SHEETS · DRIVER RATINGS`,40,33);
+  ctx.textAlign="right";ctx.font="400 18px 'Courier Prime', monospace";ctx.fillText(`after round ${rounds}`,W-40,33);ctx.textAlign="left";
+  ctx.fillStyle=col;ctx.fillRect(40,96,8,78);
+  ctx.fillStyle="#14181D";ctx.font="700 64px 'Barlow Condensed', sans-serif";ctx.textBaseline="alphabetic";
+  ctx.fillText(row.name.toUpperCase(),64,150);
+  ctx.fillStyle="#4B5660";ctx.font="500 22px 'Barlow', sans-serif";ctx.fillText(`${team} · percentile among ${season} drivers with 5+ starts · 100 = best`,64,180);
+  const top=222,rowH=40,labelW=260,barX=40+labelW,barW=560;
+  metrics.forEach((m,i)=>{
+    const v=row.metrics[m.key],yy=top+i*rowH;
+    ctx.fillStyle="#14181D";ctx.font="600 22px 'Barlow', sans-serif";ctx.fillText(m.label,40,yy+22);
+    ctx.fillStyle="rgba(20,24,29,0.08)";ctx.fillRect(barX,yy+6,barW,22);
+    if(v.pct!=null){ctx.fillStyle=col;ctx.fillRect(barX,yy+6,barW*(Math.max(2,v.pct)/100),22);}
+    ctx.fillStyle="rgba(20,24,29,0.35)";ctx.fillRect(barX+barW/2,yy+2,1.5,30);
+    ctx.fillStyle="#14181D";ctx.font="700 22px 'Courier Prime', monospace";ctx.fillText(v.pct==null?"—":String(v.pct),barX+barW+16,yy+24);
+    ctx.fillStyle="#4B5660";ctx.font="400 18px 'Courier Prime', monospace";
+    ctx.fillText(fmtMetric(v.value,m),barX+barW+76,yy+24);
+  });
+  ctx.fillStyle="#1B1F24";ctx.fillRect(0,H-46,W,46);
+  ctx.fillStyle="#E6ECF1";ctx.font="400 17px 'Courier Prime', monospace";ctx.textBaseline="middle";ctx.fillText(link,40,H-23);
+  ctx.textAlign="right";ctx.fillText("Jolpica F1 · OpenF1",W-40,H-23);ctx.textAlign="left";
+}
+
+const DriverRatings=memo(function DriverRatings({stats,DS,headshots,season}){
+  const rated=useMemo(()=>(stats?.drivers||[]).filter(d=>d.starts>=stats.minStarts),[stats]);
+  const[sel,setSel]=useState(()=>hashParams().get("d"));
+  const[copied,setCopied]=useState(false);
+  // Back/Forward between shared links changes the driver without a reload
+  useEffect(()=>{const on=()=>setSel(hashParams().get("d"));window.addEventListener("popstate",on);return()=>window.removeEventListener("popstate",on);},[]);
+  if(!rated.length)return null;
+  const order=DS.map(d=>d.did);
+  const sorted=[...rated].sort((a,b)=>(order.indexOf(a.did)+1||99)-(order.indexOf(b.did)+1||99));
+  const row=sorted.find(d=>d.did===sel)||sorted[0];
+  const team=DS.find(d=>d.did===row.did)?.t||row.team;
+  const col=TC[team]||"var(--ink-3)";
+  const link=`${location.origin}${location.pathname}${tabHref("Head to Head",{d:row.did})}`;
+  const choose=did=>{setSel(did);patchHash({d:did});};
+  const download=async()=>{
+    try{await document.fonts?.ready;}catch{/* fonts optional */}
+    const c=document.createElement("canvas");
+    drawRatingsCard(c,{row,metrics:stats.metrics,season,rounds:stats.rounds,team,link});
+    const a=document.createElement("a");a.download=`${season}-${row.did}-ratings.png`;a.href=c.toDataURL("image/png");a.click();
+  };
+  const copy=()=>{navigator.clipboard?.writeText(link).then(()=>{setCopied(true);setTimeout(()=>setCopied(false),1600);}).catch(()=>{});};
+  return(
+    <div style={PANEL}>
+      <PanelHead title="Driver Ratings" sub={`Season percentiles among the ${rated.length} drivers with ${stats.minStarts}+ starts · 100 = best in the field · after round ${stats.rounds}`}/>
+      <div style={{display:"flex",alignItems:"center",gap:12,flexWrap:"wrap",marginBottom:18}}>
+        <DH name={row.name} size={44} headshots={headshots}/>
+        <div style={{flex:"1 1 160px",minWidth:0}}>
+          <div className="head" style={{fontSize:24,fontWeight:700,lineHeight:1.05}}>{row.name}</div>
+          <div style={{fontSize:12,color:col,fontWeight:600}}>{team} · {row.starts} starts</div>
+        </div>
+        <select aria-label="Driver" value={row.did} onChange={e=>choose(e.target.value)} style={{...SELECT_STYLE,fontFamily:"var(--font-ui)",fontSize:13,padding:"6px 12px"}}>
+          {sorted.map(d=><option key={d.did} value={d.did}>{d.name}</option>)}
+        </select>
+        <button className="chip" onClick={download} style={{fontSize:12,padding:"6px 12px",background:"var(--ink)",color:"var(--sheet)",border:"1px solid var(--ink)",borderRadius:2,cursor:"pointer"}}>Download card</button>
+        <button className="chip" onClick={copy} style={{fontSize:12,padding:"6px 12px",background:"var(--w03)",color:"var(--fg)",border:"1px solid var(--w10)",borderRadius:2,cursor:"pointer"}}>{copied?"Link copied":"Copy link"}</button>
+      </div>
+      <div style={{display:"flex",flexDirection:"column",gap:8}}>
+        {stats.metrics.map(m=>{
+          const v=row.metrics[m.key];
+          return(
+            <div key={m.key} className="rating-row" title={m.note}>
+              <div style={{fontSize:13,fontWeight:600}}>{m.label}</div>
+              <div style={{position:"relative",height:16,background:"var(--w04)"}}>
+                {v.pct!=null&&<div style={{height:"100%",width:`${Math.max(2,v.pct)}%`,background:col}}/>}
+                <div style={{position:"absolute",left:"50%",top:-2,bottom:-2,width:1,background:"var(--w30)"}}/>
+              </div>
+              <div className="num" style={{fontSize:14,fontWeight:700,textAlign:"right"}}>{v.pct??"—"}</div>
+              <div className="num" style={{fontSize:11,color:"var(--w55)"}}>{fmtMetric(v.value,m)}</div>
+            </div>
+          );
+        })}
+      </div>
+      <HowComputed>
+        <p style={{margin:"0 0 6px"}}>Each metric is the driver's season figure (median for times, average for counts and rates), ranked against every driver with {stats.minStarts} or more Grand Prix starts. The percentile is the share of that field the driver beats; the tick marks the middle of the field.</p>
+        <ul style={{margin:0,paddingLeft:18}}>{stats.metrics.map(m=><li key={m.key}><b>{m.label}</b> — {m.note}</li>)}</ul>
+        <p style={{margin:"6px 0 0"}}>Lap 1 gains favour drivers who start further back (the polesitter can't gain); pit-crew times rate the team, not the driver. Race pace, consistency, overtaking and pit times need OpenF1's lap data, so a race OpenF1 didn't cover leaves those out.</p>
+      </HowComputed>
+    </div>
+  );
+});
+
+// ── Telemetry: race pace distribution ──────────────────────────────────────
+const RacePacePanel=memo(function RacePacePanel({race}){
+  const pace=useMemo(()=>racePace(race),[race]);
+  const[hover,setHover]=useState(null);
+  if(pace.length<2)return null;
+  const lo=Math.min(...pace.map(p=>p.lo)),hi=Math.max(...pace.map(p=>p.hi));
+  const x0=Math.floor(lo*2)/2-0.25,x1=Math.ceil(hi*2)/2+0.25;
+  const W=820,padL=52,padR=16,rowH=20,padT=8,H=padT+pace.length*rowH+26;
+  const x=t=>padL+((t-x0)/(x1-x0))*(W-padL-padR);
+  const ticks=[];for(let t=Math.ceil(x0);t<=x1;t+=x1-x0>8?2:1)ticks.push(t);
+  const compounds=[...new Set(pace.flatMap(p=>p.laps.map(l=>l.c)))];
+  const hp=hover!=null?pace[hover]:null;
+  return(
+    <div style={{...PANEL,position:"relative"}}>
+      <PanelHead title="Race Pace" sub="Green-flag laps per driver, finishing order · box = middle half of laps, line = median, whiskers = typical range · dots coloured by tyre"/>
+      <div style={{display:"flex",gap:12,flexWrap:"wrap",marginBottom:8}}>
+        {compounds.map(c=><span key={c} style={{display:"flex",alignItems:"center",gap:5,fontSize:11,color:"var(--w60)"}}><i style={{width:8,height:8,borderRadius:"50%",background:COMPOUND_COLORS[c]||"var(--ink-4)",display:"inline-block"}}/>{c[0]+c.slice(1).toLowerCase()}</span>)}
+      </div>
+      <div className="tbl-wrap"><svg role="img" aria-label="Race pace: distribution of each driver's green-flag lap times" viewBox={`0 0 ${W} ${H}`} style={{width:"100%",minWidth:560,display:"block"}} onPointerLeave={()=>setHover(null)}>
+        {ticks.map(t=><g key={t}><line x1={x(t)} x2={x(t)} y1={padT} y2={H-22} stroke="var(--rule-faint)"/><text x={x(t)} y={H-8} textAnchor="middle" fontSize="10" fill="var(--w45)" fontFamily="var(--font-data)">{fmtLap(t).replace(/\.000$/,"")}</text></g>)}
+        {pace.map((p,i)=>{
+          const cy=padT+i*rowH+rowH/2,col=inkify(p.teamColour)||"var(--ink-3)";
+          return(
+            <g key={p.number} onPointerEnter={()=>setHover(i)} opacity={hover==null||hover===i?1:0.45}>
+              <rect x={0} y={cy-rowH/2} width={W} height={rowH} fill="transparent"/>
+              <text x={padL-8} y={cy+4} textAnchor="end" fontSize="11" fontWeight="700" fill="var(--ink)" fontFamily="var(--font-ui)">{p.acronym}</text>
+              <line x1={x(p.lo)} x2={x(p.hi)} y1={cy} y2={cy} stroke={col} strokeWidth={1}/>
+              <rect x={x(p.q1)} y={cy-6} width={Math.max(1,x(p.q3)-x(p.q1))} height={12} fill={alpha(col,0x1A)} stroke={col} strokeWidth={1}/>
+              <line x1={x(p.med)} x2={x(p.med)} y1={cy-7} y2={cy+7} stroke="var(--ink)" strokeWidth={2}/>
+              {p.laps.filter(l=>l.t>=x0&&l.t<=x1).map(l=><circle key={l.l} cx={x(l.t)} cy={cy+((l.l*37)%9)-4} r={1.4} fill={COMPOUND_COLORS[l.c]||"var(--ink-4)"} opacity={0.75}/>)}
+            </g>
+          );
+        })}
+      </svg></div>
+      {hp&&<div className="num" style={{fontSize:12,color:"var(--w70)",marginTop:6}}>{hp.acronym} · median {fmtLap(hp.med)} · middle half {fmtLap(hp.q1)}–{fmtLap(hp.q3)} · {hp.n} laps counted</div>}
+      <HowComputed>A driver's racing laps with the noise taken out: lap 1, in- and out-laps, every lap under the safety car or VSC plus the restart lap, and anything over 107% of the driver's own median are dropped. The box spans the 25th to 75th percentile, the line is the median, and the whiskers reach the furthest laps within 1.5× the box width. Drivers with fewer than 8 laps left (early retirements) aren't shown. Fuel load isn't corrected here, so long first stints read a little slow.</HowComputed>
+    </div>
+  );
+});
+
+// ── Telemetry: weather by lap ──────────────────────────────────────────────
+const WeatherStrip=memo(function WeatherStrip({race,maxLap}){
+  const leader=useMemo(()=>[...(race?.drivers||[])].sort((a,b)=>(a.positions?.at(-1)?.p??99)-(b.positions?.at(-1)?.p??99))[0],[race]);
+  const series=useMemo(()=>{
+    const starts=(leader?.lapTimes||[]).filter(l=>l.ds).map(l=>({l:l.l,ds:l.ds,end:l.ds+l.t*1000}));
+    if(!starts.length)return[];
+    const lapOf=ms=>{if(ms<starts[0].ds)return null;const s=starts.find(x=>ms>=x.ds&&ms<x.end);return s?s.l-1+(ms-s.ds)/(s.end-s.ds):null;};
+    // a reading at or below 0°C is a station glitch, not weather
+    return (race?.weather||[]).map(([ms,track,air,rain])=>({lap:lapOf(ms),track:track>0?track:null,air:air>0?air:null,rain})).filter(r=>r.lap!=null);
+  },[race,leader]);
+  if(series.length<4)return null;
+  const temps=series.flatMap(s=>[s.track,s.air]).filter(v=>v!=null);
+  const t0=Math.floor(Math.min(...temps)-1),t1=Math.ceil(Math.max(...temps)+1);
+  const W=820,H=90,padL=52,padR=16,padT=8,padB=18;
+  const x=l=>padL+(l/Math.max(1,maxLap))*(W-padL-padR);
+  const y=v=>padT+(1-(v-t0)/(t1-t0))*(H-padT-padB);
+  const line=k=>series.filter(s=>s[k]!=null).map((s,i)=>`${i?"L":"M"}${x(s.lap).toFixed(1)},${y(s[k]).toFixed(1)}`).join(" ");
+  const rainy=series.filter(s=>s.rain);
+  const first=series.find(s=>s.track!=null)||series[0],last=[...series].reverse().find(s=>s.track!=null)||series.at(-1);
+  return(
+    <div style={PANEL}>
+      <PanelHead title="Weather" sub={`Track ${first.track}°C → ${last.track}°C · air ${first.air}°C → ${last.air}°C${rainy.length?" · rain shaded":" · no rain during the race"} · by race lap`}/>
+      <svg role="img" aria-label="Track and air temperature through the race" viewBox={`0 0 ${W} ${H}`} style={{width:"100%",display:"block"}}>
+        {rainy.map((s,i)=><rect key={i} x={x(s.lap)-2} y={padT} width={4} height={H-padT-padB} fill={alpha("#0067AD",0x30)}/>)}
+        {[t0,Math.round((t0+t1)/2),t1].map(v=><g key={v}><line x1={padL} x2={W-padR} y1={y(v)} y2={y(v)} stroke="var(--rule-faint)"/><text x={padL-8} y={y(v)+3} textAnchor="end" fontSize="10" fill="var(--w45)" fontFamily="var(--font-data)">{v}°</text></g>)}
+        {[1,...Array.from({length:Math.floor(maxLap/10)},(_,i)=>(i+1)*10)].map(l=><text key={l} x={x(l)} y={H-4} textAnchor="middle" fontSize="10" fill="var(--w45)" fontFamily="var(--font-data)">{l}</text>)}
+        <path d={line("track")} fill="none" stroke="var(--ink)" strokeWidth={1.8}/>
+        <path d={line("air")} fill="none" stroke="var(--ink-4)" strokeWidth={1.2} strokeDasharray="4 3"/>
+      </svg>
+      <div style={{display:"flex",gap:16,fontSize:11,color:"var(--w60)",marginTop:4}}>
+        <span><i style={{display:"inline-block",width:14,height:2,background:"var(--ink)",verticalAlign:"middle",marginRight:5}}/>Track</span>
+        <span><i style={{display:"inline-block",width:14,height:0,borderTop:"1.5px dashed var(--ink-4)",verticalAlign:"middle",marginRight:5}}/>Air</span>
+        {rainy.length>0&&<span><i style={{display:"inline-block",width:10,height:10,background:alpha("#0067AD",0x30),verticalAlign:"middle",marginRight:5}}/>Rain</span>}
+      </div>
+      <HowComputed>OpenF1's weather station readings, about one a minute, placed on the race's lap axis using the winner's lap start times. Track temperature drives tyre behaviour, so a cooling track often explains a late-race pace change.</HowComputed>
+    </div>
+  );
+});
+
+// ── Telemetry: mini-sector dominance on the track map ──────────────────────
+function splitTrackInto(track,n){
+  const pts=[...(track?.path||"").matchAll(/[ML]([0-9.]+),([0-9.]+)/g)].map(m=>[parseFloat(m[1]),parseFloat(m[2])]);
+  if(pts.length<n)return null;
+  const cum=[0];for(let i=1;i<pts.length;i++)cum.push(cum[i-1]+Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1]));
+  const total=cum.at(-1),segs=[];
+  let j=0;
+  for(let k=0;k<n;k++){
+    const end=(total*(k+1))/n,seg=[pts[j]];
+    while(j<pts.length-1&&cum[j+1]<=end){j++;seg.push(pts[j]);}
+    if(j<pts.length-1){const f=(end-cum[j])/(cum[j+1]-cum[j]||1);seg.push([pts[j][0]+f*(pts[j+1][0]-pts[j][0]),pts[j][1]+f*(pts[j+1][1]-pts[j][1])]);}
+    segs.push(seg.map((p,i)=>`${i?"L":"M"}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(" "));
+  }
+  return segs;
+}
+
+const MiniSectorPanel=memo(function MiniSectorPanel({race,track,trackName}){
+  const N=25;
+  const ms=useMemo(()=>miniSectors(race,N),[race]);
+  const segs=useMemo(()=>splitTrackInto(track,N),[track]);
+  if(!ms)return null;
+  const seenTeam={};
+  const style=Object.fromEntries(ms.runs.map(r=>{const second=!!seenTeam[r.team];seenTeam[r.team]=true;return[r.number,{col:inkify(r.teamColour)||"var(--ink-3)",dash:second?"6 4":null}];}));
+  const byCount=[...ms.runs].sort((a,b)=>ms.count[b.number]-ms.count[a.number]);
+  return(
+    <div style={PANEL}>
+      <PanelHead title="Mini-Sector Dominance" sub={`${trackName} · each fastest lap cut into ${N} equal stretches · each stretch drawn in the ink of whoever covered it quickest`}/>
+      <div className="g2" style={{alignItems:"center"}}>
+        {segs&&track?(
+          <svg role="img" aria-label={`Mini-sector dominance map of ${trackName}`} viewBox={track.viewBox} preserveAspectRatio="xMidYMid meet" style={{width:"100%",maxHeight:320,display:"block",overflow:"visible"}}>
+            <path d={track.path} fill="none" stroke="var(--w08)" strokeWidth={10} strokeLinecap="round" strokeLinejoin="round"/>
+            {segs.map((d,i)=>{const s=style[ms.winners[i]];return <path key={i} d={d} fill="none" stroke={s.col} strokeWidth={6} strokeDasharray={s.dash||undefined} strokeLinecap="butt" strokeLinejoin="round"><title>{`Stretch ${i+1}: ${ms.runs.find(r=>r.number===ms.winners[i])?.acronym}`}</title></path>;})}
+          </svg>
+        ):(
+          <div className="num" style={{display:"flex",height:22}}>{ms.winners.map((w,i)=><div key={i} title={`Stretch ${i+1}`} style={{flex:1,background:style[w].col,opacity:style[w].dash?0.6:1,borderRight:"1px solid var(--sheet)"}}/>)}</div>
+        )}
+        <div style={{display:"flex",flexDirection:"column",gap:6}}>
+          {byCount.map(r=>(
+            <div key={r.number} style={{display:"flex",alignItems:"center",gap:8,fontSize:13}}>
+              <svg aria-hidden="true" width={22} height={6}><line x1={0} x2={22} y1={3} y2={3} stroke={style[r.number].col} strokeWidth={5} strokeDasharray={style[r.number].dash||undefined}/></svg>
+              <b style={{width:40}}>{r.acronym}</b>
+              <span className="num" style={{width:64,color:"var(--w60)"}}>{fmtLap(r.lapTime)}</span>
+              <span className="num" style={{color:"var(--w60)"}}>L{r.lap}</span>
+              <span className="num" style={{marginLeft:"auto",fontWeight:700}}>{ms.count[r.number]}/{N}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+      <HowComputed>Only the six drivers with a recorded speed trace take part: each trace is the driver's fastest race lap, about 80 speed samples along the lap distance. Time for each stretch is distance over speed, scaled so the stretches add up to the real lap time. The outline is the circuit's map cut into {N} equal lengths, so stretches line up with the track only approximately. Team-mates share a colour; the second is dashed.</HowComputed>
+    </div>
+  );
+});
 
 // ─── Telemetry tab — module-scope memo component so hover tooltips and 60fps
 // playback frames re-render only this subtree, never the whole dashboard.
@@ -2198,6 +2652,10 @@ const TelemetryTab=memo(function TelemetryTab({openf1,tracks,telMeetingKey,setTe
 
               {/* Lap Times Chart */}
               <LapTimesChart maxLap={maxLap} yMin={yMin} yMax={yMax} race={race} visibleDrivers={visibleDrivers}/>
+              <WeatherStrip race={race} maxLap={maxLap}/>
+
+              {/* Race pace distribution */}
+              <RacePacePanel race={race}/>
 
               {/* Tire Stints */}
               <TireStrategyPanel race={race} maxLap={maxLap} allDrivers={allDrivers} visibleDrivers={visibleDrivers}/>
@@ -2213,6 +2671,9 @@ const TelemetryTab=memo(function TelemetryTab({openf1,tracks,telMeetingKey,setTe
 
               {/* Speed Trace */}
               <SpeedTracePanel allDrivers={allDrivers}/>
+
+              {/* Mini-sectors from the speed traces */}
+              <MiniSectorPanel race={race} track={tracks?.[meetingTrackName(cur.meeting)]} trackName={meetingTrackName(cur.meeting)}/>
             </div>
           );
 });
@@ -3421,15 +3882,12 @@ const TireManagementPanel=memo(function TireManagementPanel({race,allDrivers,max
                 const analyzed=[];
                 for(const driver of allDrivers){
                   const myStints=allStints.filter(s=>s.driverNumber===driver.number);
+                  const green=new Set(greenFlagLaps(driver,race).map(l=>l.l));
                   for(const s of myStints){
                     const start=Math.max(1,s.lapStart||1);
                     const end=Math.min(maxLap,s.lapEnd||maxLap);
-                    const lapData=(driver.lapTimes||[]).filter(l=>l.l>=start&&l.l<=end&&!l.pit&&l.t>0);
-                    if(lapData.length<3)continue;
-                    // Drop outliers > median + 5s (safety car laps etc)
-                    const sortedT=[...lapData].map(l=>l.t).sort((a,b)=>a-b);
-                    const median=sortedT[Math.floor(sortedT.length/2)];
-                    const clean=lapData.filter(l=>l.t<=median+5);
+                    // Green-flag laps only (no SC/VSC, restart, in- or out-laps, 107% outliers)
+                    const clean=(driver.lapTimes||[]).filter(l=>l.l>=start&&l.l<=end&&green.has(l.l));
                     if(clean.length<3)continue;
                     const avg=clean.reduce((a,b)=>a+b.t,0)/clean.length;
                     const best=Math.min(...clean.map(l=>l.t));
@@ -3437,10 +3895,13 @@ const TireManagementPanel=memo(function TireManagementPanel({race,allDrivers,max
                     const xMean=clean.reduce((a,b)=>a+(b.l-start),0)/clean.length;
                     let num=0,den=0;
                     for(const l of clean){const x=l.l-start;num+=(x-xMean)*(l.t-avg);den+=(x-xMean)**2;}
-                    const slope=den>0?num/den:0;
+                    // The car burns ~1.5 kg of fuel a lap and gets ~FUEL_S_PER_LAP quicker
+                    // for it, which hides tyre wear; adding it back isolates the tyre
+                    const rawSlope=den>0?num/den:0;
+                    const slope=rawSlope+FUEL_S_PER_LAP;
                     analyzed.push({
                       driver,stint:s,compound:(s.compound||"UNKNOWN").toUpperCase(),
-                      validLaps:clean.length,totalLaps:end-start+1,avg,best,slope,
+                      validLaps:clean.length,totalLaps:end-start+1,avg,best,slope,rawSlope,
                       lapStart:start,lapEnd:end,
                     });
                   }
@@ -3477,7 +3938,7 @@ const TireManagementPanel=memo(function TireManagementPanel({race,allDrivers,max
                 return(
                   <div data-tire-card style={{background:"var(--w02)",border:"1px solid var(--w06)",borderRadius:2,padding:20,position:"relative"}}>
                     <div style={{fontSize:15,fontWeight:700,marginBottom:4}}>Tire Management</div>
-                    <div style={{fontSize:12,color:"var(--w35)",marginBottom:20}}>Pace consistency &amp; compound benchmarks · low slope = better tire management</div>
+                    <div style={{fontSize:12,color:"var(--w35)",marginBottom:20}}>Fuel-corrected tyre degradation &amp; compound benchmarks · lower = better tyre management</div>
 
                     {/* DEGRADATION CHART */}
                     <div style={{marginBottom:24}}>
@@ -3509,7 +3970,8 @@ const TireManagementPanel=memo(function TireManagementPanel({race,allDrivers,max
                         ))}
                       </div>
                       </div>
-                      <div style={{fontSize:10,color:"var(--w30)",marginTop:6,fontStyle:"italic"}}>Bar height = absolute lap-time drift per lap (lower = more consistent). Drivers sorted by best-managed stint.</div>
+                      <div style={{fontSize:10,color:"var(--w30)",marginTop:6,fontStyle:"italic"}}>Bar height = seconds lost per lap to the tyre, after the fuel correction (lower = better managed). Drivers sorted by best-managed stint.</div>
+                      <HowComputed>Each stint's green-flag laps (no lap 1, in- or out-laps, safety-car or VSC laps, the restart lap, or laps over 107% of the driver's median) are fitted with a straight line, lap time against lap in stint. A car gets quicker as it burns fuel — about {FUEL_S_PER_LAP.toFixed(2)} s a lap, the usual rule of thumb for ~1.5 kg/lap at ~0.03 s/kg — which masks tyre wear, so that is added back. What's left is the tyre's cost per lap. Track evolution and traffic still leak in; read it as a ranking within the race, not an absolute.</HowComputed>
                     </div>
 
                     {/* COMPOUND PACE BENCHMARK */}

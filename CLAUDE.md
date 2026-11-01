@@ -18,6 +18,7 @@ f1-dashboard/
 │   ├── fetch-openf1-data.mjs       ← OpenF1 API → public/openf1/ (split layout, incremental cache)
 │   ├── fetch-driver-quotes.py      ← YouTube + Claude API → public/driver-quotes.json
 │   ├── fetch-tracks.mjs            ← Circuit GeoJSON → public/tracks.json (manual, not in CI)
+│   ├── build-season-stats.mjs      ← data.json + meeting files → public/season-stats.json (percentiles; CI, no network)
 │   ├── validate-data.mjs           ← CI gate: fails the deploy if fetched data is malformed or shrank vs HEAD
 │   ├── commit-data.sh              ← CI: commits this run's data on top of the latest main (never skips)
 │   ├── merge-video-ids.mjs         ← CI: merges discovered video IDs into main's (main wins)
@@ -27,7 +28,7 @@ f1-dashboard/
 ├── src/
 │   ├── main.jsx                    ← React entry point + root error boundary
 │   ├── App.jsx                     ← ~4,300 lines, ALL tabs and components in one file
-│   ├── data.js                     ← pure data logic: transformData, head-to-head, statuses, countdown, meeting joins
+│   ├── data.js                     ← pure data logic: transformData, head-to-head, statuses, joins + the analytics layer (green-flag laps, race pace, passes, lap-1 gains, mini-sectors, title outlook, season percentiles)
 │   └── styles.css                  ← design tokens + sheet styles
 ├── public/
 │   ├── data.json                   ← Jolpica: standings, results, qualifying, pit stops
@@ -35,9 +36,10 @@ f1-dashboard/
 │   │   ├── index.json              ← Light meeting/session metadata + headshots (~23 KB, loaded on page load)
 │   │   └── meetings/{key}.json     ← Full per-meeting data (~200 KB each, lazy-loaded per tab)
 │   ├── driver-quotes.json          ← Post-session driver quotes
+│   ├── season-stats.json           ← Driver Ratings: season metrics + percentiles (build-season-stats.mjs)
 │   ├── tracks.json                 ← SVG track outlines for track maps
 │   └── og.png                      ← 1200×630 social card (headless-Chrome capture of the Overview)
-├── docs/                           ← README screenshots
+├── docs/                           ← README screenshots, DATA.md (data dictionary — update it when a JSON shape changes)
 ├── eslint.config.js                ← `npm run lint`; react-hooks rules are errors
 ├── index.html
 ├── package.json
@@ -79,7 +81,12 @@ f1-dashboard/
 - **Lap Compare default**: Race sessions carry `lapCompareDefault` (top two finishers on the winner's fastest non-pit lap, compact `[ms, …]` rows). Older cached races are backfilled three per run, newest first.
 - Manual refetch: the workflow's `refetch_meetings` input (meeting keys or `all`) bypasses the cache for those meetings.
 - `fetchJSON` retries 429/5xx/timeouts with backoff (calls are 2 s apart for the 30 req/min free tier).
-- Key endpoints: `/meetings`, `/sessions`, `/drivers`, `/laps`, `/stints`
+- **Race extras** (Race sessions only, compact rows): `pitStops` `[num, lap, stationary s, pit-lane s]` from `/pit`, `overtakes` `[ms, by, of, pos]` from `/overtakes` (raw — every swap, pit cycles included; `onTrackPasses()` filters), `weather` `[ms, track °C, air °C, rain]` from `/weather`. Stamped `extrasV` (`RACE_EXTRAS_VERSION`); cached races missing the current version are backfilled up to 25 per run. A failed extras fetch keeps the cached session.
+- Key endpoints: `/meetings`, `/sessions`, `/drivers`, `/laps`, `/stints`, `/position`, `/race_control`, `/pit`, `/overtakes`, `/weather`, `/car_data`, `/location`
+
+### Season stats (derived)
+- `scripts/build-season-stats.mjs` runs `buildSeasonStats()` (src/data.js) over `data.json` + every meeting file → `public/season-stats.json`: nine metrics per driver (`SEASON_METRICS`) with percentiles among drivers with 5+ starts. CI step after the fetches, `continue-on-error`; committed back with the data. Precomputed because the browser would need every meeting file (~4.5 MB).
+- Metric definitions live in `SEASON_METRICS` (label, unit, better, note); the app renders the notes, so change them there.
 
 ### YouTube + Claude API (driver quotes)
 - Uses `youtube-transcript-api` Python library to pull auto-generated captions
@@ -128,12 +135,12 @@ YouTube blocks GitHub Actions IPs, so transcripts cannot be fetched in CI. The f
 | Tab | Content |
 |-----|---------|
 | Overview | Lap chart of the last GP (LapSheet: chart, read-out, stopwatch), standings billing, podium, constructors, next race (or season opener / season complete), driver reactions |
-| Standings | Drivers' & Constructors' championships, points progression, season narrative |
-| Race Results | Classification with real grid slot and places gained, DNF/DSQ labels, dropdown race selector, OpenF1 sector enrichment |
+| Standings | Title Fight (`titleOutlook`: points left, alive, clinch line, seeded Monte Carlo odds, what-if grid), championships, points progression, finishing-position heatmap, qualifying gap-to-pole small multiples, season narrative |
+| Race Results | Classification with real grid slot and places gained, Lap 1 gains and filtered on-track Passes (GPs with OpenF1 extras), DNF/DSQ labels, dropdown race selector, OpenF1 sector enrichment |
 | Sector Times | Meeting/session selectors, driver comparison, speed traps, sector map |
-| Telemetry | Race Replay (track dots + leaderboard), gap chart, Lap Compare, lap-time/position charts, tyre strategy & degradation, speed trace |
-| Head to Head | Team-mate battles per pairing (qualifying, average finish, points as team-mates) |
-| Pit Stops | Ranked pit-lane times, thresholds relative to each race's median |
+| Telemetry | Race Replay (track dots + leaderboard), gap chart, Lap Compare, lap-time chart + weather strip, race-pace box plots, position chart, tyre strategy & fuel-corrected degradation (`FUEL_S_PER_LAP`), speed trace, mini-sector dominance map |
+| Head to Head | Driver Ratings (percentile bars from `season-stats.json`, `#tab=h2h&d=<driverId>`, canvas-drawn PNG card), team-mate battles per pairing |
+| Pit Stops | Ranked pit-lane times (Jolpica), thresholds relative to each race's median, Stopped column = OpenF1 stationary time joined by car number + lap ±1 |
 | Quotes | Post-session driver quotes grouped by round, session pill filters |
 | Schedule | Full calendar in the viewer's time zone, sprint flags, live completion status |
 
@@ -162,6 +169,7 @@ Williams "#64C4FF"   Audi "#FF0000"   Cadillac "#D4AF37"
 - The lap cursor is shared through the URL: `#tab=overview&lap=N`; "Open this lap in the replay" goes to `#tab=telemetry&r=R&lap=N`, and the replay applies a lap only to its own round.
 - Colours: never append a hex alpha to a colour that might be a CSS variable — use `alpha(color, 0xNN)` (color-mix). Tyre letters use `compoundInk()`.
 - `.colophon` footer on the bench links the repo and credits the data sources.
+- Analytics charts: `PANEL` style + `PanelHead`, and a `<HowComputed>` note (`details.how`) under every derived number — say what's filtered and what the number can't tell you.
 - Motion: `.fu` fade-up on first visit of a tab only (`visitedTabs` + `.no-anim`), `.ink-draw` stroke draw-on for chart lines; `prefers-reduced-motion` collapses both.
 - Refuse: emoji as icons, glows, gradient text, nested cards, `transition: width` on bars.
 
@@ -230,10 +238,10 @@ The workflow runs on:
 
 Steps:
 1. Checkout **latest `main`** (not the triggering SHA — a queued run starts from its predecessor's data commit) → Setup Node 22 → `npm ci` → `npm run lint` → `npm test`
-2. Fetch Jolpica, fetch OpenF1, fetch driver quotes — each `continue-on-error` with an `id`. The scripts only write at the end, so a failed source leaves its committed files in place and the others still ship.
+2. Fetch Jolpica, fetch OpenF1, fetch driver quotes — each `continue-on-error` with an `id`. The scripts only write at the end, so a failed source leaves its committed files in place and the others still ship. Then `build-season-stats.mjs` (also soft).
 3. `node scripts/validate-data.mjs` — hard-fails the deploy if data is malformed or shrank vs the committed baseline (a failed build keeps the previous deploy live). Shrink checks are skipped when the season changes; `ALLOW_SHRINK` downgrades them to warnings.
 4. `npm run build` → deploy to GitHub Pages
-5. **Commit the fetched data back to `main`** via `scripts/commit-data.sh` (run from a copy, since it resets the checkout): snapshot `public/data.json`, `public/openf1/`, `public/driver-quotes.json`, reset to the latest `origin/main`, lay them back on top, merge `scripts/video-ids.json` (main wins), commit as `github-actions[bot]`, push with retries. It used to rebase, which silently skipped the commit whenever the quotes step had recorded new video IDs or a queued run followed another. `GITHUB_TOKEN` pushes never trigger workflows, so it can't loop. **Run `git pull` before pushing local work** — main moves after every deploy.
+5. **Commit the fetched data back to `main`** via `scripts/commit-data.sh` (run from a copy, since it resets the checkout): snapshot `public/data.json`, `public/openf1/`, `public/driver-quotes.json`, `public/season-stats.json`, reset to the latest `origin/main`, lay them back on top, merge `scripts/video-ids.json` (main wins), commit as `github-actions[bot]`, push with retries. It used to rebase, which silently skipped the commit whenever the quotes step had recorded new video IDs or a queued run followed another. `GITHUB_TOKEN` pushes never trigger workflows, so it can't loop. **Run `git pull` before pushing local work** — main moves after every deploy.
 6. `scripts/run-summary.mjs` writes the job summary (what each source shipped, quote lag) — then the run turns red if any source failed.
 
 ### Why the commit-back step matters

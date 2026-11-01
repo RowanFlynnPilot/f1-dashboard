@@ -13,18 +13,30 @@ Three public sources are fetched, joined, validated and deployed on a schedule w
 | Sheet | What's on it |
 |---|---|
 | **Overview** | The last Grand Prix as a lap chart (positions by lap, pit stops, yellow flags) with a stopwatch scrubber, the standings, the podium and the next race |
-| **Standings** | Drivers' and constructors' championships, points progression by round, a generated season narrative |
-| **Race Results** | Every race and sprint classification with starting grid, places gained, and OpenF1 sector data |
+| **Standings** | The title fight (points left, who can still win, what clinches it, simulated odds and a what-if grid), the championships, points progression, where each driver finishes, each team's qualifying gap to pole, a generated season narrative |
+| **Race Results** | Every race and sprint classification with starting grid, places gained, lap-1 gains, on-track passes and OpenF1 sector data |
 | **Sector Times** | Best sectors and speed traps per session, a circuit map coloured by the fastest team in each sector |
-| **Telemetry** | Race replay on the circuit outline, gap to the winner, lap times, positions, tyre strategy and degradation, and Lap Compare: two drivers' speed, throttle and brake through the same lap |
-| **Head to Head** | Team-mate battles in qualifying, race finishes and points, one per pairing |
-| **Pit Stops** | Every stop of every race, ranked, relative to that race's median |
+| **Telemetry** | Race replay on the circuit outline, gap to the winner, lap times with the weather, race-pace distributions, positions, tyre strategy and fuel-corrected degradation, mini-sector dominance, and Lap Compare: two drivers' speed, throttle and brake through the same lap |
+| **Head to Head** | Driver ratings (season percentiles in nine metrics, with a downloadable card and a link per driver), and team-mate battles in qualifying, race finishes and points |
+| **Pit Stops** | Every stop of every race, ranked against that race's median, with the pit-lane time and the time stationary in the box |
 | **Quotes** | What drivers said after each session, extracted from F1's reaction videos |
 | **Schedule** | The calendar in your time zone, with sprint weekends and results |
 
 Every view has its own URL, so links go straight to it, for example [the Spanish GP replay at lap 30](https://rowanflynnpilot.github.io/f1-dashboard/#tab=telemetry&r=14&lap=30). Back and Forward move between sheets.
 
 ![Telemetry: the race replay at lap 30 with the gap-to-winner chart](docs/telemetry.png)
+
+## The analytics
+
+Every derived number has a "How this is computed" note under its chart, and the logic lives in one tested module, [`src/data.js`](src/data.js), shared by the app and the build scripts.
+
+- **Green-flag laps.** Race pace, consistency and tyre degradation use only representative laps: no lap 1, no in- or out-laps, nothing under a safety car or VSC (or the restart lap), nothing over 107% of the driver's median.
+- **Fuel-corrected degradation.** A car gets about 0.03 s a lap quicker as it burns fuel, which hides tyre wear, so the stint slope adds it back.
+- **Filtered overtakes.** OpenF1 records every position swap; about four in five are pit cycles, lapping or safety-car shuffles. What's left counts as a pass.
+- **Title odds.** A seeded Monte Carlo replays the remaining sessions thousands of times, drawing each driver's results from their own season, beside the exact maths of points left and clinch conditions.
+- **Percentiles.** Driver ratings rank nine season metrics among drivers with five or more starts and ship precomputed in `season-stats.json`, so the browser doesn't download every race to work them out.
+
+All the data is downloadable from the page footer; [docs/DATA.md](docs/DATA.md) describes every file and field.
 
 ## How it works
 
@@ -36,6 +48,9 @@ flowchart LR
   FJ --> V{"validate-data.mjs"}
   FO --> V
   FQ --> V
+  FJ --> S["build-season-stats.mjs<br/>percentiles"]
+  FO --> S
+  S --> V
   V -- pass --> B["vite build"] --> P["GitHub Pages"]
   P --> C["commit data back to main<br/>cache, baseline, keepalive"]
   P --> A["React app<br/>static JSON, lazy-loaded meetings"]
@@ -83,9 +98,10 @@ python scripts/fetch-driver-quotes.py                       # extract quotes
 .github/workflows/deploy.yml   fetch → validate → build → deploy → commit data back
 scripts/                       fetch scripts, validator, commit and summary helpers
 src/App.jsx                    the dashboard: every sheet and component
-src/data.js                    pure data logic (transforms, statuses, joins)
+src/data.js                    pure data logic (transforms, joins, race pace, passes, title odds, percentiles)
 src/styles.css                 design tokens and sheet styles
-public/                        fetched data (data.json, openf1/, driver-quotes.json, tracks.json)
+public/                        fetched data (data.json, openf1/, driver-quotes.json, season-stats.json, tracks.json)
+docs/DATA.md                   data dictionary: every file and field
 test/                          node:test suites
 ```
 
