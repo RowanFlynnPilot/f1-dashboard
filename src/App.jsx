@@ -1,5 +1,5 @@
 import { useState, useEffect, useLayoutEffect, useMemo, useCallback, useRef, Fragment, Component, memo } from "react";
-import { transformData, countdownLabel, withStatus, meetingRaceDay, meetingForRace, meetingTrackName, greenFlagLaps, racePace, onTrackPasses, lapOneGains, miniSectors, titleOutlook, pointsFor } from "./data.js";
+import { transformData, countdownLabel, withStatus, meetingRaceDay, meetingForRace, meetingTrackName, greenFlagLaps, racePace, onTrackPasses, lapOneGains, miniSectors, titleOutlook, titleClinch, pointsFor } from "./data.js";
 
 // The season comes from data.json (scripts/season.json drives the fetch); this is
 // only the fallback before it loads.
@@ -63,7 +63,7 @@ const TEAM_LOGOS = {
 // returned unchanged. Cached: it runs per driver on every lap-chart repaint.
 const SHEET_LUM=0.768;            // relative luminance of --sheet #DDE4EA
 const INK_CONTRAST=3.1;           // target ratio for team ink on the sheet (lines, marks, large labels)
-const TEXT_CONTRAST=4.5;          // small text in team colour (WCAG AA) — the lap read-out
+const TEXT_CONTRAST=4.6;          // small text in team colour (WCAG AA 4.5, with headroom: 4.5 landed at 4.48 after rounding)
 const _srgbLin=(v)=>{v/=255;return v<=0.03928?v/12.92:Math.pow((v+0.055)/1.055,2.4);};
 const _relLum=(r,g,b)=>0.2126*_srgbLin(r)+0.7152*_srgbLin(g)+0.0722*_srgbLin(b);
 const _inkCache=new Map();
@@ -90,6 +90,8 @@ function inkify(hex,ratio=INK_CONTRAST){
 }
 const TC_RAW = { Mercedes: "#27F4D2", Ferrari: "#E80020", McLaren: "#FF8000", "Red Bull": "#3671C6", "Racing Bulls": "#6692FF", Alpine: "#FF87BC", "Aston Martin": "#229971", Haas: "#B6BABD", Williams: "#64C4FF", Audi: "#FF0000", Cadillac: "#D4AF37" };
 const TC = Object.fromEntries(Object.entries(TC_RAW).map(([k,v])=>[k,inkify(v)]));
+// Team ink for small text (names, team labels): the 4.5:1 bar instead of 3.1:1
+const TCT = Object.fromEntries(Object.entries(TC_RAW).map(([k,v])=>[k,inkify(v,TEXT_CONTRAST)]));
 const TB = { Mercedes: "rgba(27,127,75,0.10)", Ferrari: "rgba(214,40,40,0.10)", McLaren: "rgba(255,128,0,0.10)", "Red Bull": "rgba(54,113,198,0.10)", "Racing Bulls": "rgba(102,146,255,0.10)", Alpine: "rgba(255,135,188,0.10)", "Aston Martin": "rgba(34,153,113,0.10)", Haas: "rgba(182,186,189,0.10)", Williams: "rgba(100,196,255,0.10)", Audi: "rgba(255,0,0,0.06)", Cadillac: "rgba(212,175,55,0.10)" };
 
 // Translucent version of any colour — hex, rgb() or a CSS variable. Appending a
@@ -834,6 +836,7 @@ export default function F1Dashboard(){
   const{DS,CS,races,pits,pitsByRace,qualifying,h2h,completedRounds,totalRounds,fetchedAt,pitRaceName,leader,narrative,progression}=data;
   const sched=withStatus(data.sched,clock);
   const seasonDone=sched.length>0&&sched.every(r=>r.st==="done");
+  const clinch=titleClinch({DS,sched,races}); // mathematically decided, possibly with rounds to go
   const season=data.season||SEASON_FALLBACK;
   const avgP=pits.length>0?`${(pits.reduce((a,b)=>a+b.s,0)/pits.length).toFixed(3)}s`:"N/A";
   const fastestPit=pits.length>0?pits[0]:null;
@@ -863,6 +866,7 @@ export default function F1Dashboard(){
           <div className="stamp fu" style={{animationDelay:"0.1s"}} title={new Date(fetchedAt).toLocaleString()}>
             <div><b>ROUND {completedRounds} / {totalRounds}</b> completed</div>
             {!nextRace&&seasonDone&&DS[0]&&<div>season complete · <b>{DS[0].n.split(" ").pop().toUpperCase()}</b> champion</div>}
+            {!seasonDone&&clinch&&DS[0]&&<div><b>{DS[0].n.split(" ").pop().toUpperCase()}</b> · {season} champion · clinched R{clinch.round}</div>}
             {nextRace&&<div>next · <b>{nextRace.nm.replace(" Grand Prix"," GP").toUpperCase()}</b> · {raceDateFmt(nextRace.dt,nextRace.tt)} · {countdownLabel(nextRace.dt,nextRace.tt)}</div>}
             {(()=>{const pending=sched.filter(r=>r.st==="done"&&!races.some(x=>!x.sprint&&x.r===r.r));return pending.length?<div style={{color:"#F2B8B8"}}>R{pending[0].r} {pending[0].nm.replace(" Grand Prix"," GP")} · results pending next fetch</div>:null;})()}
             <div className="fresh"><i className={cls}/>{label} · Jolpica · OpenF1</div>
@@ -955,7 +959,7 @@ export default function F1Dashboard(){
                 </div>
                 <div>
                   <h2 className="sheet-h" style={{fontSize:30}}>Standings</h2>
-                  <p className="sheet-sub">Drivers · after round {completedRounds}{leader&&DS[1]?` · ${leader.n.split(" ").pop()} leads by ${leader.pts-DS[1].pts}`:""}{leader&&leader.wins?` · ${leader.wins} win${leader.wins>1?"s":""}`:""}</p>
+                  <p className="sheet-sub">Drivers · after round {completedRounds}{clinch&&leader?` · ${leader.n.split(" ").pop()} is ${season} champion, clinched at R${clinch.round}`:leader&&DS[1]?` · ${leader.n.split(" ").pop()} leads by ${leader.pts-DS[1].pts}`:""}{leader&&leader.wins?` · ${leader.wins} win${leader.wins>1?"s":""}`:""}</p>
                   <ol className="billing" style={{marginTop:12}}>
                     {DS.map((d,i)=>{const tier=i===0?"t1":i<3?"t2":i<6?"t3":i<10?"t4":"t5";return(
                       <li key={d.n} className={tier}>
@@ -990,7 +994,7 @@ export default function F1Dashboard(){
                         <div className="pos">{idx+1}</div>
                         <DH name={fullName(p.d)} size={44} headshots={headshots}/>
                         <div className="who">
-                          <b style={{color:TC[p.t]||"var(--ink)"}}>{fullName(p.d)}</b>
+                          <b style={{color:TCT[p.t]||"var(--ink)"}}>{fullName(p.d)}</b>
                           <span>{p.t}</span>
                           <span className="gap">{p.g}</span>
                         </div>
@@ -1077,7 +1081,7 @@ export default function F1Dashboard(){
                       <div key={i} className="entry">
                         <DH name={q.driver} size={40} headshots={headshots}/>
                         <div style={{flex:1,minWidth:0}}>
-                          <div className="head" style={{fontSize:17,fontWeight:700,lineHeight:1,display:"flex",alignItems:"baseline",gap:8}}>{q.driver.split(" ").pop()}<span className="num" style={{fontSize:11,fontWeight:400,textTransform:"none",letterSpacing:0,color:TC[q.team]||"var(--ink-3)"}}>{q.team}</span></div>
+                          <div className="head" style={{fontSize:17,fontWeight:700,lineHeight:1,display:"flex",alignItems:"baseline",gap:8}}>{q.driver.split(" ").pop()}<span className="num" style={{fontSize:11,fontWeight:400,textTransform:"none",letterSpacing:0,color:TCT[q.team]||"var(--ink-3)"}}>{q.team}</span></div>
                           <p style={{margin:"6px 0 0",fontSize:13.5,lineHeight:1.5,color:"var(--ink)"}}>“{q.quote.length>160?q.quote.slice(0,160)+"…":q.quote}”</p>
                           {q.context&&<div className="num" style={{fontSize:11,color:"var(--ink-3)",marginTop:5}}>{q.context}</div>}
                         </div>
@@ -1094,7 +1098,7 @@ export default function F1Dashboard(){
         {tab==="Standings"&&<TabBody render={()=>(
           <div className="fu" style={{display:"flex",flexDirection:"column",gap:24}}>
             {/* Title fight — maths, projection and what-if */}
-            <TitleFight DS={DS} sched={sched} races={races}/>
+            <TitleFight DS={DS} sched={sched} races={races} clinch={clinch} season={season}/>
             {/* Points Progression Chart */}
             {progression&&progression.labels.length>=3&&(()=>{
               const W=800,H=240,padL=44,padR=24,padT=20,padB=32;
@@ -2146,7 +2150,7 @@ function HowComputed({children}){
 }
 
 // ── Standings: the title fight ─────────────────────────────────────────────
-const TitleFight=memo(function TitleFight({DS,sched,races}){
+const TitleFight=memo(function TitleFight({DS,sched,races,clinch,season}){
   const outlook=useMemo(()=>titleOutlook({DS,sched,races,sprints:races.filter(r=>r.sprint)}),[DS,sched,races]);
   const[whatIf,setWhatIf]=useState({}); // `${eventIndex}|${driver}` → finishing position ("0" = no points)
   if(!outlook)return null;
@@ -2159,12 +2163,22 @@ const TitleFight=memo(function TitleFight({DS,sched,races}){
       <div className="head" style={{fontSize:26,fontWeight:700}}>{leader.n} · champion by {leader.pts-(rival?.pts||0)} points</div>
     </div>
   );
+  if(clinch||clinched)return(
+    <div style={PANEL}>
+      <PanelHead title="Title Fight" sub={clinch?`Decided at R${clinch.round} ${clinch.name}: ${clinch.lead} points clear with ${clinch.left} left to win`:"Decided"}/>
+      <div className="head" style={{fontSize:30,fontWeight:700,lineHeight:1.05,display:"flex",alignItems:"baseline",gap:12,flexWrap:"wrap"}}>
+        <span style={{display:"inline-block",width:5,height:24,background:TC[leader.t]||"var(--ink-3)",alignSelf:"center"}}/>
+        {leader.n}<span className="num" style={{fontSize:13,fontWeight:400,color:"var(--ink-3)",textTransform:"none"}}>{season} World Champion</span>
+      </div>
+      <p style={{margin:"10px 0 0",fontSize:14,color:"var(--w60)",maxWidth:"70ch"}}>{L(leader)} leads {L(rival)} by {leader.pts-rival.pts} points with {maxLeft} still available, so no result in the {events.length} remaining session{events.length>1?"s":""} can change the order at the top.</p>
+      <HowComputed>A title is decided once the leader's margin over every rival is larger than the points still available: 25 for every Grand Prix left and 8 for every sprint. The deciding round is found by replaying the season result by result.</HowComputed>
+    </div>
+  );
   const alive=drivers.filter(d=>d.alive);
   const contenders=alive.slice(0,4);
   const nextMax=events.filter(e=>e.round===events[0].round).reduce((s,e)=>s+e.max,0);
   let line;
-  if(clinched)line=<>{leader.n} is champion: {leader.pts-rival.pts} points clear with {maxLeft} left to win.</>;
-  else if(needed&&needed.margin<=0)line=<>{L(leader)} clinches the title at the {needed.name} unless {L(rival)} outscores {L(leader)} there by {1-needed.margin} points or more.</>;
+  if(needed&&needed.margin<=0)line=<>{L(leader)} clinches the title at the {needed.name} unless {L(rival)} outscores {L(leader)} there by {1-needed.margin} points or more.</>;
   else if(needed&&needed.margin<=nextMax)line=<>{L(leader)} can clinch at the {needed.name} by outscoring {L(rival)} there by {needed.margin} points or more.</>;
   else line=<>The title can't be settled at the {events[0].name}: {alive.length} drivers can still mathematically win it.</>;
   const pick=(i,n)=>whatIf[`${i}|${n}`]||"";
@@ -2202,7 +2216,7 @@ const TitleFight=memo(function TitleFight({DS,sched,races}){
           <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.2,color:"var(--w50)",fontWeight:600,marginBottom:8}}>What if… pick their finishes</div>
           <div style={{overflowX:"auto"}}>
             <table style={{borderCollapse:"collapse",fontSize:12}}>
-              <thead><tr><th/>{contenders.map(d=><th key={d.n} style={{padding:"4px 6px",fontSize:11,fontWeight:700,color:TC[d.t]||"var(--fg)",textAlign:"left"}}>{L(d)}</th>)}</tr></thead>
+              <thead><tr><th/>{contenders.map(d=><th key={d.n} style={{padding:"4px 6px",fontSize:11,fontWeight:700,color:TCT[d.t]||"var(--fg)",textAlign:"left"}}>{L(d)}</th>)}</tr></thead>
               <tbody>
                 {events.map((e,i)=>(
                   <tr key={i}>
@@ -2304,7 +2318,7 @@ const QualiGapTrend=memo(function QualiGapTrend({qualifying}){
           return(
             <div key={tm.t}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",gap:6}}>
-                <span className="head" style={{fontSize:14,fontWeight:700,color:col}}>{tm.t}</span>
+                <span className="head" style={{fontSize:14,fontWeight:700,color:TCT[tm.t]||col}}>{tm.t}</span>
                 <span className="num" style={{fontSize:11,color:"var(--w55)"}}>{tm.med.toFixed(2)}%{tm.poles?` · ${tm.poles} pole${tm.poles>1?"s":""}`:""}</span>
               </div>
               <svg role="img" aria-label={`${tm.t}: median ${tm.med.toFixed(2)}% off pole`} viewBox={`0 0 ${W} ${H}`} style={{width:"100%",height:H,display:"block",borderTop:"1px solid var(--rule-soft)",borderBottom:"1px solid var(--rule-faint)"}}>
@@ -2380,7 +2394,7 @@ const DriverRatings=memo(function DriverRatings({stats,DS,headshots,season}){
         <DH name={row.name} size={44} headshots={headshots}/>
         <div style={{flex:"1 1 160px",minWidth:0}}>
           <div className="head" style={{fontSize:24,fontWeight:700,lineHeight:1.05}}>{row.name}</div>
-          <div style={{fontSize:12,color:col,fontWeight:600}}>{team} · {row.starts} starts</div>
+          <div style={{fontSize:12,color:TCT[team]||col,fontWeight:600}}>{team} · {row.starts} starts</div>
         </div>
         <select aria-label="Driver" value={row.did} onChange={e=>choose(e.target.value)} style={{...SELECT_STYLE,fontFamily:"var(--font-ui)",fontSize:13,padding:"6px 12px"}}>
           {sorted.map(d=><option key={d.did} value={d.did}>{d.name}</option>)}

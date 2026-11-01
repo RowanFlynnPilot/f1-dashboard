@@ -32,7 +32,7 @@
   /* record red marks lines, dots and fills; --red-ink is the same red darkened to
      clear 4.5:1 for small TEXT on the sheet (#D62828 is 3.9:1) */
   --red:#D62828; --red-ink:#B91F1F; --red-soft:rgba(214,40,40,0.10); --red-rule:rgba(214,40,40,0.35);
-  --green:#1B7F4B; --purple:#6A2FC9; --amber:#B7791F; --gold:#9A7B1F; --yellow:#C9A400;
+  --green:#176E3E; --purple:#6A2FC9; --amber:#B7791F; --gold:#9A7B1F; --yellow:#C9A400;
   /* translucent ink ramp — the old white-alpha vocabulary, inverted onto paper.
      App.jsx references these so the whole hierarchy survives the flip. */
   --w015:rgba(20,24,29,0.025); --w02:rgba(20,24,29,0.035); --w025:rgba(20,24,29,0.04);

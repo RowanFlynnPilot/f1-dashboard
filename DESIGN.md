@@ -23,7 +23,7 @@ colors:
   record-red: "#D62828"
   red-soft: "rgba(214,40,40,0.10)"
   red-rule: "rgba(214,40,40,0.35)"
-  green: "#1B7F4B"
+  green: "#176E3E"
   purple: "#6A2FC9"
   amber: "#B7791F"
   gold: "#9A7B1F"

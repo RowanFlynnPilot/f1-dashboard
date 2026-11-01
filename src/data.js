@@ -705,7 +705,7 @@ export const SEASON_METRICS = [
   { key: "qualiGap", label: "Qualifying pace", unit: "% off pole", better: "low", digits: 2, note: "Median gap of the driver's best qualifying lap to pole, per round." },
   { key: "racePace", label: "Race pace", unit: "% off best", better: "low", digits: 2, note: "Median green-flag lap against the race's quickest median, per race." },
   { key: "consistency", label: "Consistency", unit: "% lap spread", better: "low", digits: 2, note: "Standard deviation of green-flag laps as a share of their mean, per race." },
-  { key: "lap1", label: "Starts", unit: "places on lap 1", better: "high", digits: 1, note: "Average places gained from the grid by the end of lap 1." },
+  { key: "lap1", label: "Opening lap", unit: "places gained", better: "high", digits: 1, note: "Average places gained from the grid by the end of lap 1." },
   { key: "passes", label: "Overtaking", unit: "passes / race", better: "high", digits: 1, note: "On-track passes per race, pit cycles, lapping and safety-car swaps excluded." },
   { key: "teammateQuali", label: "Beats team-mate", unit: "% of qualifyings", better: "high", digits: 0, note: "Share of qualifying sessions ahead of the team-mate that weekend." },
   { key: "pointsPerStart", label: "Scoring", unit: "points / start", better: "high", digits: 1, note: "Season points per Grand Prix started." },
@@ -785,3 +785,30 @@ export function buildSeasonStats(data, meetingsByRound, { minStarts = 5 } = {}) 
   }
   return { season: data?.season, rounds: (data?.races || []).length, minStarts, metrics: SEASON_METRICS, drivers: rows };
 }
+
+// The round the title was decided at, if it has been: replay the season event by
+// event (each round's sprint, then its Grand Prix) and find the first point where
+// the eventual leader's lead exceeded every point still available. Uses the
+// classification points (`pts` on each row), which is what the standings sum.
+// → { round, name, lead, left } or null
+export function titleClinch({ DS, sched, races }) {
+  const champ = DS?.[0];
+  if (!champ || !(sched || []).length) return null;
+  const rounds = [...sched].sort((a, b) => a.r - b.r);
+  const maxOf = r => RACE_POINTS[0] + (r.sp ? SPRINT_POINTS[0] : 0);
+  const key = row => row.did || row.d;
+  const champKey = champ.did || lastNameOf(champ.n);
+  const tot = {};
+  let left = rounds.reduce((s, r) => s + maxOf(r), 0);
+  for (const r of rounds) {
+    const run = (races || []).filter(x => parseInt(x.r) === r.r);
+    if (!run.some(x => !x.sprint)) break; // the Grand Prix hasn't run
+    for (const x of run) for (const row of x.full || []) tot[key(row)] = (tot[key(row)] || 0) + (row.pts || 0);
+    left -= maxOf(r);
+    const mine = tot[champKey] || 0;
+    const rival = Math.max(0, ...Object.entries(tot).filter(([k]) => k !== champKey).map(([, v]) => v));
+    if (mine - rival > left) return { round: r.r, name: r.nm, lead: mine - rival, left };
+  }
+  return null;
+}
+const lastNameOf = n => (n || "").split(" ").pop();

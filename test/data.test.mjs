@@ -2,7 +2,7 @@
 //   npm test
 import test from "node:test";
 import assert from "node:assert/strict";
-import { transformData, countdownLabel, withStatus, meetingForRace, greenFlagLaps, racePace, onTrackPasses, lapOneGains, miniSectors, titleOutlook, remainingEvents, buildSeasonStats } from "../src/data.js";
+import { transformData, countdownLabel, withStatus, meetingForRace, greenFlagLaps, racePace, onTrackPasses, lapOneGains, miniSectors, titleOutlook, remainingEvents, buildSeasonStats, titleClinch } from "../src/data.js";
 
 // A classification row in data.json's shape
 const row = (pos, driver, team, pts, extra = {}) => ({
@@ -252,4 +252,19 @@ test("buildSeasonStats ranks metrics into percentiles where 100 is best", () => 
   assert.deepEqual([by.one.teammateQuali.value, by.two.teammateQuali.value], [100, 0]);
   assert.equal(by.three.finishRate.value, 0);
   assert.equal(by.one.racePace.value, null, "no meeting file, no race pace");
+});
+
+test("titleClinch finds the round where the lead first beat the points left", () => {
+  const sched = [1, 2, 3, 4].map(r => ({ r, nm: `R${r} GP`, sp: r === 2 }));
+  const gp = (r, rows, sprint = false) => ({ r: sprint ? `${r}S` : r, sprint, full: rows.map(([did, pts]) => ({ did, pts })) });
+  const races = [
+    gp(1, [["one", 25], ["two", 0]]),
+    gp(2, [["one", 8], ["two", 0]], true),
+    gp(2, [["one", 25], ["two", 18]]),
+    gp(3, [["one", 25], ["two", 0]]),
+  ];
+  const DS = [{ n: "Ann One", did: "one" }, { n: "Bob Two", did: "two" }];
+  // after R2: lead 40, 50 left (R3 + R4) → not yet; after R3: lead 65, 25 left → clinched at R3
+  assert.deepEqual(titleClinch({ DS, sched, races }), { round: 3, name: "R3 GP", lead: 65, left: 25 });
+  assert.equal(titleClinch({ DS, sched, races: races.slice(0, 3) }), null);
 });
