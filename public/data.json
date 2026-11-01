@@ -1,6 +1,6 @@
 {
   "season": 2026,
-  "fetchedAt": "2026-11-01T02:12:19.216Z",
+  "fetchedAt": "2026-11-01T03:25:16.856Z",
   "completedRounds": 18,
   "totalRounds": 23,
   "standingsRound": 19,
@@ -376,8 +376,8 @@
         }
       ],
       "lineup": [
-        "Lawson",
-        "Lindblad"
+        "Lindblad",
+        "Lawson"
       ]
     },
     {
@@ -19675,15 +19675,6 @@
         },
         {
           "pos": 8,
-          "driver": "Lawson",
-          "driverId": "lawson",
-          "team": "Racing Bulls",
-          "q1": "1:18.097",
-          "q2": "1:17.207",
-          "q3": "1:17.029"
-        },
-        {
-          "pos": 9,
           "driver": "Lindblad",
           "driverId": "arvid_lindblad",
           "team": "Racing Bulls",
@@ -19692,7 +19683,16 @@
           "q3": "1:17.117"
         },
         {
-          "pos": 10,
+          "pos": 8,
+          "driver": "Lawson",
+          "driverId": "lawson",
+          "team": "Racing Bulls",
+          "q1": null,
+          "q2": "1:17.207",
+          "q3": "1:17.029"
+        },
+        {
+          "pos": 9,
           "driver": "Gasly",
           "driverId": "gasly",
           "team": "Alpine",
@@ -19701,7 +19701,7 @@
           "q3": "1:17.153"
         },
         {
-          "pos": 11,
+          "pos": 10,
           "driver": "Hülkenberg",
           "driverId": "hulkenberg",
           "team": "Audi",
@@ -19710,7 +19710,7 @@
           "q3": null
         },
         {
-          "pos": 12,
+          "pos": 11,
           "driver": "Colapinto",
           "driverId": "colapinto",
           "team": "Alpine",
@@ -19719,7 +19719,7 @@
           "q3": null
         },
         {
-          "pos": 13,
+          "pos": 12,
           "driver": "Piastri",
           "driverId": "piastri",
           "team": "McLaren",
@@ -19728,7 +19728,7 @@
           "q3": null
         },
         {
-          "pos": 14,
+          "pos": 13,
           "driver": "Bortoleto",
           "driverId": "bortoleto",
           "team": "Audi",
@@ -19737,7 +19737,7 @@
           "q3": null
         },
         {
-          "pos": 15,
+          "pos": 14,
           "driver": "Bearman",
           "driverId": "bearman",
           "team": "Haas",
@@ -19746,7 +19746,7 @@
           "q3": null
         },
         {
-          "pos": 16,
+          "pos": 15,
           "driver": "Sainz",
           "driverId": "sainz",
           "team": "Williams",
@@ -19755,7 +19755,7 @@
           "q3": null
         },
         {
-          "pos": 17,
+          "pos": 16,
           "driver": "Albon",
           "driverId": "albon",
           "team": "Williams",
@@ -19764,7 +19764,7 @@
           "q3": null
         },
         {
-          "pos": 18,
+          "pos": 17,
           "driver": "Alonso",
           "driverId": "alonso",
           "team": "Aston Martin",
@@ -19773,7 +19773,7 @@
           "q3": null
         },
         {
-          "pos": 19,
+          "pos": 18,
           "driver": "Hirakawa",
           "driverId": "ryo_hirakawa",
           "team": "Haas",
@@ -19782,7 +19782,7 @@
           "q3": null
         },
         {
-          "pos": 20,
+          "pos": 19,
           "driver": "Stroll",
           "driverId": "stroll",
           "team": "Aston Martin",
@@ -19791,7 +19791,7 @@
           "q3": null
         },
         {
-          "pos": 21,
+          "pos": 20,
           "driver": "Pérez",
           "driverId": "perez",
           "team": "Cadillac",
@@ -19800,7 +19800,7 @@
           "q3": null
         },
         {
-          "pos": 22,
+          "pos": 21,
           "driver": "Bottas",
           "driverId": "bottas",
           "team": "Cadillac",
