@@ -135,6 +135,13 @@ input[type=range]{accent-color:var(--red)}
 .hero-grid>div{min-width:0}
 .race-pills{display:flex;flex-wrap:wrap;gap:4px;flex:1 1 0;min-width:0}
 .race-pills>button{flex:0 0 auto;white-space:nowrap}
+/* Telemetry index: sticky over the sheet, condensed caps like the tab bar */
+.tel-index{position:sticky;top:0;z-index:6;display:flex;flex-wrap:wrap;gap:2px 18px;margin:-8px 0 -10px;padding:8px 0;background:var(--sheet);border-bottom:1px solid var(--rule-soft)}
+.tel-index button{flex:0 0 auto;background:none;border:0;border-bottom:2px solid transparent;padding:3px 0;font-family:var(--font-head);font-size:12.5px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-3);cursor:pointer;white-space:nowrap}
+.tel-index button:hover{color:var(--ink)}
+.tel-index button[aria-current]{color:var(--ink);border-bottom-color:var(--red)}
+.tel-sec{display:flex;flex-direction:column;gap:24px;scroll-margin-top:52px}
+.tel-sec:empty{display:none}
 .lapsheet-slot{min-height:620px}
 .lapchart{min-width:0}
 .lapchart{position:relative;user-select:none}
@@ -243,6 +250,8 @@ td{font-family:var(--font-ui)}
   .hero-grid{grid-template-columns:1fr}
         }
 @media(max-width:768px){
+  .tel-index{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;gap:16px}
+  .tel-index::-webkit-scrollbar{display:none}
   /* Telemetry's 18 race buttons: one sideways-scrolling row instead of ~5 wrapped
      rows, whose count changed with the font swap. The clipped button at the edge
      shows there is more. */

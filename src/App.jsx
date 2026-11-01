@@ -2588,6 +2588,34 @@ const MiniSectorPanel=memo(function MiniSectorPanel({race,track,trackName}){
   );
 });
 
+// The Telemetry sheet runs to a dozen panels; its index jumps between these.
+// Hash links can't be used (the hash routes the app), so buttons scroll instead.
+const TEL_SECTIONS=[["tel-replay","Replay"],["tel-compare","Lap Compare"],["tel-laps","Lap times"],["tel-pace","Race pace"],["tel-tyres","Tyres"],["tel-positions","Positions"],["tel-gaps","Gaps"],["tel-speed","Speed"]];
+function TelIndex({race}){
+  const[active,setActive]=useState(TEL_SECTIONS[0][0]);
+  useEffect(()=>{
+    // the section crossing the upper third of the viewport is the current one
+    const io=new IntersectionObserver(es=>{for(const e of es)if(e.isIntersecting)setActive(e.target.id);},{rootMargin:"-30% 0px -65% 0px"});
+    for(const[id]of TEL_SECTIONS){const el=document.getElementById(id);if(el)io.observe(el);}
+    return()=>io.disconnect();
+  },[race]);
+  // Phones scroll the index sideways: keep the current section's label in view
+  const navRef=useRef(null);
+  useEffect(()=>{
+    const nav=navRef.current,b=nav?.querySelector("[aria-current]");
+    if(!b||nav.scrollWidth<=nav.clientWidth)return;
+    const nr=nav.getBoundingClientRect(),br=b.getBoundingClientRect();
+    if(br.left<nr.left||br.right>nr.right)nav.scrollLeft+=br.left-nr.left-16;
+  },[active]);
+  return(
+    <nav ref={navRef} className="tel-index" aria-label="Telemetry sections">
+      {TEL_SECTIONS.map(([id,label])=>(
+        <button key={id} type="button" aria-current={active===id?"true":undefined} onClick={()=>document.getElementById(id)?.scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"})}>{label}</button>
+      ))}
+    </nav>
+  );
+}
+
 // ─── Telemetry tab — module-scope memo component so hover tooltips and 60fps
 // playback frames re-render only this subtree, never the whole dashboard.
 // Mounted only while the Telemetry tab is active, so the rAF clocks stop on
@@ -2682,13 +2710,21 @@ const TelemetryTab=memo(function TelemetryTab({openf1,tracks,telMeetingKey,setTe
                 </div>
               </div>
 
+              <TelIndex race={race}/>
+
               {/* Race Replay — track dots + animated leaderboard + scrubber */}
+              <section id="tel-replay" className="tel-sec">
               <ReplayPanel cur={cur} race={race} tracks={tracks} allDrivers={allDrivers} telMeetingKey={telMeetingKey} outNums={outByDay?.[meetingRaceDay(cur.meeting)]}/>
 
+              </section>
+
               {/* Lap Compare — pick 2 drivers + 1 lap, live-fetch /car_data + /location */}
+              <section id="tel-compare" className="tel-sec">
               <LapComparePanel openf1={openf1} telMeetingKey={telMeetingKey} allDrivers={allDrivers} cur={cur}/>
+              </section>
 
               {/* Driver chips */}
+              <section id="tel-laps" className="tel-sec">
               <div style={{background:"var(--w02)",border:"1px solid var(--w06)",borderRadius:2,padding:16}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:10}}>
                   <div style={{fontSize:12,color:"var(--w50)",fontWeight:500}}>Drivers (click to toggle · max 8)</div>
@@ -2711,27 +2747,38 @@ const TelemetryTab=memo(function TelemetryTab({openf1,tracks,telMeetingKey,setTe
               {/* Lap Times Chart */}
               <LapTimesChart maxLap={maxLap} yMin={yMin} yMax={yMax} race={race} visibleDrivers={visibleDrivers}/>
               <WeatherStrip race={race} maxLap={maxLap}/>
+              </section>
 
               {/* Race pace distribution */}
+              <section id="tel-pace" className="tel-sec">
               <RacePacePanel race={race}/>
+              </section>
 
               {/* Tire Stints */}
+              <section id="tel-tyres" className="tel-sec">
               <TireStrategyPanel race={race} maxLap={maxLap} allDrivers={allDrivers} visibleDrivers={visibleDrivers}/>
 
               {/* Tire Management — degradation rates + stint pace vs compound benchmark */}
               <TireManagementPanel race={race} allDrivers={allDrivers} maxLap={maxLap}/>
+              </section>
 
               {/* Position Evolution */}
+              <section id="tel-positions" className="tel-sec">
               <PositionChartPanel maxLap={maxLap} visibleDrivers={visibleDrivers} race={race}/>
+              </section>
 
               {/* Driver-vs-Driver Delta */}
+              <section id="tel-gaps" className="tel-sec">
               <DeltaChartPanel allDrivers={allDrivers} maxLap={maxLap} race={race}/>
+              </section>
 
               {/* Speed Trace */}
+              <section id="tel-speed" className="tel-sec">
               <SpeedTracePanel allDrivers={allDrivers}/>
 
               {/* Mini-sectors from the speed traces */}
               <MiniSectorPanel race={race} track={tracks?.[meetingTrackName(cur.meeting)]} trackName={meetingTrackName(cur.meeting)}/>
+              </section>
             </div>
           );
 });
