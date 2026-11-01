@@ -11,3 +11,5 @@ __pycache__/
 .impeccable/config.local.json
 *.tmp
 .ssr/
+test-results/
+playwright-report/

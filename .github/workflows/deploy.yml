@@ -94,6 +94,21 @@ jobs:
         env:
           ALLOW_SHRINK: ${{ inputs.allow_shrink && '1' || '' }}
       - run: npm run build
+      # Browser smoke test of the built site in the runner's Chrome: every sheet
+      # opens without errors at phone and desktop sizes, and the pre-rendered
+      # Overview hydrates without a mismatch or layout shift. A failure stops
+      # the deploy (the previous site stays live).
+      - name: Smoke test the build
+        run: npm run e2e
+        env:
+          CI: "true"
+      - name: Upload smoke-test traces
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-traces
+          path: test-results/
+          retention-days: 7
       - uses: actions/configure-pages@v6
       - uses: actions/upload-pages-artifact@v5
         with:
