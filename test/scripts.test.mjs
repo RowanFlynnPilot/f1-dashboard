@@ -64,6 +64,25 @@ import { processRaceControlPeriods, buildSpeedTrace, computeSessionBests, proces
 import { mergeIds } from "../scripts/merge-video-ids.mjs";
 import { matchRound, raceIsFinal, lapCompareDefaultPick, compactLapTelemetry } from "../scripts/fetch-openf1-data.mjs";
 import { validate } from "../scripts/validate-data.mjs";
+import { quoteGaps } from "../scripts/run-summary.mjs";
+
+test("quoteGaps checks every finished round, not just the latest", () => {
+  const data = {
+    races: [{ round: 17 }, { round: 18 }],
+    schedule: [
+      { round: 17, name: "Singapore Grand Prix", date: "2026-10-11", time: "12:00:00Z", sprint: true },
+      { round: 18, name: "United States Grand Prix", date: "2026-10-25", time: "19:00:00Z", sprint: false },
+      { round: 19, name: "Mexico City Grand Prix", date: "2026-11-01", time: "20:00:00Z", sprint: false },
+    ],
+  };
+  const q = (sessions) => Object.fromEntries(sessions.map(s => [s, { quotes: [{}] }]));
+  const quotes = { rounds: [{ round: 17, sessions: q(["sprint", "qualifying"]) }, { round: 18, sessions: q(["qualifying", "race"]) }] };
+  const gaps = quoteGaps(data, quotes, Date.parse("2026-10-31T12:00:00Z"));
+  assert.deepEqual(gaps, [{ round: 17, name: "Singapore Grand Prix", missing: ["sprintQualifying", "race"] }],
+    "R17's missing race is caught behind a fully quoted R18; R19 hasn't run");
+  const fresh = quoteGaps(data, { rounds: [{ round: 17, sessions: q(["sprintQualifying", "sprint", "qualifying", "race"]) }] }, Date.parse("2026-10-26T12:00:00Z"));
+  assert.deepEqual(fresh, [], "a race under 48 hours old is not a gap yet");
+});
 
 test("matchRound joins OpenF1 meetings to Jolpica rounds by race date, not name", () => {
   const schedule = [

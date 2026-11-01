@@ -5,6 +5,24 @@
 // outcomes arrive as env vars from deploy.yml. Never fails the job — a broken
 // summary must not turn a good deploy red.
 import fs from "node:fs";
+import { pathToFileURL } from "node:url";
+
+// Finished rounds (ended 48h+ ago) missing quotes for an expected session.
+// A session counts once it has quotes or an extractedAt stamp.
+export function quoteGaps(data, quotes, now = Date.now()) {
+  const byRound = Object.fromEntries((quotes?.rounds || []).map(r => [r.round, r.sessions || {}]));
+  const gaps = [];
+  for (const s of data?.schedule || []) {
+    const endedAt = new Date(`${s.date}T${s.time || "12:00:00Z"}`).getTime() + 3 * 3600e3;
+    if (!(data.races || []).some(r => r.round === s.round) || now - endedAt < 48 * 3600e3) continue;
+    const want = s.sprint ? ["sprintQualifying", "sprint", "qualifying", "race"] : ["qualifying", "race"];
+    const have = byRound[s.round] || {};
+    const missing = want.filter(k => !((have[k]?.quotes || []).length || have[k]?.extractedAt));
+    if (missing.length) gaps.push({ round: s.round, name: s.name, missing });
+  }
+  return gaps;
+}
+
 
 const read = p => { try { return JSON.parse(fs.readFileSync(p, "utf8")); } catch { return null; } };
 const env = process.env;
@@ -15,7 +33,7 @@ const OUTCOME = { success: "✅ success", failure: "❌ failed", skipped: "⏭�
 const outcome = v => OUTCOME[v ?? ""] ?? v;
 const utc = iso => (iso ? new Date(iso).toISOString().slice(0, 16).replace("T", " ") + " UTC" : "unknown");
 
-try {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) try {
   const data = read("public/data.json");
   const index = read("public/openf1/index.json");
   const quotes = read("public/driver-quotes.json");
@@ -35,25 +53,24 @@ try {
   out(`| Quotes | ${outcome(env.QUOTES_OUTCOME)} | ${lastQuoted ? `race quotes through round ${lastQuoted.round} · ${lastQuoted.raceName}` : "no race quotes yet"} |`);
   out(`| Data commit | ${outcome(env.COMMIT_OUTCOME)} | ${env.COMMIT_OUTCOME === "success" ? "cache and validator baseline saved to main" : "see the commit step log"} |`);
 
-  // Quotes lag: the transcript step runs on a local machine (YouTube blocks CI),
-  // so a finished race without quotes two days on means someone needs to run it.
-  if (data && lastRace) {
-    const sched = (data.schedule || []).find(s => s.round === lastRace.round);
-    const endedAt = sched ? new Date(`${sched.date}T${sched.time || "12:00:00Z"}`).getTime() + 3 * 3600e3 : 0;
-    const lag = lastRace.round - (lastQuoted?.round ?? 0);
-    const hoursSince = (Date.now() - endedAt) / 3600e3;
-    if (lag > 0 && hoursSince > 48) {
-      const msg = `Driver quotes lag the results by ${lag} round${lag > 1 ? "s" : ""} (latest quoted: ${lastQuoted ? `round ${lastQuoted.round}` : "none"}). ` +
-        "Run `python scripts/fetch-driver-quotes.py --fetch-transcripts` locally and push.";
-      out("");
-      out(`> ⚠️ ${msg}`);
-      console.log(`::warning title=Quotes lag::${msg}`);
-    }
+  // Quote gaps: the transcript step runs on a local machine (YouTube blocks CI),
+  // so any finished round still missing a session's quotes two days on needs a
+  // look. Every round is checked, not just the latest — R17's missing race
+  // quotes sat unnoticed for weeks behind a later round that had them.
+  const gaps = quoteGaps(data, quotes);
+  if (gaps.length) {
+    const list = gaps.map(g => `R${g.round} ${g.name.replace(" Grand Prix", "")} (${g.missing.join(", ")})`).join("; ");
+    const msg = `Driver quotes missing for ${list}. Run \`python scripts/fetch-driver-quotes.py --fetch-transcripts\` locally and push.`;
+    out("");
+    out(`> ⚠️ ${msg}`);
+    console.log(`::warning title=Quote gaps::${msg}`);
   }
 } catch (e) {
   out(`Summary failed: ${e.message}`);
 }
 
-const text = lines.join("\n") + "\n";
-if (env.GITHUB_STEP_SUMMARY) fs.appendFileSync(env.GITHUB_STEP_SUMMARY, text);
-else process.stdout.write(text);
+if (lines.length) {
+  const text = lines.join("\n") + "\n";
+  if (env.GITHUB_STEP_SUMMARY) fs.appendFileSync(env.GITHUB_STEP_SUMMARY, text);
+  else process.stdout.write(text);
+}

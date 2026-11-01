@@ -41,7 +41,7 @@ if ($Register) {
 
 function Write-Log([string]$Message) {
   $line = "$(Get-Date -Format s)  $Message"
-  Add-Content -Path $Log -Value $line
+  Add-Content -Path $Log -Value $line -Encoding UTF8  # PS 5.1 defaults to ANSI, which turned emoji into "?"
   Write-Host $line
 }
 

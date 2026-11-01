@@ -72,10 +72,12 @@ F1_RSS_URL = f"https://www.youtube.com/feeds/videos.xml?channel_id={F1_CHANNEL_I
 # etc. Match all reasonable variants. Order in SESSION_PATTERNS matters: more specific
 # patterns (sprintQualifying) must come before less specific ones (sprint, qualifying).
 SESSION_PATTERNS: list[tuple[str, re.Pattern]] = [
-    ("sprintQualifying", re.compile(r"Drivers React (?:After|To) Sprint Qualifying \| (\d{4}) (.+)")),
-    ("sprint",           re.compile(r"Drivers React (?:After|To) Sprint \| (\d{4}) (.+)")),
-    ("qualifying",       re.compile(r"Drivers React (?:To|After) Qualifying \| (\d{4}) (.+)")),
-    ("race",             re.compile(r"Drivers React (?:After(?: To)? The Race|To The Race) \| (\d{4}) (.+)")),
+# Case-insensitive: F1 titled 2026 R17 "Drivers React After the Race", and a
+# case-sensitive match silently skipped the round's race quotes.
+    ("sprintQualifying", re.compile(r"Drivers React (?:After|To) Sprint Qualifying \| (\d{4}) (.+)", re.I)),
+    ("sprint",           re.compile(r"Drivers React (?:After|To) Sprint \| (\d{4}) (.+)", re.I)),
+    ("qualifying",       re.compile(r"Drivers React (?:To|After) Qualifying \| (\d{4}) (.+)", re.I)),
+    ("race",             re.compile(r"Drivers React (?:After(?: To)? The Race|To The Race) \| (\d{4}) (.+)", re.I)),
 ]
 SESSION_TYPES = [name for name, _ in SESSION_PATTERNS]
 
@@ -352,6 +354,92 @@ def discover_new_videos(season_videos: dict) -> int:
     return found
 
 
+def search_youtube(query: str) -> list[tuple[str, str, str]]:
+    """(videoId, title, channel) for each video on a YouTube search-results page."""
+    url = "https://www.youtube.com/results?search_query=" + requests.utils.quote(query)
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/140 Safari/537.36",
+               "Accept-Language": "en-US,en;q=0.9"}
+    html = requests.get(url, headers=headers, timeout=20).text
+    m = re.search(r"var ytInitialData = (\{.*?\});</script>", html, re.S)
+    if not m:
+        return []
+    found = []
+
+    def walk(node):
+        if isinstance(node, dict):
+            vr = node.get("videoRenderer")
+            if vr:
+                runs = lambda k: "".join(r.get("text", "") for r in vr.get(k, {}).get("runs", []))
+                found.append((vr.get("videoId"), runs("title"), runs("ownerText")))
+            for v in node.values():
+                walk(v)
+        elif isinstance(node, list):
+            for v in node:
+                walk(v)
+
+    walk(json.loads(m.group(1)))
+    return found
+
+
+def expected_sessions(race: dict) -> list[str]:
+    return ["sprintQualifying", "sprint", "qualifying", "race"] if race.get("sprint") else ["qualifying", "race"]
+
+
+def backfill_missing_videos(season_videos: dict) -> int:
+    """For finished rounds still missing a session's video, search YouTube.
+
+    The RSS feed only holds F1's ~15 latest uploads, and a race weekend's burst
+    pushes Friday's videos off it before the Monday run (2026 R17 lost its
+    sprint-qualifying video that way). Local runs only — search pages may not
+    serve CI. Accepts only FORMULA 1-owned titles that match a session pattern
+    and this round's race, and only fills gaps, never replaces an ID.
+    """
+    if not DATA_JSON_PATH.exists():
+        return 0
+    with open(DATA_JSON_PATH, encoding="utf-8") as f:
+        schedule = json.load(f).get("schedule", [])
+    found = 0
+    for race in schedule:
+        if not race.get("completed"):
+            continue
+        rkey = str(race["round"])
+        have = season_videos.get(rkey, {})
+        missing = [s for s in expected_sessions(race) if not have.get(s)]
+        if not missing:
+            continue
+        print(f"  🔎 R{rkey} {race['name']}: searching YouTube for {', '.join(missing)}")
+        names = {race["name"]} | {k for k, v in YOUTUBE_RACE_ALIASES.items() if v == race["name"]}
+        results = []
+        for name in names:
+            try:
+                results += search_youtube(f"Drivers React {SEASON} {name}")
+            except Exception as e:
+                print(f"     ⚠️  search failed: {e}")
+            time.sleep(1)
+        for vid, title, owner in results:
+            if owner.strip().upper() != "FORMULA 1":
+                continue
+            for session_type, pattern in SESSION_PATTERNS:
+                m = pattern.match(title)
+                if not m:
+                    continue
+                if (session_type in missing and int(m.group(1)) == SEASON
+                        and norm_race(canonical_race(m.group(2))) == norm_race(race["name"])
+                        and not season_videos.setdefault(rkey, {"raceName": race["name"]}).get(session_type)):
+                    season_videos[rkey][session_type] = vid
+                    print(f"     ✨ {session_type}: {vid} ({title})")
+                    found += 1
+                break
+    if found:
+        with open(VIDEO_IDS_PATH, encoding="utf-8") as f:
+            all_ids = json.load(f)
+        all_ids[str(SEASON)] = season_videos
+        with open(VIDEO_IDS_PATH, "w", encoding="utf-8") as f:
+            json.dump(all_ids, f, indent=2, ensure_ascii=False)
+            f.write(chr(10))  # trailing newline, same layout as merge-video-ids.mjs
+    return found
+
+
 def fetch_transcript_from_youtube(video_id: str) -> str | None:
     """Fetch auto-generated captions from YouTube and cache to disk."""
     if YouTubeTranscriptApi is None:
@@ -578,9 +666,12 @@ def main():
         if roster_map:
             print(f"📋 Loaded {SEASON} roster: {len(roster_map)} drivers\n")
 
-    # Auto-discover new videos from RSS
+    # Auto-discover new videos from RSS; locally, also search for any finished
+    # round's sessions the feed dropped before they were seen
     if not args.video_id:
         discover_new_videos(season_videos)
+        if args.fetch_transcripts:
+            backfill_missing_videos(season_videos)
 
     # Single video mode
     if args.video_id:

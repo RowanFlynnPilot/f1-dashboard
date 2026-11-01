@@ -8,7 +8,9 @@
     "2": {
       "raceName": "Chinese Grand Prix",
       "race": "SsJ45omwkaY",
-      "qualifying": "bHd62679V8s"
+      "qualifying": "bHd62679V8s",
+      "sprint": "uxpX-S8Ln1M",
+      "sprintQualifying": "lfXrWl42VHg"
     },
     "3": {
       "raceName": "Japanese Grand Prix",
@@ -91,7 +93,9 @@
     "17": {
       "raceName": "Singapore Grand Prix",
       "qualifying": "m0ft7GE4PXo",
-      "sprint": "oNNyZWon8OE"
+      "sprint": "oNNyZWon8OE",
+      "race": "LXUtsQ6fYsU",
+      "sprintQualifying": "9iGoWdrKu6o"
     },
     "18": {
       "raceName": "United States Grand Prix",

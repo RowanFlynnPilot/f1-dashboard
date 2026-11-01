@@ -82,6 +82,10 @@ test("the points delta follows the round the standings cover", () => {
   const sat = transformData(fixture({ standingsRound: 3, sprints: [sprint] }));
   assert.equal(sat.DS.find(d => d.n === "Max Verstappen").d, "+7", "sprint points only — not round 2's race");
   assert.equal(sat.DS.find(d => d.n === "Liam Lawson").d, "—");
+  // Race Saturday without a sprint: Jolpica already lists round 3's standings,
+  // identical to round 2's — the delta must still show round 2's points
+  const early = transformData(fixture({ standingsRound: 3 }));
+  assert.equal(early.DS.find(d => d.n === "Max Verstappen").d, "+25", "an empty standings round falls back to the last round with results");
 });
 
 test("the narrative describes the current pairing and a mid-season arrival", () => {

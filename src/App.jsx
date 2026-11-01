@@ -1933,14 +1933,15 @@ export default function F1Dashboard(){
               quotes.rounds.forEach(r=>(r.sessions?.[activeSession]?.quotes||[]).forEach(q=>{driverCounts[q.driver]=(driverCounts[q.driver]||0)+1;}));
               const quoteDrivers=Object.entries(driverCounts).sort((a,b)=>b[1]-a[1]);
               const activeDriver=quoteDriver&&driverCounts[quoteDriver]?quoteDriver:null;
-              const latestGP=races.filter(r=>!r.sprint).slice(-1)[0];
-              const lastQuoteRound=[...quotes.rounds].reverse().find(r=>(r.sessions?.race?.quotes||[]).length>0)||quotes.rounds[quotes.rounds.length-1];
-              const quoteLag=latestGP&&lastQuoteRound.round<latestGP.r?latestGP.r-lastQuoteRound.round:0;
+              // Every finished Grand Prix without race quotes, not just trailing ones:
+              // a gap behind a later quoted round (R17 in 2026) used to go unmentioned
+              const quotedRace=new Set(quotes.rounds.filter(r=>(r.sessions?.race?.quotes||[]).length>0).map(r=>r.round));
+              const noRaceQuotes=races.filter(r=>!r.sprint&&!quotedRace.has(r.r));
               return(
               <>
-                {quoteLag>0&&(
+                {noRaceQuotes.length>0&&(
                   <div style={{fontSize:12,color:"var(--w45)",background:"var(--w02)",border:"1px solid var(--w06)",borderRadius:2,padding:"10px 14px"}}>
-                    Quotes run through the <b style={{color:"var(--fg)"}}>{lastQuoteRound.raceName}</b>. {quoteLag} later round{quoteLag>1?"s":""} (up to the {latestGP.nm}) {quoteLag>1?"haven't":"hasn't"} been transcribed yet.
+                    No race quotes yet for the <b style={{color:"var(--fg)"}}>{noRaceQuotes.map(r=>r.nm.replace(" Grand Prix","")).join(", ")}</b> {noRaceQuotes.length>1?"Grands Prix":"Grand Prix"} — the reaction {noRaceQuotes.length>1?"videos haven't":"video hasn't"} been transcribed yet.
                   </div>
                 )}
                 <div style={{display:"flex",gap:12,flexWrap:"wrap"}}>

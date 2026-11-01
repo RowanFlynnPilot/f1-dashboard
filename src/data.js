@@ -99,7 +99,12 @@ export function transformData(raw) {
   const sprintsArr = raw.sprints || [];
   // Older data.json builds lack per-result points — derive them from position
   const rowPts = (row, sprint) => row.pts ?? (row.out ? 0 : (sprint ? SPRINT_PTS : F1_PTS)[parseInt(row.pos)] || 0);
-  const lastRound = raw.standingsRound || Math.max(0, ...raw.races.map(r => r.round), ...sprintsArr.map(s => s.round));
+  // The latest round with a race or sprint result, no later than the round the
+  // standings follow. Jolpica opens the NEXT round's standings table on race
+  // Saturday (same points as the round before, no sessions yet) — keying off
+  // that empty round blanked every delta and arrow until the race had run.
+  const resultRounds = [...raw.races.map(r => r.round), ...sprintsArr.map(s => s.round)];
+  const lastRound = Math.max(0, ...resultRounds.filter(r => !raw.standingsRound || r <= raw.standingsRound));
   const lastRoundPts = {};      // driverId (or surname on old builds) → points
   const lastRoundTeamPts = {};  // team → points, by the team each car raced for
   for (const [sessions, sprint] of [[raw.races, false], [sprintsArr, true]]) {
