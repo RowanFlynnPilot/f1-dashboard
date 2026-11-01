@@ -23,14 +23,21 @@
     <meta name="twitter:title" content="F1 2026 Season Dashboard" />
     <meta name="twitter:description" content="Standings, race results, sector times, telemetry replays and head-to-head battles for the 2026 Formula 1 season." />
     <meta name="twitter:image:alt" content="The dashboard's first sheet: the last Grand Prix drawn as a lap chart beside the drivers' standings" />
-    <!-- Fonts load from the document head so text doesn't flash unstyled while
-         the JS bundle parses (they used to be <link> tags inside the React render) -->
+    <!-- data.json gates first paint: start it now, in parallel with the bundle,
+         instead of after the bundle has parsed (fetch() reuses this response) -->
+    <link rel="preload" href="%BASE_URL%data.json" as="fetch" crossorigin />
+    <!-- Fonts: preconnected early, stylesheet applied without blocking render
+         (display=swap text appears in fallback faces, then swaps) -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600;700&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600;700&family=Courier+Prime:wght@400;700&display=swap" media="print" onload="this.media='all'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600;700&family=Courier+Prime:wght@400;700&display=swap" /></noscript>
   </head>
   <body>
-    <div id="root"></div>
+    <!-- Static shell: paints with the stylesheet, before any JavaScript runs.
+         React replaces it with the same loading screen, then the sheets. -->
+    <div id="root"><div class="bench" style="display:flex;align-items:center;justify-content:center"><div style="text-align:center;color:#E6ECF1"><div class="head" style="font-size:30px;font-weight:700;margin-bottom:6px">Opening the season sheets</div><div class="num" style="color:#93A1AF;font-size:13px">reading data.json …</div></div></div></div>
+    <noscript><p style="font-family:sans-serif;padding:16px">The F1 season sheets need JavaScript to draw the charts.</p></noscript>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
