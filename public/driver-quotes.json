@@ -1,6 +1,6 @@
 {
   "season": 2026,
-  "fetchedAt": "2026-11-02T02:32:13Z",
+  "fetchedAt": "2026-11-02T15:03:57Z",
   "rounds": [
     {
       "round": 1,
@@ -4659,6 +4659,60 @@
             }
           ],
           "extractedAt": "2026-10-26T14:04:15Z"
+        }
+      }
+    },
+    {
+      "round": 19,
+      "raceName": "Mexico City Grand Prix",
+      "sessions": {
+        "qualifying": {
+          "videoId": "mZQwMnnFeG0",
+          "quotes": [
+            {
+              "driver": "Lewis Hamilton",
+              "team": "Ferrari",
+              "quote": "That's one of the greatest feelings, honestly. I've obviously been fortunate to have many great experiences with Mercedes over the years, and we've obviously had a sprint pole, but I've been really dreaming and eyeing for that first pole with the team. Charles is very very quick over one lap. He's obviously had an engineer that he's worked with for years, so it's an environment he's very very aware of and used to. I'm still settling in, and I'm still learning with new engineers this year, and I think we really found a good rapport, and we're really doing a great job.",
+              "context": "Reflecting on first pole position with Ferrari"
+            },
+            {
+              "driver": "Charles Leclerc",
+              "team": "Ferrari",
+              "quote": "It was quite surprising for me, we didn't feel in that fight all day really, and very glad to have pulled it off when it mattered, but I still would like more consistency. We're either doing very good laps or very bad laps, we're not doing anything in between. I always have this faith that the performance is in there, but just struggling to unlock it more consistently.",
+              "context": "Discussing inconsistency despite strong qualifying result"
+            },
+            {
+              "driver": "Max Verstappen",
+              "team": "Red Bull",
+              "quote": "Already going into turn 12 I had a car very close to me, so I already lost time there with the dirty air, and then going into the hairpin, instead of going on the left, I had one car on my right. Where you normally want to open up the corner, so it's a bit of an awkward angle than how you have to go into the hairpin. Plus, you lose your reference on the right-hand side. That then killed my lap, but I think for me the most promising is how we turned it around, because in practice I was not very happy and then in qualifying we are fighting for the win for sure.",
+              "context": "Explaining traffic ruining his qualifying lap"
+            },
+            {
+              "driver": "Lando Norris",
+              "team": "McLaren",
+              "quote": "Yeah, it was tricky for everyone I think. I just feel like I didn't do a good enough job out there and I didn't have the most confidence definitely. I've been a bit more tense this weekend than usual but yeah, still a lot to play for tomorrow.",
+              "context": "Admitting lack of confidence in qualifying"
+            },
+            {
+              "driver": "Fernando Alonso",
+              "team": "Aston Martin",
+              "quote": "Engine, yeah.",
+              "context": "Explaining his session-ending mechanical failure"
+            },
+            {
+              "driver": "Sergio P\u00e9rez",
+              "team": "Cadillac",
+              "quote": "Obviously it's not ideal, and yeah, obviously what happened yesterday didn't need to happen so I went to see Max this morning to apologize, and yeah, obviously now it puts us back a place so we need to try and move forward tomorrow, but we're both leading the midfield which is positive. We can use that hopefully to our advantage tomorrow.",
+              "context": "Discussing grid drop and apologizing to Verstappen"
+            },
+            {
+              "driver": "Valtteri Bottas",
+              "team": "Cadillac",
+              "quote": "Pretty straightforward, everything went to plan. I have like 50 place penalty for the race, so the job for me today was to try and help Checo. So the last two runs I gave him a tow. I think he gained a bit, that's why he was pretty close to the cars ahead. Sadly, didn't improve the position, but at least we tried as a team.",
+              "context": "Explaining his role helping P\u00e9rez with tow"
+            }
+          ],
+          "extractedAt": "2026-11-02T15:03:55Z"
         }
       }
     }
