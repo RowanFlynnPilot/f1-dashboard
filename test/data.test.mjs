@@ -274,3 +274,23 @@ test("countdownLabel can count UTC days, for the pre-rendered page", () => {
   assert.equal(countdownLabel("2026-11-01", "20:00:00Z", new Date("2026-10-31T23:30:00Z"), true), "tomorrow");
   assert.equal(countdownLabel("2026-11-01", "20:00:00Z", new Date("2026-11-01T00:30:00Z"), true), "today");
 });
+
+test("titleOutlook: the fight for second (champion excluded but racing) and the constructors", () => {
+  const sched = [{ r: 1, nm: "A", st: "done", sp: false }, { r: 2, nm: "B", st: "next", sp: false }];
+  const DS = [
+    { n: "Ann One", did: "one", t: "X", pts: 200 },
+    { n: "Bob Two", did: "two", t: "Y", pts: 60 },
+    { n: "Cat Three", did: "three", t: "X", pts: 50 },
+    { n: "Dan Four", did: "four", t: "Y", pts: 10 },
+  ];
+  const CS = [{ t: "X", pts: 250 }, { t: "Y", pts: 70 }];
+  const races = [{ r: 1, full: [{ did: "one", p: 1 }, { did: "two", p: 2 }, { did: "three", p: 3 }, { did: "four", p: 4 }] }];
+  const o = titleOutlook({ DS, sched, races, sprints: [], sims: 300, exclude: ["Ann One"], CS });
+  assert.deepEqual(o.drivers.map(d => d.n), ["Bob Two", "Cat Three", "Dan Four"], "the champion is out of the contest");
+  assert.deepEqual(o.drivers.map(d => d.alive), [true, true, false]);
+  assert.ok(Math.abs(o.drivers.reduce((s, d) => s + d.prob, 0) - 1) < 1e-9);
+  // constructors: 43 left (25 + 18), X leads by 180
+  assert.equal(o.constructors.maxLeft, 43);
+  assert.equal(o.constructors.clinched, true);
+  assert.deepEqual(o.constructors.teams.map(t => t.prob), [1, 0]);
+});

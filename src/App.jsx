@@ -444,7 +444,8 @@ const LapChart=memo(function LapChart({session,lap,setLap,outNums}){
         {[...yellow].filter(l=>l>=1&&l<=total).map(l=>{const cw=(W-ML-MR)/Math.max(1,total-1);return <rect key={"y"+l} x={x(l)-cw/2} y={0} width={cw} height={H} fill="var(--yellow)" opacity={0.12}/>;})}
         {/* rules: rows + every 5th lap */}
         {Array.from({length:n+1},(_,i)=><line key={"r"+i} x1={ML-4} x2={W-MR+4} y1={MT+i*rowH} y2={MT+i*rowH} stroke={i%5===0?"var(--rule)":"var(--rule-faint)"} strokeWidth={i%5===0?0.8:0.5}/>)}
-        {Array.from({length:total},(_,i)=>i+1).filter(l=>l===1||l%5===0||l===total).map(l=><g key={"c"+l}><line x1={x(l)} x2={x(l)} y1={MT-2} y2={H-MB} stroke={l%10===0||l===1||l===total?"var(--rule)":"var(--rule-faint)"} strokeWidth={0.6}/><text x={x(l)} y={MT-6} textAnchor="middle" className="lc-lap" style={{fontSize:fsLap}}>{l}</text></g>)}
+        {/* every 5th lap, plus the first and last; a 5th lap within 2 of the end gives way, or its label runs into the final one ("7071") */}
+        {Array.from({length:total},(_,i)=>i+1).filter(l=>l===1||l===total||(l%5===0&&total-l>2)).map(l=><g key={"c"+l}><line x1={x(l)} x2={x(l)} y1={MT-2} y2={H-MB} stroke={l%10===0||l===1||l===total?"var(--rule)":"var(--rule-faint)"} strokeWidth={0.6}/><text x={x(l)} y={MT-6} textAnchor="middle" className="lc-lap" style={{fontSize:fsLap}}>{l}</text></g>)}
         {/* car lines */}
         {paths.map(({d,dstr,pits})=>{const col=inkify(d.teamColour||"var(--ink-4)");const isW=d.number===winner;return(
           <g key={d.number} className={`${isW?"leader ":""}${focus===d.number?"focus":""}`} onPointerEnter={()=>setFocus(d.number)} onPointerLeave={()=>setFocus(null)}>
@@ -993,7 +994,7 @@ export default function F1Dashboard({initialRaw=null,renderAt=null}){
                     {DS.map((d,i)=>{const tier=i===0?"t1":i<3?"t2":i<6?"t3":i<10?"t4":"t5";return(
                       <li key={d.n} className={tier}>
                         <span className="rk">{d.p}</span>
-                        <span className="nm"><em style={{background:TC[d.t]||"var(--ink-4)"}}/>{d.n.split(" ").pop()}{tier!=="t5"&&<small>{d.t}</small>}</span>
+                        <span className="nm"><em style={{background:TC[d.t]||"var(--ink-4)"}}/>{d.n.split(" ").pop()}{i===0&&clinch&&<b className="champ">{season} champion</b>}{tier!=="t5"&&<small>{d.t}</small>}</span>
                         <span className="pt">{d.pts}{d.d!=="—"&&<small>{d.d}</small>}</span>
                       </li>);})}
                   </ol>
@@ -1127,7 +1128,7 @@ export default function F1Dashboard({initialRaw=null,renderAt=null}){
         {tab==="Standings"&&<TabBody render={()=>(
           <div className="fu" style={{display:"flex",flexDirection:"column",gap:24}}>
             {/* Title fight — maths, projection and what-if */}
-            <TitleFight DS={DS} sched={sched} races={races} clinch={clinch} season={season}/>
+            <TitleFight DS={DS} sched={sched} races={races} CS={CS} clinch={clinch} season={season}/>
             {/* Points Progression Chart */}
             {progression&&progression.labels.length>=3&&(()=>{
               const W=800,H=240,padL=44,padR=24,padT=20,padB=32;
@@ -1460,7 +1461,7 @@ export default function F1Dashboard({initialRaw=null,renderAt=null}){
             <div style={{background:"var(--w02)",border:"1px solid var(--w06)",borderRadius:2,padding:20}}>
               <div style={{fontSize:13,textTransform:"uppercase",letterSpacing:1.5,color:"var(--w40)",marginBottom:16}}>{season} Season Key Facts</div>
               <div className="g3">
-                {[{l:"New Regulations",v:"Active aero, 50/50 ICE/ERS split, new chassis"},{l:"New Teams",v:"Cadillac (11th team), Audi (ex-Sauber)"},{l:"New Engine Suppliers",v:"Audi, Honda (Aston Martin), Ford (Red Bull)"},{l:"Calendar",v:`${totalRounds} rounds · Bahrain moved to Sepang, Saudi Arabia postponed`},{l:"Defending Champions",v:"Norris (WDC) · McLaren (WCC)"},{l:"Youngest Pole",v:"Antonelli — 19y 201d (China)"}].map((f,i)=>(
+                {[...(clinch&&DS[0]?[{l:`${season} Champion`,v:`${DS[0].n} — clinched at R${clinch.round} ${clinch.name.replace(" Grand Prix","")}`}]:[]),{l:"New Regulations",v:"Active aero, 50/50 ICE/ERS split, new chassis"},{l:"New Teams",v:"Cadillac (11th team), Audi (ex-Sauber)"},{l:"New Engine Suppliers",v:"Audi, Honda (Aston Martin), Ford (Red Bull)"},{l:"Calendar",v:`${totalRounds} rounds · Bahrain moved to Sepang, Saudi Arabia postponed`},{l:"Defending Champions",v:"Norris (WDC) · McLaren (WCC)"},{l:"Youngest Pole",v:"Antonelli — 19y 201d (China)"}].map((f,i)=>(
                   <div key={i} style={{padding:14,background:"var(--w02)",borderRadius:2}}>
                     <div style={{fontSize:11,color:"var(--w40)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}}>{f.l}</div>
                     <div style={{fontSize:13,color:"var(--w75)",lineHeight:1.4}}>{f.v}</div>
@@ -2179,8 +2180,34 @@ function HowComputed({children}){
 }
 
 // ── Standings: the title fight ─────────────────────────────────────────────
-const TitleFight=memo(function TitleFight({DS,sched,races,clinch,season}){
+// Odds table for a contest still open: driver or team, points, gap, ceiling, odds
+function OddsTable({rows,nameOf,colorOf}){
+  const maxP=Math.max(...rows.map(r=>r.prob),0);
+  return(
+    <div className="tbl-wrap" style={{overflowX:"auto"}}>
+      <table style={{width:"100%",borderCollapse:"collapse",fontSize:13,minWidth:340}}>
+        <thead><tr style={{borderBottom:"1px solid var(--w08)"}}>{["","Pts","Behind","Max","Odds"].map(h=><th key={h} style={{textAlign:h===""||h==="Odds"?"left":"right",padding:"6px 8px",fontSize:10,textTransform:"uppercase",letterSpacing:1,color:"var(--w40)",fontWeight:600}}>{h}</th>)}</tr></thead>
+        <tbody>{rows.map(r=>(
+          <tr key={nameOf(r)} style={{borderBottom:"1px solid var(--w04)"}}>
+            <td style={{padding:"6px 8px",whiteSpace:"nowrap"}}><span style={{display:"inline-block",width:3,height:12,background:colorOf(r),marginRight:8,verticalAlign:"-1px"}}/>{nameOf(r)}</td>
+            <td className="num" style={{padding:"6px 8px",textAlign:"right",fontWeight:700}}>{r.pts}</td>
+            <td className="num" style={{padding:"6px 8px",textAlign:"right",color:"var(--w50)"}}>{r.behind?`−${r.behind}`:"—"}</td>
+            <td className="num" style={{padding:"6px 8px",textAlign:"right",color:"var(--w50)"}}>{r.max}</td>
+            <td style={{padding:"6px 8px",minWidth:110}}><div style={{display:"flex",alignItems:"center",gap:8}}>
+              <div style={{flex:1,height:6,background:"var(--w04)"}}><div style={{height:"100%",width:`${maxP>0?(r.prob/maxP)*100:0}%`,background:colorOf(r)}}/></div>
+              <span className="num" style={{width:34,textAlign:"right",fontSize:12}}>{pctLabel(r.prob,false)}</span>
+            </div></td>
+          </tr>))}</tbody>
+      </table>
+    </div>
+  );
+}
+
+const TitleFight=memo(function TitleFight({DS,sched,races,CS,clinch,season}){
   const outlook=useMemo(()=>titleOutlook({DS,sched,races,sprints:races.filter(r=>r.sprint)}),[DS,sched,races]);
+  // Once the title is settled the open contests are second place and the constructors'
+  const decided=!!(clinch||outlook?.clinched);
+  const after=useMemo(()=>decided&&DS[0]?titleOutlook({DS,sched,races,sprints:races.filter(r=>r.sprint),exclude:[DS[0].n],CS}):null,[decided,DS,sched,races,CS]);
   const[whatIf,setWhatIf]=useState({}); // `${eventIndex}|${driver}` → finishing position ("0" = no points)
   if(!outlook)return null;
   const{events,maxLeft,clinched,needed,drivers,sims}=outlook;
@@ -2192,17 +2219,46 @@ const TitleFight=memo(function TitleFight({DS,sched,races,clinch,season}){
       <div className="head" style={{fontSize:26,fontWeight:700}}>{leader.n} · champion by {leader.pts-(rival?.pts||0)} points</div>
     </div>
   );
-  if(clinch||clinched)return(
-    <div style={PANEL}>
-      <PanelHead title="Title Fight" sub={clinch?`Decided at R${clinch.round} ${clinch.name}: ${clinch.lead} points clear with ${clinch.left} left to win`:"Decided"}/>
-      <div className="head" style={{fontSize:30,fontWeight:700,lineHeight:1.05,display:"flex",alignItems:"baseline",gap:12,flexWrap:"wrap"}}>
-        <span style={{display:"inline-block",width:5,height:24,background:TC[leader.t]||"var(--ink-3)",alignSelf:"center"}}/>
-        {leader.n}<span className="num" style={{fontSize:13,fontWeight:400,color:"var(--ink-3)",textTransform:"none"}}>{season} World Champion</span>
+  if(decided){
+    const p2=after?.drivers.filter(d=>d.alive)||[];
+    const wcc=after?.constructors;
+    const teamNext=after?.events.filter(e=>e.round===after.events[0]?.round).reduce((x,e)=>x+(e.kind==="sprint"?15:43),0)||0;
+    let wccLine=null;
+    if(wcc){
+      const [lt,rt]=wcc.teams;
+      if(wcc.clinched)wccLine=<>{lt.t} are constructors' champions: {lt.pts-rt.pts} points clear with {wcc.maxLeft} left.</>;
+      else if(wcc.needed.margin<=0)wccLine=<>{lt.t} clinch at the {wcc.needed.name} unless {rt.t} outscore them there by {1-wcc.needed.margin} points or more.</>;
+      else if(wcc.needed.margin<=teamNext)wccLine=<>{lt.t} can clinch at the {wcc.needed.name} by outscoring {rt.t} there by {wcc.needed.margin} points or more.</>;
+      else wccLine=<>It can't be settled at the {wcc.needed.name}: {lt.t} lead {rt.t} by {lt.pts-rt.pts} with {wcc.maxLeft} left for one team.</>;
+    }
+    const sub=clinch?`Decided at R${clinch.round} ${clinch.name}: ${clinch.lead} points clear with ${clinch.left} left to win`:"Decided";
+    return(
+      <div style={PANEL}>
+        <PanelHead title="Title Fight" sub={sub}/>
+        <div className="head" style={{fontSize:30,fontWeight:700,lineHeight:1.05,display:"flex",alignItems:"baseline",gap:12,flexWrap:"wrap"}}>
+          <span style={{display:"inline-block",width:5,height:24,background:TC[leader.t]||"var(--ink-3)",alignSelf:"center"}}/>
+          {leader.n}<span className="num" style={{fontSize:13,fontWeight:400,color:"var(--ink-3)",textTransform:"none"}}>{season} World Champion</span>
+        </div>
+        {after&&after.events.length>0?(
+          <div className="g2" style={{marginTop:20,alignItems:"start"}}>
+            <div>
+              <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.2,color:"var(--w50)",fontWeight:600,marginBottom:6}}>Fight for second</div>
+              <p style={{margin:"0 0 10px",fontSize:14,lineHeight:1.45}}>{p2.length>1?<>{L(p2[0])} holds second by {p2[0].pts-p2[1].pts} over {L(p2[1])}; with {after.maxLeft} points left, {p2.length} drivers can still finish runner-up.</>:<>{L(p2[0])} has second place sealed.</>}</p>
+              <OddsTable rows={p2.slice(0,5)} nameOf={d=>L(d)} colorOf={d=>TC[d.t]||"var(--ink-4)"}/>
+            </div>
+            {wcc&&<div>
+              <div style={{fontSize:11,textTransform:"uppercase",letterSpacing:1.2,color:"var(--w50)",fontWeight:600,marginBottom:6}}>Constructors' championship</div>
+              <p style={{margin:"0 0 10px",fontSize:14,lineHeight:1.45}}>{wccLine}</p>
+              <OddsTable rows={wcc.teams.filter(t=>t.alive)} nameOf={t=>t.t} colorOf={t=>TC[t.t]||"var(--ink-4)"}/>
+            </div>}
+          </div>
+        ):(
+          <p style={{margin:"10px 0 0",fontSize:14,color:"var(--w60)",maxWidth:"70ch"}}>{L(leader)} finished the season {leader.pts-rival.pts} points clear of {L(rival)}.</p>
+        )}
+        <HowComputed>A title is decided once the leader's margin over every rival is larger than the points still available: 25 for every Grand Prix left and 8 for every sprint; the deciding round is found by replaying the season result by result. The fight for second runs the same {after?.sims?.toLocaleString?.()||"4,000"} simulated run-ins with the champion still racing (still taking points and places) but out of the count. Constructors' odds come from the same runs, summing each team's two cars; a team can add 43 points per Grand Prix (25 + 18) and 15 per sprint. Projections from this season's form, not predictions.</HowComputed>
       </div>
-      <p style={{margin:"10px 0 0",fontSize:14,color:"var(--w60)",maxWidth:"70ch"}}>{L(leader)} leads {L(rival)} by {leader.pts-rival.pts} points with {maxLeft} still available, so no result in the {events.length} remaining session{events.length>1?"s":""} can change the order at the top.</p>
-      <HowComputed>A title is decided once the leader's margin over every rival is larger than the points still available: 25 for every Grand Prix left and 8 for every sprint. The deciding round is found by replaying the season result by result.</HowComputed>
-    </div>
-  );
+    );
+  }
   const alive=drivers.filter(d=>d.alive);
   const contenders=alive.slice(0,4);
   const nextMax=events.filter(e=>e.round===events[0].round).reduce((s,e)=>s+e.max,0);

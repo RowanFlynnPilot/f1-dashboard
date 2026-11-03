@@ -284,6 +284,9 @@ export function transformData(raw) {
     }
   }
   const nRaces=raw.races.length;
+  // A title settled before the season ends is the headline of its team's story
+  const champ=titleClinch({DS,sched,races:allRaces});
+  const champLast=champ&&DS[0]?DS[0].n.split(" ").pop():null;
   const narrative=CS.slice(0,4).map((c,i)=>{
     const s=teamRaceStats[c.t]||{wins:0,pods:0,dnfs:0,dns:0,bestFinish:99,driverWins:{},driverPods:{}};
     const pts=c.pts;
@@ -404,6 +407,8 @@ export function transformData(raw) {
     } else if(d1.pts===d2.pts){
       if(d1.pts===0)lines.push(`Neither driver has scored yet.`);
       else lines.push(`${d1.n} and ${d2.n} are level on ${d1.pts} pts apiece.`);
+    } else if(champLast&&d1.n===champLast){
+      lines.push(`${DS[0].n} clinched the ${raw.season} drivers' title at the ${champ.name}, and leads the garage on ${d1.pts} to ${d2.n}'s ${d2.pts}.`);
     } else {
       lines.push(`${d1.n} leads the garage on ${d1.pts} to ${d2.n}'s ${d2.pts}.`);
     }
@@ -649,10 +654,15 @@ export function remainingEvents(sched, sprintsRun) {
   return out;
 }
 
-export function titleOutlook({ DS, sched, races, sprints, sims = 4000, seed = 2026 }) {
+// `exclude`: drivers who still race (and take points and places in every
+// simulated session) but are out of this contest — the champion, once the
+// title is settled, leaving the fight for second. `CS` adds the constructors'
+// outlook from the same simulated run-ins (team = each driver's current team).
+export function titleOutlook({ DS, sched, races, sprints, sims = 4000, seed = 2026, exclude = [], CS = null }) {
   const events = remainingEvents(sched, sprints);
   const maxLeft = events.reduce((s, e) => s + e.max, 0);
-  const field = (DS || []).filter(d => d.pts != null);
+  const racers = (DS || []).filter(d => d.pts != null);
+  const field = racers.filter(d => !exclude.includes(d.n));
   if (!field.length) return null;
   const leader = field[0];
   const alive = field.filter(d => d.pts + maxLeft >= leader.pts);
@@ -671,24 +681,47 @@ export function titleOutlook({ DS, sched, races, sprints, sims = 4000, seed = 20
   const last = d => d.n.split(" ").pop();
   const rand = rng(seed);
   const titles = Object.fromEntries(field.map(d => [d.n, 0]));
+  const teams = (CS || []).filter(c => c.pts != null);
+  const teamTitles = Object.fromEntries(teams.map(c => [c.t, 0]));
   for (let s = 0; s < sims && events.length; s++) {
-    const tot = Object.fromEntries(field.map(d => [d.n, d.pts]));
+    const tot = Object.fromEntries(racers.map(d => [d.n, d.pts]));
+    const teamTot = Object.fromEntries(teams.map(c => [c.t, c.pts]));
     for (const e of events) {
       const table = e.kind === "sprint" ? SPRINT_POINTS : RACE_POINTS;
-      const order = field.map(d => {
+      const order = racers.map(d => {
         const h = hist[d.did] || hist[last(d)] || [];
         const draw = h.length ? h[Math.floor(rand() * h.length)] : 12 + rand() * 8;
-        return { n: d.n, score: draw == null ? 100 + rand() : draw + (rand() - 0.5) * 3 };
+        return { n: d.n, t: d.t, score: draw == null ? 100 + rand() : draw + (rand() - 0.5) * 3 };
       }).sort((a, b) => a.score - b.score);
-      order.forEach((o, i) => { if (o.score < 100 && i < table.length) tot[o.n] += table[i]; });
+      order.forEach((o, i) => {
+        if (o.score >= 100 || i >= table.length) return;
+        tot[o.n] += table[i];
+        if (o.t in teamTot) teamTot[o.t] += table[i];
+      });
     }
     let best = null;
     for (const d of field) if (!best || tot[d.n] > tot[best] || (tot[d.n] === tot[best] && rand() < 0.5)) best = d.n;
     titles[best]++;
+    let bestTeam = null;
+    for (const c of teams) if (!bestTeam || teamTot[c.t] > teamTot[bestTeam]) bestTeam = c.t;
+    if (bestTeam) teamTitles[bestTeam]++;
+  }
+  // Constructors: two cars score, so a team can add 25 + 18 per Grand Prix, 8 + 7 per sprint
+  let constructors = null;
+  if (teams.length) {
+    const teamMax = events.reduce((s, e) => s + (e.kind === "sprint" ? SPRINT_POINTS[0] + SPRINT_POINTS[1] : RACE_POINTS[0] + RACE_POINTS[1]), 0);
+    const [lead, second] = teams;
+    const nextTeamMax = next.reduce((s, e) => s + (e.kind === "sprint" ? SPRINT_POINTS[0] + SPRINT_POINTS[1] : RACE_POINTS[0] + RACE_POINTS[1]), 0);
+    const tClinched = !!second && lead.pts - second.pts > teamMax;
+    constructors = {
+      maxLeft: teamMax, clinched: tClinched,
+      needed: tClinched || !second ? null : { round: next[0]?.round, name: next[0]?.name, rival: second.t, margin: teamMax - nextTeamMax + 1 - (lead.pts - second.pts) },
+      teams: teams.map(c => ({ t: c.t, pts: c.pts, max: c.pts + teamMax, alive: c.pts + teamMax >= lead.pts, behind: lead.pts - c.pts, prob: events.length ? teamTitles[c.t] / sims : c === lead ? 1 : 0 })),
+    };
   }
   const prob = Object.fromEntries(field.map(d => [d.n, events.length ? titles[d.n] / sims : d === leader ? 1 : 0]));
   return {
-    events, maxLeft, clinched, needed, sims: events.length ? sims : 0,
+    events, maxLeft, clinched, needed, sims: events.length ? sims : 0, constructors,
     drivers: field.map(d => ({ n: d.n, t: d.t, pts: d.pts, max: d.pts + maxLeft, alive: alive.includes(d), behind: leader.pts - d.pts, prob: prob[d.n] })),
   };
 }
