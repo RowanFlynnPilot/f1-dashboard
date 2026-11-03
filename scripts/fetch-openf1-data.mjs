@@ -462,10 +462,12 @@ export const RACE_EXTRAS_VERSION = 1;
 export const RACE_CONTROL_VERSION = 2;
 const round1 = v => (v == null ? null : Math.round(v * 10) / 10);
 const round3 = v => (v == null ? null : Math.round(v * 1000) / 1000);
-export function compactRaceExtras(pit, overtakes, weather) {
+// `startMs`: lights out. /pit also logs cars leaving the pit lane for the grid
+// (2026 Mexico: 22 rows on "lap 1", an hour before the start), which aren't stops.
+export function compactRaceExtras(pit, overtakes, weather, startMs = null) {
   return {
     // [driver, lap, stationary s, pit-lane s] — stop_duration is the car at rest
-    pitStops: (pit || []).filter(p => p.driver_number != null)
+    pitStops: (pit || []).filter(p => p.driver_number != null && !(startMs && p.date && Date.parse(p.date) < startMs))
       .map(p => [p.driver_number, p.lap_number ?? null, round3(p.stop_duration), round3(p.lane_duration ?? p.pit_duration)]),
     // [epoch ms, overtaking driver, overtaken driver, position gained] — every
     // position swap, pit cycles included; the app filters (onTrackPasses)
@@ -478,14 +480,14 @@ export function compactRaceExtras(pit, overtakes, weather) {
   };
 }
 
-async function fetchRaceExtras(sessionKey) {
+async function fetchRaceExtras(sessionKey, dateStart) {
   const pit = await optional(`${BASE}/pit?session_key=${sessionKey}`);
   await sleep(2000);
   const overtakes = await optional(`${BASE}/overtakes?session_key=${sessionKey}`);
   await sleep(2000);
   const weather = await optional(`${BASE}/weather?session_key=${sessionKey}`);
   await sleep(2000);
-  return compactRaceExtras(pit, overtakes, weather);
+  return compactRaceExtras(pit, overtakes, weather, dateStart ? Date.parse(dateStart) : null);
 }
 
 // Write via a temp file + rename, so an interrupted run never leaves a
@@ -607,7 +609,7 @@ async function main() {
         const raceX = (cached.sessions || []).find(s => s.sessionName === "Race" && s.drivers && s.extrasV !== RACE_EXTRAS_VERSION);
         if (raceX && extrasBackfill.has(meeting.meeting_key)) {
           try {
-            Object.assign(raceX, await fetchRaceExtras(raceX.sessionKey));
+            Object.assign(raceX, await fetchRaceExtras(raceX.sessionKey, raceX.dateStart));
             console.log(`   🛰️  Added pit/overtake/weather extras (${raceX.pitStops.length} stops, ${raceX.overtakes.length} swaps)`);
           } catch (e) {
             console.log(`   ⚠️  Race extras skipped: ${e.message}`);
@@ -849,7 +851,7 @@ async function main() {
             console.log(`      ⚠️  Lap Compare default failed: ${e.message}`);
           }
           try {
-            Object.assign(sessionOut, await fetchRaceExtras(session.session_key));
+            Object.assign(sessionOut, await fetchRaceExtras(session.session_key, session.date_start));
           } catch (e) {
             partial = true;
             console.log(`      ⚠️  Race extras failed: ${e.message}`);

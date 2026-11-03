@@ -243,6 +243,9 @@ test("compactRaceExtras keeps stationary time, raw swaps and a weather row per r
   assert.deepEqual(x.overtakes, [[Date.parse("2026-10-25T20:10:00Z"), 4, 1, 3]]);
   assert.deepEqual(x.weather, [[Date.parse("2026-10-25T20:00:00Z"), 38.3, 27, 0]]);
   assert.equal(x.extrasV, RACE_EXTRAS_VERSION);
+  // rows from before lights out are cars heading to the grid, not stops
+  const pre = compactRaceExtras([{ date: "2026-11-01T19:08:59Z", driver_number: 10, lap_number: 1 }, { date: "2026-11-01T20:40:00Z", driver_number: 10, lap_number: 26, stop_duration: 2.5 }], [], [], Date.parse("2026-11-01T20:00:00Z"));
+  assert.deepEqual(pre.pitStops, [[10, 26, 2.5, null]]);
 });
 
 import { injectPrerender } from "../scripts/prerender.mjs";

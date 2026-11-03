@@ -238,7 +238,7 @@ python3 scripts/fetch-driver-quotes.py --race "Japanese Grand Prix"
 
 The workflow runs on:
 - Push to `main`
-- Weekly schedule at minute 17 (top-of-hour crons are delayed most): Saturday 20:17 UTC (qualifying / sprint, Saturday races such as Baku and Las Vegas), Sunday 23:17 UTC (race), Monday 06:17 UTC (retry for races that finish after the Sunday cron, e.g. Miami/Austin/Mexico ending ~22:00 UTC)
+- Weekly race-weekend schedule, off the hour (top-of-hour crons are delayed most): Saturday 16:47 and 20:17 UTC, Sunday 15:47 / 18:47 / 21:47 / 23:17 UTC, Monday 02:47 and 06:17 UTC. GitHub started every 2026 scheduled run late (Saturday 2–3 h, Sunday 1.5–3 h, Monday 5–10 h), so the slots are staggered for one to land within a few hours of the flag whatever the delay
 - Manual trigger (`workflow_dispatch`) with inputs `allow_shrink` (accept a legitimate shrink, e.g. a round removed) and `refetch_meetings` (OpenF1 meeting keys, or `all`)
 
 Steps:

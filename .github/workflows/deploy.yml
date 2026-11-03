@@ -2,10 +2,18 @@ name: Fetch F1 Data & Deploy
 
 on:
   schedule:
-    # Off the hour: GitHub delays top-of-hour crons the most under load.
-    - cron: '17 20 * * 6'   # Saturday 20:17 UTC — qualifying / sprint results, OpenF1 practice & quali, Saturday races (Baku, Las Vegas)
-    - cron: '17 23 * * 0'   # Sunday 23:17 UTC — catches most race results
-    - cron: '17 6 * * 1'    # Monday 06:17 UTC — retry for late races (Miami/Austin/Mexico end ~22:00 UTC Sunday)
+    # Off the hour: GitHub delays top-of-hour crons the most under load — and
+    # in 2026 every scheduled run still started late: Saturday's by 2-3 h,
+    # Sunday's 23:17 by 1.5-3 h (so European races, done by ~15:00 UTC, only
+    # reached the site after midnight), Monday's 06:17 by 5-10 h. Staggered
+    # slots make sure one lands within a few hours whatever the delay. A run
+    # with nothing new is cheap (the OpenF1 cache skips settled weekends).
+    - cron: '47 16 * * 6'   # Saturday 16:47 UTC — European qualifying / sprints
+    - cron: '17 20 * * 6'   # Saturday 20:17 UTC — qualifying / sprint results, Saturday races (Baku, Las Vegas)
+    - cron: '47 15,18,21 * * 0'  # Sunday 15:47 / 18:47 / 21:47 UTC — European races (results gate: start + 3 h)
+    - cron: '17 23 * * 0'   # Sunday 23:17 UTC — the Americas
+    - cron: '47 2 * * 1'    # Monday 02:47 UTC — late races (Miami/Austin/Mexico end ~22:00 UTC Sunday)
+    - cron: '17 6 * * 1'    # Monday 06:17 UTC — retry
   push:
     branches: ['main']
   workflow_dispatch:         # Manual trigger

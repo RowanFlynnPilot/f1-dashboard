@@ -1939,6 +1939,7 @@ export default function F1Dashboard({initialRaw=null,renderAt=null}){
           const stoppedFor=d=>{if(!pitSess)return null;const n=numOf[d.d];const rows=pitSess.pitStops.filter(p=>String(p[0])===n&&p[2]>0);const hit=rows.find(p=>p[1]===d.l)||rows.find(p=>Math.abs(p[1]-d.l)===1);return hit?hit[2]:null;};
           const stopped=cpits.map(stoppedFor);
           const quickest=stopped.reduce((b,v,i)=>v!=null&&(b<0||v<stopped[b])?i:b,-1);
+          const hasStopped=quickest>=0; // OpenF1 has no stationary times for some races (2026 Mexico): no column of dashes
           return(
           <div className="fu" style={{display:"flex",flexDirection:"column",gap:24}}>
             {prs.length>1&&(
@@ -1975,7 +1976,7 @@ export default function F1Dashboard({initialRaw=null,renderAt=null}){
               <div style={{fontSize:15,fontWeight:700,marginBottom:16}}>{"Full Pit Stop Summary — " + cName}</div>
               <div style={{overflowX:"auto",WebkitOverflowScrolling:"touch"}}><table style={{width:"100%",borderCollapse:"collapse",minWidth:600,fontSize:13}}>
                 <thead><tr style={{borderBottom:"1px solid var(--w08)"}}>
-                  {["#","Driver","Team","Lap","Pit lane",...(pitSess?["Stopped"]:[])].map(h=><th key={h} style={{textAlign:"left",padding:"8px 12px",fontSize:11,textTransform:"uppercase",letterSpacing:1,color:"var(--w35)",fontWeight:500}}>{h}</th>)}
+                  {["#","Driver","Team","Lap","Pit lane",...(hasStopped?["Stopped"]:[])].map(h=><th key={h} style={{textAlign:"left",padding:"8px 12px",fontSize:11,textTransform:"uppercase",letterSpacing:1,color:"var(--w35)",fontWeight:500}}>{h}</th>)}
                 </tr></thead>
                 <tbody>
                   {cpits.map((d,i)=>(
@@ -1985,12 +1986,12 @@ export default function F1Dashboard({initialRaw=null,renderAt=null}){
                       <td style={{padding:"10px 12px"}}><div style={{display:"flex",alignItems:"center",gap:6,color:"var(--w50)"}}><TL team={d.t} size={16}/>{d.t}</div></td>
                       <td style={{padding:"10px 12px",fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)"}}>{d.l}</td>
                       <td style={{padding:"10px 12px",fontWeight:700,fontVariantNumeric:"tabular-nums",fontFamily:"var(--font-data)",color:d.s<=quickS?"var(--green)":d.s>=slowS?"var(--red)":"var(--fg)"}}>{d.s.toFixed(3)}s</td>
-                      {pitSess&&<td className="num" style={{padding:"10px 12px",color:i===quickest?"var(--green)":"var(--w60)",fontWeight:i===quickest?700:400}}>{stopped[i]!=null?`${stopped[i].toFixed(1)}s`:"—"}</td>}
+                      {hasStopped&&<td className="num" style={{padding:"10px 12px",color:i===quickest?"var(--green)":"var(--w60)",fontWeight:i===quickest?700:400}}>{stopped[i]!=null?`${stopped[i].toFixed(1)}s`:"—"}</td>}
                     </tr>
                   ))}
                 </tbody>
               </table></div>
-              <HowComputed>Pit lane is Jolpica's timing from pit entry to pit exit, so it depends on the length of each circuit's pit lane; the quick and slow colours compare each stop with this race's median. Stopped is OpenF1's time with the car at rest in the box — the crew's part of the stop — matched to Jolpica's stop by car number and lap (one lap either way, as the two count laps differently). A dash means OpenF1 had no stationary time for that stop.</HowComputed>
+              <HowComputed>Pit lane is Jolpica's timing from pit entry to pit exit, so it depends on the length of each circuit's pit lane; the quick and slow colours compare each stop with this race's median. Stopped is OpenF1's time with the car at rest in the box — the crew's part of the stop — matched to Jolpica's stop by car number and lap (one lap either way, as the two count laps differently). A dash means OpenF1 had no stationary time for that stop; for a race where it has none at all, the column is left out.</HowComputed>
             </div>
           </div>);
         }}/>}
