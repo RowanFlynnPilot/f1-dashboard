@@ -91,6 +91,8 @@ YOUTUBE_RACE_ALIASES: dict[str, str] = {
     "Malaysian Grand Prix": "Bahrain Grand Prix in Malaysia",
     # F1 titles the Interlagos round "São Paulo Grand Prix"; Jolpica calls it Brazilian.
     "São Paulo Grand Prix": "Brazilian Grand Prix",
+    # F1's titles drop "City": "2026 Mexico Grand Prix" (R19's race video sat unmatched)
+    "Mexico Grand Prix": "Mexico City Grand Prix",
 }
 
 # Transcripts longer than this are cut before extraction (the longest so far is
@@ -106,63 +108,42 @@ def norm_race(name: str) -> str:
 ALIASES_NORM = {norm_race(k): v for k, v in YOUTUBE_RACE_ALIASES.items()}
 
 
-def canonical_race(title_race: str) -> str:
-    """Map a race name from a YouTube title to the Jolpica raceName it refers to."""
-    return ALIASES_NORM.get(norm_race(title_race), title_race.strip())
+def _race_tokens(name: str) -> set[str]:
+    return {t for t in re.findall(r"[a-z]+", norm_race(name)) if t not in ("grand", "prix")}
 
-EXTRACTION_PROMPT = """You are analyzing a transcript from an official Formula 1 YouTube video where drivers give their reactions after a {session_type} session at the {race_name}.
 
-This is the {season} season. The COMPLETE list of drivers competing in {season} is below — every quote you extract MUST be from a driver on this list, using the team shown here. Do NOT use driver/team pairings from previous seasons. Drivers like Tsunoda, Ricciardo, Magnussen, Bottas (unless listed below) are NOT in F1 this year. If you think you hear a driver who isn't on this list, you are mistaken — either it's a different driver on the list, or the speaker is unclear and you should omit the quote.
+_SCHEDULE_NAMES: list[str] | None = None
 
-OFFICIAL {season} DRIVER ROSTER (driver — team):
-{roster}
 
-Rules for extracting quotes:
-1. Auto-generated YouTube captions have NO speaker labels. You must identify the speaker from context: the host/interviewer addressing them by name, the driver self-identifying ("as a Ferrari driver…"), or unambiguous content (e.g. discussing their own finishing position which matches results).
-2. If you cannot confidently identify the speaker, OMIT the quote. Do not guess. It is much better to return fewer high-confidence quotes than to misattribute.
-3. The "team" field MUST match the roster above exactly. Never use a driver's prior-season team.
-4. The "driver" field MUST be a name from the roster above. Use the full name as shown.
-5. Aim for 1-2 quotes per identified driver. Quotes should be complete, meaningful sentences capturing the driver's actual point. Clean up filler words and stuttering but stay faithful to what was said.
+def schedule_race_names() -> list[str]:
+    """This season's Jolpica race names, from data.json (empty if unreadable)."""
+    global _SCHEDULE_NAMES
+    if _SCHEDULE_NAMES is None:
+        try:
+            with open(DATA_JSON_PATH, encoding="utf-8") as f:
+                _SCHEDULE_NAMES = [r["name"] for r in json.load(f).get("schedule", [])]
+        except Exception:
+            _SCHEDULE_NAMES = []
+    return _SCHEDULE_NAMES
 
-Return ONLY valid JSON in this exact format (no markdown, no extra text):
-{{
-  "quotes": [
-    {{
-      "driver": "Full Driver Name (must match roster)",
-      "team": "Team Name (must match roster)",
-      "quote": "The actual quote from the driver",
-      "context": "Brief 3-8 word description of what they're discussing"
-    }}
-  ]
-}}
 
-Here is the transcript:
+def canonical_race(title_race: str, names: list[str] | None = None) -> str:
+    """Map a race name from a YouTube title to the Jolpica raceName it refers to.
 
-{transcript}"""
-
-# Structured-output schema matching the JSON shape in EXTRACTION_PROMPT — the API
-# guarantees the response parses against this, so no fence-stripping/retry needed.
-QUOTES_SCHEMA = {
-    "type": "object",
-    "properties": {
-        "quotes": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "properties": {
-                    "driver": {"type": "string"},
-                    "team": {"type": "string"},
-                    "quote": {"type": "string"},
-                    "context": {"type": "string"},
-                },
-                "required": ["driver", "team", "quote", "context"],
-                "additionalProperties": False,
-            },
-        },
-    },
-    "required": ["quotes"],
-    "additionalProperties": False,
-}
+    An alias wins; an exact (case/accent-insensitive) name is kept; otherwise a
+    title whose words all appear in exactly ONE scheduled round's name maps to
+    that round ("Mexico Grand Prix" → "Mexico City Grand Prix"). Ambiguous or
+    unmatched names come back unchanged, so the caller's warning still fires.
+    """
+    alias = ALIASES_NORM.get(norm_race(title_race))
+    if alias:
+        return alias
+    names = schedule_race_names() if names is None else names
+    if any(norm_race(n) == norm_race(title_race) for n in names):
+        return title_race.strip()
+    tokens = _race_tokens(title_race)
+    hits = [n for n in names if tokens and tokens <= _race_tokens(n)]
+    return hits[0] if len(hits) == 1 else title_race.strip()
 
 
 def transcript_path(video_id: str) -> Path:
