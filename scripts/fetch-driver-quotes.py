@@ -145,6 +145,60 @@ def canonical_race(title_race: str, names: list[str] | None = None) -> str:
     hits = [n for n in names if tokens and tokens <= _race_tokens(n)]
     return hits[0] if len(hits) == 1 else title_race.strip()
 
+EXTRACTION_PROMPT = """You are analyzing a transcript from an official Formula 1 YouTube video where drivers give their reactions after a {session_type} session at the {race_name}.
+
+This is the {season} season. The COMPLETE list of drivers competing in {season} is below — every quote you extract MUST be from a driver on this list, using the team shown here. Do NOT use driver/team pairings from previous seasons. Drivers like Tsunoda, Ricciardo, Magnussen, Bottas (unless listed below) are NOT in F1 this year. If you think you hear a driver who isn't on this list, you are mistaken — either it's a different driver on the list, or the speaker is unclear and you should omit the quote.
+
+OFFICIAL {season} DRIVER ROSTER (driver — team):
+{roster}
+
+Rules for extracting quotes:
+1. Auto-generated YouTube captions have NO speaker labels. You must identify the speaker from context: the host/interviewer addressing them by name, the driver self-identifying ("as a Ferrari driver…"), or unambiguous content (e.g. discussing their own finishing position which matches results).
+2. If you cannot confidently identify the speaker, OMIT the quote. Do not guess. It is much better to return fewer high-confidence quotes than to misattribute.
+3. The "team" field MUST match the roster above exactly. Never use a driver's prior-season team.
+4. The "driver" field MUST be a name from the roster above. Use the full name as shown.
+5. Aim for 1-2 quotes per identified driver. Quotes should be complete, meaningful sentences capturing the driver's actual point. Clean up filler words and stuttering but stay faithful to what was said.
+
+Return ONLY valid JSON in this exact format (no markdown, no extra text):
+{{
+  "quotes": [
+    {{
+      "driver": "Full Driver Name (must match roster)",
+      "team": "Team Name (must match roster)",
+      "quote": "The actual quote from the driver",
+      "context": "Brief 3-8 word description of what they're discussing"
+    }}
+  ]
+}}
+
+Here is the transcript:
+
+{transcript}"""
+
+# Structured-output schema matching the JSON shape in EXTRACTION_PROMPT — the API
+# guarantees the response parses against this, so no fence-stripping/retry needed.
+QUOTES_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "quotes": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "driver": {"type": "string"},
+                    "team": {"type": "string"},
+                    "quote": {"type": "string"},
+                    "context": {"type": "string"},
+                },
+                "required": ["driver", "team", "quote", "context"],
+                "additionalProperties": False,
+            },
+        },
+    },
+    "required": ["quotes"],
+    "additionalProperties": False,
+}
+
 
 def transcript_path(video_id: str) -> Path:
     """Return the cached transcript file path for a video."""
@@ -535,7 +589,7 @@ def process_video(video_id: str, race_name: str, session_type: str,
     # Try cache first, then YouTube
     transcript = get_transcript(video_id)
     if not transcript:
-        print(f"      ⬇️  Not cached, fetching from YouTube...")
+        print("      ⬇️  Not cached, fetching from YouTube...")
         transcript = fetch_transcript_from_youtube(video_id)
     if not transcript:
         # No transcript is not the same as "no quotes": the caller must leave the
@@ -545,12 +599,12 @@ def process_video(video_id: str, race_name: str, session_type: str,
     if fetch_only:
         return {"videoId": video_id, "quotes": []}
 
-    print(f"      🤖 Extracting quotes via Claude...")
+    print("      🤖 Extracting quotes via Claude...")
     time.sleep(1)
 
     quotes = extract_quotes(transcript, race_name, session_type, roster_block, roster_map or {})
     if quotes is None:
-        print(f"      ❌ Extraction failed — session left out so the next run retries it")
+        print("      ❌ Extraction failed — session left out so the next run retries it")
         return {"videoId": video_id, "quotes": [], "failed": True}
     print(f"      ✅ Extracted {len(quotes)} quotes")
     # extractedAt marks the session done even when Claude found nothing usable,
@@ -695,7 +749,7 @@ def main():
             existing_sessions = existing_round.get("sessions", {})
             all_done = all(session_done(existing_sessions.get(s)) for s in configured_sessions)
             if configured_sessions and all_done:
-                print(f"  ⏭️  Already have quotes for all configured sessions, skipping (use --race to re-fetch)")
+                print("  ⏭️  Already have quotes for all configured sessions, skipping (use --race to re-fetch)")
                 rounds_data.append(existing_round)
                 continue
 
@@ -713,7 +767,7 @@ def main():
                     print(f"    📂 {session_type}: {vid} (already cached)")
                     cached_count += 1
                 elif not verify_video(vid, race_name, session_type):
-                    print(f"      ⏭️  Not caching — fix this ID in video-ids.json")
+                    print("      ⏭️  Not caching — fix this ID in video-ids.json")
                     missing_count += 1
                 else:
                     result = process_video(vid, race_name, session_type, fetch_only=True)
@@ -745,7 +799,7 @@ def main():
             )
             if result.get("missing"):
                 missing_sessions += 1
-                print(f"      ⏳ No transcript yet — session left out until one is cached")
+                print("      ⏳ No transcript yet — session left out until one is cached")
                 continue
             if result.get("failed"):
                 failed_sessions += 1
@@ -764,7 +818,7 @@ def main():
 
     if args.fetch_transcripts:
         print(f"\n✅ Transcripts: {cached_count} cached, {missing_count} failed")
-        print(f"   Commit scripts/transcripts/ and push to let CI extract quotes.\n")
+        print("   Commit scripts/transcripts/ and push to let CI extract quotes.\n")
         return
 
     # Apply manual overrides (for misattributions Claude can't resolve from captions alone)

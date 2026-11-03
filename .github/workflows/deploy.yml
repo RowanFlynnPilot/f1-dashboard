@@ -61,6 +61,13 @@ jobs:
         run: npm run lint
       - name: Run unit tests
         run: npm test
+      # The quotes script only runs on weekends with a new transcript, so a broken
+      # name in it surfaced mid-deploy (EXTRACTION_PROMPT, Nov 2026). pyflakes
+      # catches undefined names on every push. The runner ships Python 3.
+      - name: Lint Python
+        run: |
+          python3 -m pip install --quiet pyflakes
+          python3 -m pyflakes scripts/*.py
 
       # Each source fails soft. The fetch scripts only write their output at the
       # end, so a failed source leaves its committed files in place, the
