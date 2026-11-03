@@ -1,6 +1,6 @@
 {
   "season": 2026,
-  "fetchedAt": "2026-11-02T16:10:46.346Z",
+  "fetchedAt": "2026-11-03T00:59:19.949Z",
   "completedRounds": 19,
   "totalRounds": 23,
   "standingsRound": 19,
@@ -78,7 +78,7 @@
       "teams": [
         "McLaren"
       ],
-      "pts": 150,
+      "pts": 144,
       "wins": 0,
       "driverId": "piastri"
     },
@@ -89,7 +89,7 @@
       "teams": [
         "Red Bull"
       ],
-      "pts": 105,
+      "pts": 107,
       "wins": 0,
       "driverId": "hadjar"
     },
@@ -101,7 +101,7 @@
         "Racing Bulls",
         "Red Bull"
       ],
-      "pts": 79,
+      "pts": 83,
       "wins": 0,
       "driverId": "lawson"
     },
@@ -112,7 +112,7 @@
       "teams": [
         "Alpine"
       ],
-      "pts": 43,
+      "pts": 42,
       "wins": 0,
       "driverId": "gasly"
     },
@@ -134,7 +134,7 @@
       "teams": [
         "Alpine"
       ],
-      "pts": 31,
+      "pts": 27,
       "wins": 0,
       "driverId": "colapinto"
     },
@@ -151,6 +151,17 @@
     },
     {
       "pos": 14,
+      "name": "Gabriel Bortoleto",
+      "team": "Audi",
+      "teams": [
+        "Audi"
+      ],
+      "pts": 14,
+      "wins": 0,
+      "driverId": "bortoleto"
+    },
+    {
+      "pos": 15,
       "name": "Nico Hülkenberg",
       "team": "Audi",
       "teams": [
@@ -159,17 +170,6 @@
       "pts": 13,
       "wins": 0,
       "driverId": "hulkenberg"
-    },
-    {
-      "pos": 15,
-      "name": "Gabriel Bortoleto",
-      "team": "Audi",
-      "teams": [
-        "Audi"
-      ],
-      "pts": 10,
-      "wins": 0,
-      "driverId": "bortoleto"
     },
     {
       "pos": 16,
@@ -228,6 +228,17 @@
     },
     {
       "pos": 21,
+      "name": "Ryo Hirakawa",
+      "team": "Haas",
+      "teams": [
+        "Haas"
+      ],
+      "pts": 1,
+      "wins": 0,
+      "driverId": "ryo_hirakawa"
+    },
+    {
+      "pos": 22,
       "name": "Lance Stroll",
       "team": "Aston Martin",
       "teams": [
@@ -238,7 +249,7 @@
       "driverId": "stroll"
     },
     {
-      "pos": 22,
+      "pos": 23,
       "name": "Valtteri Bottas",
       "team": "Cadillac",
       "teams": [
@@ -247,17 +258,6 @@
       "pts": 0,
       "wins": 0,
       "driverId": "bottas"
-    },
-    {
-      "pos": 23,
-      "name": "Ryo Hirakawa",
-      "team": "Haas",
-      "teams": [
-        "Haas"
-      ],
-      "pts": 0,
-      "wins": 0,
-      "driverId": "ryo_hirakawa"
     },
     {
       "pos": 24,
@@ -315,7 +315,7 @@
     {
       "pos": 3,
       "team": "Red Bull",
-      "pts": 380,
+      "pts": 382,
       "wins": 3,
       "drivers": [
         {
@@ -324,7 +324,7 @@
         },
         {
           "name": "Hadjar",
-          "pts": 105
+          "pts": 107
         },
         {
           "name": "Lawson",
@@ -339,7 +339,7 @@
     {
       "pos": 4,
       "team": "McLaren",
-      "pts": 371,
+      "pts": 365,
       "wins": 2,
       "drivers": [
         {
@@ -348,7 +348,7 @@
         },
         {
           "name": "Piastri",
-          "pts": 150
+          "pts": 144
         }
       ],
       "lineup": [
@@ -359,12 +359,12 @@
     {
       "pos": 5,
       "team": "Racing Bulls",
-      "pts": 104,
+      "pts": 108,
       "wins": 0,
       "drivers": [
         {
           "name": "Lawson",
-          "pts": 65
+          "pts": 69
         },
         {
           "name": "Lindblad",
@@ -383,16 +383,16 @@
     {
       "pos": 6,
       "team": "Alpine",
-      "pts": 74,
+      "pts": 69,
       "wins": 0,
       "drivers": [
         {
           "name": "Gasly",
-          "pts": 43
+          "pts": 42
         },
         {
           "name": "Colapinto",
-          "pts": 31
+          "pts": 27
         }
       ],
       "lineup": [
@@ -403,7 +403,7 @@
     {
       "pos": 7,
       "team": "Haas",
-      "pts": 30,
+      "pts": 31,
       "wins": 0,
       "drivers": [
         {
@@ -416,7 +416,7 @@
         },
         {
           "name": "Hirakawa",
-          "pts": 0
+          "pts": 1
         }
       ],
       "lineup": [
@@ -427,16 +427,16 @@
     {
       "pos": 8,
       "team": "Audi",
-      "pts": 23,
+      "pts": 27,
       "wins": 0,
       "drivers": [
         {
-          "name": "Hülkenberg",
-          "pts": 13
+          "name": "Bortoleto",
+          "pts": 14
         },
         {
-          "name": "Bortoleto",
-          "pts": 10
+          "name": "Hülkenberg",
+          "pts": 13
         }
       ],
       "lineup": [
@@ -6817,65 +6817,20 @@
         {
           "pos": "7",
           "out": null,
-          "num": "81",
-          "did": "piastri",
-          "driver": "Piastri",
-          "team": "McLaren",
-          "grid": 12,
-          "laps": 71,
-          "pts": 6,
-          "gap": "+19.475",
-          "status": "Finished",
-          "fastestLapTime": "1:20.690",
-          "fastestLapRank": "9"
-        },
-        {
-          "pos": "8",
-          "out": null,
-          "num": "43",
-          "did": "colapinto",
-          "driver": "Colapinto",
-          "team": "Alpine",
-          "grid": 11,
-          "laps": 71,
-          "pts": 4,
-          "gap": "+20.204",
-          "status": "Finished",
-          "fastestLapTime": "1:20.750",
-          "fastestLapRank": "12"
-        },
-        {
-          "pos": "9",
-          "out": null,
           "num": "30",
           "did": "lawson",
           "driver": "Lawson",
           "team": "Racing Bulls",
           "grid": 22,
           "laps": 71,
-          "pts": 2,
+          "pts": 6,
           "gap": "+20.899",
           "status": "Finished",
           "fastestLapTime": "1:20.713",
           "fastestLapRank": "10"
         },
         {
-          "pos": "10",
-          "out": null,
-          "num": "10",
-          "did": "gasly",
-          "driver": "Gasly",
-          "team": "Alpine",
-          "grid": 9,
-          "laps": 71,
-          "pts": 1,
-          "gap": "+21.483",
-          "status": "Finished",
-          "fastestLapTime": "1:20.754",
-          "fastestLapRank": "13"
-        },
-        {
-          "pos": "11",
+          "pos": "8",
           "out": null,
           "num": "5",
           "did": "bortoleto",
@@ -6883,14 +6838,14 @@
           "team": "Audi",
           "grid": 13,
           "laps": 71,
-          "pts": 0,
+          "pts": 4,
           "gap": "+22.041",
           "status": "Finished",
           "fastestLapTime": "1:20.872",
           "fastestLapRank": "14"
         },
         {
-          "pos": "12",
+          "pos": "9",
           "out": null,
           "num": "6",
           "did": "hadjar",
@@ -6898,14 +6853,14 @@
           "team": "Red Bull",
           "grid": 7,
           "laps": 71,
-          "pts": 0,
+          "pts": 2,
           "gap": "+22.503",
           "status": "Finished",
           "fastestLapTime": "1:20.244",
           "fastestLapRank": "7"
         },
         {
-          "pos": "13",
+          "pos": "10",
           "out": null,
           "num": "50",
           "did": "ryo_hirakawa",
@@ -6913,14 +6868,14 @@
           "team": "Haas",
           "grid": 18,
           "laps": 71,
-          "pts": 0,
+          "pts": 1,
           "gap": "+25.373",
           "status": "Finished",
           "fastestLapTime": "1:20.984",
           "fastestLapRank": "15"
         },
         {
-          "pos": "14",
+          "pos": "11",
           "out": null,
           "num": "23",
           "did": "albon",
@@ -6935,7 +6890,7 @@
           "fastestLapRank": "17"
         },
         {
-          "pos": "15",
+          "pos": "12",
           "out": null,
           "num": "55",
           "did": "sainz",
@@ -6950,7 +6905,22 @@
           "fastestLapRank": "19"
         },
         {
-          "pos": "16",
+          "pos": "13",
+          "out": null,
+          "num": "81",
+          "did": "piastri",
+          "driver": "Piastri",
+          "team": "McLaren",
+          "grid": 12,
+          "laps": 71,
+          "pts": 0,
+          "gap": "+29.475",
+          "status": "Finished",
+          "fastestLapTime": "1:20.690",
+          "fastestLapRank": "9"
+        },
+        {
+          "pos": "14",
           "out": null,
           "num": "27",
           "did": "hulkenberg",
@@ -6965,7 +6935,22 @@
           "fastestLapRank": "11"
         },
         {
-          "pos": "17",
+          "pos": "15",
+          "out": null,
+          "num": "43",
+          "did": "colapinto",
+          "driver": "Colapinto",
+          "team": "Alpine",
+          "grid": 11,
+          "laps": 71,
+          "pts": 0,
+          "gap": "+30.204",
+          "status": "Finished",
+          "fastestLapTime": "1:20.750",
+          "fastestLapRank": "12"
+        },
+        {
+          "pos": "16",
           "out": null,
           "num": "11",
           "did": "perez",
@@ -6978,6 +6963,21 @@
           "status": "Finished",
           "fastestLapTime": "1:21.256",
           "fastestLapRank": "18"
+        },
+        {
+          "pos": "17",
+          "out": null,
+          "num": "10",
+          "did": "gasly",
+          "driver": "Gasly",
+          "team": "Alpine",
+          "grid": 9,
+          "laps": 71,
+          "pts": 0,
+          "gap": "+51.483",
+          "status": "Finished",
+          "fastestLapTime": "1:20.754",
+          "fastestLapRank": "13"
         },
         {
           "pos": "18",
