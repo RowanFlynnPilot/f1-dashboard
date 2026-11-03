@@ -1,6 +1,6 @@
 {
   "season": 2026,
-  "fetchedAt": "2026-11-02T16:12:26Z",
+  "fetchedAt": "2026-11-03T01:18:13Z",
   "rounds": [
     {
       "round": 1,
@@ -4713,6 +4713,108 @@
             }
           ],
           "extractedAt": "2026-11-02T15:03:55Z"
+        },
+        "race": {
+          "videoId": "eMBI0isVJbo",
+          "quotes": [
+            {
+              "driver": "Max Verstappen",
+              "team": "Red Bull",
+              "quote": "I always tried to go for every opportunity and today I saw the opportunity and it was a cool fight till the end. Lewis was flat out in my gearbox, so I could not afford to make a mistake.",
+              "context": "Describing his race-winning battle"
+            },
+            {
+              "driver": "Max Verstappen",
+              "team": "Red Bull",
+              "quote": "Kimmy just won the world championship, youngest world champion ever. I'd love to keep on that positive note. I don't really have anything to say about the incident with Charles.",
+              "context": "Deflecting to Antonelli's championship win"
+            },
+            {
+              "driver": "Andrea Kimi Antonelli",
+              "team": "Mercedes",
+              "quote": "We did it. I'm just so happy. It's an incredible moment, incredible feeling and I'm very grateful for all the opportunity that I was given, all the support, the family, the friends that I have. To finally clinch it is an incredible feeling.",
+              "context": "Reacting to clinching world championship"
+            },
+            {
+              "driver": "Charles Leclerc",
+              "team": "Ferrari",
+              "quote": "The penalty was deserved in a way. The thing is that it was a bit confusing because we both didn't make turn four. Then I stayed ahead and then Lewis and Max got past Lewis. So I asked what should I do and I kept the position and took a deserved penalty.",
+              "context": "Explaining his penalty at turn four"
+            },
+            {
+              "driver": "Lewis Hamilton",
+              "team": "Ferrari",
+              "quote": "The pace certainly seemed very good. I just cannot overtake. It was a good battle with Charles, he defended very very well, it was impossible. I was kind of hoping he made a mistake but even when he did it was in the tight twisty bit where it was too difficult to get past.",
+              "context": "Frustrated by inability to overtake"
+            },
+            {
+              "driver": "Lando Norris",
+              "team": "McLaren",
+              "quote": "I went to go up the inside of turn one and AR moved very late, so I kind of ended up on the outside because I was avoiding him. Then from that point onwards I tried to go around the outside, he pushed me pretty wide, and where we made contact was well before the corner actually happened.",
+              "context": "Describing his turn one incident"
+            },
+            {
+              "driver": "Oscar Piastri",
+              "team": "McLaren",
+              "quote": "Very happy. In general a very positive race, we maximized each moment. It was a very tricky race to execute perfectly and we did, and I'm very proud of that.",
+              "context": "Positive reaction to strong race execution"
+            },
+            {
+              "driver": "Liam Lawson",
+              "team": "Racing Bulls",
+              "quote": "The first part was a real struggle. We missed the VSC, didn't box, and then we boxed for our second stop the lap before the safety car. It was just really unlucky and we lost a lot of race time. Then the red flag helped us and I just tried to attack as much as possible.",
+              "context": "Explaining unlucky strategy and recovery"
+            },
+            {
+              "driver": "Arvid Lindblad",
+              "team": "Racing Bulls",
+              "quote": "Into turn one I was a bit surprised with Franco's braking. It came quite early and then I just avoided him. Liam was behind me before we went side by side. I'm not too sure what we got to talk about, but I think I did a good race.",
+              "context": "Explaining turn one incident with Lawson"
+            },
+            {
+              "driver": "Franco Colapinto",
+              "team": "Alpine",
+              "quote": "P11 unfortunately, again this number. At some point this season I hope we don't get any more of these results because it has been a few times now and we are so close to the points. Hopefully at my home race we are able to score some good points.",
+              "context": "Disappointed with another near-miss result"
+            },
+            {
+              "driver": "Pierre Gasly",
+              "team": "Alpine",
+              "quote": "There's not much to say, he shunted into me and that's it. It's a track where overtaking is so difficult anyway. It's been a tough weekend but once again the car is just so competitive even though it's pretty hard to drive.",
+              "context": "Reacting to being hit in race"
+            },
+            {
+              "driver": "Gabriel Bortoleto",
+              "team": "Audi",
+              "quote": "It was a lot of things to do especially at the start. Going into turn one is so long and you think about a lot of braking points with cars side by side. I think I took too much margin because I really wanted to finish the race and learn, but after the safety car with the C5 I had more confidence and passed two cars.",
+              "context": "Reflecting on learning experience in race"
+            },
+            {
+              "driver": "Nico H\u00fclkenberg",
+              "team": "Audi",
+              "quote": "Not a bad race. I think we went for the two stop which was a wrong call, we lost out a little bit, and then the red flag kind of brought us back in. Pace was good though, I think all things considered I was pretty happy with the weekend.",
+              "context": "Mixed feelings on strategy and pace"
+            },
+            {
+              "driver": "George Russell",
+              "team": "Mercedes",
+              "quote": "At the second start into turn four, I just got a little bit too close, lost all the front downforce and obviously hit Ollie in the back. Apologies to him, not ideal, not how I want to go racing, but just slightly misjudged that one.",
+              "context": "Apologizing for hitting Bearman"
+            },
+            {
+              "driver": "Charles Leclerc",
+              "team": "Ferrari",
+              "quote": "Being completely honest, I lost a bit of my rhythm after Madrid and Baku where I had the two crashes. I wasn't as confident to hustle the car as much. This weekend I felt more like myself, the race pace was really good, which has been a weakness of mine for the last few races.",
+              "context": "Regaining confidence after difficult spell"
+            },
+            {
+              "driver": "Oliver Bearman",
+              "team": "Haas",
+              "quote": "Just got smashed off. I was turning in and next thing I know I'm looking at everybody else coming past me facing the wrong way. Race over.",
+              "context": "Describing being hit at race start"
+            }
+          ],
+          "extractedAt": "2026-11-03T01:18:11Z"
         }
       }
     }
