@@ -198,36 +198,44 @@ export function processRaceControlPeriods(events, maxLap) {
   const periods = [];
   const yellowLapSet = new Set();
   let scStart = null, vscStart = null, rfStart = null;
+  const close = (type, start, lap) => periods.push({ type, lapStart: start, lapEnd: lap || start });
   for (const e of sorted) {
+    // OpenF1 writes "VSC DEPLOYED" / "VSC ENDING", and a red flag only as message
+    // text ("RED FLAG - RACE SUSPENDED", with SessionStatus "SESSION ABORTED")
+    // and no flag value. Matching only the long forms missed every VSC and red
+    // flag of 2026, and a safety car cut short by a red flag never closed.
+    // (Word boundaries: "CHEQUERED FLAG" contains "RED FLAG".)
     const msg = (e.message || "").toUpperCase();
     const lap = e.lap_number;
-    if (msg.includes("VIRTUAL SAFETY CAR DEPLOYED")) {
+    const isVsc = /\bVSC\b|VIRTUAL SAFETY CAR/.test(msg);
+    if (isVsc && msg.includes("DEPLOYED")) {
       if (vscStart == null) vscStart = lap;
-    } else if (msg.includes("VIRTUAL SAFETY CAR ENDING")) {
-      if (vscStart != null) {
-        periods.push({ type: "VSC", lapStart: vscStart, lapEnd: lap || vscStart });
-        vscStart = null;
-      }
+    } else if (isVsc && msg.includes("ENDING")) {
+      if (vscStart != null) { close("VSC", vscStart, lap); vscStart = null; }
     } else if (msg.includes("SAFETY CAR DEPLOYED")) {
       if (scStart == null) scStart = lap;
+      // a VSC upgraded to a full safety car ends there (no "VSC ENDING" follows)
+      if (vscStart != null) { close("VSC", vscStart, lap); vscStart = null; }
     } else if (msg.includes("SAFETY CAR ENDING") || msg.includes("SAFETY CAR IN THIS LAP")) {
-      if (scStart != null) {
-        periods.push({ type: "SC", lapStart: scStart, lapEnd: lap || scStart });
-        scStart = null;
+      if (scStart != null) { close("SC", scStart, lap); scStart = null; }
+    } else if (e.flag === "RED" || /\bRED FLAG\b/.test(msg) || msg.includes("SESSION ABORTED") || msg.includes("SESSION SUSPENDED")) {
+      if (rfStart == null) {
+        rfStart = lap;
+        // the race stops: whatever was neutralising it ends here
+        if (scStart != null) { close("SC", scStart, lap); scStart = null; }
+        if (vscStart != null) { close("VSC", vscStart, lap); vscStart = null; }
       }
-    } else if (e.flag === "RED") {
-      if (rfStart == null) rfStart = lap;
-    } else if (e.flag === "GREEN" && rfStart != null) {
-      periods.push({ type: "RED", lapStart: rfStart, lapEnd: lap || rfStart });
+    } else if (rfStart != null && (msg.includes("RESUME") || msg.includes("SESSION STARTED") || (e.flag === "GREEN" && e.scope === "Track"))) {
+      close("RED", rfStart, lap);
       rfStart = null;
     } else if (e.flag === "YELLOW" && lap != null) {
       // Localized sector yellow — record the lap so the chart can mark it
       yellowLapSet.add(lap);
     }
   }
-  if (scStart != null) periods.push({ type: "SC", lapStart: scStart, lapEnd: maxLap });
-  if (vscStart != null) periods.push({ type: "VSC", lapStart: vscStart, lapEnd: maxLap });
-  if (rfStart != null) periods.push({ type: "RED", lapStart: rfStart, lapEnd: maxLap });
+  if (scStart != null) close("SC", scStart, maxLap);
+  if (vscStart != null) close("VSC", vscStart, maxLap);
+  if (rfStart != null) close("RED", rfStart, maxLap);
   return { periods, yellowLaps: [...yellowLapSet].sort((a, b) => a - b) };
 }
 
@@ -449,6 +457,9 @@ async function buildLapCompareDefault(sessionKey, drivers) {
 // compact rows. Bump RACE_EXTRAS_VERSION when the shape changes and the
 // cached races refetch them (a few per run).
 export const RACE_EXTRAS_VERSION = 1;
+// Bump when processRaceControlPeriods changes: cached races and sprints refetch
+// /race_control (one request each) and recompute their SC / VSC / red-flag periods
+export const RACE_CONTROL_VERSION = 2;
 const round1 = v => (v == null ? null : Math.round(v * 10) / 10);
 const round3 = v => (v == null ? null : Math.round(v * 1000) / 1000);
 export function compactRaceExtras(pit, overtakes, weather) {
@@ -551,6 +562,12 @@ async function main() {
       .filter(k => (readCachedMeeting(k)?.sessions || []).some(s => s.sessionName === "Race" && s.drivers && !s.lapCompareDefault))
       .slice(0, 3),
   );
+  // Cached races and sprints whose SC/VSC/red-flag periods predate the current parser
+  const isRaceLikeSession = s => (s.sessionName === "Race" || s.sessionName === "Sprint") && s.drivers;
+  const raceControlBackfill = new Set(
+    meetings.filter(m => new Date(m.date_start) <= now).map(m => m.meeting_key)
+      .filter(k => (readCachedMeeting(k)?.sessions || []).some(s => isRaceLikeSession(s) && s.rcV !== RACE_CONTROL_VERSION)),
+  );
   // Cached races without the current pit/overtake/weather extras, newest first
   const extrasBackfill = new Set(
     meetings.filter(m => new Date(m.date_start) <= now).map(m => m.meeting_key).reverse()
@@ -594,6 +611,20 @@ async function main() {
             console.log(`   🛰️  Added pit/overtake/weather extras (${raceX.pitStops.length} stops, ${raceX.overtakes.length} swaps)`);
           } catch (e) {
             console.log(`   ⚠️  Race extras skipped: ${e.message}`);
+          }
+        }
+        if (raceControlBackfill.has(meeting.meeting_key)) {
+          for (const sess of (cached.sessions || []).filter(s => isRaceLikeSession(s) && s.rcV !== RACE_CONTROL_VERSION)) {
+            try {
+              const rc = await getRaceControl(sess.sessionKey);
+              await sleep(2000);
+              const maxLap = Math.max(0, ...sess.drivers.flatMap(d => (d.lapTimes || []).map(l => l.l || 0)));
+              const { periods, yellowLaps } = processRaceControlPeriods(rc, maxLap);
+              Object.assign(sess, { raceControlPeriods: periods, yellowFlagLaps: yellowLaps, rcV: RACE_CONTROL_VERSION });
+              console.log(`   🚩 ${sess.sessionName} race control: ${periods.map(p => `${p.type} ${p.lapStart}-${p.lapEnd}`).join(", ") || "green throughout"}`);
+            } catch (e) {
+              console.log(`   ⚠️  ${sess.sessionName} race control skipped: ${e.message}`);
+            }
           }
         }
         allMeetingData.push(cached);
@@ -805,6 +836,7 @@ async function main() {
           raceControlPeriods,
           // Laps with at least one localized yellow flag (sector wave)
           yellowFlagLaps,
+          ...(isRaceLike ? { rcV: RACE_CONTROL_VERSION } : {}),
         };
 
         // Race only: Lap Compare's default view, precomputed (see lapCompareDefaultPick)

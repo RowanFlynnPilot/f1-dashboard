@@ -255,3 +255,53 @@ test("injectPrerender swaps the shell for the render and keeps it for deep links
   assert.ok(!out.includes("<!--shell-->"));
   assert.throws(() => injectPrerender("<div id=\"root\"></div>", "x", 1), /markers/);
 });
+
+test("processRaceControlPeriods reads OpenF1's real message forms (2026 Mexico, Zandvoort)", () => {
+  const at = (lap, sec, message, extra = {}) => ({ date: `2026-11-01T20:${String(lap).padStart(2, "0")}:${String(sec).padStart(2, "0")}Z`, lap_number: lap, message, ...extra });
+  // R19 Mexico City, as OpenF1 logged it: abbreviated VSC, a safety car cut short
+  // by a red flag (message text only, no flag value), the restart, a second SC
+  const mexico = [
+    at(1, 0, "GREEN LIGHT - PIT EXIT OPEN", { category: "Flag", flag: "GREEN", scope: "Track" }),
+    at(7, 0, "VSC DEPLOYED", { category: "SafetyCar" }),
+    at(8, 0, "VSC ENDING", { category: "SafetyCar" }),
+    at(44, 0, "YELLOW IN TRACK SECTOR 2", { category: "Flag", flag: "YELLOW", scope: "Sector" }),
+    at(44, 10, "SAFETY CAR DEPLOYED", { category: "SafetyCar" }),
+    at(45, 0, "SESSION ABORTED", { category: "SessionStatus" }),
+    at(45, 1, "RED FLAG - RACE SUSPENDED", { category: "Other" }),
+    at(46, 0, "RACE WILL RESUME AT 15:45", { category: "Other" }),
+    at(59, 0, "SAFETY CAR DEPLOYED", { category: "SafetyCar" }),
+    at(62, 0, "SAFETY CAR IN THIS LAP", { category: "SafetyCar" }),
+    at(71, 0, "CHEQUERED FLAG", { category: "Flag", flag: "CHEQUERED", scope: "Track" }),
+  ];
+  assert.deepEqual(processRaceControlPeriods(mexico, 71).periods, [
+    { type: "VSC", lapStart: 7, lapEnd: 8 },
+    { type: "SC", lapStart: 44, lapEnd: 45 },
+    { type: "RED", lapStart: 45, lapEnd: 46 },
+    { type: "SC", lapStart: 59, lapEnd: 62 },
+  ], "was one SC from lap 44 to 62, and no VSC");
+  // R13 Zandvoort: SC and red flag on lap 3 — stored as an SC covering laps 3–53
+  const zandvoort = [
+    at(3, 0, "SAFETY CAR DEPLOYED"), at(3, 5, "SESSION ABORTED", { category: "SessionStatus" }),
+    at(3, 6, "RED FLAG - RACE SUSPENDED"), at(4, 0, "SESSION STARTED", { category: "SessionStatus" }),
+    at(28, 0, "VSC DEPLOYED"), at(29, 0, "VSC ENDING"),
+    // R16-style: a VSC upgraded to a safety car without "VSC ENDING"
+    at(40, 0, "VSC DEPLOYED"), at(42, 0, "SAFETY CAR DEPLOYED"), at(45, 0, "SAFETY CAR IN THIS LAP"),
+    at(53, 0, "CHEQUERED FLAG", { flag: "CHEQUERED" }),
+  ];
+  assert.deepEqual(processRaceControlPeriods(zandvoort, 53).periods, [
+    { type: "SC", lapStart: 3, lapEnd: 3 },
+    { type: "RED", lapStart: 3, lapEnd: 4 },
+    { type: "VSC", lapStart: 28, lapEnd: 29 },
+    { type: "VSC", lapStart: 40, lapEnd: 42 },
+    { type: "SC", lapStart: 42, lapEnd: 45 },
+  ], "the chequered flag is not a red flag");
+});
+
+test("a red flag reported only in the message text still counts", () => {
+  const ev = [
+    { date: "2026-01-01T00:00:01Z", lap_number: 5, message: "RED FLAG - RACE SUSPENDED", category: "Other" },
+    { date: "2026-01-01T00:00:02Z", lap_number: 6, message: "RACE WILL RESUME AT 15:00", category: "Other" },
+    { date: "2026-01-01T00:00:03Z", lap_number: 50, message: "CHEQUERED FLAG", flag: "CHEQUERED" },
+  ];
+  assert.deepEqual(processRaceControlPeriods(ev, 50).periods, [{ type: "RED", lapStart: 5, lapEnd: 6 }]);
+});
