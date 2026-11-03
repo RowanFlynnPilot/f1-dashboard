@@ -83,7 +83,8 @@ Race and Sprint sessions add:
 | `drivers[].lapTimes[]` | `{l: lap, t: seconds, pit: true on a pit-out lap, ds: lap start, epoch ms}` |
 | `drivers[].positions[]` | `{l: lap, p: position at the end of that lap}` |
 | `drivers[].fastLapTrace` | `{lap, lapTime, trace: [{d, s}]}`: ~80 samples of the fastest lap, `d` cumulative distance in OpenF1 location units, `s` km/h; top six drivers only |
-| `raceControlPeriods[]` | `{type: "SC" \| "VSC" \| "RED", lapStart, lapEnd}` |
+| `raceControlPeriods[]` | `{type: "SC" \| "VSC" \| "RED", lapStart, lapEnd}`, from OpenF1 race control |
+| `rcV` | Version of the race-control parser that produced the periods; a bump recomputes cached sessions |
 | `yellowFlagLaps[]` | Laps with at least one local yellow |
 
 Race sessions also carry:
@@ -91,7 +92,7 @@ Race sessions also carry:
 | Field | Row shape | Meaning |
 |---|---|---|
 | `lapCompareDefault` | `{lap, drivers: {num: {t0, car: [[ms, speed, throttle, brake, gear]], loc: [[ms, x, y]]}}}` | The Telemetry tab's default Lap Compare (top two finishers, the winner's fastest lap), so the tab opens without live API calls |
-| `pitStops` | `[driver, lap, stationary s, pit-lane s]` | OpenF1 `/pit`; stationary is the car at rest |
+| `pitStops` | `[driver, lap, stationary s, pit-lane s]` | OpenF1 `/pit`; stationary is the car at rest (null where OpenF1 has none, as for 2026 Mexico); rows from before lights out are dropped |
 | `overtakes` | `[epoch ms, overtaking driver, overtaken driver, position]` | OpenF1 `/overtakes`, raw: every position swap, pit cycles included |
 | `weather` | `[epoch ms, track °C, air °C, rain 0/1]` | OpenF1 `/weather`, about one reading a minute |
 | `extrasV` | number | Version of the three fields above; a bump refetches them for cached races |

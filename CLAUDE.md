@@ -85,6 +85,7 @@ f1-dashboard/
 - **Lap Compare default**: Race sessions carry `lapCompareDefault` (top two finishers on the winner's fastest non-pit lap, compact `[ms, …]` rows). Older cached races are backfilled three per run, newest first.
 - Manual refetch: the workflow's `refetch_meetings` input (meeting keys or `all`) bypasses the cache for those meetings.
 - `fetchJSON` retries 429/5xx/timeouts with backoff (calls are 2 s apart for the 30 req/min free tier).
+- **Race control** → `raceControlPeriods` (SC / VSC / RED) via `processRaceControlPeriods`. OpenF1's real forms: "VSC DEPLOYED" / "VSC ENDING"; a red flag is message text only ("RED FLAG - RACE SUSPENDED", SessionStatus "SESSION ABORTED") ending at "RACE WILL RESUME" / "SESSION STARTED"; a red flag closes an open SC/VSC and an SC closes a VSC it replaces; "CHEQUERED FLAG" contains "RED FLAG" (word boundaries). Until Nov 2026 every VSC and red flag was missed (tests then used invented message strings — build tests from real OpenF1 sequences). Sessions carry `rcV` (`RACE_CONTROL_VERSION`); bumping it refetches `/race_control` for cached race-likes, one request each.
 - **Race extras** (Race sessions only, compact rows): `pitStops` `[num, lap, stationary s, pit-lane s]` from `/pit`, `overtakes` `[ms, by, of, pos]` from `/overtakes` (raw — every swap, pit cycles included; `onTrackPasses()` filters), `weather` `[ms, track °C, air °C, rain]` from `/weather`. Stamped `extrasV` (`RACE_EXTRAS_VERSION`); cached races missing the current version are backfilled up to 25 per run. A failed extras fetch keeps the cached session.
 - Key endpoints: `/meetings`, `/sessions`, `/drivers`, `/laps`, `/stints`, `/position`, `/race_control`, `/pit`, `/overtakes`, `/weather`, `/car_data`, `/location`
 
@@ -110,7 +111,7 @@ YouTube blocks GitHub Actions IPs, so transcripts cannot be fetched in CI. The f
    ```
    This auto-discovers new "Drivers React" videos from the F1 YouTube RSS feed, checks each ID through YouTube oEmbed (FORMULA 1 channel, matching race and session) and caches transcripts to `scripts/transcripts/`. May also write to `scripts/video-ids.json`. CI's RSS discovery also records new IDs, and the commit step saves them, so they survive aging off the feed.
 
-2. **If videos have aged off RSS** (older than ~15 most recent F1 uploads), find the IDs manually and add to `scripts/video-ids.json`, then re-run step 1. A YouTube search-results page can be scraped for `"videoId":"…"` / title pairs; only accept videos owned by the FORMULA 1 channel. F1's video titles don't always match Jolpica's race names (2026 R7 is "Barcelona-Catalunya Grand Prix" on YouTube, "Barcelona Grand Prix" in the API) — add such cases to `YOUTUBE_RACE_ALIASES` in the script so RSS discovery keeps working.
+2. **If videos have aged off RSS** (older than ~15 most recent F1 uploads), find the IDs manually and add to `scripts/video-ids.json`, then re-run step 1. A YouTube search-results page can be scraped for `"videoId":"…"` / title pairs; only accept videos owned by the FORMULA 1 channel. F1's video titles don't always match Jolpica's race names (2026 R7 is "Barcelona-Catalunya Grand Prix" on YouTube, "Barcelona Grand Prix" in the API) — add such cases to `YOUTUBE_RACE_ALIASES` in the script so RSS discovery keeps working. `canonical_race()` also maps a title whose words all appear in exactly one scheduled round's name ("Mexico Grand Prix" → "Mexico City Grand Prix", which cost R19's race quotes a day); ambiguous names are left alone so the warning still fires. The automatic search backfill also covers RSS outages (the feed returned 404 on 2026-11-02).
 
 3. **Commit and push**:
    ```bash
@@ -242,7 +243,7 @@ The workflow runs on:
 - Manual trigger (`workflow_dispatch`) with inputs `allow_shrink` (accept a legitimate shrink, e.g. a round removed) and `refetch_meetings` (OpenF1 meeting keys, or `all`)
 
 Steps:
-1. Checkout **latest `main`** (not the triggering SHA — a queued run starts from its predecessor's data commit) → Setup Node 22 → `npm ci` → `npm run lint` → `npm test`
+1. Checkout **latest `main`** (not the triggering SHA — a queued run starts from its predecessor's data commit) → Setup Node 22 → `npm ci` → `npm run lint` → `npm test` → pyflakes over `scripts/*.py` (undefined names — the quotes script only runs on transcript weekends, so a broken name otherwise surfaces mid-deploy)
 2. Fetch Jolpica, fetch OpenF1, fetch driver quotes — each `continue-on-error` with an `id`. The scripts only write at the end, so a failed source leaves its committed files in place and the others still ship. Then `build-season-stats.mjs` (also soft).
 3. `node scripts/validate-data.mjs` — hard-fails the deploy if data is malformed or shrank vs the committed baseline (a failed build keeps the previous deploy live). Shrink checks are skipped when the season changes; `ALLOW_SHRINK` downgrades them to warnings.
 4. `npm run build` (with the Overview pre-render) → `npm run e2e` smoke test (fails the deploy; traces uploaded) → deploy to GitHub Pages
