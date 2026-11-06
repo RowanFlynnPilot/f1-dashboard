@@ -1,6 +1,6 @@
 {
   "season": 2026,
-  "fetchedAt": "2026-11-06T05:28:25.530Z",
+  "fetchedAt": "2026-11-06T05:33:52.640Z",
   "completedRounds": 19,
   "totalRounds": 23,
   "standingsRound": 19,
@@ -14,7 +14,8 @@
       ],
       "pts": 380,
       "wins": 9,
-      "driverId": "antonelli"
+      "driverId": "antonelli",
+      "dob": "2006-08-25"
     },
     {
       "pos": 2,
@@ -25,7 +26,8 @@
       ],
       "pts": 261,
       "wins": 3,
-      "driverId": "max_verstappen"
+      "driverId": "max_verstappen",
+      "dob": "1997-09-30"
     },
     {
       "pos": 3,
@@ -36,7 +38,8 @@
       ],
       "pts": 259,
       "wins": 1,
-      "driverId": "hamilton"
+      "driverId": "hamilton",
+      "dob": "1985-01-07"
     },
     {
       "pos": 4,
@@ -47,7 +50,8 @@
       ],
       "pts": 250,
       "wins": 3,
-      "driverId": "russell"
+      "driverId": "russell",
+      "dob": "1998-02-15"
     },
     {
       "pos": 5,
@@ -58,7 +62,8 @@
       ],
       "pts": 245,
       "wins": 1,
-      "driverId": "leclerc"
+      "driverId": "leclerc",
+      "dob": "1997-10-16"
     },
     {
       "pos": 6,
@@ -69,7 +74,8 @@
       ],
       "pts": 221,
       "wins": 2,
-      "driverId": "norris"
+      "driverId": "norris",
+      "dob": "1999-11-13"
     },
     {
       "pos": 7,
@@ -80,7 +86,8 @@
       ],
       "pts": 144,
       "wins": 0,
-      "driverId": "piastri"
+      "driverId": "piastri",
+      "dob": "2001-04-06"
     },
     {
       "pos": 8,
@@ -91,7 +98,8 @@
       ],
       "pts": 107,
       "wins": 0,
-      "driverId": "hadjar"
+      "driverId": "hadjar",
+      "dob": "2004-09-28"
     },
     {
       "pos": 9,
@@ -103,7 +111,8 @@
       ],
       "pts": 83,
       "wins": 0,
-      "driverId": "lawson"
+      "driverId": "lawson",
+      "dob": "2002-02-11"
     },
     {
       "pos": 10,
@@ -114,7 +123,8 @@
       ],
       "pts": 42,
       "wins": 0,
-      "driverId": "gasly"
+      "driverId": "gasly",
+      "dob": "1996-02-07"
     },
     {
       "pos": 11,
@@ -125,7 +135,8 @@
       ],
       "pts": 38,
       "wins": 0,
-      "driverId": "arvid_lindblad"
+      "driverId": "arvid_lindblad",
+      "dob": "2007-08-08"
     },
     {
       "pos": 12,
@@ -136,7 +147,8 @@
       ],
       "pts": 27,
       "wins": 0,
-      "driverId": "colapinto"
+      "driverId": "colapinto",
+      "dob": "2003-05-27"
     },
     {
       "pos": 13,
@@ -147,7 +159,8 @@
       ],
       "pts": 23,
       "wins": 0,
-      "driverId": "bearman"
+      "driverId": "bearman",
+      "dob": "2005-05-08"
     },
     {
       "pos": 14,
@@ -158,7 +171,8 @@
       ],
       "pts": 14,
       "wins": 0,
-      "driverId": "bortoleto"
+      "driverId": "bortoleto",
+      "dob": "2004-10-14"
     },
     {
       "pos": 15,
@@ -169,7 +183,8 @@
       ],
       "pts": 13,
       "wins": 0,
-      "driverId": "hulkenberg"
+      "driverId": "hulkenberg",
+      "dob": "1987-08-19"
     },
     {
       "pos": 16,
@@ -180,7 +195,8 @@
       ],
       "pts": 7,
       "wins": 0,
-      "driverId": "ocon"
+      "driverId": "ocon",
+      "dob": "1996-09-17"
     },
     {
       "pos": 17,
@@ -191,7 +207,8 @@
       ],
       "pts": 7,
       "wins": 0,
-      "driverId": "alonso"
+      "driverId": "alonso",
+      "dob": "1981-07-29"
     },
     {
       "pos": 18,
@@ -202,7 +219,8 @@
       ],
       "pts": 7,
       "wins": 0,
-      "driverId": "sainz"
+      "driverId": "sainz",
+      "dob": "1994-09-01"
     },
     {
       "pos": 19,
@@ -213,7 +231,8 @@
       ],
       "pts": 5,
       "wins": 0,
-      "driverId": "albon"
+      "driverId": "albon",
+      "dob": "1996-03-23"
     },
     {
       "pos": 20,
@@ -224,7 +243,8 @@
       ],
       "pts": 1,
       "wins": 0,
-      "driverId": "tsunoda"
+      "driverId": "tsunoda",
+      "dob": "2000-05-11"
     },
     {
       "pos": 21,
@@ -235,7 +255,8 @@
       ],
       "pts": 1,
       "wins": 0,
-      "driverId": "ryo_hirakawa"
+      "driverId": "ryo_hirakawa",
+      "dob": "1994-03-07"
     },
     {
       "pos": 22,
@@ -246,7 +267,8 @@
       ],
       "pts": 0,
       "wins": 0,
-      "driverId": "stroll"
+      "driverId": "stroll",
+      "dob": "1998-10-29"
     },
     {
       "pos": 23,
@@ -257,7 +279,8 @@
       ],
       "pts": 0,
       "wins": 0,
-      "driverId": "bottas"
+      "driverId": "bottas",
+      "dob": "1989-08-28"
     },
     {
       "pos": 24,
@@ -268,7 +291,8 @@
       ],
       "pts": 0,
       "wins": 0,
-      "driverId": "perez"
+      "driverId": "perez",
+      "dob": "1990-01-26"
     }
   ],
   "constructors": [
