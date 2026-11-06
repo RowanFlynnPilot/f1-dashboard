@@ -997,7 +997,7 @@ export default function F1Dashboard({initialRaw=null,renderAt=null}){
                     {DS.map((d,i)=>{const tier=i===0?"t1":i<3?"t2":i<6?"t3":i<10?"t4":"t5";return(
                       <li key={d.n} className={tier}>
                         <span className="rk">{d.p}</span>
-                        <span className="nm"><em style={{background:TC[d.t]||"var(--ink-4)"}}/>{d.n.split(" ").pop()}{i===0&&clinch&&<b className="champ">{season} champion</b>}{tier!=="t5"&&<small>{d.t}</small>}</span>
+                        <span className="nm"><em style={{background:TC[d.t]||"var(--ink-4)"}}/>{d.n.split(" ").pop()}{tier!=="t5"&&<small>{d.t}</small>}{i===0&&clinch&&<b className="champ">{season} champion</b>}</span>
                         <span className="pt">{d.pts}{d.d!=="—"&&<small>{d.d}</small>}</span>
                       </li>);})}
                   </ol>

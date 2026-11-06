@@ -182,8 +182,10 @@ input[type=range]{accent-color:var(--red)}
 .billing li .rk{font-family:var(--font-data);font-size:11px;color:var(--ink-4)}
 .billing li .nm{font-family:var(--font-head);font-weight:700;text-transform:uppercase;line-height:1;letter-spacing:.01em;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;min-width:0}
 .billing li .nm em{font-style:normal;display:inline-block;width:14px;height:3px;margin-right:8px;transform:translateY(-3px)}
-/* the champion's tag: record-red ink, ruled like a stamp */
-.billing li .nm .champ{display:inline-block;margin-left:10px;padding:2px 6px 1px;border:1px solid var(--red-rule);font-family:var(--font-data);font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;line-height:1.2;color:var(--red-ink);vertical-align:middle}
+/* the champion's tag: record-red ink, ruled like a stamp, on its own line under the
+   name — beside it, the name cell (~310 px in the two-column Overview, ~180 on a
+   360 px phone) clipped the stamp and the team label */
+.billing li .nm .champ{display:block;width:fit-content;margin:6px 0 2px 22px;padding:2px 6px 1px;border:1px solid var(--red-rule);font-family:var(--font-data);font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;line-height:1.2;color:var(--red-ink);vertical-align:middle}
 .billing li .nm small{font-family:var(--font-ui);font-size:11px;font-weight:500;color:var(--ink-4);text-transform:none;letter-spacing:0;margin-left:8px}
 .billing li .pt{font-family:var(--font-data);font-weight:700;color:var(--ink)}
 .billing li .pt small{font-weight:400;color:var(--green);margin-left:6px;font-size:11px}
@@ -303,8 +305,6 @@ td{font-family:var(--font-ui)}
 }
 @media(max-width:480px){
   .g4{grid-template-columns:1fr}
-  /* "ANTONELLI" plus the stamp needs ~275 px; a 360 px phone gives the name cell ~180 */
-  .billing li .nm .champ{display:block;width:fit-content;margin:6px 0 2px 22px}
   .rating-row{grid-template-columns:1fr 34px;row-gap:2px}
   .rating-row>:nth-child(2){grid-column:1/-1;grid-row:2}
   .rating-row>:nth-child(4){grid-column:1/-1;grid-row:3}
