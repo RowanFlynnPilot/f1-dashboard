@@ -13,6 +13,12 @@ export default defineConfig({
   use: {
     baseURL: `http://localhost:${PORT}/f1-dashboard/`,
     channel: "chrome",
+    // Deliberately unlike the build's zone and locale (CI builds in UTC, en-US):
+    // pre-rendered text that depends on either must fail here, not on visitors'
+    // phones. A local "lights out" time failed hydration outside UTC for days
+    // while this suite, sharing the build's zone, passed.
+    timezoneId: "Pacific/Auckland",
+    locale: "en-GB",
     trace: "retain-on-failure",
   },
   projects: [

@@ -631,6 +631,9 @@ export default function F1Dashboard({initialRaw=null,renderAt=null}){
   const fixedFmt=hydrated?null:FIXED_FMT;
   const dateFmt=(dt,tt)=>raceDateFmt(dt,tt,fixedFmt);
   const countdown=(dt,tt)=>countdownLabel(dt,tt,new Date(clock),!hydrated);
+  // "11:00 AM CST" — in UTC until hydration, like every other date on the Overview: the
+  // build renders in CI's zone, so a local time here failed hydration for everyone else
+  const timeFmt=(dt,tt)=>new Date(`${dt}T${tt}`).toLocaleTimeString(fixedFmt?.locale,{hour:"numeric",minute:"2-digit",timeZoneName:"short",timeZone:fixedFmt?.timeZone});
   const stampFmt=(iso,opts)=>new Date(iso).toLocaleString(fixedFmt?.locale,{...opts,timeZone:fixedFmt?.timeZone});
   useEffect(()=>{
     const tick=()=>setClock(Date.now());
@@ -1066,7 +1069,7 @@ export default function F1Dashboard({initialRaw=null,renderAt=null}){
             {nextRace&&(
             <div>
               <h2 className="sheet-h" style={{fontSize:30}}>Next race · {nextRace.nm}</h2>
-              <p className="sheet-sub">Round {nextRace.r} · {countdown(nextRace.dt,nextRace.tt)} · {nextRace.ci} · {dateFmt(nextRace.dt,nextRace.tt)}{nextRace.tt?` · lights out ${new Date(`${nextRace.dt}T${nextRace.tt}`).toLocaleTimeString(undefined,{hour:"numeric",minute:"2-digit",timeZoneName:"short"})} your time`:""}{nextRace.sp?" · sprint weekend":""}</p>
+              <p className="sheet-sub">Round {nextRace.r} · {countdown(nextRace.dt,nextRace.tt)} · {nextRace.ci} · {dateFmt(nextRace.dt,nextRace.tt)}{nextRace.tt?` · lights out ${timeFmt(nextRace.dt,nextRace.tt)}${hydrated?" your time":""}`:""}{nextRace.sp?" · sprint weekend":""}</p>
               <div style={{borderTop:"1px solid var(--rule)",marginTop:12,paddingTop:16}}>
                 {tracks&&tracks[nextRace.nm]&&(
                   <div style={{display:"flex",justifyContent:"center",padding:"6px 0 8px"}}>
