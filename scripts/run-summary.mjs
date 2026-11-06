@@ -6,6 +6,8 @@
 // summary must not turn a good deploy red.
 import fs from "node:fs";
 import { pathToFileURL } from "node:url";
+import { qualityChecks } from "./data-quality.mjs";
+import { loadMeetingsByRound } from "./build-season-stats.mjs";
 
 // Finished rounds (ended 48h+ ago) missing quotes for an expected session.
 // A session counts once it has quotes or an extractedAt stamp.
@@ -67,6 +69,12 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     out(`> ⚠️ ${msg}`);
     console.log(`::warning title=Quote gaps::${msg}`);
   }
+  // Data quality: warnings, never a failed run (scripts/data-quality.mjs)
+  const findings = qualityChecks({ data, quotes, meetingsByRound: loadMeetingsByRound() });
+  out("");
+  out(`#### Data quality · ${findings.length ? `${findings.length} finding${findings.length > 1 ? "s" : ""}` : "all checks pass"}`);
+  for (const f of findings) out(`- **${f.check}** · ${f.detail}`);
+  for (const f of findings.slice(0, 10)) console.log(`::warning title=Data quality (${f.check})::${f.detail}`);
 } catch (e) {
   out(`Summary failed: ${e.message}`);
 }

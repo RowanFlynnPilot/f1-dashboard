@@ -308,3 +308,24 @@ test("a red flag reported only in the message text still counts", () => {
   ];
   assert.deepEqual(processRaceControlPeriods(ev, 50).periods, [{ type: "RED", lapStart: 5, lapEnd: 6 }]);
 });
+
+import { qualityChecks } from "../scripts/data-quality.mjs";
+test("qualityChecks flags the season's silent failures and stays quiet on good data", () => {
+  const row = (did, driver, pts, num) => ({ did, driver, team: "X", pts, num: String(num), out: null });
+  const data = {
+    season: 2026,
+    drivers: [{ name: "Ann One", driverId: "one", pts: 25 }, { name: "Bob Two", driverId: "two", pts: 18 }],
+    constructors: [{ team: "X", pts: 43 }],
+    races: [{ round: 13, name: "Dutch Grand Prix", results: [row("one", "One", 25, 1), row("two", "Two", 18, 2)] }],
+    sprints: [],
+  };
+  const car = n => ({ number: n, lapTimes: [], positions: Array.from({ length: 53 }, (_, i) => ({ l: i + 1, p: n })) });
+  const good = { sessions: [{ sessionName: "Race", drivers: [car(1), car(2)], rcV: 2, extrasV: 1, raceControlPeriods: [{ type: "SC", lapStart: 3, lapEnd: 3 }] }] };
+  const quotes = { rounds: [{ round: 13, sessions: { race: { quotes: [{ driver: "Ann One" }] } } }] };
+  assert.deepEqual(qualityChecks({ data, quotes, meetingsByRound: { 13: good } }), []);
+  // Zandvoort as it was stored before the fix: one SC from lap 3 to the flag, no version stamp
+  const bad = { sessions: [{ ...good.sessions[0], rcV: undefined, raceControlPeriods: [{ type: "SC", lapStart: 3, lapEnd: 53 }] }] };
+  const badQuotes = { rounds: [{ round: 13, sessions: { race: { quotes: [{ driver: "Yuki Nobody" }] } } }] };
+  const found = qualityChecks({ data: { ...data, drivers: [{ ...data.drivers[0], pts: 26 }, data.drivers[1]] }, quotes: badQuotes, meetingsByRound: { 13: bad } });
+  assert.deepEqual([...new Set(found.map(f => f.check))].sort(), ["points", "quotes", "race control", "versions"]);
+});

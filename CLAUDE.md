@@ -23,7 +23,8 @@ f1-dashboard/
 │   ├── validate-data.mjs           ← CI gate: fails the deploy if fetched data is malformed or shrank vs HEAD
 │   ├── commit-data.sh              ← CI: commits this run's data on top of the latest main (never skips)
 │   ├── merge-video-ids.mjs         ← CI: merges discovered video IDs into main's (main wins)
-│   ├── run-summary.mjs             ← CI: job summary + "quotes lag" warning annotation
+│   ├── run-summary.mjs             ← CI: job summary + "quotes lag" warning annotation + the data-quality section
+│   ├── data-quality.mjs            ← qualityChecks(): non-blocking assertions over the shipped data (points add up, race-control/extras versions, neutralised share, passes kept, quotes on the roster)
 │   └── weekly-transcripts.ps1      ← local scheduled task: fetch transcripts, commit, push (see Quote workflow)
 ├── e2e/smoke.spec.mjs              ← Playwright smoke test of the built site (installed Chrome; playwright.config.mjs) — CI gate before deploy
 ├── test/                           ← node:test (`npm test`): scripts.test.mjs (fetch helpers, validator), data.test.mjs (src/data.js)
@@ -248,7 +249,7 @@ Steps:
 3. `node scripts/validate-data.mjs` — hard-fails the deploy if data is malformed or shrank vs the committed baseline (a failed build keeps the previous deploy live). Shrink checks are skipped when the season changes; `ALLOW_SHRINK` downgrades them to warnings.
 4. `npm run build` (with the Overview pre-render) → `npm run e2e` smoke test (fails the deploy; traces uploaded) → deploy to GitHub Pages
 5. **Commit the fetched data back to `main`** via `scripts/commit-data.sh` (run from a copy, since it resets the checkout): snapshot `public/data.json`, `public/openf1/`, `public/driver-quotes.json`, `public/season-stats.json`, reset to the latest `origin/main`, lay them back on top, merge `scripts/video-ids.json` (main wins), commit as `github-actions[bot]`, push with retries. It used to rebase, which silently skipped the commit whenever the quotes step had recorded new video IDs or a queued run followed another. `GITHUB_TOKEN` pushes never trigger workflows, so it can't loop. **Run `git pull` before pushing local work** — main moves after every deploy.
-6. `scripts/run-summary.mjs` writes the job summary (what each source shipped, quote lag) — then the run turns red if any source failed.
+6. `scripts/run-summary.mjs` writes the job summary (what each source shipped, quote lag, and the **Data quality** findings from `qualityChecks()` as warning annotations — never a failed run) — then the run turns red if any source failed. Add a check there whenever a new class of silent data failure turns up.
 
 ### Why the commit-back step matters
 GitHub disables scheduled workflows after 60 days without a commit. That happened in August 2026 (last human push June 12 → crons silently stopped, site froze at the Hungarian GP). The bot commit after each run keeps the repo active year-round, including the off-season. `.github/dependabot.yml` (monthly, grouped) is a second source of activity.
