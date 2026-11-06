@@ -334,3 +334,13 @@ test("seasonReview: titles, leaders with ties, the closest team-mate battle", ()
   assert.deepEqual(L.Retirements.names, ["Cat Three"], "a DNS isn't a retirement; sprints don't count");
   assert.deepEqual(r.closestTeammates, { team: "X", a: "Ann One", b: "Cat Three", score: "4–1" }, "pairings under five weekends are left out");
 });
+
+test("onTrackPasses counts safety-car restart laps but not the standing restart after a red flag", () => {
+  const a = car(1, { laps: 30 }), b = car(2, { laps: 30 });
+  const at = lap => a.lapTimes[lap - 1].ds + 10_000;
+  const swaps = laps => laps.map(l => [at(l), 1, 2, 1]);
+  const sc = onTrackPasses({ drivers: [a, b], raceControlPeriods: [{ type: "SC", lapStart: 10, lapEnd: 12 }], overtakes: swaps([11, 13]) });
+  assert.equal(sc.kept, 1, "lap 11 is behind the SC; lap 13, the restart, is a real pass");
+  const red = onTrackPasses({ drivers: [a, b], raceControlPeriods: [{ type: "RED", lapStart: 20, lapEnd: 21 }], overtakes: swaps([21, 22, 23]) });
+  assert.equal(red.kept, 1, "21 under red, 22 the standing restart; 23 counts");
+});

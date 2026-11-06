@@ -54,7 +54,7 @@ Computed from `data.json` and every meeting file by `buildSeasonStats()` in `src
 | `finishRate` | % of Grands Prix classified | Jolpica |
 | `pitStop` | Median seconds stationary in the box (the crew's part) | OpenF1 pit |
 
-*Green-flag laps* drop lap 1, in- and out-laps, laps under a safety car, VSC or red flag plus the restart lap, and laps over 107% of the driver's median. *On-track passes* are OpenF1's raw position swaps minus lap 1, swaps while either car is on an in- or out-lap, swaps under a neutralisation, swaps between cars on different laps, and a retiring car's last laps.
+*Green-flag laps* drop lap 1, in- and out-laps, laps under a safety car, VSC or red flag plus the restart lap, and laps over 107% of the driver's median. *On-track passes* are OpenF1's raw position swaps minus lap 1, swaps while either car is on an in- or out-lap, swaps while a safety car, VSC or red flag is out (a safety-car restart lap counts; the standing restart after a red flag doesn't), swaps between cars on different laps, and a retiring car's last laps.
 
 ## openf1/index.json
 

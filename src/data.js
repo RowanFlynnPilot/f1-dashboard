@@ -565,12 +565,16 @@ function lapAt(driver, ms) {
 
 // On-track passes from OpenF1's raw overtakes, which record every position
 // swap. Dropped: lap 1 (its own metric), swaps where either car pitted that
-// lap or the next (pit cycles), swaps under a safety car/VSC, swaps with a car
+// lap or the next (pit cycles), swaps while a safety car, VSC or red flag is out
+// (and on the standing restart after a red flag, a start in all but name — but
+// a safety-car restart lap counts: its passes are real), swaps with a car
 // on a different lap (lapping), and swaps on a car's final lap when it retired
 // (a stopping car isn't overtaken). Returns {byDriver: {num: {made, lost}}, kept, raw}.
 export function onTrackPasses(session, outNums = new Set()) {
   const drivers = Object.fromEntries((session?.drivers || []).map(d => [d.number, d]));
-  const neutral = neutralLaps(session);
+  // Unlike race pace (neutralLaps), the restart lap after an SC/VSC stays in
+  const neutral = new Set();
+  for (const p of session?.raceControlPeriods || []) for (let l = p.lapStart; l <= p.lapEnd + (p.type === "RED" ? 1 : 0); l++) neutral.add(l);
   // pit-out lap or the in-lap before it
   const pitAround = (d, lap) => (d?.lapTimes || []).some(l => l.pit && (l.l === lap || l.l === lap + 1));
   const byDriver = {};
@@ -742,7 +746,7 @@ export const SEASON_METRICS = [
   { key: "racePace", label: "Race pace", unit: "% off best", better: "low", digits: 2, note: "Median green-flag lap against the race's quickest median, per race." },
   { key: "consistency", label: "Consistency", unit: "% lap spread", better: "low", digits: 2, note: "Standard deviation of green-flag laps as a share of their mean, per race." },
   { key: "lap1", label: "Opening lap", unit: "places gained", better: "high", digits: 1, note: "Average places gained from the grid by the end of lap 1." },
-  { key: "passes", label: "Overtaking", unit: "passes / race", better: "high", digits: 1, note: "On-track passes per race, pit cycles, lapping and safety-car swaps excluded." },
+  { key: "passes", label: "Overtaking", unit: "passes / race", better: "high", digits: 1, note: "On-track passes per race; pit cycles, lapping and swaps behind a safety car or VSC excluded (restart laps count)." },
   { key: "teammateQuali", label: "Beats team-mate", unit: "% of qualifyings", better: "high", digits: 0, note: "Share of qualifying sessions ahead of the team-mate that weekend." },
   { key: "pointsPerStart", label: "Scoring", unit: "points / start", better: "high", digits: 1, note: "Season points per Grand Prix started." },
   { key: "finishRate", label: "Reliability", unit: "% classified", better: "high", digits: 0, note: "Share of Grands Prix with a classified finish." },
