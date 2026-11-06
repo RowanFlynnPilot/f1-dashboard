@@ -303,6 +303,8 @@ td{font-family:var(--font-ui)}
 }
 @media(max-width:480px){
   .g4{grid-template-columns:1fr}
+  /* "ANTONELLI" plus the stamp needs ~275 px; a 360 px phone gives the name cell ~180 */
+  .billing li .nm .champ{display:block;width:fit-content;margin:6px 0 2px 22px}
   .rating-row{grid-template-columns:1fr 34px;row-gap:2px}
   .rating-row>:nth-child(2){grid-column:1/-1;grid-row:2}
   .rating-row>:nth-child(4){grid-column:1/-1;grid-row:3}

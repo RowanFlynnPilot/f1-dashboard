@@ -1,5 +1,5 @@
 import { useState, useEffect, useLayoutEffect, useMemo, useCallback, useRef, Fragment, Component, memo } from "react";
-import { transformData, countdownLabel, withStatus, meetingRaceDay, meetingForRace, meetingTrackName, greenFlagLaps, racePace, onTrackPasses, lapOneGains, miniSectors, titleOutlook, titleClinch, pointsFor } from "./data.js";
+import { transformData, countdownLabel, withStatus, meetingRaceDay, meetingForRace, meetingTrackName, greenFlagLaps, racePace, onTrackPasses, lapOneGains, miniSectors, titleOutlook, titleClinch, championAge, YOUNGEST_CHAMPION_BEFORE_2026, pointsFor } from "./data.js";
 
 // The season comes from data.json (scripts/season.json drives the fetch); this is
 // only the fallback before it loads.
@@ -1464,7 +1464,7 @@ export default function F1Dashboard({initialRaw=null,renderAt=null}){
             <div style={{background:"var(--w02)",border:"1px solid var(--w06)",borderRadius:2,padding:20}}>
               <div style={{fontSize:13,textTransform:"uppercase",letterSpacing:1.5,color:"var(--w40)",marginBottom:16}}>{season} Season Key Facts</div>
               <div className="g3">
-                {[...(clinch&&DS[0]?[{l:`${season} Champion`,v:`${DS[0].n} — clinched at R${clinch.round} ${clinch.name.replace(" Grand Prix","")}`}]:[]),{l:"New Regulations",v:"Active aero, 50/50 ICE/ERS split, new chassis"},{l:"New Teams",v:"Cadillac (11th team), Audi (ex-Sauber)"},{l:"New Engine Suppliers",v:"Audi, Honda (Aston Martin), Ford (Red Bull)"},{l:"Calendar",v:`${totalRounds} rounds · Bahrain moved to Sepang, Saudi Arabia postponed`},{l:"Defending Champions",v:"Norris (WDC) · McLaren (WCC)"},{l:"Youngest Pole",v:"Antonelli — 19y 201d (China)"}].map((f,i)=>(
+                {[...(clinch&&DS[0]?[{l:`${season} Champion`,v:(()=>{const a=championAge(DS[0],clinch,races);return `${DS[0].n} — clinched at R${clinch.round} ${clinch.name.replace(" Grand Prix","")}${a?`, aged ${a.label}${a.youngest?" (youngest ever)":""}`:""}`;})()}]:[]),{l:"New Regulations",v:"Active aero, 50/50 ICE/ERS split, new chassis"},{l:"New Teams",v:"Cadillac (11th team), Audi (ex-Sauber)"},{l:"New Engine Suppliers",v:"Audi, Honda (Aston Martin), Ford (Red Bull)"},{l:"Calendar",v:`${totalRounds} rounds · Bahrain moved to Sepang, Saudi Arabia postponed`},{l:"Defending Champions",v:"Norris (WDC) · McLaren (WCC)"},{l:"Youngest Pole",v:"Antonelli — 19y 201d (China)"}].map((f,i)=>(
                   <div key={i} style={{padding:14,background:"var(--w02)",borderRadius:2}}>
                     <div style={{fontSize:11,color:"var(--w40)",textTransform:"uppercase",letterSpacing:.5,marginBottom:4}}>{f.l}</div>
                     <div style={{fontSize:13,color:"var(--w75)",lineHeight:1.4}}>{f.v}</div>
@@ -2236,12 +2236,14 @@ const TitleFight=memo(function TitleFight({DS,sched,races,CS,clinch,season}){
       else wccLine=<>It can't be settled at the {wcc.needed.name}: {lt.t} lead {rt.t} by {lt.pts-rt.pts} with {wcc.maxLeft} left for one team.</>;
     }
     const sub=clinch?`Decided at R${clinch.round} ${clinch.name}: ${clinch.lead} points clear with ${clinch.left} left to win`:"Decided";
+    const age=clinch?championAge(DS[0],clinch,races):null;
+    const rec=YOUNGEST_CHAMPION_BEFORE_2026;
     return(
       <div style={PANEL}>
         <PanelHead title="Title Fight" sub={sub}/>
         <div className="head" style={{fontSize:30,fontWeight:700,lineHeight:1.05,display:"flex",alignItems:"baseline",gap:12,flexWrap:"wrap"}}>
           <span style={{display:"inline-block",width:5,height:24,background:TC[leader.t]||"var(--ink-3)",alignSelf:"center"}}/>
-          {leader.n}<span className="num" style={{fontSize:13,fontWeight:400,color:"var(--ink-3)",textTransform:"none"}}>{season} World Champion</span>
+          {leader.n}<span className="num" style={{fontSize:13,fontWeight:400,color:"var(--ink-3)",textTransform:"none"}}>{season} World Champion{age?` · ${age.youngest?"the youngest in history, at ":"aged "}${age.label}`:""}</span>
         </div>
         {after&&after.events.length>0?(
           <div className="g2" style={{marginTop:20,alignItems:"start"}}>
@@ -2259,7 +2261,7 @@ const TitleFight=memo(function TitleFight({DS,sched,races,CS,clinch,season}){
         ):(
           <p style={{margin:"10px 0 0",fontSize:14,color:"var(--w60)",maxWidth:"70ch"}}>{L(leader)} finished the season {leader.pts-rival.pts} points clear of {L(rival)}.</p>
         )}
-        <HowComputed>A title is decided once the leader's margin over every rival is larger than the points still available: 25 for every Grand Prix left and 8 for every sprint; the deciding round is found by replaying the season result by result. The fight for second runs the same {after?.sims?.toLocaleString?.()||"4,000"} simulated run-ins with the champion still racing (still taking points and places) but out of the count. Constructors' odds come from the same runs, summing each team's two cars; a team can add 43 points per Grand Prix (25 + 18) and 15 per sprint. Projections from this season's form, not predictions.</HowComputed>
+        <HowComputed>A title is decided once the leader's margin over every rival is larger than the points still available: 25 for every Grand Prix left and 8 for every sprint; the deciding round is found by replaying the season result by result.{age?` The champion's age is counted from Jolpica's date of birth to the day of the deciding race; the record it is compared with is ${rec.name}'s, ${rec.years} years ${rec.days} days in ${rec.season}.`:""} The fight for second runs the same {after?.sims?.toLocaleString?.()||"4,000"} simulated run-ins with the champion still racing (still taking points and places) but out of the count. Constructors' odds come from the same runs, summing each team's two cars; a team can add 43 points per Grand Prix (25 + 18) and 15 per sprint. Projections from this season's form, not predictions.</HowComputed>
       </div>
     );
   }

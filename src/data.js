@@ -123,7 +123,7 @@ export function transformData(raw) {
 
   const DS = raw.drivers.map(d => {
     const delta = lastPtsOf(d.driverId, d.name);
-    return { p: d.pos, n: d.name, t: d.team, pts: d.pts, wins: d.wins || 0, d: delta > 0 ? `+${delta}` : "—", mv: 0, did: d.driverId || "", teams: d.teams || [d.team] };
+    return { p: d.pos, n: d.name, t: d.team, pts: d.pts, wins: d.wins || 0, d: delta > 0 ? `+${delta}` : "—", mv: 0, did: d.driverId || "", teams: d.teams || [d.team], dob: d.dob || null };
   });
 
   // Compute position movement: compare current standings vs what they'd be without last-round points
@@ -408,7 +408,8 @@ export function transformData(raw) {
       if(d1.pts===0)lines.push(`Neither driver has scored yet.`);
       else lines.push(`${d1.n} and ${d2.n} are level on ${d1.pts} pts apiece.`);
     } else if(champLast&&d1.n===champLast){
-      lines.push(`${DS[0].n} clinched the ${raw.season} drivers' title at the ${champ.name}, and leads the garage on ${d1.pts} to ${d2.n}'s ${d2.pts}.`);
+      const age=championAge(DS[0],champ,allRaces);
+      lines.push(`${DS[0].n} clinched the ${raw.season} drivers' title at the ${champ.name}${age?`, at ${age.label}${age.youngest?" the youngest champion in the sport's history":""}`:""}, and leads the garage on ${d1.pts} to ${d2.n}'s ${d2.pts}.`);
     } else {
       lines.push(`${d1.n} leads the garage on ${d1.pts} to ${d2.n}'s ${d2.pts}.`);
     }
@@ -847,3 +848,28 @@ export function titleClinch({ DS, sched, races }) {
   return null;
 }
 const lastNameOf = n => (n || "").split(" ").pop();
+
+// Whole years and leftover days from a birth date to a date ("YYYY-MM-DD")
+export function ageOn(dob, date) {
+  if (!dob || !date) return null;
+  const [by, bm, bd] = dob.split("-").map(Number), [y, m, d] = date.split("-").map(Number);
+  let years = y - by;
+  if (m < bm || (m === bm && d < bd)) years--;
+  const lastBirthday = Date.UTC(by + years, bm - 1, bd);
+  const days = Math.round((Date.UTC(y, m - 1, d) - lastBirthday) / 86400000);
+  return { years, days };
+}
+
+// The record before 2026: Sebastian Vettel, champion at 23 years 134 days
+// (2010 Abu Dhabi GP). Compared, not computed — Jolpica would need every
+// season's final standings and every champion's birth date.
+export const YOUNGEST_CHAMPION_BEFORE_2026 = { name: "Sebastian Vettel", season: 2010, years: 23, days: 134 };
+
+// The champion's age on the day the title was decided, and whether that beats the record
+export function championAge(champion, clinch, races) {
+  const date = (races || []).find(r => !r.sprint && parseInt(r.r) === clinch?.round)?.dt;
+  const age = ageOn(champion?.dob, date);
+  if (!age) return null;
+  const rec = YOUNGEST_CHAMPION_BEFORE_2026;
+  return { ...age, label: `${age.years} years ${age.days} days`, youngest: age.years < rec.years || (age.years === rec.years && age.days < rec.days) };
+}

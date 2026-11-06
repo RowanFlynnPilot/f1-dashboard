@@ -2,7 +2,7 @@
 //   npm test
 import test from "node:test";
 import assert from "node:assert/strict";
-import { transformData, countdownLabel, withStatus, meetingForRace, greenFlagLaps, racePace, onTrackPasses, lapOneGains, miniSectors, titleOutlook, remainingEvents, buildSeasonStats, titleClinch } from "../src/data.js";
+import { transformData, countdownLabel, withStatus, meetingForRace, greenFlagLaps, racePace, onTrackPasses, lapOneGains, miniSectors, titleOutlook, remainingEvents, buildSeasonStats, titleClinch, ageOn, championAge } from "../src/data.js";
 
 // A classification row in data.json's shape
 const row = (pos, driver, team, pts, extra = {}) => ({
@@ -293,4 +293,16 @@ test("titleOutlook: the fight for second (champion excluded but racing) and the 
   assert.equal(o.constructors.maxLeft, 43);
   assert.equal(o.constructors.clinched, true);
   assert.deepEqual(o.constructors.teams.map(t => t.prob), [1, 0]);
+});
+
+test("ageOn and championAge: Antonelli at the 2026 Mexico City GP, against Vettel's record", () => {
+  assert.deepEqual(ageOn("2006-08-25", "2026-11-01"), { years: 20, days: 68 });
+  assert.deepEqual(ageOn("1987-07-03", "2010-11-14"), { years: 23, days: 134 }, "Vettel's 2010 record, as the constant says");
+  assert.deepEqual(ageOn("2000-03-01", "2020-02-29"), { years: 19, days: 365 }, "a day short of a birthday, across a leap day");
+  const races = [{ r: 19, sprint: false, dt: "2026-11-01" }];
+  const a = championAge({ dob: "2006-08-25" }, { round: 19 }, races);
+  assert.equal(a.label, "20 years 68 days");
+  assert.equal(a.youngest, true);
+  assert.equal(championAge({ dob: "1980-01-01" }, { round: 19 }, races).youngest, false);
+  assert.equal(championAge({ dob: null }, { round: 19 }, races), null, "no birth date, no claim");
 });

@@ -21,7 +21,7 @@ Conventions: times are seconds (numbers) unless they are display strings from Jo
 | `fetchedAt` | ISO time | When Jolpica was fetched |
 | `completedRounds` / `totalRounds` | number | Grands Prix run / on the calendar |
 | `standingsRound` | number | The round the standings follow (on a sprint Saturday, the standings include the sprint) |
-| `drivers[]` | | Drivers' standings: `pos`, `name`, `driverId` (Jolpica id, e.g. `max_verstappen`), `team` (current, the last constructor), `teams[]` (every team this season, in order), `pts`, `wins` |
+| `drivers[]` | | Drivers' standings: `pos`, `name`, `driverId` (Jolpica id, e.g. `max_verstappen`), `team` (current, the last constructor), `teams[]` (every team this season, in order), `pts`, `wins`, `dob` (date of birth, `YYYY-MM-DD`) |
 | `constructors[]` | | `pos`, `team`, `pts`, `wins`, `drivers[]` (`{name, pts}` scored for this team, so a mid-season mover appears under both), `lineup[]` (current pairing) |
 | `races[]` | | One per Grand Prix run: `round`, `name`, `circuit`, `date`, `time` (UTC start), `winnerTime`, `fastestLap` `{driver, time, team}`, `results[]` |
 | `races[].results[]` | | `pos` (string; Jolpica numbers retirements too), `out` (`"DNF"`, `"DSQ"`, `"DNS"`, `"NC"` or null), `num` (car number), `did` (driverId), `driver` (surname), `team`, `grid` (0 = pit lane), `laps`, `pts`, `gap`, `status`, `fastestLapTime`, `fastestLapRank` |

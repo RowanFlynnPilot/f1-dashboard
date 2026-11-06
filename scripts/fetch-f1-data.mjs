@@ -338,6 +338,7 @@ async function main() {
     pts: parseInt(ds.points),
     wins: parseInt(ds.wins),
     driverId: ds.Driver.driverId,
+    dob: ds.Driver.dateOfBirth || null, // for ages (the champion's at the deciding race)
   }));
 
   // Race results
