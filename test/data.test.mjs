@@ -2,7 +2,7 @@
 //   npm test
 import test from "node:test";
 import assert from "node:assert/strict";
-import { transformData, countdownLabel, withStatus, meetingForRace, greenFlagLaps, racePace, onTrackPasses, lapOneGains, miniSectors, titleOutlook, remainingEvents, buildSeasonStats, titleClinch, ageOn, championAge } from "../src/data.js";
+import { transformData, countdownLabel, withStatus, meetingForRace, greenFlagLaps, racePace, onTrackPasses, lapOneGains, miniSectors, titleOutlook, remainingEvents, buildSeasonStats, titleClinch, ageOn, championAge, seasonReview } from "../src/data.js";
 
 // A classification row in data.json's shape
 const row = (pos, driver, team, pts, extra = {}) => ({
@@ -305,4 +305,32 @@ test("ageOn and championAge: Antonelli at the 2026 Mexico City GP, against Vette
   assert.equal(a.youngest, true);
   assert.equal(championAge({ dob: "1980-01-01" }, { round: 19 }, races).youngest, false);
   assert.equal(championAge({ dob: null }, { round: 19 }, races), null, "no birth date, no claim");
+});
+
+test("seasonReview: titles, leaders with ties, the closest team-mate battle", () => {
+  const DS = [
+    { n: "Ann One", did: "one", t: "X", pts: 300, wins: 6 },
+    { n: "Bob Two", did: "two", t: "Y", pts: 250, wins: 6 },
+    { n: "Cat Three", did: "three", t: "X", pts: 100, wins: 0 },
+  ];
+  const CS = [{ t: "X", pts: 400 }, { t: "Y", pts: 250 }];
+  const races = [
+    { r: 1, sprint: false, full: [{ did: "one", d: "One", p: 1 }, { did: "two", d: "Two", p: 2 }, { did: "three", d: "Three", p: "DNF" }] },
+    { r: 2, sprint: false, full: [{ did: "two", d: "Two", p: 1 }, { did: "three", d: "Three", p: 2 }, { did: "one", d: "One", p: "DNS" }] },
+    { r: "2S", sprint: true, full: [{ did: "three", d: "Three", p: 1 }] },
+  ];
+  const qualifying = [{ results: [{ pos: 1, did: "two" }] }, { results: [{ pos: 1, did: "two" }] }];
+  const h2h = [
+    { team: "X", d1: DS[0], d2: DS[2], rounds: [1, 2, 3, 4, 5], qual: { d1: 4, d2: 1 } },
+    { team: "Z", d1: { n: "P", pts: 10 }, d2: { n: "Q", pts: 9 }, rounds: [1, 2], qual: { d1: 1, d2: 1 } },
+  ];
+  const r = seasonReview({ DS, CS, races, qualifying, h2h });
+  assert.equal(r.margin, 50);
+  assert.equal(r.constructorsMargin, 150);
+  const L = Object.fromEntries(r.leaders.map(l => [l.label, l]));
+  assert.deepEqual(L.Wins.names, ["Ann One", "Bob Two"], "a tie lists both");
+  assert.deepEqual([L.Poles.names, L.Poles.value], [["Bob Two"], 2]);
+  assert.deepEqual([L.Podiums.names, L.Podiums.value], [["Bob Two"], 2]);
+  assert.deepEqual(L.Retirements.names, ["Cat Three"], "a DNS isn't a retirement; sprints don't count");
+  assert.deepEqual(r.closestTeammates, { team: "X", a: "Ann One", b: "Cat Three", score: "4–1" }, "pairings under five weekends are left out");
 });

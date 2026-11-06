@@ -873,3 +873,46 @@ export function championAge(champion, clinch, races) {
   const rec = YOUNGEST_CHAMPION_BEFORE_2026;
   return { ...age, label: `${age.years} years ${age.days} days`, youngest: age.years < rec.years || (age.years === rec.years && age.days < rec.days) };
 }
+
+// ── Season in review ─────────────────────────────────────────────────────────
+// The finished season in a few lines: the three titles and their margins,
+// leaders by wins, poles, podiums and retirements (Grands Prix only; ties
+// listed together), and the closest team-mate qualifying battle among
+// pairings that shared at least five weekends. Inputs: transformData output.
+export function seasonReview({ DS, CS, races, qualifying, h2h }) {
+  if (!DS?.length) return null;
+  const nameOf = Object.fromEntries(DS.map(d => [d.did, d]));
+  const byLast = Object.fromEntries(DS.map(d => [d.n.split(" ").pop(), d]));
+  const who = row => nameOf[row.did] || byLast[row.d];
+  const tally = () => ({});
+  const podiums = tally(), dnfs = tally(), poles = tally();
+  const gps = (races || []).filter(r => !r.sprint);
+  for (const r of gps) for (const row of r.full || []) {
+    const d = who(row); if (!d) continue;
+    if (typeof row.p === "number" && row.p <= 3) podiums[d.n] = (podiums[d.n] || 0) + 1;
+    if (typeof row.p !== "number" && row.p !== "DNS") dnfs[d.n] = (dnfs[d.n] || 0) + 1;
+  }
+  for (const q of qualifying || []) {
+    const top = q.results.find(x => x.pos === 1); const d = top && (nameOf[top.did] || byLast[top.d]);
+    if (d) poles[d.n] = (poles[d.n] || 0) + 1;
+  }
+  const wins = Object.fromEntries(DS.filter(d => d.wins).map(d => [d.n, d.wins]));
+  const leader = (label, counts) => {
+    const max = Math.max(0, ...Object.values(counts));
+    if (!max) return null;
+    const names = Object.keys(counts).filter(n => counts[n] === max);
+    return { label, value: max, names, teams: names.map(n => DS.find(d => d.n === n)?.t) };
+  };
+  const pairs = (h2h || []).filter(p => (p.rounds || []).length >= 5 && p.qual);
+  const closest = pairs.length ? pairs.reduce((a, b) => {
+    const ga = Math.abs(a.qual.d1 - a.qual.d2), gb = Math.abs(b.qual.d1 - b.qual.d2);
+    return gb < ga || (gb === ga && Math.abs(b.d1.pts - b.d2.pts) < Math.abs(a.d1.pts - a.d2.pts)) ? b : a;
+  }) : null;
+  return {
+    rounds: gps.length,
+    champion: DS[0], runnerUp: DS[1] || null, margin: DS[1] ? DS[0].pts - DS[1].pts : null,
+    constructors: CS?.[0] || null, constructorsMargin: CS?.[1] ? CS[0].pts - CS[1].pts : null, constructorsRunnerUp: CS?.[1] || null,
+    leaders: [leader("Wins", wins), leader("Poles", poles), leader("Podiums", podiums), leader("Retirements", dnfs)].filter(Boolean),
+    closestTeammates: closest ? { team: closest.team, a: closest.d1.n, b: closest.d2.n, score: `${closest.qual.d1}–${closest.qual.d2}` } : null,
+  };
+}

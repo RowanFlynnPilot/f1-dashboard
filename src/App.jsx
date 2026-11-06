@@ -1,5 +1,5 @@
 import { useState, useEffect, useLayoutEffect, useMemo, useCallback, useRef, Fragment, Component, memo } from "react";
-import { transformData, countdownLabel, withStatus, meetingRaceDay, meetingForRace, meetingTrackName, greenFlagLaps, racePace, onTrackPasses, lapOneGains, miniSectors, titleOutlook, titleClinch, championAge, YOUNGEST_CHAMPION_BEFORE_2026, pointsFor } from "./data.js";
+import { transformData, countdownLabel, withStatus, meetingRaceDay, meetingForRace, meetingTrackName, greenFlagLaps, racePace, onTrackPasses, lapOneGains, miniSectors, titleOutlook, titleClinch, championAge, YOUNGEST_CHAMPION_BEFORE_2026, seasonReview, pointsFor } from "./data.js";
 
 // The season comes from data.json (scripts/season.json drives the fetch); this is
 // only the fallback before it loads.
@@ -1131,7 +1131,7 @@ export default function F1Dashboard({initialRaw=null,renderAt=null}){
         {tab==="Standings"&&<TabBody render={()=>(
           <div className="fu" style={{display:"flex",flexDirection:"column",gap:24}}>
             {/* Title fight — maths, projection and what-if */}
-            <TitleFight DS={DS} sched={sched} races={races} CS={CS} clinch={clinch} season={season}/>
+            <TitleFight DS={DS} sched={sched} races={races} CS={CS} clinch={clinch} season={season} qualifying={qualifying} h2h={h2h}/>
             {/* Points Progression Chart */}
             {progression&&progression.labels.length>=3&&(()=>{
               const W=800,H=240,padL=44,padR=24,padT=20,padB=32;
@@ -2207,7 +2207,7 @@ function OddsTable({rows,nameOf,colorOf}){
   );
 }
 
-const TitleFight=memo(function TitleFight({DS,sched,races,CS,clinch,season}){
+const TitleFight=memo(function TitleFight({DS,sched,races,CS,clinch,season,qualifying,h2h}){
   const outlook=useMemo(()=>titleOutlook({DS,sched,races,sprints:races.filter(r=>r.sprint)}),[DS,sched,races]);
   // Once the title is settled the open contests are second place and the constructors'
   const decided=!!(clinch||outlook?.clinched);
@@ -2217,12 +2217,30 @@ const TitleFight=memo(function TitleFight({DS,sched,races,CS,clinch,season}){
   const{events,maxLeft,clinched,needed,drivers,sims}=outlook;
   const leader=drivers[0],rival=drivers[1];
   const L=d=>lastName(d.n);
-  if(!events.length)return(
-    <div style={PANEL}>
-      <PanelHead title="Title Fight" sub="Season complete"/>
-      <div className="head" style={{fontSize:26,fontWeight:700}}>{leader.n} · champion by {leader.pts-(rival?.pts||0)} points</div>
-    </div>
-  );
+  if(!events.length){
+    // Season over: the three titles, the leaders, the closest team-mate battle
+    const rv=seasonReview({DS,CS,races,qualifying,h2h});
+    const age=clinch?championAge(DS[0],clinch,races):null;
+    const titleRow=(label,name,team,detail)=>(
+      <div style={{display:"grid",gridTemplateColumns:"minmax(110px,160px) 1fr",gap:12,alignItems:"baseline",padding:"8px 0",borderBottom:"1px solid var(--rule-faint)"}}>
+        <span className="head" style={{fontSize:12,letterSpacing:".08em",color:"var(--ink-3)"}}>{label}</span>
+        <span><b className="head" style={{fontSize:20}}><span style={{display:"inline-block",width:4,height:16,background:TC[team]||"var(--ink-3)",marginRight:8,verticalAlign:"-1px"}}/>{name}</b><span className="num" style={{fontSize:12,color:"var(--ink-3)",marginLeft:10}}>{detail}</span></span>
+      </div>
+    );
+    return(
+      <div style={PANEL}>
+        <PanelHead title="Season in Review" sub={`${season} · final standings after ${rv?.rounds??races.filter(r=>!r.sprint).length} Grands Prix`}/>
+        {titleRow("World Champion",leader.n,leader.t,`${leader.pts} pts${rv?.margin!=null?` · by ${rv.margin}`:""}${clinch?` · decided at R${clinch.round}`:""}${age?.youngest?` · youngest ever, ${age.label}`:""}`)}
+        {rv?.runnerUp&&titleRow("Runner-up",rv.runnerUp.n,rv.runnerUp.t,`${rv.runnerUp.pts} pts`)}
+        {rv?.constructors&&titleRow("Constructors",rv.constructors.t,rv.constructors.t,`${rv.constructors.pts} pts${rv.constructorsMargin!=null?` · by ${rv.constructorsMargin} over ${rv.constructorsRunnerUp.t}`:""}`)}
+        {rv&&<div className="ledger" style={{marginTop:16}}>
+          {rv.leaders.map(l=><span key={l.label}><i>most {l.label.toLowerCase()}</i><b>{l.value}</b><small>{l.names.map(n=>lastName(n)).join(", ")}</small></span>)}
+          {rv.closestTeammates&&<span><i>closest team-mates</i><b>{rv.closestTeammates.score}</b><small>{lastName(rv.closestTeammates.a)} v {lastName(rv.closestTeammates.b)}, qualifying</small></span>}
+        </div>}
+        <HowComputed>Final championship points from Jolpica. Leaders count Grands Prix only (sprints left out); a tie lists every driver on the mark; retirements are any unclassified finish except a non-start. The closest team-mate battle is the smallest qualifying head-to-head margin among pairings that shared at least five weekends, with the points gap breaking ties.</HowComputed>
+      </div>
+    );
+  }
   if(decided){
     const p2=after?.drivers.filter(d=>d.alive)||[];
     const wcc=after?.constructors;
