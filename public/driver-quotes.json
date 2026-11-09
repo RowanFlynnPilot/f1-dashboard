@@ -1,6 +1,6 @@
 {
   "season": 2026,
-  "fetchedAt": "2026-11-09T10:25:18Z",
+  "fetchedAt": "2026-11-09T15:04:31Z",
   "rounds": [
     {
       "round": 1,
@@ -4815,6 +4815,210 @@
             }
           ],
           "extractedAt": "2026-11-03T01:18:11Z"
+        }
+      }
+    },
+    {
+      "round": 20,
+      "raceName": "Brazilian Grand Prix",
+      "sessions": {
+        "qualifying": {
+          "videoId": "5RyZGgxFI8A",
+          "quotes": [
+            {
+              "driver": "Lando Norris",
+              "team": "McLaren",
+              "quote": "My lap was just very clean, and that's in the end what you want. It's not like I couldn't have done anything more today. It was just put a very nice clean lap in, no mistakes, and that's what I managed to do.",
+              "context": "Reflecting on clean pole position lap"
+            },
+            {
+              "driver": "George Russell",
+              "team": "Mercedes",
+              "quote": "Pole was ours for the taking there and just a misjudgment from us collectively as a team to abort my second lap. Because we thought we'd get another 60 seconds without the rain. Unfortunately, we got that wrong. That was a pole lap, I think.",
+              "context": "Frustrated about aborting potential pole lap"
+            },
+            {
+              "driver": "Fernando Alonso",
+              "team": "Aston Martin",
+              "quote": "It seems strange to say that because we cannot change a lot of things on the car in qualifying, but I think we experienced a bit more than usual just because we knew we had a 10 grid places penalty. I think we understood quite a lot of things and I'm pretty sure the team as well \u2014 it's been one of the weaknesses for sure in the last few years, the wet driving in general.",
+              "context": "Learning from wet qualifying despite grid penalty"
+            },
+            {
+              "driver": "Carlos Sainz",
+              "team": "Williams",
+              "quote": "Classic S\u00e3o Paulo, I guess. You never know when the shower is going to hit you and how hard it is, but very happy. Obviously after yesterday, good recovery and I guess the mixed conditions or the rain helped a bit as well to make up for that lack of running yesterday.",
+              "context": "Happy with recovery after difficult Friday"
+            },
+            {
+              "driver": "Oscar Piastri",
+              "team": "McLaren",
+              "quote": "That was very sketchy to drive. The Q1 conditions would not have been raceable, but because it's a qualifying session we can have a go at it. We missed out on a much better result because we were last of the queue going into that final Q3 lap.",
+              "context": "Describing treacherous conditions and missed opportunity"
+            },
+            {
+              "driver": "Liam Lawson",
+              "team": "Racing Bulls",
+              "quote": "I learned a lot from my first rodeo here two years ago and I did a much better job, and also the team did a better job too on the wet tire \u2014 when to push, when to cool. Shame about Q3, I think compared to our competitors we just struggled to put the tires in the correct window.",
+              "context": "Improved wet weather performance but Q3 struggles"
+            },
+            {
+              "driver": "Gabriel Bortoleto",
+              "team": "Audi",
+              "quote": "The first Q3 of the season feels good. Let's hope it stays wet for tomorrow. I think with some penalties ahead as well, we can start a bit further up. As a team we needed that.",
+              "context": "Celebrating first Q3 appearance of the season"
+            },
+            {
+              "driver": "Charles Leclerc",
+              "team": "Ferrari",
+              "quote": "Yeah, that was a tricky one. I'm okay, it was just a bit unlucky in the last corner getting the lock up and then after trying to release to make the corner but it was really not possible. Overall I think it was a positive session.",
+              "context": "Explaining late corner lockup incident"
+            },
+            {
+              "driver": "Lewis Hamilton",
+              "team": "Ferrari",
+              "quote": "Q1 was good, I felt really good. I wasn't able to do the last lap but I think on the penultimate lap I was like P3 or something, so I was fast, I was feeling good. Then in Q2 from the beginning the car felt very strange and then a PU issue.",
+              "context": "Describing strong Q1 before power unit issue"
+            },
+            {
+              "driver": "Pierre Gasly",
+              "team": "Alpine",
+              "quote": "It was for sure a very tricky session but honestly I was feeling really good in the wet. Did some good laps in Q1 and Q2 on the extreme wet and then we decided to switch to inter maybe a bit late. There was a red flag and we couldn't settle up on inters, so in the end everyone who set a lap on inters went through and we didn't.",
+              "context": "Unlucky timing on inter switch cost Q3 place"
+            },
+            {
+              "driver": "Nico H\u00fclkenberg",
+              "team": "Audi",
+              "quote": "Generally the session was tricky for us. Didn't have any grip on the front or rear axle and at one point when the track started to dry up it started to feel a little bit better, but still in sector we were lacking a lot of time. We are going to have to try to work really hard tonight to understand what happened on this tire.",
+              "context": "Struggling with grip throughout wet session"
+            },
+            {
+              "driver": "Valtteri Bottas",
+              "team": "Cadillac",
+              "quote": "It's just been a very poor session from us as a team and I can't really understand why we struggle so much for grip.",
+              "context": "Frustrated by lack of grip all session"
+            },
+            {
+              "driver": "Alexander Albon",
+              "team": "Williams",
+              "quote": "More survival than racing. Managed to keep it on track and actually the pace looked quite promising in the early stages \u2014 we could get the tires to work pretty quick, but then towards the end we started overheating the rear tires and kind of fell to our normal position.",
+              "context": "Describing survival drive and tire overheating"
+            },
+            {
+              "driver": "Rafael Camara",
+              "team": "Haas",
+              "quote": "Today we really had the pace to go through at times. I was really fast in the last sector. Unfortunately on my final lap I cooled down a little bit too much and I lost a bit of temperature on the tire and went straight on my final lap. Otherwise I think definitely Q2 was in the cards.",
+              "context": "Disappointed after losing tire temperature on final lap"
+            },
+            {
+              "driver": "Oliver Bearman",
+              "team": "Haas",
+              "quote": "I messed up. I was early in qualifying, I locked up a bit, went straight into the grass and I couldn't stop the car in time before hitting the wall. Then obviously had the rear wing damage and I couldn't continue.",
+              "context": "Explaining early qualifying crash and retirement"
+            }
+          ],
+          "extractedAt": "2026-11-09T15:03:57Z"
+        },
+        "race": {
+          "videoId": "jpwFNmUzWn8",
+          "quotes": [
+            {
+              "driver": "Max Verstappen",
+              "team": "Red Bull",
+              "quote": "Every single lap was probably one of the hardest of the year, and therefore probably one of the best wins I've had. It was a constant challenge, but therefore probably one of the most rewarding at the same time.",
+              "context": "Reflecting on his Brazilian GP victory"
+            },
+            {
+              "driver": "Max Verstappen",
+              "team": "Red Bull",
+              "quote": "McLaren introduced some upgrades here and they were very fast, so I think it will still be a proper battle till the end.",
+              "context": "Discussing constructors championship battle"
+            },
+            {
+              "driver": "Oscar Piastri",
+              "team": "McLaren",
+              "quote": "Starting P21 and finishing second, so of course from that side I'm very happy to be on the podium here. I enjoyed the mixed conditions, I enjoyed nearly crashing all the time.",
+              "context": "Reacting to his podium from P21"
+            },
+            {
+              "driver": "George Russell",
+              "team": "Mercedes",
+              "quote": "An incredible achievement from everyone in the team. We had four tough years and to come through and take the championship was really really great.",
+              "context": "Celebrating Mercedes constructors championship win"
+            },
+            {
+              "driver": "George Russell",
+              "team": "Mercedes",
+              "quote": "No idea what happened on that pit exit. Probably just took too much risk because I was seeing an opportunity to go for the win at that point.",
+              "context": "Explaining his pit exit incident"
+            },
+            {
+              "driver": "Lewis Hamilton",
+              "team": "Ferrari",
+              "quote": "Extremely disappointed with the race, but I'm going to put it aside because today is a great day for the team, and they all deserve it. Incredible group of people not only here at the track but everyone back at the factory, Brackley, Brixworth.",
+              "context": "Reacting to Mercedes championship despite personal disappointment"
+            },
+            {
+              "driver": "Charles Leclerc",
+              "team": "Ferrari",
+              "quote": "The pace on the first stint was horrendous for me. We just have so much struggle putting those tires into temperature, it's unbelievable and it's just undrivable. Lewis definitely found a way because he had an incredible start but for me it was just like driving on ice.",
+              "context": "Describing tire temperature struggles in race"
+            },
+            {
+              "driver": "Fernando Alonso",
+              "team": "Aston Martin",
+              "quote": "It was probably the best race for the car feeling today. The car was phenomenal on the corners and we were battling with the Ferraris at one point. Even on the inters in the last five laps we were in the mix with the two Mercedes.",
+              "context": "Praising Aston Martin car performance"
+            },
+            {
+              "driver": "Carlos Sainz",
+              "team": "Williams",
+              "quote": "The bad start really compromised the race. We were stuck and didn't go forwards and lost a lot of places. The intermediates and the extreme wets we were not quick enough, we had no grip and no balance, so we don't understand why that happened.",
+              "context": "Analyzing poor wet weather performance"
+            },
+            {
+              "driver": "Alexander Albon",
+              "team": "Williams",
+              "quote": "It's a shame as a team not to walk away with any points on a day like today. It's been a difficult weekend since yesterday.",
+              "context": "Disappointed with pointless result"
+            },
+            {
+              "driver": "Gabriel Bortoleto",
+              "team": "Audi",
+              "quote": "It was not easy to overtake because we are limited by the power we have when it's raining, limited on 250 kW, so difficult to get top speed difference on the straight. Home race was not how I expected, but the love from the fans were there and I really appreciate it.",
+              "context": "Discussing home race disappointment and fan support"
+            },
+            {
+              "driver": "Pierre Gasly",
+              "team": "Alpine",
+              "quote": "For the most part I executed a really strong race but need to see what happened in the last 15 laps because until that point I was pretty convinced we were going to be in the top 10. I think on the most part it was a well executed race, team did a good job, pit stops were good.",
+              "context": "Reviewing his race execution and late issues"
+            },
+            {
+              "driver": "Lando Norris",
+              "team": "McLaren",
+              "quote": "The pace once I got up to speed after the first few laps was very strong. That's a big positive. It's been a while since I've been genuinely able to say that, so just have a few more things to iron out and we'll get there.",
+              "context": "Positive about car pace despite room to improve"
+            },
+            {
+              "driver": "Liam Lawson",
+              "team": "Racing Bulls",
+              "quote": "It was a good move, set him up a bit on the entry for the exit with an undercut. That felt nice especially after the penalty to fight back for that position. That was the maximum possible really today.",
+              "context": "Describing overtake and penalty recovery"
+            },
+            {
+              "driver": "Nico H\u00fclkenberg",
+              "team": "Audi",
+              "quote": "Yeah, very very tricky to be honest. It was extremely tricky to manage the car and the tires with the lack of downforce we have. We gambled to stay out on the soft one lap too much to see if the safety car came out and that made us lose quite a lot of positions.",
+              "context": "Explaining difficult race and strategy gamble"
+            },
+            {
+              "driver": "Franco Colapinto",
+              "team": "Alpine",
+              "quote": "Yeah, definitely was not an easy one. All the conditions I think we experienced in one race. In the end compared to yesterday a positive thing was that there was no damage today, but it definitely was a race to learn a lot for the future.",
+              "context": "Reflecting on chaotic race and lessons learned"
+            }
+          ],
+          "extractedAt": "2026-11-09T15:04:29Z"
         }
       }
     }
