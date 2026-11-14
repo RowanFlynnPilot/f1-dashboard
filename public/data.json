@@ -1,6 +1,6 @@
 {
   "season": 2026,
-  "fetchedAt": "2026-11-09T16:33:38.431Z",
+  "fetchedAt": "2026-11-14T20:57:36.174Z",
   "completedRounds": 20,
   "totalRounds": 23,
   "standingsRound": 20,
@@ -304,7 +304,7 @@
       "pts": 0,
       "wins": 0,
       "driverId": "rafael_camara",
-      "dob": null
+      "dob": "2005-05-05"
     }
   ],
   "constructors": [
@@ -21707,15 +21707,6 @@
           "q3": "1:17.117"
         },
         {
-          "pos": 8,
-          "driver": "Lawson",
-          "driverId": "lawson",
-          "team": "Racing Bulls",
-          "q1": null,
-          "q2": "1:17.207",
-          "q3": "1:17.029"
-        },
-        {
           "pos": 9,
           "driver": "Gasly",
           "driverId": "gasly",
@@ -21831,6 +21822,15 @@
           "q1": "1:19.852",
           "q2": null,
           "q3": null
+        },
+        {
+          "pos": 22,
+          "driver": "Lawson",
+          "driverId": "lawson",
+          "team": "Racing Bulls",
+          "q1": null,
+          "q2": null,
+          "q3": null
         }
       ]
     },
@@ -21843,98 +21843,98 @@
           "driver": "Norris",
           "driverId": "norris",
           "team": "McLaren",
-          "q1": null,
-          "q2": null,
-          "q3": null
+          "q1": "1:30.939",
+          "q2": "1:29.207",
+          "q3": "1:27.470"
         },
         {
           "pos": 2,
           "driver": "Russell",
           "driverId": "russell",
           "team": "Mercedes",
-          "q1": null,
-          "q2": null,
-          "q3": null
+          "q1": "1:31.206",
+          "q2": "1:26.745",
+          "q3": "1:27.674"
         },
         {
           "pos": 3,
           "driver": "Antonelli",
           "driverId": "antonelli",
           "team": "Mercedes",
-          "q1": null,
-          "q2": null,
-          "q3": null
+          "q1": "1:32.229",
+          "q2": "1:29.302",
+          "q3": "1:28.095"
         },
         {
           "pos": 4,
           "driver": "Leclerc",
           "driverId": "leclerc",
           "team": "Ferrari",
-          "q1": null,
-          "q2": null,
-          "q3": null
+          "q1": "1:32.121",
+          "q2": "1:28.082",
+          "q3": "1:28.289"
         },
         {
           "pos": 5,
           "driver": "Lawson",
           "driverId": "lawson",
           "team": "Racing Bulls",
-          "q1": null,
-          "q2": null,
-          "q3": null
+          "q1": "1:32.085",
+          "q2": "1:27.049",
+          "q3": "1:28.321"
         },
         {
           "pos": 6,
           "driver": "Hülkenberg",
           "driverId": "hulkenberg",
           "team": "Audi",
-          "q1": null,
-          "q2": null,
-          "q3": null
+          "q1": "1:31.693",
+          "q2": "1:28.361",
+          "q3": "1:28.668"
         },
         {
           "pos": 7,
           "driver": "Hadjar",
           "driverId": "hadjar",
           "team": "Red Bull",
-          "q1": null,
-          "q2": null,
-          "q3": null
+          "q1": "1:32.059",
+          "q2": "1:27.218",
+          "q3": "1:28.763"
         },
         {
           "pos": 8,
           "driver": "Bearman",
           "driverId": "bearman",
           "team": "Haas",
-          "q1": null,
-          "q2": null,
-          "q3": null
+          "q1": "1:33.030",
+          "q2": "1:29.130",
+          "q3": "1:29.831"
         },
         {
           "pos": 9,
           "driver": "Alonso",
           "driverId": "alonso",
           "team": "Aston Martin",
-          "q1": null,
-          "q2": null,
-          "q3": null
+          "q1": "1:32.092",
+          "q2": "1:29.072",
+          "q3": "1:30.311"
         },
         {
           "pos": 10,
           "driver": "Albon",
           "driverId": "albon",
           "team": "Williams",
-          "q1": null,
-          "q2": null,
-          "q3": null
+          "q1": "1:33.150",
+          "q2": "1:28.918",
+          "q3": "1:30.456"
         },
         {
           "pos": 11,
           "driver": "Hamilton",
           "driverId": "hamilton",
           "team": "Ferrari",
-          "q1": null,
-          "q2": null,
+          "q1": "1:31.666",
+          "q2": "1:30.001",
           "q3": null
         },
         {
@@ -21942,8 +21942,8 @@
           "driver": "Piastri",
           "driverId": "piastri",
           "team": "McLaren",
-          "q1": null,
-          "q2": null,
+          "q1": "1:32.251",
+          "q2": "1:30.369",
           "q3": null
         },
         {
@@ -21951,8 +21951,8 @@
           "driver": "Camara",
           "driverId": "rafael_camara",
           "team": "Haas",
-          "q1": null,
-          "q2": null,
+          "q1": "1:32.809",
+          "q2": "1:31.515",
           "q3": null
         },
         {
@@ -21960,8 +21960,8 @@
           "driver": "Lindblad",
           "driverId": "arvid_lindblad",
           "team": "Racing Bulls",
-          "q1": null,
-          "q2": null,
+          "q1": "1:32.306",
+          "q2": "1:31.687",
           "q3": null
         },
         {
@@ -21969,8 +21969,8 @@
           "driver": "Sainz",
           "driverId": "sainz",
           "team": "Williams",
-          "q1": null,
-          "q2": null,
+          "q1": "1:32.959",
+          "q2": "1:31.785",
           "q3": null
         },
         {
@@ -21978,7 +21978,7 @@
           "driver": "Verstappen",
           "driverId": "max_verstappen",
           "team": "Red Bull",
-          "q1": null,
+          "q1": "1:31.238",
           "q2": null,
           "q3": null
         },
@@ -21987,7 +21987,7 @@
           "driver": "Colapinto",
           "driverId": "colapinto",
           "team": "Alpine",
-          "q1": null,
+          "q1": "1:33.327",
           "q2": null,
           "q3": null
         },
@@ -21996,7 +21996,7 @@
           "driver": "Gasly",
           "driverId": "gasly",
           "team": "Alpine",
-          "q1": null,
+          "q1": "1:33.449",
           "q2": null,
           "q3": null
         },
@@ -22005,7 +22005,7 @@
           "driver": "Stroll",
           "driverId": "stroll",
           "team": "Aston Martin",
-          "q1": null,
+          "q1": "1:33.653",
           "q2": null,
           "q3": null
         },
@@ -22014,7 +22014,7 @@
           "driver": "Bottas",
           "driverId": "bottas",
           "team": "Cadillac",
-          "q1": null,
+          "q1": "1:33.774",
           "q2": null,
           "q3": null
         },
@@ -22023,7 +22023,7 @@
           "driver": "Pérez",
           "driverId": "perez",
           "team": "Cadillac",
-          "q1": null,
+          "q1": "1:34.509",
           "q2": null,
           "q3": null
         },
@@ -22032,7 +22032,7 @@
           "driver": "Bortoleto",
           "driverId": "bortoleto",
           "team": "Audi",
-          "q1": null,
+          "q1": "1:41.564",
           "q2": null,
           "q3": null
         }
